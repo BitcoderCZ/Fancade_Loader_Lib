@@ -403,11 +403,12 @@ namespace Fancade.LevelEditor
                         if (Block.Blocks.ContainsKey(pos))
                         {
                             if (pos == Pos)
-                                break;
+                                return id;
                             id++;
                         }
                     }
-            return id;
+
+            return 0;
         }
 
         public static bool operator ==(BlockSegment a, BlockSegment b)

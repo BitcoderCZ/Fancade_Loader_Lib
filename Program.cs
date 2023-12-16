@@ -19,34 +19,7 @@ namespace Fancade.LevelEditor
             //string path = @"C:\dev\fancade level format\level samples\" + name;
             //string path = @"C:\dev\" + name;
 
-            List<(ushort id, Block block)> blocks = new List<(ushort id, Block block)>();
-
-            foreach (string file in Directory.EnumerateFiles(path))
-            {
-                Game g;
-                try
-                {
-                    using (SaveReader reader = new SaveReader(file))
-                        g = Game.Load(reader, file);
-                } catch (Exception ex)
-                {
-                    Console.WriteLine($"{Path.GetFileName(file)} was skipped");
-                    continue;
-                }
-
-                blocks.Add((g.Levels[0].BlockIds[0], g.CustomSegments.First().Value.Block));
-            }
-
-            blocks.Sort((a, b) => a.id.CompareTo(b.id));
-
-            foreach ((ushort id, Block block) item in blocks)
-            {
-                Console.WriteLine($"{item.id, 3}:{item.block.Blocks.Count, 2} " +
-                    $"\"{item.block.Name}\"");
-            }
-            Console.WriteLine("Done");
-            Console.ReadKey(true);
-
+            
             /*g.Author = "Unknown Author";
             Dictionary<ushort, Block> customBlocks = g.GetCustomBlocks();
             foreach (KeyValuePair<ushort, Block> item in customBlocks)

@@ -62,7 +62,7 @@ namespace Fancade.LevelEditor
 
         public static Game Load(SaveReader reader
             #if DEBUG
-            , string path
+            //, string path
 #endif
             )
         {
@@ -82,13 +82,12 @@ namespace Fancade.LevelEditor
                         GZip.DecompressMain(restStream, reader.Stream);
                     reader.Position = 0;
 #if DEBUG
-                    using (SaveWriter writer = new SaveWriter(path + " fix", true)) {
+                    /*using (SaveWriter writer = new SaveWriter(path + " fix", true)) {
                         writer.WriteBytes(reader.ReadBytes((int)reader.BytesLeft));
                         writer.Flush();
                     }
                     reader.Position = 0;
-                    Console.WriteLine("Fixed");
-                    //Console.ReadKey(true);
+                    Console.WriteLine("Fixed");*/
 #endif
                     break;
             }
@@ -138,6 +137,59 @@ namespace Fancade.LevelEditor
                 Levels = levels.ToArray(),
                 CustomBlocks = customBlocks.Finalize(saveVersion),
             };
+        }
+
+        /// <summary>
+        /// Reorders custom block ids in order to make more sense
+        /// </summary>
+        public void FixIds()
+        {
+            ushort minId = ushort.MaxValue;
+
+            Dictionary<(ushort id, Vector3I pos), ushort> sectionToId = new Dictionary<(ushort id, Vector3I pos), ushort>();
+            CustomBlocks.EnumerateSegments(item =>
+            {
+                sectionToId.Add((item.Value.Block.MainId, item.Value.Pos), item.Key);
+                if (item.Key < minId)
+                    minId = item.Key;
+            });
+
+            Dictionary<ushort, ushort> oldToNewId = new Dictionary<ushort, ushort>();
+            BlockList newCustomBlocks = new BlockList();
+
+            ushort id = minId;
+            CustomBlocks.EnumerateBlocksSorted(item =>
+            {
+                Block block = item.Value;
+                ushort oldMainId = block.MainId;
+                block.MainId = id;
+                Vector3I size = block.GetSize();
+
+                bool isMain = true;
+                for (int z = 0; z < size.Z; z++)
+                    for (int y = 0; y < size.Y; y++)
+                        for (int x = 0; x < size.X; x++)
+                        {
+                            Vector3I pos = new Vector3I(x, y, z);
+                            if (!block.Blocks.ContainsKey(pos))
+                                continue;
+
+                            oldToNewId.Add(sectionToId[(oldMainId, pos)], id);
+                            newCustomBlocks.AddSegment(id++, new BlockSegment(pos, isMain, block));
+                            isMain = false;
+                        }
+            });
+
+            for (int i = 0; i < Levels.Length; i++)
+            {
+                Level level = Levels[i];
+
+                for (int j = 0; j < level.BlockIds.Length; j++)
+                    if (level.BlockIds[j] >= minId) // is custom block?
+                        level.BlockIds[j] = oldToNewId[level.BlockIds[j]];
+            }
+
+            CustomBlocks = newCustomBlocks;
         }
 
         public byte GetLevelsPlusCustomBlocks()
