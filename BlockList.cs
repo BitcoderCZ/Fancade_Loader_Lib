@@ -52,7 +52,10 @@ namespace Fancade.LevelEditor
                 for (int y = 0; y < size.Y; y++)
                     for (int x = 0; x < size.X; x++)
                     {
-                        segments.Add(id, new BlockSegment(new Vector3I(x, y, z), id == block.MainId, block));
+                        Vector3I pos = new Vector3I(x, y, z);
+                        if (!block.Blocks.ContainsKey(pos))
+                            continue;
+                        segments.Add(id, new BlockSegment(pos, id == block.MainId, block));
                         id++;
                     }
         }
