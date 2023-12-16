@@ -394,7 +394,20 @@ namespace Fancade.LevelEditor
         public ushort GetIDOffset()
         {
             Vector3I size = Block.GetSize();
-            return (ushort)(Pos.X + Pos.Y * size.X + Pos.Z * size.X * size.Y);
+            ushort id = 0;
+            for (int z = 0; z < size.Z; z++)
+                for (int y = 0; y < size.Y; y++)
+                    for (int x = 0; x < size.X; x++)
+                    {
+                        Vector3I pos = new Vector3I(x, y, z);
+                        if (Block.Blocks.ContainsKey(pos))
+                        {
+                            if (pos == Pos)
+                                break;
+                            id++;
+                        }
+                    }
+            return id;
         }
 
         public static bool operator ==(BlockSegment a, BlockSegment b)

@@ -88,10 +88,24 @@ namespace Fancade.LevelEditor
             foreach (KeyValuePair<ushort, Block> item in blocks)
                 action(item);
         }
+        public void EnumerateBlocksSorted(Action<KeyValuePair<ushort, Block>> action)
+        {
+            KeyValuePair<ushort, Block>[] array = blocks.ToArray();
+            Array.Sort(array, (a, b) => a.Key.CompareTo(b.Key));
+            for (int i = 0; i < array.Length; i++)
+                action(array[i]);
+        }
         public void EnumerateSegments(Action<KeyValuePair<ushort, BlockSegment>> action)
         {
             foreach (KeyValuePair<ushort, BlockSegment> item in segments)
                 action(item);
+        }
+        public void EnumerateSegmentsSorted(Action<KeyValuePair<ushort, BlockSegment>> action)
+        {
+            KeyValuePair<ushort, BlockSegment>[] array = segments.ToArray();
+            Array.Sort(array, (a, b) => a.Key.CompareTo(b.Key));
+            for (int i = 0; i < array.Length; i++)
+                action(array[i]);
         }
 
         public Block[] GetBlocks()
