@@ -434,7 +434,7 @@ namespace Fancade.LevelEditor
     public struct BlockAttribs
     {
         public bool Unknown;
-        public bool Uneditable; // ? not sure, in 3D sokoban "guy" doesn't have edit symbol, probaly only official games have this
+        public bool Uneditable;
         public bool IsMultiBlock;
         public bool BlocksInside;
         public bool ValuesInside;
@@ -607,6 +607,27 @@ namespace Fancade.LevelEditor
                 Value = _value;
                 additionalValue = 0;
                 AdditionalSet = false;
+            }
+
+            public static Collider_T FromEnum(ColliderEnum value)
+            {
+                switch (value)
+                {
+                    case ColliderEnum.Box:
+                        return new Collider_T(0x08);
+                    case ColliderEnum.None:
+                        return new Collider_T(0x28)
+                        {
+                            AdditionalValue = 0x00
+                        };
+                    case ColliderEnum.Sphere:
+                        return new Collider_T(0x28)
+                        {
+                            AdditionalValue = 0x02
+                        };
+                    default:
+                        throw new ArgumentException($"Cannot convert {value} to Collider_T", "value");
+                }
             }
 
             public ColliderEnum ToEnum()
