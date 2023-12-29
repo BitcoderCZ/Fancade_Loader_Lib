@@ -14,20 +14,24 @@ namespace Fancade.LevelEditor
     {
         static void Main(string[] args)
         {
-            string name = "SFX_Fp";
-            string path = @"C:\Users\Bitcoder\Desktop\fancade\fancade\assets\blocks\";
-            //string path = @"C:\dev\fancade level format\level samples\" + name;
+            string name = "658B97B57E427478";
+            //string path = @"C:\Users\Bitcoder\Desktop\fancade\fancade\assets\blocks\";
+            string path = @"C:\dev\fancade level format\level samples\" + name;
             //string path = @"C:\dev\" + name;
 
-            
-            /*g.Author = "Unknown Author";
-            Dictionary<ushort, Block> customBlocks = g.GetCustomBlocks();
-            foreach (KeyValuePair<ushort, Block> item in customBlocks)
+            Game g;
+            using (SaveReader reader = new SaveReader(path))
+                g = Game.Load(reader, path);
+
+            g.Author = "Unknown Author";
+            g.CustomBlocks.EnumerateBlocks(item =>
             {
                 item.Value.Attribs.Uneditable = false;
-                foreach (var item2 in item.Value.Blocks)
+                foreach (KeyValuePair<Vector3I, BlockSection> item2 in item.Value.Blocks)
                     item2.Value.Attribs.Uneditable = false;
-            }
+            });
+            foreach (Level level in g.Levels)
+                level.LevelUnEditable = false;
 
             Console.WriteLine(g.SaveVersion);
             Console.WriteLine("Loadded");
@@ -38,7 +42,7 @@ namespace Fancade.LevelEditor
                 g.Save(fs);// File.ReadAllBytes(path + " fix"));
 
             Console.WriteLine("Saved");
-            Console.ReadKey(true);*/
+            Console.ReadKey(true);
         }
     }
 #endif

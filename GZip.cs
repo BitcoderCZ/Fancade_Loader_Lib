@@ -29,10 +29,11 @@ namespace Fancade.LevelEditor
         public static Action<Stream, Stream> CompressMain = compress;
         private static void compress(Stream from, Stream to)
         {
-            using (GZipStream gz = new GZipStream(to, CompressionLevel.Optimal, true)) {
-                from.CopyTo(gz);
-                from.Dispose();
-            }
+            using GZipStream destination = new GZipStream(to, CompressionLevel.Optimal, leaveOpen: true);
+            from.Position = 0;
+            from.CopyTo(destination);
+            destination.Flush();
+            from.Dispose();
         }
         public static byte[] Compress(Stream from)
         {

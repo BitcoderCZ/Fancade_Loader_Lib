@@ -377,6 +377,11 @@ namespace Fancade.LevelEditor
             Attribs = _attribs;
             Id = _id;
         }
+
+        public int Index(Vector3I pos)
+            => Index(pos.X, pos.Y, pos.Z);
+        public int Index(int x, int y, int z)
+            => x + y * 8 + z * 64;
     }
     public struct BlockSegment
     {
@@ -677,6 +682,8 @@ namespace Fancade.LevelEditor
         // -Z
         public fixed byte Colors[6]; // colors
         public fixed byte Attribs[6]; // "legos"
+
+        public bool IsEmpty => Colors[0] == 0;
 
         public override string ToString() => 
             $"[{Colors[0]}, {Colors[1]}, {Colors[2]}, {Colors[3]}, {Colors[4]}, {Colors[5]}; Attribs:" +

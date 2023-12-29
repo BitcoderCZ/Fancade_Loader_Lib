@@ -15,7 +15,7 @@ namespace Fancade.LevelEditor
 
         public string Name;
         public byte BackgroundColor;
-        public bool LevelEditable;
+        public bool LevelUnEditable;
         public Vector3I Size;
         public ushort[] BlockIds;
         public BlockValue[] BlockValues;
@@ -24,7 +24,7 @@ namespace Fancade.LevelEditor
         public void Save(SaveWriter writer)
         {
             writer.WriteUInt8((byte)(
-                  (LevelEditable ? 0b_0100_0000 : 0)
+                  (LevelUnEditable ? 0b_0100_0000 : 0)
                 | (unknownFlag ? 0b_0100_0000 : 0)
                 | (BlockIds.Length > 0 ? 0b_0100 : 0)
                 | (BlockValues.Length > 0 ? 0b_0010 : 0)
@@ -115,7 +115,7 @@ namespace Fancade.LevelEditor
                 unknownFlag = (info[0] & 0b_0010_0000) != 0,
                 Name = name,
                 BackgroundColor = backgroundColor,
-                LevelEditable = (info[0] & 0b_0100_0000) != 0,
+                LevelUnEditable = (info[0] & 0b_0100_0000) != 0,
                 Size = size,
                 BlockIds = blockIds,
                 BlockValues = values,

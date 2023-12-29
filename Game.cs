@@ -62,7 +62,7 @@ namespace Fancade.LevelEditor
 
         public static Game Load(SaveReader reader
             #if DEBUG
-            //, string path
+            , string path
 #endif
             )
         {
@@ -82,12 +82,12 @@ namespace Fancade.LevelEditor
                         GZip.DecompressMain(restStream, reader.Stream);
                     reader.Position = 0;
 #if DEBUG
-                    /*using (SaveWriter writer = new SaveWriter(path + " fix", true)) {
+                    using (SaveWriter writer = new SaveWriter(path + " fix", true)) {
                         writer.WriteBytes(reader.ReadBytes((int)reader.BytesLeft));
                         writer.Flush();
                     }
                     reader.Position = 0;
-                    Console.WriteLine("Fixed");*/
+                    Console.WriteLine("Fixed");
 #endif
                     break;
             }
