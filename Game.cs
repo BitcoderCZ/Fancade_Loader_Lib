@@ -102,6 +102,7 @@ namespace Fancade.LevelEditor
 
             reader.ReadBytes(1);
 
+            // probably ushort, but why, the value shouldn't normally be above 255
             byte levelsPlusCustomBlocks = reader.ReadUInt8();
             reader.ReadBytes(1);
 

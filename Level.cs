@@ -16,8 +16,7 @@ namespace Fancade.LevelEditor
         public string Name;
         public byte BackgroundColor;
         public bool LevelUnEditable;
-        public Vector3I Size;
-        public ushort[] BlockIds;
+        public BlockData BlockIds;
         public BlockValue[] BlockValues;
         public Connection[] Connections;
 
@@ -41,11 +40,13 @@ namespace Fancade.LevelEditor
 
             if (BlockIds.Length > 0)
             {
-                writer.WriteUInt16((ushort)Size.X);
-                writer.WriteUInt16((ushort)Size.Y);
-                writer.WriteUInt16((ushort)Size.Z);
-                for (int i = 0; i < BlockIds.Length; i++)
-                    writer.WriteUInt16(BlockIds[i]);
+                writer.WriteUInt16((ushort)BlockIds.Size.X);
+                writer.WriteUInt16((ushort)BlockIds.Size.Y);
+                writer.WriteUInt16((ushort)BlockIds.Size.Z);
+                for (int z = 0; z < BlockIds.Size.Z; z++)
+                    for (int y = 0; y < BlockIds.Size.Y; y++)
+                        for (int x = 0; x < BlockIds.Size.X; x++)
+                            writer.WriteUInt16(BlockIds.GetSegment(x, y, z));
             }
             if (BlockValues.Length > 0)
             {
@@ -116,13 +117,12 @@ namespace Fancade.LevelEditor
                 Name = name,
                 BackgroundColor = backgroundColor,
                 LevelUnEditable = (info[0] & 0b_0100_0000) != 0,
-                Size = size,
-                BlockIds = blockIds,
+                BlockIds = new BlockData(new Array3D<ushort>(blockIds, size.X, size.Y, size.Z)),
                 BlockValues = values,
                 Connections = connections
             };
         }
 
-        public override string ToString() => $"[{Name}, Size: {Size}]";
+        public override string ToString() => $"[{Name}, Size: {BlockIds.Size}]";
     }
 }
