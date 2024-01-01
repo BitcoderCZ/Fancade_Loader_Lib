@@ -33,7 +33,13 @@ namespace Fancade.LevelEditor
         public void AddAll(ushort id, Block block, Vector3I pos, bool isMain)
             => all.Add((id, new BlockSegment(pos, isMain, block)));
 
-        public BlockList Finalize(ushort saveVersion)
+        /// <summary>
+        /// Tries to assign all segment their id
+        /// </summary>
+        /// <param name="saveVersion">Save version or 0 if startId should be used</param>
+        /// <param name="startId">Used when id can't be determined automatically and saveVErsion is 0</param>
+        /// <returns></returns>
+        public BlockList Finalize(ushort saveVersion, ushort startId = 0)
         {
             ushort id = 0;
             for (int i = 0; i < all.Count; i++)
@@ -44,7 +50,7 @@ namespace Fancade.LevelEditor
                 }
 
             if (id == 0)
-                id = Block.GetCustomBlockOffset(saveVersion);
+                id = saveVersion == 0 ? startId : Block.GetCustomBlockOffset(saveVersion);
 
             Dictionary<ushort, BlockSegment> segments = new Dictionary<ushort, BlockSegment>();
 

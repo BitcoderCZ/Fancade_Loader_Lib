@@ -25,10 +25,37 @@ namespace Fancade.LevelEditor
                     for (int y = 0; y < size.Y; y++)
                         for (int x = 0; x < size.X; x++)
                         {
-                            segments.Add(id, new BlockSegment(new Vector3I(x, y, z), id == item.Key, item.Value));
+                            Vector3I pos = new Vector3I(x, y, z);
+                            if (!item.Value.Blocks.ContainsKey(pos))
+                                continue;
+
+                            segments.Add(id, new BlockSegment(pos, id == item.Key, item.Value));
                             id++;
                         }
             }
+        }
+
+        public void Save(SaveWriter writer)
+        {
+            writer.WriteUInt32((uint)segments.Count);
+            writer.WriteUInt16(segments.ToArray().Min(item => item.Key));
+            EnumerateSegmentsSorted(item =>
+            {
+                item.Value.Block.Save(writer, item.Value.Pos, item.Value.IsMain);
+            });
+        }
+
+        public static BlockList Load(SaveReader reader)
+        {
+            uint count = reader.ReadUInt32();
+            ushort startId = reader.ReadUInt16();
+
+            int segmentCount = 0;
+            BlockLoadingList loadingList = new BlockLoadingList();
+            for (int i = 0; i < count; i++)
+                Block.Load(reader, loadingList, segmentCount);
+
+            return loadingList.Finalize(0, startId);
         }
 
         public BlockList(Dictionary<ushort, BlockSegment> _segments)
