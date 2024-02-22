@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fancade.LevelEditor
+namespace FancadeLoaderLib
 {
     /// <summary>
     /// if From/To.XYZ == 32769 && in block = one side of connection is outside

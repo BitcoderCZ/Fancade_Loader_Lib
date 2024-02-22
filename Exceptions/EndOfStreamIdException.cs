@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fancade.LevelEditor.Exceptions
+namespace FancadeLoaderLib.Exceptions
 {
     internal class EndOfStreamIdException : Exception
     {

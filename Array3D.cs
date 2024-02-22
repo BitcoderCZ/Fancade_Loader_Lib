@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fancade.LevelEditor
+namespace FancadeLoaderLib
 {
         public class Array3D<T> : IEnumerable<T>
         {

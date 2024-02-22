@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fancade.LevelEditor
+namespace FancadeLoaderLib
 {
     public struct Vector3I
     {

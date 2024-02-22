@@ -1,4 +1,4 @@
-﻿using Fancade.LevelEditor.Exceptions;
+﻿using FancadeLoaderLib.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fancade.LevelEditor
+namespace FancadeLoaderLib
 {
     public class Game
     {

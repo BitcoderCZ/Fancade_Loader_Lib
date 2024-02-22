@@ -1,4 +1,4 @@
-﻿using Fancade.LevelEditor.Exceptions;
+﻿using FancadeLoaderLib.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,7 +7,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Fancade.LevelEditor
+namespace FancadeLoaderLib
 {
     public class Level
     {
