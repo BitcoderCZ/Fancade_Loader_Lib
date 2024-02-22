@@ -14,7 +14,7 @@ namespace Fancade.LevelEditor
     {
         static void Main(string[] args)
         {
-            string name = "658B97B57E427478";
+            string name = "6579E530E1D99EB0";
             //string path = @"C:\Users\Bitcoder\Desktop\fancade\fancade\assets\blocks\";
             string path = @"C:\dev\fancade level format\level samples\" + name;
             //string path = @"C:\dev\" + name;

@@ -110,6 +110,84 @@ namespace Fancade.LevelEditor
         public bool TryGetSegment(ushort id, out BlockSegment segment)
             => segments.TryGetValue(id, out segment);
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="id"></param>
+		/// <param name="pos"></param>
+		/// <param name="incrementedIds"></param>
+		/// <param name="segmentId"></param>
+		/// <returns><see langword="true"/> if the segment was added, <see langword="false"/> if the block already has a segment at pos</returns>
+		public bool AddSegmentToBlock(ushort id, Vector3I pos, out ICollection<ushort> incrementedIds, out ushort segmentId)
+        {
+            Block block = blocks[id];
+            if (block.Blocks.ContainsKey(pos))
+            {
+                incrementedIds = new HashSet<ushort>();
+                segmentId = ushort.MaxValue;
+				return false;
+            }
+
+			// get id the segment will have
+			Vector3I size = block.GetSize();
+			segmentId = block.MainId;
+			for (int z = 0; z < size.Z; z++)
+				for (int y = 0; y < size.Y; y++)
+					for (int x = 0; x < size.X; x++)
+						if (x == pos.X && y == pos.Y && z == pos.Z)
+							break;
+						else if (block.Blocks.ContainsKey(new Vector3I(x, y, z)))
+							segmentId++;
+
+			// increment ids
+			incAfter((ushort)(segmentId - 1), out incrementedIds);
+
+            // increment segment ids
+            for (int z = pos.Z; z < size.Z; z++)
+                for (int y = pos.Y; y < size.Y; y++)
+                    for (int x = pos.X + 1; x < size.X; x++)
+                        if (block.Blocks.TryGetValue(new Vector3I(x, y, z), out BlockSection section))
+                            section.Id++;
+
+            segments.Add(segmentId, new BlockSegment(pos, pos == Vector3I.Zero, block));
+            block.Blocks.Add(pos, new BlockSection(new SubBlock[8 * 8 * 8], block.Attribs, segmentId));
+            return true;
+        }
+
+        private void incAfter(ushort id, out ICollection<ushort> incrementedIds)
+        {
+            List<ushort> segmentsToInc = new List<ushort>();
+            foreach (var item in segments)
+                if (item.Key > id)
+                    segmentsToInc.Add(item.Key);
+
+            segmentsToInc.Sort();
+            for (int i = segmentsToInc.Count - 1; i >= 0; i--)
+            {
+                ushort bId = segmentsToInc[i];
+                BlockSegment b = segments[bId];
+				segments.Remove(bId);
+				segments.Add((ushort)(bId + 1), b);
+            }
+
+            incrementedIds = segmentsToInc.ToHashSet();
+
+			List<ushort> blocksToInc = new List<ushort>();
+			foreach (var item in blocks)
+				if (item.Key > id)
+					blocksToInc.Add(item.Key);
+
+			blocksToInc.Sort();
+			for (int i = blocksToInc.Count - 1; i >= 0; i--)
+			{
+				ushort bId = blocksToInc[i];
+				Block b = blocks[bId];
+                b.IncId();
+				blocks.Remove(bId);
+				blocks.Add((ushort)(bId + 1), b);
+			}
+		}
+
         public void EnumerateBlocks(Action<KeyValuePair<ushort, Block>> action)
         {
             foreach (KeyValuePair<ushort, Block> item in blocks)
@@ -149,7 +227,7 @@ namespace Fancade.LevelEditor
 
         public void FixIds(Level[] levels)
         {
-            ushort lowestID = LowestID();
+            ushort lowestID = LowestSegmentID();
             ushort idOffset = Block.GetCustomBlockOffset(Game.CurrentVersion);
             if (lowestID >= idOffset)
                 return;
@@ -170,11 +248,11 @@ namespace Fancade.LevelEditor
         }
 
         /// <returns>Lowest Segment ID, if there are none returns <see cref="ushort.MaxValue"/></returns>
-        public ushort LowestID()
+        public ushort LowestSegmentID()
         {
             ushort id = ushort.MaxValue;
 
-            foreach (var item in blocks)
+            foreach (KeyValuePair<ushort, BlockSegment> item in segments)
                 if (item.Key < id)
                     id = item.Key;
 
@@ -182,11 +260,11 @@ namespace Fancade.LevelEditor
         }
 
         /// <returns>Highest Segment ID, if there are none returns 0</returns>
-        public ushort HightestID()
+        public ushort HightestSegmentID()
         {
             ushort id = 0;
 
-            foreach (var item in blocks)
+            foreach (KeyValuePair<ushort, BlockSegment> item in segments)
                 if (item.Key > id)
                     id = item.Key;
 

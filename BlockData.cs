@@ -25,9 +25,9 @@ namespace Fancade.LevelEditor
         { }
         public BlockData(Array3D<ushort> _segments)
         {
-            segments = _segments;
             detectMaxBlockPos();
-            ensureSizeAndMaxPos(segments.LengthX, segments.LengthY, segments.LengthZ);
+            ensureSizeAndMaxPos(_segments.LengthX - 1, _segments.LengthY - 1, _segments.LengthZ - 1);
+            segments = _segments;
         }
 
         public bool InBounds(Vector3I pos)
@@ -135,7 +135,7 @@ namespace Fancade.LevelEditor
             {
                 for (int y = 0; y < segments.LengthY; y++)
                 {
-                    for (int z = segments.LengthZ - 1; z >= 0; z--)
+                    for (int z = 0; z < segments.LengthZ; z++)
                     {
                         ushort id = GetSegment(x, y, z);
                         if (id == 0)

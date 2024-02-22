@@ -34,6 +34,13 @@ namespace Fancade.LevelEditor
             mainLoaded = false;
         }
 
+        internal void IncId()
+        {
+            MainId++;
+            foreach (var item in Blocks)
+                item.Value.Id++;
+        }
+
         public static ushort GetCustomBlockOffset(ushort saveVersion)
         {
             switch (saveVersion)
@@ -303,26 +310,6 @@ namespace Fancade.LevelEditor
             }
         }
 
-        [Obsolete("This methoed is obsolete and will be removed, please use GetSize instead.", true)]
-        public Vector3I CalculateSize()
-        {
-            int highX = 0;
-            int highY = 0;
-            int highZ = 0;
-
-            foreach (KeyValuePair<Vector3I, BlockSection> section in Blocks)
-            {
-                Vector3I pos = section.Key;
-                if (pos.X > highX)
-                    highX = pos.X;
-                if (pos.Y > highY)
-                    highY = pos.Y;
-                if (pos.Z > highZ)
-                    highZ = pos.Z;
-            }
-
-            return new Vector3I(highX, highY, highZ);
-        }
         public Vector3I GetSize()
         {
             int highX = 0;
@@ -653,6 +640,9 @@ namespace Fancade.LevelEditor
                 } else
                     return ColliderEnum.Unknown;
             }
+
+            public override string ToString()
+                => $"{{{ToEnum()}}}";
         }
         public enum ColliderEnum
         {
