@@ -115,46 +115,52 @@ namespace FancadeLoaderLib
 		/// </summary>
 		/// <param name="id"></param>
 		/// <param name="pos"></param>
-		/// <param name="incrementedIds"></param>
 		/// <param name="segmentId"></param>
 		/// <returns><see langword="true"/> if the segment was added, <see langword="false"/> if the block already has a segment at pos</returns>
-		public bool AddSegmentToBlock(ushort id, Vector3I pos, out ICollection<ushort> incrementedIds, out ushort segmentId)
+		public bool AddSegmentToBlock(ushort id, Vector3I pos, out ushort segmentId)
         {
             Block block = blocks[id];
             if (block.Blocks.ContainsKey(pos))
             {
-                incrementedIds = new HashSet<ushort>();
                 segmentId = ushort.MaxValue;
 				return false;
             }
 
 			// get id the segment will have
-			Vector3I size = block.GetSize();
+			Vector3I size = Vector3I.Max(block.GetSize(), pos + Vector3I.One);
 			segmentId = block.MainId;
 			for (int z = 0; z < size.Z; z++)
 				for (int y = 0; y < size.Y; y++)
 					for (int x = 0; x < size.X; x++)
 						if (x == pos.X && y == pos.Y && z == pos.Z)
-							break;
+							goto exit;
 						else if (block.Blocks.ContainsKey(new Vector3I(x, y, z)))
 							segmentId++;
 
-			// increment ids
-			incAfter((ushort)(segmentId - 1), out incrementedIds);
+            exit:
 
-            // increment segment ids
-            for (int z = pos.Z; z < size.Z; z++)
-                for (int y = pos.Y; y < size.Y; y++)
-                    for (int x = pos.X + 1; x < size.X; x++)
-                        if (block.Blocks.TryGetValue(new Vector3I(x, y, z), out BlockSection section))
+			// increment ids
+			incAfter((ushort)(segmentId - 1));
+
+			// increment the block's segment ids
+			bool hitBlock = false;
+			for (int z = 0; z < size.Z; z++)
+                for (int y = 0; y < size.Y; y++)
+                    for (int x = 0; x < size.X; x++)
+                    {
+                        Vector3I cPos = new Vector3I(x, y, z);
+                        if (cPos == pos)
+                            hitBlock = true;
+                        else if (hitBlock && block.Blocks.TryGetValue(cPos, out BlockSection section))
                             section.Id++;
+                    }
 
             segments.Add(segmentId, new BlockSegment(pos, pos == Vector3I.Zero, block));
             block.Blocks.Add(pos, new BlockSection(new SubBlock[8 * 8 * 8], block.Attribs, segmentId));
             return true;
         }
 
-        private void incAfter(ushort id, out ICollection<ushort> incrementedIds)
+        private void incAfter(ushort id)
         {
             List<ushort> segmentsToInc = new List<ushort>();
             foreach (var item in segments)
@@ -169,8 +175,6 @@ namespace FancadeLoaderLib
 				segments.Remove(bId);
 				segments.Add((ushort)(bId + 1), b);
             }
-
-            incrementedIds = segmentsToInc.ToHashSet();
 
 			List<ushort> blocksToInc = new List<ushort>();
 			foreach (var item in blocks)
