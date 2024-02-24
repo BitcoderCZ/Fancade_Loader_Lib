@@ -43,6 +43,7 @@ namespace FancadeLoaderLib
 
         public static ushort GetCustomBlockOffset(ushort saveVersion)
         {
+            // TODO: download differend game versions, make a custom block bigger than one, see id
             switch (saveVersion)
             {
                 case 27:
@@ -174,9 +175,6 @@ namespace FancadeLoaderLib
                 else
                 {
                     thisBlock = new Block();
-                    /*{
-                        MainId = id,
-                    };*/
                     customBlocks.AddKnownIdBlock(id, thisBlock);
                     newBlock = true;
                 }
