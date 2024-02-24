@@ -53,6 +53,7 @@ namespace FancadeLoaderLib
 
             for (int i = 0; i < Levels.Length; i++)
                 Levels[i].Save(writer);
+
             KeyValuePair<ushort, BlockSegment>[] customSegments = CustomBlocks.GetSegments();
             Array.Sort(customSegments, (a, b) =>  a.Key.CompareTo(b.Key));
             for (int i = 0; i < customSegments.Length; i++)
@@ -202,7 +203,7 @@ namespace FancadeLoaderLib
                 numb += blocks[i].Blocks.Count;
 
             if (numb > byte.MaxValue)
-                throw new Exception($"Levels ({Levels.Length}) + Custom blocks ({numb - Levels.Length}) != Saved levels + custom blocks count ({numb})");
+                throw new Exception($"Levels ({Levels.Length}) + Custom blocks ({numb - Levels.Length}) > {byte.MaxValue}");
 
             return (byte)numb;
         }

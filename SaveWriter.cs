@@ -97,7 +97,7 @@ namespace FancadeLoaderLib
 
         public void WriteString(string value)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(value);
+            byte[] bytes = Encoding.ASCII.GetBytes(value);
             if (bytes.Length > byte.MaxValue)
                 throw new Exception($"String too long ({bytes.Length}) max {byte.MaxValue}, string: \"{value}\"");
             WriteUInt8((byte)bytes.Length);

@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="Array3D.cs" />
     <Compile Include="Block.cs" />
+    <Compile Include="BlockAttribs.cs" />
     <Compile Include="BlockData.cs" />
     <Compile Include="BlockList.cs" />
     <Compile Include="BlockLoadingList.cs" />

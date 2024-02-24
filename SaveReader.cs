@@ -104,7 +104,7 @@ namespace FancadeLoaderLib
         public string ReadString()
         {
             byte length = ReadUInt8();
-            return Encoding.UTF8.GetString(ReadBytes(length));
+            return Encoding.ASCII.GetString(ReadBytes(length));
         }
 
         public void Dispose()
