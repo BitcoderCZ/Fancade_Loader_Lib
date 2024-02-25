@@ -63,8 +63,8 @@ namespace FancadeLoaderLib
         }
 
         public static Level Load(SaveReader reader)
-        {
-            reader.NextThing(false, out object _info);
+		{
+			reader.NextThing(false, out object _info);
             byte[] info = (byte[])_info;
 
             string name = reader.ReadString();
@@ -78,8 +78,9 @@ namespace FancadeLoaderLib
 
             Vector3I size;
             ushort[] blockIds;
-            if ((info[0] & 0b_0000_0100) != 0) {
-                size = new Vector3I(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+            if ((info[0] & 0b_0000_0100) != 0) 
+            {
+				size = new Vector3I(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
 
                 blockIds = new ushort[size.X * size.Y * size.Z];
                 int i = 0;
@@ -87,7 +88,7 @@ namespace FancadeLoaderLib
                     for (int y = 0; y < size.Y; y++)
                         for (int z = 0; z < size.Z; z++)
                             blockIds[i++] = reader.ReadUInt16();
-            } else {
+			} else {
                 size = Vector3I.One;
                 blockIds = new ushort[0];
             }
@@ -111,7 +112,7 @@ namespace FancadeLoaderLib
             else
                 connections = new Connection[0];
 
-            return new Level()
+			return new Level()
             {
                 unknownFlag = (info[0] & 0b_0010_0000) != 0,
                 Name = name,

@@ -43,12 +43,17 @@ namespace FancadeLoaderLib
 
         public static ushort GetCustomBlockOffset(ushort saveVersion)
         {
-            // TODO: download differend game versions, make a custom block bigger than one, see id
             switch (saveVersion)
             {
                 case 27:
                     return 557;
-                case 31:
+                case 28:
+                    return 585;
+                case 29:
+                    return 589;
+                case 30:
+                    return 597;
+				case 31:
                     return 598;
                 default:
                     if (Opptions.ExceptionWhenUnknownCustomBlockOffset)
@@ -142,8 +147,9 @@ namespace FancadeLoaderLib
             }
         }
 
-        public static void Load(SaveReader reader, BlockLoadingList customBlocks, int sectionCount) {
-            reader.NextThing(false, out object _attribs);
+        public static void Load(SaveReader reader, BlockLoadingList customBlocks, int sectionCount)
+		{
+			reader.NextThing(false, out object _attribs);
             BlockAttribs attribs = (BlockAttribs)_attribs;
 
             bool isMain = attribs.IsMain;
@@ -276,8 +282,8 @@ namespace FancadeLoaderLib
                 thisBlock.InsideBlockIds = blockIds;
                 thisBlock.BlockValues = values;
                 thisBlock.Connections = connections;
-            }
-        }
+			}
+		}
 
         public Vector3I GetSize()
         {
