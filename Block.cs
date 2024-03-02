@@ -65,7 +65,6 @@ namespace FancadeLoaderLib
 
         public void Save(SaveWriter writer, Vector3I pos, bool isMain)
         {
-            // TODO: Name should probably be a part of attribs
             if (isMain)
             {
                 Attribs.Save(writer, Attribs, Name, true);

@@ -129,6 +129,7 @@ namespace FancadeLoaderLib
             if (levels.Count + segmentCount != levelsPlusCustomBlocks)
                 throw new Exception($"Levels ({levels.Count}) + Custom blocks ({segmentCount}) != Saved levels + custom blocks count ({levelsPlusCustomBlocks})");
 
+            Level[] levelsArray = levels.ToArray();
             return new Game()
             {
                 Name = name,
@@ -136,8 +137,8 @@ namespace FancadeLoaderLib
                 Description = description,
                 SaveVersion = saveVersion,
                 Unknown = unknown,
-                Levels = levels.ToArray(),
-                CustomBlocks = customBlocks.Finalize(saveVersion),
+                Levels = levelsArray,
+                CustomBlocks = customBlocks.Finalize(saveVersion, levelsArray, 0),
             };
         }
 
