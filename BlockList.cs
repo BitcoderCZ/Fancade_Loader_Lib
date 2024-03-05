@@ -171,7 +171,7 @@ namespace FancadeLoaderLib
         /// <param name="pos"></param>
         /// <param name="segmentId">Id of the segment that was removed</param>
         /// <returns><see langword="true"/>If the segment was removed, <see langword="false"/> if the block already has a segment at pos</returns>
-        public bool RemoveSegmentToBlock(ushort id, Vector3I pos, out ushort segmentId)
+        public bool RemoveSegmentFromBlock(ushort id, Vector3I pos, out ushort segmentId)
         {
             Block block = blocks[id];
             if (!block.Blocks.TryGetValue(pos, out BlockSection section))
