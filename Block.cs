@@ -34,11 +34,20 @@ namespace FancadeLoaderLib
             mainLoaded = false;
         }
 
-        internal void IncId()
+        internal void UpdateId(short _value)
         {
-            MainId++;
-            foreach (var item in Blocks)
-                item.Value.Id++;
+            ushort value = (ushort)Math.Abs(_value);
+            if (_value >= 0)
+            {
+                MainId += value;
+                foreach (var item in Blocks)
+                    item.Value.Id += value;
+            } else
+            {
+                MainId -= value;
+                foreach (var item in Blocks)
+                    item.Value.Id -= value;
+            }
         }
 
         public static ushort GetCustomBlockOffset(ushort saveVersion)
@@ -305,21 +314,22 @@ namespace FancadeLoaderLib
         }
 
         public static bool operator ==(Block a, Block b)
-            => a is null ? b is null : a.Equals(b);
+            => a?.Equals(b) ?? (a is null == b is null);
         public static bool operator !=(Block a, Block b)
-            => a is null ? !(b is null) : !a.Equals(b);
+            => !a?.Equals(b) ?? (a is null != b is null);
 
         public override bool Equals(object obj)
         {
-            if (obj is null)
-                return false;
-            else if (obj is Block other)
+            if (obj is Block other)
                 return Equals(other);
             else
                 return false;
         }
         public bool Equals(Block other)
-            => MainId == other.MainId && Name == other.Name;
+        {
+            if (other is null) return false;
+            else return MainId == other.MainId && Name == other.Name;
+        }
 
         public override int GetHashCode() => MainId ^ Name.GetHashCode();
 

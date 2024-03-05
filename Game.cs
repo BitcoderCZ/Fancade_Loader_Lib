@@ -61,11 +61,7 @@ namespace FancadeLoaderLib
                     customSegments[i].Value.IsMain);
         }
 
-        public static Game Load(SaveReader reader
-            #if DEBUG
-            , string path
-#endif
-            )
+        public static Game Load(SaveReader reader)
         {
             reader.ReadBytes(2);
             byte encoding = reader.ReadUInt8();
@@ -82,14 +78,6 @@ namespace FancadeLoaderLib
                     using (MemoryStream restStream = new MemoryStream(rest))
                         GZip.DecompressMain(restStream, reader.Stream);
                     reader.Position = 0;
-#if DEBUG
-                    using (SaveWriter writer = new SaveWriter(path + " fix", true)) {
-                        writer.WriteBytes(reader.ReadBytes((int)reader.BytesLeft));
-                        writer.Flush();
-                    }
-                    reader.Position = 0;
-                    Console.WriteLine("Fixed");
-#endif
                     break;
             }
 

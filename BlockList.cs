@@ -105,46 +105,50 @@ namespace FancadeLoaderLib
             => blocks[id];
         public BlockSegment GetSegment(ushort id)
             => segments[id];
+        public void SetBlock(ushort id, Block value)
+            => blocks[id] = value;
+        public void SetSegment(ushort id, BlockSegment value)
+            => segments[id] = value;
         public bool TryGetBlock(ushort id, out Block block)
             => blocks.TryGetValue(id, out block);
         public bool TryGetSegment(ushort id, out BlockSegment segment)
             => segments.TryGetValue(id, out segment);
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="id"></param>
-		/// <param name="pos"></param>
-		/// <param name="segmentId"></param>
-		/// <returns><see langword="true"/> if the segment was added, <see langword="false"/> if the block already has a segment at pos</returns>
-		public bool AddSegmentToBlock(ushort id, Vector3I pos, out ushort segmentId)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="pos"></param>
+        /// <param name="segmentId">Id of the segment that was added</param>
+        /// <returns><see langword="true"/>If the segment was added, <see langword="false"/> if the block already has a segment at pos</returns>
+        public bool AddSegmentToBlock(ushort id, Vector3I pos, out ushort segmentId)
         {
             Block block = blocks[id];
             if (block.Blocks.ContainsKey(pos))
             {
                 segmentId = ushort.MaxValue;
-				return false;
+                return false;
             }
 
-			// get id the segment will have
-			Vector3I size = Vector3I.Max(block.GetSize(), pos + Vector3I.One);
-			segmentId = block.MainId;
-			for (int z = 0; z < size.Z; z++)
-				for (int y = 0; y < size.Y; y++)
-					for (int x = 0; x < size.X; x++)
-						if (x == pos.X && y == pos.Y && z == pos.Z)
-							goto exit;
-						else if (block.Blocks.ContainsKey(new Vector3I(x, y, z)))
-							segmentId++;
+            // get id the segment will have
+            Vector3I size = Vector3I.Max(block.GetSize(), pos + Vector3I.One);
+            segmentId = block.MainId;
+            for (int z = 0; z < size.Z; z++)
+                for (int y = 0; y < size.Y; y++)
+                    for (int x = 0; x < size.X; x++)
+                        if (x == pos.X && y == pos.Y && z == pos.Z)
+                            goto exit;
+                        else if (block.Blocks.ContainsKey(new Vector3I(x, y, z)))
+                            segmentId++;
 
-            exit:
+                        exit:
 
-			// increment ids
-			incAfter((ushort)(segmentId - 1));
+            // increment ids
+            updateAfter((ushort)(segmentId - 1), 1);
 
-			// increment the block's segment ids
-			bool hitBlock = false;
-			for (int z = 0; z < size.Z; z++)
+            // increment the block's segment ids
+            bool hitBlock = false;
+            for (int z = 0; z < size.Z; z++)
                 for (int y = 0; y < size.Y; y++)
                     for (int x = 0; x < size.X; x++)
                     {
@@ -160,37 +164,99 @@ namespace FancadeLoaderLib
             return true;
         }
 
-        private void incAfter(ushort id)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="pos"></param>
+        /// <param name="segmentId">Id of the segment that was removed</param>
+        /// <returns><see langword="true"/>If the segment was removed, <see langword="false"/> if the block already has a segment at pos</returns>
+        public bool RemoveSegmentToBlock(ushort id, Vector3I pos, out ushort segmentId)
         {
-            List<ushort> segmentsToInc = new List<ushort>();
+            Block block = blocks[id];
+            if (!block.Blocks.TryGetValue(pos, out BlockSection section))
+            {
+                segmentId = ushort.MaxValue;
+                return false;
+            }
+            
+            // get id the segment will have
+            Vector3I size = Vector3I.Max(block.GetSize(), pos + Vector3I.One);
+            segmentId = section.Id;
+
+            // remove the segment
+            segments.Remove(segmentId);
+            block.Blocks.Remove(pos);
+
+            // decrement ids
+            updateAfter(segmentId, -1);
+
+            // decrement the block's segment ids
+            bool hitBlock = false;
+            for (int z = 0; z < size.Z; z++)
+                for (int y = 0; y < size.Y; y++)
+                    for (int x = 0; x < size.X; x++)
+                    {
+                        Vector3I cPos = new Vector3I(x, y, z);
+                        if (cPos == pos)
+                            hitBlock = true;
+                        else if (hitBlock && block.Blocks.TryGetValue(cPos, out BlockSection bs))
+                            bs.Id--;
+                    }
+
+            return true;
+        }
+
+        private void updateAfter(ushort id, short value)
+        {
+            List<ushort> segmentsToUpdate = new List<ushort>();
             foreach (var item in segments)
                 if (item.Key > id)
-                    segmentsToInc.Add(item.Key);
+                    segmentsToUpdate.Add(item.Key);
 
-            segmentsToInc.Sort();
-            for (int i = segmentsToInc.Count - 1; i >= 0; i--)
-            {
-                ushort bId = segmentsToInc[i];
-                BlockSegment b = segments[bId];
-				segments.Remove(bId);
-				segments.Add((ushort)(bId + 1), b);
-            }
+            segmentsToUpdate.Sort();
+            if (value > 0)
+                for (int i = segmentsToUpdate.Count - 1; i >= 0; i--)
+                {
+                    ushort bId = segmentsToUpdate[i];
+                    BlockSegment b = segments[bId];
+                    segments.Remove(bId);
+                    segments.Add((ushort)(bId + value), b);
+                }
+            else
+                for (int i = 0; i < segmentsToUpdate.Count; i++)
+                {
+                    ushort bId = segmentsToUpdate[i];
+                    BlockSegment b = segments[bId];
+                    segments.Remove(bId);
+                    segments.Add((ushort)(bId + value), b);
+                }
 
-			List<ushort> blocksToInc = new List<ushort>();
-			foreach (var item in blocks)
-				if (item.Key > id)
-					blocksToInc.Add(item.Key);
+            List<ushort> blocksToUpdate = new List<ushort>();
+            foreach (var item in blocks)
+                if (item.Key > id)
+                    blocksToUpdate.Add(item.Key);
 
-			blocksToInc.Sort();
-			for (int i = blocksToInc.Count - 1; i >= 0; i--)
-			{
-				ushort bId = blocksToInc[i];
-				Block b = blocks[bId];
-                b.IncId();
-				blocks.Remove(bId);
-				blocks.Add((ushort)(bId + 1), b);
-			}
-		}
+            blocksToUpdate.Sort();
+            if (value > 0)
+                for (int i = blocksToUpdate.Count - 1; i >= 0; i--)
+                {
+                    ushort bId = blocksToUpdate[i];
+                    Block b = blocks[bId];
+                    b.UpdateId(value);
+                    blocks.Remove(bId);
+                    blocks.Add((ushort)(bId + value), b);
+                }
+            else
+                for (int i = 0; i < blocksToUpdate.Count; i++)
+                {
+                    ushort bId = blocksToUpdate[i];
+                    Block b = blocks[bId];
+                    b.UpdateId(value);
+                    blocks.Remove(bId);
+                    blocks.Add((ushort)(bId + value), b);
+                }
+        }
 
         public void EnumerateBlocks(Action<KeyValuePair<ushort, Block>> action)
         {
@@ -243,7 +309,7 @@ namespace FancadeLoaderLib
                     levels[i].BlockIds[j] += add;
             });
 
-            blocks = blocks.ToDictionary(item => (ushort)(item.Key + add), item => 
+            blocks = blocks.ToDictionary(item => (ushort)(item.Key + add), item =>
             {
                 item.Value.MainId += add;
                 return item.Value;
