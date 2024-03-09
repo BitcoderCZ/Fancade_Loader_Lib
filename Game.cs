@@ -61,6 +61,36 @@ namespace FancadeLoaderLib
                     customSegments[i].Value.IsMain);
         }
 
+        public static (ushort version, string name, string author, string description) LoadInfo(SaveReader reader)
+        {
+            reader.ReadBytes(2);
+            byte encoding = reader.ReadUInt8();
+            switch (encoding)
+            {
+                case 1: // plain text
+                    throw new Exception($"Plain text levels aren't supported");
+                    //reader.ReadBytes(/*7*/6);
+                    break;
+                default: // gzip
+                    reader.Position = 0;
+                    byte[] rest = reader.ReadBytes((int)reader.BytesLeft);
+                    reader.Dispose();
+                    reader = new SaveReader(new MemoryStream());
+                    using (MemoryStream restStream = new MemoryStream(rest))
+                        GZip.DecompressMain(restStream, reader.Stream);
+                    reader.Position = 0;
+                    break;
+            }
+
+            ushort saveVersion = reader.ReadUInt16(); // just a guess
+
+            string name = reader.ReadString();
+            string author = reader.ReadString();
+            string description = reader.ReadString();
+            
+            return (saveVersion, name, author, description);
+        }
+
         public static Game Load(SaveReader reader)
         {
             reader.ReadBytes(2);
