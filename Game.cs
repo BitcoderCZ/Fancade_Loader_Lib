@@ -12,7 +12,7 @@ namespace FancadeLoaderLib
 {
     public class Game
     {
-        public const ushort CurrentVersion = 31;
+        public readonly ushort CurrentVersion = 31;
 
         public string Name;
         public string Author;
