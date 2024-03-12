@@ -33,8 +33,19 @@ namespace FancadeLoaderLib
 			ConnectionsInside = false,
 			Uneditable = false
 		};
+        public static BlockAttribs DefaultSection = new BlockAttribs()
+        {
+            IsMain = false,
+            BlocksInside = false,
+            Collider = Collider_T.FromEnum(ColliderEnum.Box),
+            Type = Type_T.Section,
+            ValuesInside = false,
+            IsMultiBlock = false,
+            ConnectionsInside = false,
+            Uneditable = false
+        };
 
-		public void Save(SaveWriter writer, BlockAttribs mainAttribs, string name, bool mainSave)
+        public void Save(SaveWriter writer, BlockAttribs mainAttribs, string name, bool mainSave)
 		{
 			if (mainSave)
 				writer.WriteUInt8((byte)(

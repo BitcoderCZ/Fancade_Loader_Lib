@@ -36,6 +36,10 @@ namespace FancadeLoaderLib
 
             Attribs = BlockAttribs.Default;
 
+            Blocks = new Dictionary<Vector3I, BlockSection>()
+            {
+                { Vector3I.Zero, new BlockSection(new SubBlock[8*8*8], BlockAttribs.DefaultSection, id) }
+            };
             InsideSize = Vector3I.Zero;
             InsideBlockIds = new ushort[0];
             BlockValues = new List<BlockValue>();
