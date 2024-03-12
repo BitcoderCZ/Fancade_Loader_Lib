@@ -76,6 +76,8 @@ namespace FancadeLoaderLib
         {
             if (isMain)
             {
+                UpdateAttribs();
+
                 Attribs.Save(writer, Attribs, Name, true);
 
                 BlockSection mainSection = Blocks[pos];
@@ -292,6 +294,14 @@ namespace FancadeLoaderLib
                 thisBlock.Connections = connections;
 			}
 		}
+
+        public void UpdateAttribs()
+        {
+            Attribs.IsMultiBlock = Blocks.Count > 0;
+            Attribs.BlocksInside = InsideBlockIds.Length > 0;
+            Attribs.ValuesInside = BlockValues.Length > 0;
+            Attribs.ConnectionsInside = Connections.Length > 0;
+        }
 
         public Vector3I GetSize()
         {
