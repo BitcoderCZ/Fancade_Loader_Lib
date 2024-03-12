@@ -64,7 +64,7 @@ namespace FancadeLoaderLib
 
         public void SetSegment(int x, int y, int z, ushort id)
         {
-            if (id > 1)
+            if (id > 0)
             {
                 ensureSizeAndMaxPos(x, y, z);
                 setSegment(x, y, z, id);
