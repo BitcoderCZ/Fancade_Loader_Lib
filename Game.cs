@@ -24,6 +24,17 @@ namespace FancadeLoaderLib
         public Level[] Levels;
         public BlockList CustomBlocks = new BlockList();
 
+        public Game(string name)
+        {
+            Name = name;
+            Author = "Unknown Author";
+            Description = string.Empty;
+            SaveVersion = CurrentVersion;
+            CustomBlocks = new BlockList();
+            Levels = new Level[0];
+            Unknown = 84;
+        }
+
         public void Save(Stream stream)
         {
             using (MemoryStream writerStream = new MemoryStream())
@@ -148,9 +159,8 @@ namespace FancadeLoaderLib
                 throw new Exception($"Levels ({levels.Count}) + Custom blocks ({segmentCount}) != Saved levels + custom blocks count ({levelsPlusCustomBlocks})");
 
             Level[] levelsArray = levels.ToArray();
-            return new Game()
+            return new Game(name)
             {
-                Name = name,
                 Author = author,
                 Description = description,
                 SaveVersion = saveVersion,

@@ -29,7 +29,20 @@ namespace FancadeLoaderLib
         public BlockValue[] BlockValues;
         public Connection[] Connections;
 
-        public Block()
+        public Block(ushort id, string name)
+        {
+            MainId = id;
+            Name = name;
+
+            Attribs = BlockAttribs.Default;
+
+            InsideSize = Vector3I.Zero;
+            InsideBlockIds = new ushort[0];
+            BlockValues = new BlockValue[0];
+            Connections = new Connection[0];
+        }
+
+        private Block()
         {
             mainLoaded = false;
         }

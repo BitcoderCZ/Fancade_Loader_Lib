@@ -22,6 +22,18 @@ namespace FancadeLoaderLib
 		/// </summary>
 		public string Name { get; private set; }
 
+		public static BlockAttribs Default = new BlockAttribs()
+		{
+			IsMain = true,
+			BlocksInside = false,
+			Collider = Collider_T.FromEnum(ColliderEnum.Box),
+			Type = Type_T.Normal,
+			ValuesInside = false,
+			IsMultiBlock = false,
+			ConnectionsInside = false,
+			Uneditable = false
+		};
+
 		public void Save(SaveWriter writer, BlockAttribs mainAttribs, string name, bool mainSave)
 		{
 			if (mainSave)
