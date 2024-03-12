@@ -156,7 +156,7 @@ namespace FancadeLoaderLib
         }
 
         public static void Load(SaveReader reader, BlockLoadingList customBlocks, int sectionCount)
-		{
+        {
 			reader.NextThing(false, out object _attribs);
             BlockAttribs attribs = (BlockAttribs)_attribs;
 

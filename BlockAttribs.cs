@@ -42,6 +42,9 @@ namespace FancadeLoaderLib
 					| Collider.Value
 					));
 
+			if (!mainSave)
+				Type = Type_T.Section; // would break things when loading
+
 			switch (Type)
 			{
 				case Type_T.Normal:
