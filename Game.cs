@@ -21,7 +21,7 @@ namespace FancadeLoaderLib
         public ushort SaveVersion;
         public byte Unknown;
 
-        public Level[] Levels;
+        public List<Level> Levels;
         public BlockList CustomBlocks = new BlockList();
 
         public Game(string name)
@@ -31,7 +31,7 @@ namespace FancadeLoaderLib
             Description = string.Empty;
             SaveVersion = CurrentVersion;
             CustomBlocks = new BlockList();
-            Levels = new Level[0];
+            Levels = new List<Level>();
             Unknown = 84;
         }
 
@@ -62,7 +62,7 @@ namespace FancadeLoaderLib
             writer.WriteUInt8(GetLevelsPlusCustomBlocks());
             writer.WriteUInt8(0);
 
-            for (int i = 0; i < Levels.Length; i++)
+            for (int i = 0; i < Levels.Count; i++)
                 Levels[i].Save(writer);
 
             KeyValuePair<ushort, BlockSegment>[] customSegments = CustomBlocks.GetSegments();
@@ -158,15 +158,14 @@ namespace FancadeLoaderLib
             if (levels.Count + segmentCount != levelsPlusCustomBlocks)
                 throw new Exception($"Levels ({levels.Count}) + Custom blocks ({segmentCount}) != Saved levels + custom blocks count ({levelsPlusCustomBlocks})");
 
-            Level[] levelsArray = levels.ToArray();
             return new Game(name)
             {
                 Author = author,
                 Description = description,
                 SaveVersion = saveVersion,
                 Unknown = unknown,
-                Levels = levelsArray,
-                CustomBlocks = customBlocks.Finalize(saveVersion, levelsArray, 0),
+                Levels = levels,
+                CustomBlocks = customBlocks.Finalize(saveVersion, levels.ToArray(), 0),
             };
         }
 
@@ -211,7 +210,7 @@ namespace FancadeLoaderLib
                         }
             });
 
-            for (int i = 0; i < Levels.Length; i++)
+            for (int i = 0; i < Levels.Count; i++)
             {
                 Level level = Levels[i];
 
@@ -225,14 +224,14 @@ namespace FancadeLoaderLib
 
         public byte GetLevelsPlusCustomBlocks()
         {
-            int numb = Levels.Length;
+            int numb = Levels.Count;
             Block[] blocks = CustomBlocks.GetBlocks();
 
             for (int i = 0; i < blocks.Length; i++)
                 numb += blocks[i].Blocks.Count;
 
             if (numb > byte.MaxValue)
-                throw new Exception($"Levels ({Levels.Length}) + Custom blocks ({numb - Levels.Length}) > {byte.MaxValue}");
+                throw new Exception($"Levels ({Levels.Count}) + Custom blocks ({numb - Levels.Count}) > {byte.MaxValue}");
 
             return (byte)numb;
         }

@@ -26,8 +26,8 @@ namespace FancadeLoaderLib
         public Vector3I InsideSize;
         public ushort[] InsideBlockIds;
 
-        public BlockValue[] BlockValues;
-        public Connection[] Connections;
+        public List<BlockValue> BlockValues;
+        public List<Connection> Connections;
 
         public Block(ushort id, string name)
         {
@@ -38,8 +38,8 @@ namespace FancadeLoaderLib
 
             InsideSize = Vector3I.Zero;
             InsideBlockIds = new ushort[0];
-            BlockValues = new BlockValue[0];
-            Connections = new Connection[0];
+            BlockValues = new List<BlockValue>();
+            Connections = new List<Connection>();
         }
 
         private Block()
@@ -128,16 +128,16 @@ namespace FancadeLoaderLib
                     for (int i = 0; i < InsideBlockIds.Length; i++)
                         writer.WriteUInt16(InsideBlockIds[i]);
                 }
-                if (BlockValues.Length > 0)
+                if (BlockValues.Count > 0)
                 {
-                    writer.WriteUInt16((ushort)BlockValues.Length);
-                    for (int i = 0; i < BlockValues.Length; i++)
+                    writer.WriteUInt16((ushort)BlockValues.Count);
+                    for (int i = 0; i < BlockValues.Count; i++)
                         BlockValues[i].Save(writer);
                 }
-                if (Connections.Length > 0)
+                if (Connections.Count > 0)
                 {
-                    writer.WriteUInt16((ushort)Connections.Length);
-                    for (int i = 0; i < Connections.Length; i++)
+                    writer.WriteUInt16((ushort)Connections.Count);
+                    for (int i = 0; i < Connections.Count; i++)
                         Connections[i].Save(writer);
                 }
             }
@@ -303,8 +303,8 @@ namespace FancadeLoaderLib
 
                 thisBlock.InsideSize = size;
                 thisBlock.InsideBlockIds = blockIds;
-                thisBlock.BlockValues = values;
-                thisBlock.Connections = connections;
+                thisBlock.BlockValues = values.ToList();
+                thisBlock.Connections = connections.ToList();
 			}
 		}
 
@@ -312,8 +312,8 @@ namespace FancadeLoaderLib
         {
             Attribs.IsMultiBlock = Blocks.Count > 0;
             Attribs.BlocksInside = InsideBlockIds.Length > 0;
-            Attribs.ValuesInside = BlockValues.Length > 0;
-            Attribs.ConnectionsInside = Connections.Length > 0;
+            Attribs.ValuesInside = BlockValues.Count > 0;
+            Attribs.ConnectionsInside = Connections.Count > 0;
         }
 
         public Vector3I GetSize()

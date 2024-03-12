@@ -17,8 +17,18 @@ namespace FancadeLoaderLib
         public byte BackgroundColor;
         public bool LevelUnEditable;
         public BlockData BlockIds;
-        public BlockValue[] BlockValues;
-        public Connection[] Connections;
+        public List<BlockValue> BlockValues;
+        public List<Connection> Connections;
+
+        public Level(string name)
+        {
+            Name = name;
+            BackgroundColor = 26;
+            LevelUnEditable = false;
+            BlockIds = new BlockData(new Array3D<ushort>(1, 1, 1));
+            BlockValues = new List<BlockValue>();
+            Connections = new List<Connection>();
+        }
 
         public void Save(SaveWriter writer)
         {
@@ -26,8 +36,8 @@ namespace FancadeLoaderLib
                   (LevelUnEditable ? 0b_0100_0000 : 0)
                 | (unknownFlag ? 0b_0100_0000 : 0)
                 | (BlockIds.Length > 0 ? 0b_0100 : 0)
-                | (BlockValues.Length > 0 ? 0b_0010 : 0)
-                | (Connections.Length > 0 ? 0b_0001 : 0)
+                | (BlockValues.Count > 0 ? 0b_0010 : 0)
+                | (Connections.Count > 0 ? 0b_0001 : 0)
                 ));
             writer.WriteUInt8((byte)(BackgroundColor == 26 ? 0x18 : 0x19));
             writer.WriteUInt8(0x03);
@@ -48,16 +58,16 @@ namespace FancadeLoaderLib
                         for (int x = 0; x < BlockIds.Size.X; x++)
                             writer.WriteUInt16(BlockIds.GetSegment(x, y, z));
             }
-            if (BlockValues.Length > 0)
+            if (BlockValues.Count > 0)
             {
-                writer.WriteUInt16((ushort)BlockValues.Length);
-                for (int i = 0; i < BlockValues.Length; i++)
+                writer.WriteUInt16((ushort)BlockValues.Count);
+                for (int i = 0; i < BlockValues.Count; i++)
                     BlockValues[i].Save(writer);
             }
-            if (Connections.Length > 0)
+            if (Connections.Count > 0)
             {
-                writer.WriteUInt16((ushort)Connections.Length);
-                for (int i = 0; i < Connections.Length; i++)
+                writer.WriteUInt16((ushort)Connections.Count);
+                for (int i = 0; i < Connections.Count; i++)
                     Connections[i].Save(writer);
             }
         }
@@ -112,15 +122,14 @@ namespace FancadeLoaderLib
             else
                 connections = new Connection[0];
 
-			return new Level()
+			return new Level(name)
             {
                 unknownFlag = (info[0] & 0b_0010_0000) != 0,
-                Name = name,
                 BackgroundColor = backgroundColor,
                 LevelUnEditable = (info[0] & 0b_0100_0000) != 0,
                 BlockIds = new BlockData(new Array3D<ushort>(blockIds, size.X, size.Y, size.Z)),
-                BlockValues = values,
-                Connections = connections
+                BlockValues = values.ToList(),
+                Connections = connections.ToList()
             };
         }
 
