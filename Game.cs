@@ -68,8 +68,7 @@ namespace FancadeLoaderLib
             KeyValuePair<ushort, BlockSegment>[] customSegments = CustomBlocks.GetSegments();
             Array.Sort(customSegments, (a, b) =>  a.Key.CompareTo(b.Key));
             for (int i = 0; i < customSegments.Length; i++)
-                customSegments[i].Value.Block.Save(writer, customSegments[i].Value.Pos, 
-                    customSegments[i].Value.IsMain);
+                customSegments[i].Value.Block.Save(writer, customSegments[i].Value.Pos, customSegments[i].Value.IsMain);
         }
 
         public static (ushort version, string name, string author, string description) LoadInfo(SaveReader reader)

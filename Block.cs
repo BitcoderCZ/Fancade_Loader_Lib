@@ -314,7 +314,7 @@ namespace FancadeLoaderLib
 
         public void UpdateAttribs()
         {
-            Attribs.IsMultiBlock = Blocks.Count > 0;
+            Attribs.IsMultiBlock = Blocks.Count > 1;
             Attribs.BlocksInside = InsideBlockIds.Length > 0;
             Attribs.ValuesInside = BlockValues.Count > 0;
             Attribs.ConnectionsInside = Connections.Count > 0;
