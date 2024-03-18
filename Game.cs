@@ -5,6 +5,7 @@ using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -203,6 +204,14 @@ namespace FancadeLoaderLib
                     if (level.BlockIds[j] >= minId) // is custom block?
                         level.BlockIds[j] = oldToNewId[level.BlockIds[j]];
             }
+
+            CustomBlocks.EnumerateBlocks(item =>
+            {
+                Block block = item.Value;
+                for (int i = 0; i < block.InsideBlockIds.Length; i++)
+                    if (block.InsideBlockIds[i] >= minId) // is custom block?
+                        block.InsideBlockIds[i] = oldToNewId[block.InsideBlockIds[i]];
+            });
 
             CustomBlocks = newCustomBlocks;
         }
