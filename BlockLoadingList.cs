@@ -10,7 +10,7 @@ namespace FancadeLoaderLib
     public class BlockLoadingList
     {
         Dictionary<ushort, Block> knownIdBlocks = new Dictionary<ushort, Block>();
-        
+
         List<Block> unknownIdBlocks = new List<Block>();
 
         List<(ushort, BlockSegment)> all = new List<(ushort, BlockSegment)>();
@@ -39,9 +39,9 @@ namespace FancadeLoaderLib
         /// <param name="saveVersion">Save version or 0 if startId should be used</param>
         /// <param name="startId">Used when id can't be determined automatically and saveVErsion is 0</param>
         /// <returns></returns>
-        public BlockList Finalize(ushort saveVersion, int levelCount, ushort startId = 0)
+        public BlockList Finalize(ushort saveVersion, Level[] levels, ushort startId = 0)
         {
-            ushort id = 0;
+            /*ushort id = 0;
             for (int i = 0; i < all.Count; i++)
                 if (all[i].Item1 != ushort.MaxValue)
                 {
@@ -49,8 +49,8 @@ namespace FancadeLoaderLib
                     break;
                 }
 
-            if (id == 0)
-                id = saveVersion == 0 ? startId : (ushort)(Block.GetCustomBlockOffset(saveVersion) + levelCount);
+            if (id == 0)*/
+            ushort id = saveVersion == 0 ? startId : (ushort)(Block.GetCustomBlockOffset(saveVersion) + levels.Length);
 
             Dictionary<ushort, BlockSegment> segments = new Dictionary<ushort, BlockSegment>();
 

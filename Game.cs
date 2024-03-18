@@ -151,7 +151,7 @@ namespace FancadeLoaderLib
                 SaveVersion = saveVersion,
                 Unknown = unknown,
                 Levels = levels,
-                CustomBlocks = customBlocks.Finalize(saveVersion, levels.Count, 0),
+                CustomBlocks = customBlocks.Finalize(saveVersion, levels.ToArray(), 0),
             };
         }
 
