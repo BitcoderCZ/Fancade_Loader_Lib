@@ -6,41 +6,31 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using zlib;
 
 namespace FancadeLoaderLib
 {
-    public static class GZip
+    public static class Zlib
     {
-        public static Action<Stream, Stream> DecompressMain = decompress;
-        private static void decompress(Stream from, Stream to)
+        public static void Decompress(Stream from, Stream to)
         {
-            using (GZipStream gz = new GZipStream(from, CompressionMode.Decompress, false)) {
-                gz.CopyTo(to);
-            }
-        }
-        public static byte[] Decompress(Stream from)
-        {
-            using (MemoryStream ms = new MemoryStream()) {
-                DecompressMain(from, ms);
-                return ms.ToArray();
-            }
+            using ZInputStream stream = new ZInputStream(from);
+
+            byte[] res = new byte[stream.TotalOut];
+            stream.read(res, 0, res.Length);
+
+            to.Write(res, 0, res.Length);
         }
 
-        public static Action<Stream, Stream> CompressMain = compress;
-        private static void compress(Stream from, Stream to)
+        public static void Compress(Stream from, Stream to)
         {
-            using GZipStream destination = new GZipStream(to, CompressionLevel.Optimal, leaveOpen: true);
             from.Position = 0;
-            from.CopyTo(destination);
-            destination.Flush();
-            from.Dispose();
-        }
-        public static byte[] Compress(Stream from)
-        {
-            using (MemoryStream ms = new MemoryStream()) {
-                CompressMain(from, ms);
-                return ms.ToArray();
-            }
+            using ZOutputStream stream = new ZOutputStream(to);
+
+            byte[] bytes = new byte[from.Length];
+            from.Read(bytes, 0, bytes.Length);
+
+            stream.Write(bytes, 0, bytes.Length);
         }
     }
 }

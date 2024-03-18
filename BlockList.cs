@@ -55,7 +55,7 @@ namespace FancadeLoaderLib
             for (int i = 0; i < count; i++)
                 Block.Load(reader, loadingList, segmentCount);
 
-            return loadingList.Finalize(0, null, startId);
+            return loadingList.Finalize(0, startId);
         }
 
         public BlockList(Dictionary<ushort, BlockSegment> _segments)

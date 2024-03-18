@@ -42,13 +42,7 @@ namespace FancadeLoaderLib
             {
                 Save(writer);
 
-                byte[] compressed = GZip.Compress(writerStream);
-
-                byte[] header = new byte[] { 0x78, 0x01 };
-                byte[] resBytes = new byte[compressed.Length + 2 - 10 - 8];
-                Array.Copy(header, resBytes, header.Length);
-                Array.Copy(compressed, 10, resBytes, 2, compressed.Length - 18);
-                stream.Write(resBytes, 0, resBytes.Length);
+                Zlib.Compress(writerStream, stream);
             }
         }
         internal void Save(SaveWriter writer)
@@ -87,7 +81,7 @@ namespace FancadeLoaderLib
                     reader.Dispose();
                     reader = new SaveReader(new MemoryStream());
                     using (MemoryStream restStream = new MemoryStream(rest))
-                        GZip.DecompressMain(restStream, reader.Stream);
+                        Zlib.Decompress(restStream, reader.Stream);
                     reader.Position = 0;
                     break;
             }
@@ -116,7 +110,7 @@ namespace FancadeLoaderLib
                     reader.Dispose();
                     reader = new SaveReader(new MemoryStream());
                     using (MemoryStream restStream = new MemoryStream(rest))
-                        GZip.DecompressMain(restStream, reader.Stream);
+                        Zlib.Decompress(restStream, reader.Stream);
                     reader.Position = 0;
                     break;
             }
@@ -156,7 +150,7 @@ namespace FancadeLoaderLib
 
             if (levels.Count + segmentCount != levelsPlusCustomBlocks)
                 throw new Exception($"Levels ({levels.Count}) + Custom blocks ({segmentCount}) != Saved levels + custom blocks count ({levelsPlusCustomBlocks})");
-
+            
             return new Game(name)
             {
                 Author = author,
@@ -164,7 +158,7 @@ namespace FancadeLoaderLib
                 SaveVersion = saveVersion,
                 Unknown = unknown,
                 Levels = levels,
-                CustomBlocks = customBlocks.Finalize(saveVersion, levels.ToArray(), 0),
+                CustomBlocks = customBlocks.Finalize(saveVersion, 0),
             };
         }
 
