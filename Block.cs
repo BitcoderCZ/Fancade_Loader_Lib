@@ -72,15 +72,15 @@ namespace FancadeLoaderLib
             switch (saveVersion)
             {
                 case 27:
-                    return 557;
+                    return 556;
                 case 28:
-                    return 585;
+                    return 584;
                 case 29:
-                    return 589;
+                    return 588;
                 case 30:
-                    return 597;
+                    return 596;
 				case 31:
-                    return 598;
+                    return 597;
                 default:
                     if (Opptions.ExceptionWhenUnknownCustomBlockOffset)
                         throw new Exception($"Unsuported save version: {saveVersion} (unknown custom block offset)");

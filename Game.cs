@@ -150,7 +150,7 @@ namespace FancadeLoaderLib
                 SaveVersion = saveVersion,
                 Unknown = unknown,
                 Levels = levels,
-                CustomBlocks = customBlocks.Finalize(saveVersion, 0),
+                CustomBlocks = customBlocks.Finalize(saveVersion, levels.Count, 0),
             };
         }
 
@@ -172,7 +172,7 @@ namespace FancadeLoaderLib
             Dictionary<ushort, ushort> oldToNewId = new Dictionary<ushort, ushort>();
             BlockList newCustomBlocks = new BlockList();
 
-            ushort id = minId;
+            ushort id = (ushort)(Block.GetCustomBlockOffset(SaveVersion) + Levels.Count);//minId;
             CustomBlocks.EnumerateBlocksSorted(item =>
             {
                 Block block = item.Value;

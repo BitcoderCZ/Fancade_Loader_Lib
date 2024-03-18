@@ -55,7 +55,7 @@ namespace FancadeLoaderLib
             for (int i = 0; i < count; i++)
                 Block.Load(reader, loadingList, segmentCount);
 
-            return loadingList.Finalize(0, startId);
+            return loadingList.Finalize(0, 0, startId);
         }
 
         public BlockList(Dictionary<ushort, BlockSegment> _segments)
@@ -298,7 +298,7 @@ namespace FancadeLoaderLib
         public void FixIds(Level[] levels)
         {
             ushort lowestID = LowestSegmentID();
-            ushort idOffset = Block.GetCustomBlockOffset(Game.CurrentVersion);
+            ushort idOffset = (ushort)(Block.GetCustomBlockOffset(Game.CurrentVersion) + levels.Length);
             if (lowestID >= idOffset)
                 return;
 

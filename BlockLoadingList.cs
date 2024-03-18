@@ -39,7 +39,7 @@ namespace FancadeLoaderLib
         /// <param name="saveVersion">Save version or 0 if startId should be used</param>
         /// <param name="startId">Used when id can't be determined automatically and saveVErsion is 0</param>
         /// <returns></returns>
-        public BlockList Finalize(ushort saveVersion, ushort startId = 0)
+        public BlockList Finalize(ushort saveVersion, int levelCount, ushort startId = 0)
         {
             ushort id = 0;
             for (int i = 0; i < all.Count; i++)
@@ -50,7 +50,7 @@ namespace FancadeLoaderLib
                 }
 
             if (id == 0)
-                id = saveVersion == 0 ? startId : Block.GetCustomBlockOffset(saveVersion);
+                id = saveVersion == 0 ? startId : (ushort)(Block.GetCustomBlockOffset(saveVersion) + levelCount);
 
             Dictionary<ushort, BlockSegment> segments = new Dictionary<ushort, BlockSegment>();
 
