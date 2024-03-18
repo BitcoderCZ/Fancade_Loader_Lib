@@ -11,9 +11,9 @@ namespace FancadeLoaderLib
     {
         public static bool ArrayEquals<T> (this T[] a, T[] b, Func<T, T, bool> compare)
         {
-            if (a == null && b == null)
+            if (a is null && b is null)
                 return true;
-            else if (a == null || b == null)
+            else if (a is null || b is null)
                 return false;
             else if (a.Length != b.Length) 
                 return false;
