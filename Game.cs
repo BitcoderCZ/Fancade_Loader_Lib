@@ -60,7 +60,7 @@ namespace FancadeLoaderLib
                 Levels[i].Save(writer);
 
             KeyValuePair<ushort, BlockSegment>[] customSegments = CustomBlocks.GetSegments();
-            Array.Sort(customSegments, (a, b) =>  a.Key.CompareTo(b.Key));
+            Array.Sort(customSegments, (a, b) => a.Key.CompareTo(b.Key));
             for (int i = 0; i < customSegments.Length; i++)
                 customSegments[i].Value.Block.Save(writer, customSegments[i].Value.Pos, customSegments[i].Value.IsMain);
         }
@@ -91,29 +91,19 @@ namespace FancadeLoaderLib
             string name = reader.ReadString();
             string author = reader.ReadString();
             string description = reader.ReadString();
-            
+
             return (saveVersion, name, author, description);
         }
 
         public static Game Load(SaveReader reader)
         {
-            reader.ReadBytes(2);
-            byte encoding = reader.ReadUInt8();
-            switch (encoding) {
-                case 1: // plain text
-                    throw new Exception($"Plain text levels aren't supported");
-                    //reader.ReadBytes(/*7*/6);
-                    break;
-                default: // gzip
-                    reader.Position = 0;
-                    byte[] rest = reader.ReadBytes((int)reader.BytesLeft);
-                    reader.Dispose();
-                    reader = new SaveReader(new MemoryStream());
-                    using (MemoryStream restStream = new MemoryStream(rest))
-                        Zlib.Decompress(restStream, reader.Stream);
-                    reader.Position = 0;
-                    break;
-            }
+            // decompress
+            byte[] rest = reader.ReadBytes((int)reader.BytesLeft);
+            reader.Dispose();
+            reader = new SaveReader(new MemoryStream());
+            using (MemoryStream restStream = new MemoryStream(rest))
+                Zlib.Decompress(restStream, reader.Stream);
+            reader.Position = 0;
 
             ushort saveVersion = reader.ReadUInt16(); // just a guess
 
@@ -132,9 +122,11 @@ namespace FancadeLoaderLib
             List<Level> levels = new List<Level>();
             BlockLoadingList customBlocks = new BlockLoadingList();
             int segmentCount = 0;
-            for (int i = 0; i < 255; i++) {
+            for (int i = 0; i < 255; i++)
+            {
                 int next = reader.NextThing(true, out _);
-                switch (next) {
+                switch (next)
+                {
                     case 0:
                     case int.MaxValue:
                         goto exit;
@@ -150,7 +142,7 @@ namespace FancadeLoaderLib
 
             if (levels.Count + segmentCount != levelsPlusCustomBlocks)
                 throw new Exception($"Levels ({levels.Count}) + Custom blocks ({segmentCount}) != Saved levels + custom blocks count ({levelsPlusCustomBlocks})");
-            
+
             return new Game(name)
             {
                 Author = author,
