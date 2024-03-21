@@ -54,8 +54,8 @@ namespace FancadeLoaderLib
             writer.WriteString(Description);
             writer.WriteUInt8(Unknown);
             writer.WriteUInt8(0x02);
-            writer.WriteUInt8(GetLevelsPlusCustomBlocks());
-            writer.WriteUInt8(0);
+
+            writer.WriteUInt16(GetLevelsPlusCustomBlocks());
 
             for (int i = 0; i < Levels.Count; i++)
                 Levels[i].Save(writer);
@@ -116,14 +116,12 @@ namespace FancadeLoaderLib
 
             reader.ReadBytes(1);
 
-            // probably ushort, but why, the value shouldn't normally be above 255
-            byte levelsPlusCustomBlocks = reader.ReadUInt8();
-            reader.ReadBytes(1);
+            ushort levelsPlusCustomBlocks = reader.ReadUInt16();
 
             List<Level> levels = new List<Level>();
             BlockLoadingList customBlocks = new BlockLoadingList();
             int segmentCount = 0;
-            for (int i = 0; i < 255; i++)
+            for (int i = 0; i < levelsPlusCustomBlocks; i++)
             {
                 int next = reader.NextThing(true, out _);
                 switch (next)
@@ -143,6 +141,8 @@ namespace FancadeLoaderLib
 
             if (levels.Count + segmentCount != levelsPlusCustomBlocks)
                 throw new Exception($"Levels ({levels.Count}) + Custom blocks ({segmentCount}) != Saved levels + custom blocks count ({levelsPlusCustomBlocks})");
+            else if (reader.BytesLeft > 0)
+                throw new Exception($"{reader.BytesLeft} bytes were left, this probably means the level was loaded incorrectly");
 
             return new Game(name)
             {
@@ -216,7 +216,7 @@ namespace FancadeLoaderLib
             CustomBlocks = newCustomBlocks;
         }
 
-        public byte GetLevelsPlusCustomBlocks()
+        public ushort GetLevelsPlusCustomBlocks()
         {
             int numb = Levels.Count;
             Block[] blocks = CustomBlocks.GetBlocks();
@@ -224,10 +224,10 @@ namespace FancadeLoaderLib
             for (int i = 0; i < blocks.Length; i++)
                 numb += blocks[i].Blocks.Count;
 
-            if (numb > byte.MaxValue)
+            if (numb > ushort.MaxValue)
                 throw new Exception($"Levels ({Levels.Count}) + Custom blocks ({numb - Levels.Count}) > {byte.MaxValue}");
 
-            return (byte)numb;
+            return (ushort)numb;
         }
 
         public override string ToString() => $"[{Name}, Author: {Author}, Description: {Description}]";
