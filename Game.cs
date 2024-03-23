@@ -223,6 +223,8 @@ namespace FancadeLoaderLib
         {
             if (BlockIdOffset > 85)
                 throw new Exception($"Invalid {nameof(BlockIdOffset)}");
+            else if (BlockIdOffset == 85)
+                return; // BlockIdOffset is already correct
 
             ushort offset = (ushort)(85 - BlockIdOffset);
 
