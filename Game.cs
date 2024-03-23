@@ -13,14 +13,17 @@ namespace FancadeLoaderLib
 {
     public class Game
     {
-        public static readonly ushort CurrentVersion = 31;
+        public static readonly ushort CurrentBlockPaletteVersion = 31;
 
         public string Name;
         public string Author;
         public string Description;
 
-        public ushort SaveVersion;
-        public byte Unknown;
+        public ushort PaletteVersion;
+        /// <summary>
+        /// Custom block ids in levels will be incremented by 85 - [value] (really weird, might not be true)
+        /// </summary>
+        public byte BlockIdOffset;
 
         public List<Level> Levels;
         public BlockList CustomBlocks = new BlockList();
@@ -30,10 +33,10 @@ namespace FancadeLoaderLib
             Name = name;
             Author = "Unknown Author";
             Description = string.Empty;
-            SaveVersion = CurrentVersion;
+            PaletteVersion = CurrentBlockPaletteVersion;
             CustomBlocks = new BlockList();
             Levels = new List<Level>();
-            Unknown = 84;
+            BlockIdOffset = 85;
         }
 
         public void Save(Stream stream)
@@ -48,11 +51,11 @@ namespace FancadeLoaderLib
         }
         internal void Save(SaveWriter writer)
         {
-            writer.WriteUInt16(SaveVersion);
+            writer.WriteUInt16(PaletteVersion);
             writer.WriteString(Name);
             writer.WriteString(Author);
             writer.WriteString(Description);
-            writer.WriteUInt8(Unknown);
+            writer.WriteUInt8(BlockIdOffset);
             writer.WriteUInt8(0x02);
 
             writer.WriteUInt16(GetLevelsPlusCustomBlocks());
@@ -66,7 +69,7 @@ namespace FancadeLoaderLib
                 customSegments[i].Value.Block.Save(writer, customSegments[i].Value.Pos, customSegments[i].Value.IsMain);
         }
 
-        public static (ushort version, string name, string author, string description) LoadInfo(SaveReader reader)
+        public static (ushort paletteVersion, string name, string author, string description) LoadInfo(SaveReader reader)
         {
             reader.ReadBytes(2);
             byte encoding = reader.ReadUInt8();
@@ -87,13 +90,13 @@ namespace FancadeLoaderLib
                     break;
             }
 
-            ushort saveVersion = reader.ReadUInt16(); // just a guess
+            ushort paletteVersion = reader.ReadUInt16(); // just a guess
 
             string name = reader.ReadString();
             string author = reader.ReadString();
             string description = reader.ReadString();
 
-            return (saveVersion, name, author, description);
+            return (paletteVersion, name, author, description);
         }
 
         public static Game Load(SaveReader reader)
@@ -106,13 +109,13 @@ namespace FancadeLoaderLib
                 Zlib.Decompress(restStream, reader.Stream);
             reader.Position = 0;
 
-            ushort saveVersion = reader.ReadUInt16(); // just a guess
+            ushort paletteVersion = reader.ReadUInt16(); // just a guess
 
             string name = reader.ReadString();
             string author = reader.ReadString();
             string description = reader.ReadString();
 
-            byte unknown = reader.ReadUInt8();
+            byte blockIdOffset = reader.ReadUInt8();
 
             reader.ReadBytes(1);
 
@@ -148,10 +151,10 @@ namespace FancadeLoaderLib
             {
                 Author = author,
                 Description = description,
-                SaveVersion = saveVersion,
-                Unknown = unknown,
+                PaletteVersion = paletteVersion,
+                BlockIdOffset = blockIdOffset,
                 Levels = levels,
-                CustomBlocks = customBlocks.Finalize(saveVersion, levels.ToArray(), 0),
+                CustomBlocks = customBlocks.Finalize(paletteVersion, levels.ToArray(), 0),
             };
         }
 
@@ -173,7 +176,7 @@ namespace FancadeLoaderLib
             Dictionary<ushort, ushort> oldToNewId = new Dictionary<ushort, ushort>();
             BlockList newCustomBlocks = new BlockList();
 
-            ushort id = (ushort)(Block.GetCustomBlockOffset(SaveVersion) + Levels.Count);//minId;
+            ushort id = (ushort)(Block.GetCustomBlockOffset(PaletteVersion) + Levels.Count);//minId;
             CustomBlocks.EnumerateBlocksSorted(item =>
             {
                 Block block = item.Value;

@@ -298,7 +298,7 @@ namespace FancadeLoaderLib
         public void FixIds(Level[] levels)
         {
             ushort lowestID = LowestSegmentID();
-            ushort idOffset = (ushort)(Block.GetCustomBlockOffset(Game.CurrentVersion) + levels.Length);
+            ushort idOffset = (ushort)(Block.GetCustomBlockOffset(Game.CurrentBlockPaletteVersion) + levels.Length);
             if (lowestID >= idOffset)
                 return;
 

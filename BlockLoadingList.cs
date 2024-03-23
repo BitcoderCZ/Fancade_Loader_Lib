@@ -36,21 +36,12 @@ namespace FancadeLoaderLib
         /// <summary>
         /// Tries to assign all segment their id
         /// </summary>
-        /// <param name="saveVersion">Save version or 0 if startId should be used</param>
+        /// <param name="paletteVersion">Save version or 0 if startId should be used</param>
         /// <param name="startId">Used when id can't be determined automatically and saveVErsion is 0</param>
         /// <returns></returns>
-        public BlockList Finalize(ushort saveVersion, Level[] levels, ushort startId = 0)
+        public BlockList Finalize(ushort paletteVersion, Level[] levels, ushort startId = 0)
         {
-            /*ushort id = 0;
-            for (int i = 0; i < all.Count; i++)
-                if (all[i].Item1 != ushort.MaxValue)
-                {
-                    id = (ushort)(all[i].Item1 - i);
-                    break;
-                }
-
-            if (id == 0)*/
-            ushort id = saveVersion == 0 ? startId : (ushort)(Block.GetCustomBlockOffset(saveVersion) + levels.Length);
+            ushort id = paletteVersion == 0 ? startId : (ushort)(Block.GetCustomBlockOffset(paletteVersion) + levels.Length);
 
             Dictionary<ushort, BlockSegment> segments = new Dictionary<ushort, BlockSegment>();
 
