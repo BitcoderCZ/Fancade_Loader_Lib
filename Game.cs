@@ -219,6 +219,35 @@ namespace FancadeLoaderLib
             CustomBlocks = newCustomBlocks;
         }
 
+        public void FixBlockIdOffset()
+        {
+            if (BlockIdOffset > 85)
+                throw new Exception($"Invalid {nameof(BlockIdOffset)}");
+
+            ushort offset = (ushort)(85 - BlockIdOffset);
+
+            ushort minCustomId = Block.GetCustomBlockOffset(PaletteVersion);
+
+            Parallel.For(0, Levels.Count, i =>
+            {
+                Level level = Levels[i];
+                for (int j = 0; j < level.BlockIds.Length; j++)
+                    if (level.BlockIds[j] + offset >= minCustomId)
+                        level.BlockIds[j] += offset;
+            });
+
+            CustomBlocks.EnumerateBlocks(item =>
+            {
+                Block block = item.Value;
+
+                for (int i = 0; i < block.InsideBlockIds.Length; i++)
+                    if (block.InsideBlockIds[i] + offset >= minCustomId)
+                        block.InsideBlockIds[i] += offset;
+            });
+
+            BlockIdOffset = 85;
+        }
+
         public ushort GetLevelsPlusCustomBlocks()
         {
             int numb = Levels.Count;

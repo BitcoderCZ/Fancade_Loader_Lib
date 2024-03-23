@@ -67,9 +67,9 @@ namespace FancadeLoaderLib
             }
         }
 
-        public static ushort GetCustomBlockOffset(ushort saveVersion)
+        public static ushort GetCustomBlockOffset(ushort formatVersion)
         {
-            switch (saveVersion)
+            switch (formatVersion)
             {
                 case 27:
                     return 556;
@@ -83,7 +83,7 @@ namespace FancadeLoaderLib
                     return 597;
                 default:
                     if (Opptions.ExceptionWhenUnknownCustomBlockOffset)
-                        throw new Exception($"Unsuported save version: {saveVersion} (unknown custom block offset)");
+                        throw new Exception($"Unknown format version: {formatVersion} (unknown custom block offset)");
                     else
                         return 0;
             }

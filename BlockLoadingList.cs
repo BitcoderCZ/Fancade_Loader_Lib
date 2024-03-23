@@ -36,8 +36,7 @@ namespace FancadeLoaderLib
         /// <summary>
         /// Tries to assign all segment their id
         /// </summary>
-        /// <param name="paletteVersion">Save version or 0 if startId should be used</param>
-        /// <param name="startId">Used when id can't be determined automatically and saveVErsion is 0</param>
+        /// <param name="startId">Used when <paramref name="paletteVersion"/> is 0</param>
         /// <returns></returns>
         public BlockList Finalize(ushort paletteVersion, Level[] levels, ushort startId = 0)
         {
