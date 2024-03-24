@@ -23,8 +23,7 @@ namespace FancadeLoaderLib
         public string Name;
         public Dictionary<Vector3I, BlockSection> Blocks = new Dictionary<Vector3I, BlockSection>();
 
-        public Vector3I InsideSize;
-        public ushort[] InsideBlockIds;
+        public BlockData InsideBlockIds;
 
         public List<BlockValue> BlockValues;
         public List<Connection> Connections;
@@ -40,8 +39,7 @@ namespace FancadeLoaderLib
             {
                 { Vector3I.Zero, new BlockSection(new SubBlock[8*8*8], BlockAttribs.DefaultSection, id) }
             };
-            InsideSize = Vector3I.Zero;
-            InsideBlockIds = new ushort[0];
+            InsideBlockIds = new BlockData();
             BlockValues = new List<BlockValue>();
             Connections = new List<Connection>();
         }
@@ -125,9 +123,9 @@ namespace FancadeLoaderLib
 
                 if (InsideBlockIds.Length > 0)
                 {
-                    writer.WriteUInt16((ushort)InsideSize.X);
-                    writer.WriteUInt16((ushort)InsideSize.Y);
-                    writer.WriteUInt16((ushort)InsideSize.Z);
+                    writer.WriteUInt16((ushort)InsideBlockIds.Size.X);
+                    writer.WriteUInt16((ushort)InsideBlockIds.Size.Y);
+                    writer.WriteUInt16((ushort)InsideBlockIds.Size.Z);
 
                     for (int i = 0; i < InsideBlockIds.Length; i++)
                         writer.WriteUInt16(InsideBlockIds[i]);
@@ -269,17 +267,17 @@ namespace FancadeLoaderLib
 
             if (isMain)
             {
-                Vector3I size = Vector3I.Zero;
+                Vector3I insideSize = Vector3I.Zero;
                 ushort[] blockIds = new ushort[0];
 
                 if (attribs.BlocksInside)
                 {
-                    size = new Vector3I(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
-                    blockIds = new ushort[size.X * size.Y * size.Z];
+                    insideSize = new Vector3I(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+                    blockIds = new ushort[insideSize.X * insideSize.Y * insideSize.Z];
                     int i = 0;
-                    for (int x = 0; x < size.X; x++)
-                        for (int y = 0; y < size.Y; y++)
-                            for (int z = 0; z < size.Z; z++)
+                    for (int x = 0; x < insideSize.X; x++)
+                        for (int y = 0; y < insideSize.Y; y++)
+                            for (int z = 0; z < insideSize.Z; z++)
                             {
                                 blockIds[i++] = reader.ReadUInt16();
                             }
@@ -305,8 +303,7 @@ namespace FancadeLoaderLib
                 else
                     connections = new Connection[0];
 
-                thisBlock.InsideSize = size;
-                thisBlock.InsideBlockIds = blockIds;
+                thisBlock.InsideBlockIds = new BlockData(new Array3D<ushort>(blockIds, insideSize.X, insideSize.Y, insideSize.Z));
                 thisBlock.BlockValues = values.ToList();
                 thisBlock.Connections = connections.ToList();
 			}
