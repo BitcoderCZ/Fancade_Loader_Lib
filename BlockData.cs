@@ -128,7 +128,7 @@ namespace FancadeLoaderLib
 
         private void detectMaxBlockPos()
         {
-            maxBlockPos = Vector3I.Zero;
+            maxBlockPos = -Vector3I.One;
             object myLock = new object();
 
             Parallel.For(0, segments.LengthX, x =>

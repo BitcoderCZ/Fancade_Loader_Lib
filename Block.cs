@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FancadeLoaderLib
 {
-	public class Block
+    public class Block
     {
         const int NumbSubBlocks = 8 * 8 * 8;
 
@@ -37,7 +37,7 @@ namespace FancadeLoaderLib
 
             Blocks = new Dictionary<Vector3I, BlockSection>()
             {
-                { Vector3I.Zero, new BlockSection(new SubBlock[8*8*8], BlockAttribs.DefaultSection, id) }
+                { Vector3I.Zero, new BlockSection(new SubBlock[8*8*8], BlockAttribs.Default, id) }
             };
             InsideBlockIds = new BlockData();
             BlockValues = new List<BlockValue>();
@@ -57,7 +57,8 @@ namespace FancadeLoaderLib
                 MainId += value;
                 foreach (var item in Blocks)
                     item.Value.Id += value;
-            } else
+            }
+            else
             {
                 MainId -= value;
                 foreach (var item in Blocks)
@@ -77,7 +78,7 @@ namespace FancadeLoaderLib
                     return 588;
                 case 30:
                     return 596;
-				case 31:
+                case 31:
                     return 597;
                 default:
                     if (Opptions.ExceptionWhenUnknownCustomBlockOffset)
@@ -121,14 +122,16 @@ namespace FancadeLoaderLib
                 }
                 writer.WriteBytes(blockData);
 
-                if (InsideBlockIds.Length > 0)
+                if (InsideBlockIds.Size.X > 0)
                 {
                     writer.WriteUInt16((ushort)InsideBlockIds.Size.X);
                     writer.WriteUInt16((ushort)InsideBlockIds.Size.Y);
                     writer.WriteUInt16((ushort)InsideBlockIds.Size.Z);
 
-                    for (int i = 0; i < InsideBlockIds.Length; i++)
-                        writer.WriteUInt16(InsideBlockIds[i]);
+                    for (int z = 0; z < InsideBlockIds.Size.Z; z++)
+                        for (int y = 0; y < InsideBlockIds.Size.Y; y++)
+                            for (int x = 0; x < InsideBlockIds.Size.X; x++)
+                                writer.WriteUInt16(InsideBlockIds.GetSegment(x, y, z));
                 }
                 if (BlockValues.Count > 0)
                 {
@@ -174,18 +177,19 @@ namespace FancadeLoaderLib
 
         public static void Load(SaveReader reader, BlockLoadingList customBlocks, int sectionCount)
         {
-			reader.NextThing(false, out object _attribs);
+            reader.NextThing(false, out object _attribs);
             BlockAttribs attribs = (BlockAttribs)_attribs;
 
             bool isMain = attribs.IsMain;
 
-			ushort id;
+            ushort id;
             Vector3I sectionPos;
             if (!isMain || (isMain && attribs.IsMultiBlock))
             {
                 id = reader.ReadUInt16();
                 sectionPos = new Vector3I(reader.ReadUInt8(), reader.ReadUInt8(), reader.ReadUInt8());
-            } else
+            }
+            else
             {
                 id = ushort.MaxValue;
                 sectionPos = Vector3I.Zero;
@@ -306,13 +310,13 @@ namespace FancadeLoaderLib
                 thisBlock.InsideBlockIds = new BlockData(new Array3D<ushort>(blockIds, insideSize.X, insideSize.Y, insideSize.Z));
                 thisBlock.BlockValues = values.ToList();
                 thisBlock.Connections = connections.ToList();
-			}
-		}
+            }
+        }
 
         public void UpdateAttribs()
         {
             Attribs.IsMultiBlock = Blocks.Count > 1;
-            Attribs.BlocksInside = InsideBlockIds.Length > 0;
+            Attribs.BlocksInside = InsideBlockIds.Size.X > 0;
             Attribs.ValuesInside = BlockValues.Count > 0;
             Attribs.ConnectionsInside = Connections.Count > 0;
         }
@@ -451,7 +455,7 @@ namespace FancadeLoaderLib
 
         public bool IsEmpty => Colors[0] == 0;
 
-        public override string ToString() => 
+        public override string ToString() =>
             $"[{Colors[0]}, {Colors[1]}, {Colors[2]}, {Colors[3]}, {Colors[4]}, {Colors[5]}; Attribs:" +
             $"{Attribs[0]}, {Attribs[1]}, {Attribs[2]}, {Attribs[3]}, {Attribs[4]}, {Attribs[5]}]";
     }
