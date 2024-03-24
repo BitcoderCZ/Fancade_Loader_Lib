@@ -22,7 +22,9 @@ namespace FancadeLoaderLib
         }
 
         public BlockData()
-        { }
+        {
+            maxBlockPos = -Vector3I.One;
+        }
         public BlockData(Array3D<ushort> _segments)
         {
             detectMaxBlockPos();

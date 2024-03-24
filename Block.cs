@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FancadeLoaderLib
 {
-    public class Block
+    public class Block : BlockContainer
     {
         const int NumbSubBlocks = 8 * 8 * 8;
 
@@ -23,12 +23,8 @@ namespace FancadeLoaderLib
         public string Name;
         public Dictionary<Vector3I, BlockSection> Sections = new Dictionary<Vector3I, BlockSection>();
 
-        public BlockData InsideBlockIds;
-
-        public List<BlockValue> BlockValues;
-        public List<Connection> Connections;
-
         public Block(ushort id, string name)
+            : base()
         {
             MainId = id;
             Name = name;
@@ -39,9 +35,6 @@ namespace FancadeLoaderLib
             {
                 { Vector3I.Zero, new BlockSection(new SubBlock[8*8*8], BlockAttribs.Default, id) }
             };
-            InsideBlockIds = new BlockData();
-            BlockValues = new List<BlockValue>();
-            Connections = new List<Connection>();
         }
 
         private Block()
@@ -122,29 +115,7 @@ namespace FancadeLoaderLib
                 }
                 writer.WriteBytes(blockData);
 
-                if (InsideBlockIds.Size.X > 0)
-                {
-                    writer.WriteUInt16((ushort)InsideBlockIds.Size.X);
-                    writer.WriteUInt16((ushort)InsideBlockIds.Size.Y);
-                    writer.WriteUInt16((ushort)InsideBlockIds.Size.Z);
-
-                    for (int z = 0; z < InsideBlockIds.Size.Z; z++)
-                        for (int y = 0; y < InsideBlockIds.Size.Y; y++)
-                            for (int x = 0; x < InsideBlockIds.Size.X; x++)
-                                writer.WriteUInt16(InsideBlockIds.GetSegment(x, y, z));
-                }
-                if (BlockValues.Count > 0)
-                {
-                    writer.WriteUInt16((ushort)BlockValues.Count);
-                    for (int i = 0; i < BlockValues.Count; i++)
-                        BlockValues[i].Save(writer);
-                }
-                if (Connections.Count > 0)
-                {
-                    writer.WriteUInt16((ushort)Connections.Count);
-                    for (int i = 0; i < Connections.Count; i++)
-                        Connections[i].Save(writer);
-                }
+                save(writer);
             }
             else
             {
@@ -270,53 +241,13 @@ namespace FancadeLoaderLib
             }
 
             if (isMain)
-            {
-                Vector3I insideSize = Vector3I.Zero;
-                ushort[] blockIds = new ushort[0];
-
-                if (attribs.BlocksInside)
-                {
-                    insideSize = new Vector3I(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
-                    blockIds = new ushort[insideSize.X * insideSize.Y * insideSize.Z];
-                    int i = 0;
-                    for (int x = 0; x < insideSize.X; x++)
-                        for (int y = 0; y < insideSize.Y; y++)
-                            for (int z = 0; z < insideSize.Z; z++)
-                            {
-                                blockIds[i++] = reader.ReadUInt16();
-                            }
-                }
-
-                BlockValue[] values;
-                if (attribs.ValuesInside)
-                {
-                    values = new BlockValue[reader.ReadUInt16()];
-                    for (int i = 0; i < values.Length; i++)
-                        values[i] = BlockValue.Load(reader);
-                }
-                else
-                    values = new BlockValue[0];
-
-                Connection[] connections;
-                if (attribs.ConnectionsInside)
-                {
-                    connections = new Connection[reader.ReadUInt16()];
-                    for (int i = 0; i < connections.Length; i++)
-                        connections[i] = Connection.Load(reader);
-                }
-                else
-                    connections = new Connection[0];
-
-                thisBlock.InsideBlockIds = new BlockData(new Array3D<ushort>(blockIds, insideSize.X, insideSize.Y, insideSize.Z));
-                thisBlock.BlockValues = values.ToList();
-                thisBlock.Connections = connections.ToList();
-            }
+                (thisBlock.BlockIds, thisBlock.BlockValues, thisBlock.Connections) = load(reader, attribs.BlocksInside, attribs.ValuesInside, attribs.ConnectionsInside);
         }
 
         public void UpdateAttribs()
         {
             Attribs.IsMultiBlock = Sections.Count > 1;
-            Attribs.BlocksInside = InsideBlockIds.Size.X > 0;
+            Attribs.BlocksInside = BlockIds.Size.X > 0;
             Attribs.ValuesInside = BlockValues.Count > 0;
             Attribs.ConnectionsInside = Connections.Count > 0;
         }
