@@ -262,6 +262,19 @@ namespace FancadeLoaderLib
                     level.Connections[j] = con;
                 }
             }
+            CustomBlocks.EnumerateBlocks(item =>
+            {
+                for (int i = 0; i < item.Value.Connections.Count; i++)
+                {
+                    Connection con = item.Value.Connections[i];
+                    // connector position doesn't seem to change (isn't related to origin, can't be negative, TODO: should do more testing)
+                    if (con.From.X != 32769)
+                        fixConnection(item.Value.InsideBlockIds.GetSegment, ref con.From);
+                    if (con.To.X != 32769)
+                        fixConnection(item.Value.InsideBlockIds.GetSegment, ref con.To);
+                    item.Value.Connections[i] = con;
+                }
+            });
             void fixConnection(Func<Vector3I, ushort> func, ref Vector3I pos)
             {
                 ushort id = func(pos);
