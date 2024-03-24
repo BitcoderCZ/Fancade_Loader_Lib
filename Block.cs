@@ -91,10 +91,10 @@ namespace FancadeLoaderLib
 
         public void Save(SaveWriter writer, Vector3I pos, bool isMain)
         {
+            UpdateAttribs();
+
             if (isMain)
             {
-                UpdateAttribs();
-
                 Attribs.Save(writer, Attribs, Name, true);
 
                 BlockSection mainSection = Blocks[pos];
@@ -150,8 +150,8 @@ namespace FancadeLoaderLib
                 byte[] blockData = new byte[NumbSubBlocks * 6];
                 if (Blocks.Count > 1)
                 {
-                    BlockSection item = Blocks[pos];
-                    item.Attribs.Save(writer, Attribs, Name, false);
+                    BlockSection section = Blocks[pos];
+                    section.Attribs.Save(writer, Attribs, Name, false);
                     writer.WriteUInt16(MainId);
                     writer.WriteUInt8((byte)pos.X);
                     writer.WriteUInt8((byte)pos.Y);
@@ -160,7 +160,7 @@ namespace FancadeLoaderLib
                     {
                         for (int i = 0; i < NumbSubBlocks; i++)
                         {
-                            SubBlock block = item.Blocks[i];
+                            SubBlock block = section.Blocks[i];
                             blockData[i + NumbSubBlocks * 0] = (byte)(block.Colors[0] | block.Attribs[0] << 6);
                             blockData[i + NumbSubBlocks * 1] = (byte)(block.Colors[1] | block.Attribs[1] << 6);
                             blockData[i + NumbSubBlocks * 2] = (byte)(block.Colors[2] | block.Attribs[2] << 6);
@@ -380,6 +380,9 @@ namespace FancadeLoaderLib
             => Index(pos.X, pos.Y, pos.Z);
         public int Index(int x, int y, int z)
             => x + y * 8 + z * 64;
+
+        public override string ToString()
+            => $"{{Id: {Id}}}";
     }
     public struct BlockSegment
     {
@@ -418,6 +421,9 @@ namespace FancadeLoaderLib
             => a.Equals(b);
         public static bool operator !=(BlockSegment a, BlockSegment b)
             => !a.Equals(b);
+
+        public override string ToString()
+            => $"{{BlockId: {Block.MainId}, Pos: {Pos}, IsMain: {IsMain}}}";
 
         public override bool Equals(object obj)
         {

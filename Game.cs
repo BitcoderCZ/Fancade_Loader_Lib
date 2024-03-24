@@ -176,13 +176,26 @@ namespace FancadeLoaderLib
             Dictionary<ushort, ushort> oldToNewId = new Dictionary<ushort, ushort>();
             BlockList newCustomBlocks = new BlockList();
 
-            ushort id = (ushort)(Block.GetCustomBlockOffset(PaletteVersion) + Levels.Count);//minId;
+            // segment id, to how the blocks origin moved
+            Dictionary<ushort, Vector3I> idToOriginMove = new Dictionary<ushort, Vector3I>();
+
+            ushort id = (ushort)(Block.GetCustomBlockOffset(PaletteVersion) + Levels.Count);
             CustomBlocks.EnumerateBlocksSorted(item =>
             {
                 Block block = item.Value;
                 ushort oldMainId = block.MainId;
                 block.MainId = id;
                 Vector3I size = block.GetSize();
+
+                Dictionary<Vector3I, BlockSection> newSections = new Dictionary<Vector3I, BlockSection>();
+
+                Vector3I originMove = Vector3I.Zero;
+                foreach (var section in block.Blocks)
+                    if (section.Value.Attribs.IsMain)
+                    {
+                        originMove = section.Key;
+                        break;
+                    }
 
                 bool isMain = true;
                 for (int z = 0; z < size.Z; z++)
@@ -193,12 +206,30 @@ namespace FancadeLoaderLib
                             if (!block.Blocks.ContainsKey(pos))
                                 continue;
 
+                            BlockSection section = block.Blocks[pos];
+                            section.Id = id;
+
+                            if (isMain)
+                            {
+                                section.Attribs = block.Attribs;
+                                originMove = pos - originMove;
+                            }
+
+                            if (block.Blocks.Count > 0)
+                                idToOriginMove.Add(id, originMove);
+
+                            newSections.Add(pos, section);
+
+                            // also move attribs?
                             oldToNewId.Add(sectionToId[(oldMainId, pos)], id);
                             newCustomBlocks.AddSegment(id++, new BlockSegment(pos, isMain, block));
                             isMain = false;
                         }
+
+                block.Blocks = newSections;
             });
 
+            // fix ids in levels and blocks
             for (int i = 0; i < Levels.Count; i++)
             {
                 Level level = Levels[i];
@@ -207,7 +238,6 @@ namespace FancadeLoaderLib
                     if (level.BlockIds[j] >= minId) // is custom block?
                         level.BlockIds[j] = oldToNewId[level.BlockIds[j]];
             }
-
             CustomBlocks.EnumerateBlocks(item =>
             {
                 Block block = item.Value;
@@ -215,8 +245,30 @@ namespace FancadeLoaderLib
                     if (block.InsideBlockIds[i] >= minId) // is custom block?
                         block.InsideBlockIds[i] = oldToNewId[block.InsideBlockIds[i]];
             });
-
             CustomBlocks = newCustomBlocks;
+
+            // fix connections
+            minId = (ushort)(Block.GetCustomBlockOffset(PaletteVersion) + Levels.Count);
+
+            for (int i = 0; i < Levels.Count; i++)
+            {
+                Level level = Levels[i];
+                for (int j = 0; j < level.Connections.Count; j++)
+                {
+                    Connection con = level.Connections[j];
+                    // connector position doesn't seem to change (isn't related to origin, can't be negative, TODO: should do more testing)
+                    fixConnection(level.BlockIds.GetSegment, ref con.From);
+                    fixConnection(level.BlockIds.GetSegment, ref con.To);
+                    level.Connections[j] = con;
+                }
+            }
+            void fixConnection(Func<Vector3I, ushort> func, ref Vector3I pos)
+            {
+                ushort id = func(pos);
+
+                if (id >= minId)
+                    pos += idToOriginMove[id];
+            }
         }
 
         public void FixBlockIdOffset()

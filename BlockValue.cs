@@ -39,9 +39,9 @@ namespace FancadeLoaderLib
 					break;
 				case 5: // vec3, rot
 					Vector3 vec = (Vector3)Value;
-					writer.WriteFloat((float)vec.X);
-					writer.WriteFloat((float)vec.Y);
-					writer.WriteFloat((float)vec.Z);
+					writer.WriteFloat(vec.X);
+					writer.WriteFloat(vec.Y);
+					writer.WriteFloat(vec.Z);
 					break;
 				// TODO: test
 				// I think this also describes the connector type and if it's in/out
