@@ -135,7 +135,7 @@ namespace FancadeLoaderLib
             else if (reader.BytesLeft > 0)
                 throw new Exception($"{reader.BytesLeft} bytes were left, this probably means the level was loaded incorrectly");
 
-            return new Game(name)
+            Game game = new Game(name)
             {
                 Author = author,
                 Description = description,
@@ -144,6 +144,10 @@ namespace FancadeLoaderLib
                 Levels = levels,
                 CustomBlocks = customBlocks.Finalize(paletteVersion, levels.ToArray(), 0),
             };
+
+            game.FixBlockIdOffset();
+
+            return game;
         }
 
         /// <summary>
@@ -178,7 +182,7 @@ namespace FancadeLoaderLib
                 Dictionary<Vector3I, BlockSection> newSections = new Dictionary<Vector3I, BlockSection>();
 
                 Vector3I originMove = Vector3I.Zero;
-                foreach (var section in block.Blocks)
+                foreach (var section in block.Sections)
                     if (section.Value.Attribs.IsMain)
                     {
                         originMove = section.Key;
@@ -191,10 +195,10 @@ namespace FancadeLoaderLib
                         for (int x = 0; x < size.X; x++)
                         {
                             Vector3I pos = new Vector3I(x, y, z);
-                            if (!block.Blocks.ContainsKey(pos))
+                            if (!block.Sections.ContainsKey(pos))
                                 continue;
 
-                            BlockSection section = block.Blocks[pos];
+                            BlockSection section = block.Sections[pos];
                             section.Id = id;
 
                             if (isMain)
@@ -203,7 +207,7 @@ namespace FancadeLoaderLib
                                 originMove = pos - originMove;
                             }
 
-                            if (block.Blocks.Count > 0)
+                            if (block.Sections.Count > 0)
                                 idToOriginMove.Add(id, originMove);
 
                             newSections.Add(pos, section);
@@ -214,7 +218,7 @@ namespace FancadeLoaderLib
                             isMain = false;
                         }
 
-                block.Blocks = newSections;
+                block.Sections = newSections;
             });
 
             // fix ids in levels and blocks
@@ -309,7 +313,7 @@ namespace FancadeLoaderLib
             Block[] blocks = CustomBlocks.GetBlocks();
 
             for (int i = 0; i < blocks.Length; i++)
-                numb += blocks[i].Blocks.Count;
+                numb += blocks[i].Sections.Count;
 
             if (numb > ushort.MaxValue)
                 throw new Exception($"Levels ({Levels.Count}) + Custom blocks ({numb - Levels.Count}) > {byte.MaxValue}");

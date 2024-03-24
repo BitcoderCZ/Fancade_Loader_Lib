@@ -26,7 +26,7 @@ namespace FancadeLoaderLib
                         for (int x = 0; x < size.X; x++)
                         {
                             Vector3I pos = new Vector3I(x, y, z);
-                            if (!item.Value.Blocks.ContainsKey(pos))
+                            if (!item.Value.Sections.ContainsKey(pos))
                                 continue;
 
                             segments.Add(id, new BlockSegment(pos, id == item.Key, item.Value));
@@ -80,7 +80,7 @@ namespace FancadeLoaderLib
                     for (int x = 0; x < size.X; x++)
                     {
                         Vector3I pos = new Vector3I(x, y, z);
-                        if (!block.Blocks.ContainsKey(pos))
+                        if (!block.Sections.ContainsKey(pos))
                             continue;
                         segments.Add(id, new BlockSegment(pos, id == block.MainId, block));
                         id++;
@@ -124,7 +124,7 @@ namespace FancadeLoaderLib
         public bool AddSegmentToBlock(ushort id, Vector3I pos, out ushort segmentId)
         {
             Block block = blocks[id];
-            if (block.Blocks.ContainsKey(pos))
+            if (block.Sections.ContainsKey(pos))
             {
                 segmentId = ushort.MaxValue;
                 return false;
@@ -138,7 +138,7 @@ namespace FancadeLoaderLib
                     for (int x = 0; x < size.X; x++)
                         if (x == pos.X && y == pos.Y && z == pos.Z)
                             goto exit;
-                        else if (block.Blocks.ContainsKey(new Vector3I(x, y, z)))
+                        else if (block.Sections.ContainsKey(new Vector3I(x, y, z)))
                             segmentId++;
 
                         exit:
@@ -155,12 +155,12 @@ namespace FancadeLoaderLib
                         Vector3I cPos = new Vector3I(x, y, z);
                         if (cPos == pos)
                             hitBlock = true;
-                        else if (hitBlock && block.Blocks.TryGetValue(cPos, out BlockSection section))
+                        else if (hitBlock && block.Sections.TryGetValue(cPos, out BlockSection section))
                             section.Id++;
                     }
 
             segments.Add(segmentId, new BlockSegment(pos, pos == Vector3I.Zero, block));
-            block.Blocks.Add(pos, new BlockSection(new SubBlock[8 * 8 * 8], block.Attribs, segmentId));
+            block.Sections.Add(pos, new BlockSection(new SubBlock[8 * 8 * 8], block.Attribs, segmentId));
             return true;
         }
 
@@ -174,7 +174,7 @@ namespace FancadeLoaderLib
         public bool RemoveSegmentFromBlock(ushort id, Vector3I pos, out ushort segmentId)
         {
             Block block = blocks[id];
-            if (!block.Blocks.TryGetValue(pos, out BlockSection section))
+            if (!block.Sections.TryGetValue(pos, out BlockSection section))
             {
                 segmentId = ushort.MaxValue;
                 return false;
@@ -186,7 +186,7 @@ namespace FancadeLoaderLib
 
             // remove the segment
             segments.Remove(segmentId);
-            block.Blocks.Remove(pos);
+            block.Sections.Remove(pos);
 
             // decrement ids
             updateAfter(segmentId, -1);
@@ -200,7 +200,7 @@ namespace FancadeLoaderLib
                         Vector3I cPos = new Vector3I(x, y, z);
                         if (cPos == pos)
                             hitBlock = true;
-                        else if (hitBlock && block.Blocks.TryGetValue(cPos, out BlockSection bs))
+                        else if (hitBlock && block.Sections.TryGetValue(cPos, out BlockSection bs))
                             bs.Id--;
                     }
 

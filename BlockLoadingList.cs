@@ -47,7 +47,7 @@ namespace FancadeLoaderLib
             for (int i = 0; i < all.Count; i++)
             {
                 (ushort, BlockSegment) item = all[i];
-                item.Item2.Block.Blocks[item.Item2.Pos].Id = id;
+                item.Item2.Block.Sections[item.Item2.Pos].Id = id;
                 if (item.Item2.IsMain && item.Item2.Block.MainId == 0)
                     item.Item2.Block.MainId = id;
                 segments.Add(id, item.Item2);

@@ -54,7 +54,7 @@ namespace FancadeLoaderLib
                     for (int _x = 0; _x < size.X; _x++)
                     {
                         Vector3I pos = new Vector3I(_x, _y, _z);
-                        if (!block.Blocks.ContainsKey(pos))
+                        if (!block.Sections.ContainsKey(pos))
                             continue;
 
                         setSegment(x + _x, y + _y, z + _z, id);

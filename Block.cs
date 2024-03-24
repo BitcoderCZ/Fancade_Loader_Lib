@@ -21,7 +21,7 @@ namespace FancadeLoaderLib
         public ushort MainId;
         public BlockAttribs Attribs;
         public string Name;
-        public Dictionary<Vector3I, BlockSection> Blocks = new Dictionary<Vector3I, BlockSection>();
+        public Dictionary<Vector3I, BlockSection> Sections = new Dictionary<Vector3I, BlockSection>();
 
         public BlockData InsideBlockIds;
 
@@ -35,7 +35,7 @@ namespace FancadeLoaderLib
 
             Attribs = BlockAttribs.Default;
 
-            Blocks = new Dictionary<Vector3I, BlockSection>()
+            Sections = new Dictionary<Vector3I, BlockSection>()
             {
                 { Vector3I.Zero, new BlockSection(new SubBlock[8*8*8], BlockAttribs.Default, id) }
             };
@@ -55,13 +55,13 @@ namespace FancadeLoaderLib
             if (_value >= 0)
             {
                 MainId += value;
-                foreach (var item in Blocks)
+                foreach (var item in Sections)
                     item.Value.Id += value;
             }
             else
             {
                 MainId -= value;
-                foreach (var item in Blocks)
+                foreach (var item in Sections)
                     item.Value.Id -= value;
             }
         }
@@ -96,7 +96,7 @@ namespace FancadeLoaderLib
             {
                 Attribs.Save(writer, Attribs, Name, true);
 
-                BlockSection mainSection = Blocks[pos];
+                BlockSection mainSection = Sections[pos];
 
                 if (Attribs.IsMultiBlock)
                 {
@@ -149,9 +149,9 @@ namespace FancadeLoaderLib
             else
             {
                 byte[] blockData = new byte[NumbSubBlocks * 6];
-                if (Blocks.Count > 1)
+                if (Sections.Count > 1)
                 {
-                    BlockSection section = Blocks[pos];
+                    BlockSection section = Sections[pos];
                     section.Attribs.Save(writer, Attribs, Name, false);
                     writer.WriteUInt16(MainId);
                     writer.WriteUInt8((byte)pos.X);
@@ -266,7 +266,7 @@ namespace FancadeLoaderLib
 
                     subBlocks[i] = block;
                 }
-                thisBlock.Blocks.Add(sectionPos, new BlockSection(subBlocks, attribs, 0));
+                thisBlock.Sections.Add(sectionPos, new BlockSection(subBlocks, attribs, 0));
             }
 
             if (isMain)
@@ -315,7 +315,7 @@ namespace FancadeLoaderLib
 
         public void UpdateAttribs()
         {
-            Attribs.IsMultiBlock = Blocks.Count > 1;
+            Attribs.IsMultiBlock = Sections.Count > 1;
             Attribs.BlocksInside = InsideBlockIds.Size.X > 0;
             Attribs.ValuesInside = BlockValues.Count > 0;
             Attribs.ConnectionsInside = Connections.Count > 0;
@@ -327,7 +327,7 @@ namespace FancadeLoaderLib
             int highY = 0;
             int highZ = 0;
 
-            foreach (KeyValuePair<Vector3I, BlockSection> section in Blocks)
+            foreach (KeyValuePair<Vector3I, BlockSection> section in Sections)
             {
                 Vector3I pos = section.Key;
                 if (pos.X > highX)
@@ -407,7 +407,7 @@ namespace FancadeLoaderLib
                     for (int x = 0; x < size.X; x++)
                     {
                         Vector3I pos = new Vector3I(x, y, z);
-                        if (Block.Blocks.ContainsKey(pos))
+                        if (Block.Sections.ContainsKey(pos))
                         {
                             if (pos == Pos)
                                 return id;
