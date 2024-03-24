@@ -71,26 +71,14 @@ namespace FancadeLoaderLib
 
         public static (ushort paletteVersion, string name, string author, string description) LoadInfo(SaveReader reader)
         {
-            reader.ReadBytes(2);
-            byte encoding = reader.ReadUInt8();
-            switch (encoding)
-            {
-                case 1: // plain text
-                    throw new Exception($"Plain text levels aren't supported");
-                    //reader.ReadBytes(/*7*/6);
-                    break;
-                default: // gzip
-                    reader.Position = 0;
-                    byte[] rest = reader.ReadBytes((int)reader.BytesLeft);
-                    reader.Dispose();
-                    reader = new SaveReader(new MemoryStream());
-                    using (MemoryStream restStream = new MemoryStream(rest))
-                        Zlib.Decompress(restStream, reader.Stream);
-                    reader.Position = 0;
-                    break;
-            }
+            byte[] rest = reader.ReadBytes((int)reader.BytesLeft);
+            reader.Dispose();
+            reader = new SaveReader(new MemoryStream());
+            using (MemoryStream restStream = new MemoryStream(rest))
+                Zlib.Decompress(restStream, reader.Stream);
+            reader.Position = 0;
 
-            ushort paletteVersion = reader.ReadUInt16(); // just a guess
+            ushort paletteVersion = reader.ReadUInt16();
 
             string name = reader.ReadString();
             string author = reader.ReadString();
@@ -109,7 +97,7 @@ namespace FancadeLoaderLib
                 Zlib.Decompress(restStream, reader.Stream);
             reader.Position = 0;
 
-            ushort paletteVersion = reader.ReadUInt16(); // just a guess
+            ushort paletteVersion = reader.ReadUInt16();
 
             string name = reader.ReadString();
             string author = reader.ReadString();

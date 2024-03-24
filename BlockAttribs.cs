@@ -59,7 +59,7 @@ namespace FancadeLoaderLib
 					));
 			else
 				writer.WriteUInt8((byte)(
-					  0b_0001_0000 /*IsMultiBlock should always be true*/
+					  0b_0001_0000 //IsMultiBlock should always be true
 					| (Uneditable ? 0b_0100_0000 : 0)
 					| (Unknown ? 0b_1000_0000 : 0)
 					| Collider.Value
@@ -172,18 +172,7 @@ namespace FancadeLoaderLib
 			long pos = reader.Position;
 
 			// not sure how reliable this is
-			bool isMain = type != Type_T.Section;/*((Func<bool>)(() =>
-			{
-				byte stringLength = reader.ReadUInt8();
-				if (stringLength >= reader.BytesLeft || stringLength < 1)
-					return false;
-
-				for (int i = 0; i < stringLength; i++)
-					if (char.IsControl((char)reader.ReadUInt8()))
-						return false;
-
-				return true;
-			}))();*/
+			bool isMain = type != Type_T.Section;
 
 			reader.Position = pos;
 
