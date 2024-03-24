@@ -81,7 +81,7 @@ namespace FancadeLoaderLib
                     return 597;
                 default:
                     if (Opptions.ExceptionWhenUnknownCustomBlockOffset)
-                        throw new Exception($"Unknown format version: {paletteVersion} (unknown custom block offset)");
+                        throw new Exception($"Unknown block palette version: {paletteVersion} (unknown custom block offset)");
                     else
                         return 0;
             }
