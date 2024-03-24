@@ -65,9 +65,9 @@ namespace FancadeLoaderLib
             }
         }
 
-        public static ushort GetCustomBlockOffset(ushort formatVersion)
+        public static ushort GetCustomBlockOffset(ushort paletteVersion)
         {
-            switch (formatVersion)
+            switch (paletteVersion)
             {
                 case 27:
                     return 556;
@@ -81,7 +81,7 @@ namespace FancadeLoaderLib
                     return 597;
                 default:
                     if (Opptions.ExceptionWhenUnknownCustomBlockOffset)
-                        throw new Exception($"Unknown format version: {formatVersion} (unknown custom block offset)");
+                        throw new Exception($"Unknown format version: {paletteVersion} (unknown custom block offset)");
                     else
                         return 0;
             }
