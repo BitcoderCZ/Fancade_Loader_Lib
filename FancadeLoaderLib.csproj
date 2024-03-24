@@ -65,6 +65,7 @@
     <Compile Include="Connection.cs" />
     <Compile Include="Exceptions\EndOfStreamIdException.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="Vector3S.cs" />
     <Compile Include="ZLib.cs" />
     <Compile Include="Level.cs" />
     <Compile Include="Program.cs" />

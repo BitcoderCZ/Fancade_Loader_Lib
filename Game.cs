@@ -267,7 +267,7 @@ namespace FancadeLoaderLib
                     item.Value.Connections[i] = con;
                 }
             });
-            void fixConnection(Func<Vector3I, ushort> func, ref Vector3I pos)
+            void fixConnection(Func<Vector3I, ushort> func, ref Vector3S pos)
             {
                 ushort id = func(pos);
 

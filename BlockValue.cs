@@ -15,16 +15,16 @@ namespace FancadeLoaderLib
 	{
 		public byte ValueIndex; // first, second...
 		public byte Type;
-		public Vector3I Position;
+		public Vector3S Position;
 		public object Value;
 
 		public void Save(SaveWriter writer)
 		{
 			writer.WriteUInt8(ValueIndex);
 			writer.WriteUInt8(Type);
-			writer.WriteUInt16((ushort)Position.X);
-			writer.WriteUInt16((ushort)Position.Y);
-			writer.WriteUInt16((ushort)Position.Z);
+			writer.WriteUInt16(Position.X);
+			writer.WriteUInt16(Position.Y);
+			writer.WriteUInt16(Position.Z);
 
 			switch (Type)
 			{
@@ -68,7 +68,7 @@ namespace FancadeLoaderLib
 		{
 			byte valueIndex = reader.ReadUInt8();
 			byte type = reader.ReadUInt8();
-			Vector3I pos = new Vector3I(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+			Vector3S pos = new Vector3S(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
 			object value;
 
 			switch (type)
