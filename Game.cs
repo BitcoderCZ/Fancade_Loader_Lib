@@ -15,6 +15,11 @@ namespace FancadeLoaderLib
     {
         public static readonly ushort CurrentBlockPaletteVersion = 31;
 
+        public static class Opptions
+        {
+            public static bool AutofixBlockIdOffset = true;
+        }
+
         public string Name;
         public string Author;
         public string Description;
@@ -145,7 +150,8 @@ namespace FancadeLoaderLib
                 CustomBlocks = customBlocks.Finalize(paletteVersion, levels.ToArray(), 0),
             };
 
-            game.FixBlockIdOffset();
+            if (Opptions.AutofixBlockIdOffset)
+                game.FixBlockIdOffset();
 
             return game;
         }
