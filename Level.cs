@@ -60,7 +60,7 @@ namespace FancadeLoaderLib
             if ((info[0] & 0b_0010_0000) != 0)
                 reader.ReadUInt8();
 
-            var (blockIds, values, connections) = load(reader, hasBlocks: (info[0] & 0b_0000_0100) != 0, hasValue: (info[0] & 0b_0000_0010) != 0, hasConnections: (info[0] & 0b_0000_0001) != 0);
+            var (blockIds, values, connections) = load(reader, hasBlocks: (info[0] & 0b_0000_0100) != 0, hasValues: (info[0] & 0b_0000_0010) != 0, hasConnections: (info[0] & 0b_0000_0001) != 0);
 
 			return new Level(name)
             {

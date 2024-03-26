@@ -45,7 +45,7 @@ namespace FancadeLoaderLib
             }
         }
 
-        protected static (BlockData blockIds, List<BlockValue> blockValues, List<Connection> connections) load(SaveReader reader, bool hasBlocks, bool hasValue, bool hasConnections)
+        protected static (BlockData blockIds, List<BlockValue> blockValues, List<Connection> connections) load(SaveReader reader, bool hasBlocks, bool hasValues, bool hasConnections)
         {
             Vector3I size;
             ushort[] blockIds;
@@ -68,7 +68,7 @@ namespace FancadeLoaderLib
 
             BlockValue[] values;
             // block values (for number, vec3, probably touch (touch 1,2 or 3), ...)
-            if (hasValue)
+            if (hasValues)
             {
                 values = new BlockValue[reader.ReadUInt16()];
                 for (int i = 0; i < values.Length; i++)
