@@ -329,7 +329,11 @@ namespace FancadeLoaderLib
             Block = _block;
         }
 
-        public ushort GetIDOffset()
+        /// <summary>
+        /// Retuns id offset of this <see cref="BlockSegment"/> from <see cref="Block.MainId"/>, or null if this this segment isn't in <see cref="Block"/>
+        /// </summary>
+        /// <returns></returns>
+        public ushort? GetIDOffset()
         {
             Vector3I size = Block.GetSize();
             ushort id = 0;
@@ -346,7 +350,7 @@ namespace FancadeLoaderLib
                         }
                     }
 
-            return 0;
+            return null;
         }
 
         public static bool operator ==(BlockSegment a, BlockSegment b)
