@@ -117,32 +117,30 @@ namespace FancadeLoaderLib
 
                 save(writer);
             }
-            else
+            else if (Sections.Count > 1)
             {
+                BlockSection section = Sections[pos];
+                section.Attribs.Save(writer, Attribs, Name, false);
+                writer.WriteUInt16(MainId);
+                writer.WriteUInt8((byte)pos.X);
+                writer.WriteUInt8((byte)pos.Y);
+                writer.WriteUInt8((byte)pos.Z);
+
                 byte[] blockData = new byte[NumbSubBlocks * 6];
-                if (Sections.Count > 1)
+                unsafe
                 {
-                    BlockSection section = Sections[pos];
-                    section.Attribs.Save(writer, Attribs, Name, false);
-                    writer.WriteUInt16(MainId);
-                    writer.WriteUInt8((byte)pos.X);
-                    writer.WriteUInt8((byte)pos.Y);
-                    writer.WriteUInt8((byte)pos.Z);
-                    unsafe
+                    for (int i = 0; i < NumbSubBlocks; i++)
                     {
-                        for (int i = 0; i < NumbSubBlocks; i++)
-                        {
-                            SubBlock block = section.Blocks[i];
-                            blockData[i + NumbSubBlocks * 0] = (byte)(block.Colors[0] | block.Attribs[0] << 6);
-                            blockData[i + NumbSubBlocks * 1] = (byte)(block.Colors[1] | block.Attribs[1] << 6);
-                            blockData[i + NumbSubBlocks * 2] = (byte)(block.Colors[2] | block.Attribs[2] << 6);
-                            blockData[i + NumbSubBlocks * 3] = (byte)(block.Colors[3] | block.Attribs[3] << 6);
-                            blockData[i + NumbSubBlocks * 4] = (byte)(block.Colors[4] | block.Attribs[4] << 6);
-                            blockData[i + NumbSubBlocks * 5] = (byte)(block.Colors[5] | block.Attribs[5] << 6);
-                        }
+                        SubBlock block = section.Blocks[i];
+                        blockData[i + NumbSubBlocks * 0] = (byte)(block.Colors[0] | block.Attribs[0] << 6);
+                        blockData[i + NumbSubBlocks * 1] = (byte)(block.Colors[1] | block.Attribs[1] << 6);
+                        blockData[i + NumbSubBlocks * 2] = (byte)(block.Colors[2] | block.Attribs[2] << 6);
+                        blockData[i + NumbSubBlocks * 3] = (byte)(block.Colors[3] | block.Attribs[3] << 6);
+                        blockData[i + NumbSubBlocks * 4] = (byte)(block.Colors[4] | block.Attribs[4] << 6);
+                        blockData[i + NumbSubBlocks * 5] = (byte)(block.Colors[5] | block.Attribs[5] << 6);
                     }
-                    writer.WriteBytes(blockData);
                 }
+                writer.WriteBytes(blockData);
             }
         }
 
@@ -332,7 +330,6 @@ namespace FancadeLoaderLib
         /// <summary>
         /// Retuns id offset of this <see cref="BlockSegment"/> from <see cref="Block.MainId"/>, or null if this this segment isn't in <see cref="Block"/>
         /// </summary>
-        /// <returns></returns>
         public ushort? GetIDOffset()
         {
             Vector3I size = Block.GetSize();
