@@ -148,8 +148,8 @@ namespace FancadeLoaderLib
 
         public static void Load(SaveReader reader, BlockLoadingList customBlocks, int sectionCount)
         {
-            reader.NextThing(false, out object _attribs);
-            BlockAttribs attribs = (BlockAttribs)_attribs;
+            if (!BlockAttribs.TryLoad(reader, false, out BlockAttribs attribs, out string name))
+                throw new Exception("Invalid block header");
 
             bool isMain = attribs.IsMain;
 
@@ -200,7 +200,7 @@ namespace FancadeLoaderLib
             }
             else if (isMain)
             {
-                thisBlock.Name = attribs.Name;
+                thisBlock.Name = name;
                 thisBlock.Attribs = attribs;
                 thisBlock.mainLoaded = true;
             }

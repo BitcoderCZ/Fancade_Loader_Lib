@@ -13,18 +13,10 @@ namespace FancadeLoaderLib
 		public Collider_T Collider;
 		public Type_T Type;
 
-		/// <summary>
-		/// Only used when loading
-		/// </summary>
-		public bool IsMain { get; private set; }
-		/// <summary>
-		/// Only used when loading, use <see cref="Block.Name"/> instead
-		/// </summary>
-		public string Name { get; private set; }
+		public bool IsMain => Type != Type_T.Section;
 
 		public static BlockAttribs Default = new BlockAttribs()
 		{
-			IsMain = true,
 			BlocksInside = false,
 			Collider = Collider_T.FromEnum(ColliderEnum.Box),
 			Type = Type_T.Normal,
@@ -35,7 +27,6 @@ namespace FancadeLoaderLib
 		};
         public static BlockAttribs DefaultSection = new BlockAttribs()
         {
-            IsMain = false,
             BlocksInside = false,
             Collider = Collider_T.FromEnum(ColliderEnum.Box),
             Type = Type_T.Section,
@@ -99,9 +90,10 @@ namespace FancadeLoaderLib
 				writer.WriteUInt8(mainAttribs.Collider.AdditionalValue);
 		}
 
-		public static bool TryLoad(SaveReader reader, bool seek, out BlockAttribs blockAttribs)
+		public static bool TryLoad(SaveReader reader, bool seek, out BlockAttribs blockAttribs, out string name)
 		{
 			blockAttribs = default;
+			name = "";
 
 			long startPos = reader.Position;
 
@@ -176,7 +168,7 @@ namespace FancadeLoaderLib
 
 			reader.Position = pos;
 
-			string name = null;
+			name = null;
 			if (isMain) { 
 				name = reader.ReadString();
 
@@ -198,9 +190,7 @@ namespace FancadeLoaderLib
 				ConnectionsInside = connectionsInside,
 				BlocksInside = blocksInside,
 				Collider = collider,
-				Type = type,
-				IsMain = isMain,
-				Name = name
+				Type = type
 			};
 			return true;
 		}

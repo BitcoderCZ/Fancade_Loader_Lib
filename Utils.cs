@@ -53,7 +53,7 @@ namespace FancadeLoaderLib
             }
             reader.Position -= 3;
 
-            if (BlockAttribs.TryLoad(reader, seek, out BlockAttribs attribs)) {
+            if (BlockAttribs.TryLoad(reader, seek, out BlockAttribs attribs, out _)) {
                 o = attribs;
                 return 2;
             }
