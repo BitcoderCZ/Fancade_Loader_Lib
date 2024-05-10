@@ -1,4 +1,6 @@
-﻿namespace FancadeLoaderLib
+﻿using System.IO;
+
+namespace FancadeLoaderLib
 {
     public class Game
     {
@@ -58,13 +60,11 @@
                 customSegments[i].Value.Block.Save(writer, customSegments[i].Value.Pos, customSegments[i].Value.IsMain);
         }
 
-        public static (ushort paletteVersion, string name, string author, string description) LoadInfo(SaveReader reader)
+        public static (ushort paletteVersion, string name, string author, string description) LoadInfo(Stream stream)
         {
-            byte[] rest = reader.ReadBytes((int)reader.BytesLeft);
-            reader.Dispose();
-            reader = new SaveReader(new MemoryStream());
-            using (MemoryStream restStream = new MemoryStream(rest))
-                Zlib.Decompress(restStream, reader.Stream);
+            // decompress
+            SaveReader reader = new SaveReader(new MemoryStream());
+            Zlib.Decompress(stream, reader.Stream);
             reader.Position = 0;
 
             ushort paletteVersion = reader.ReadUInt16();
@@ -76,14 +76,11 @@
             return (paletteVersion, name, author, description);
         }
 
-        public static Game Load(SaveReader reader)
+        public static Game Load(Stream stream)
         {
             // decompress
-            byte[] rest = reader.ReadBytes((int)reader.BytesLeft);
-            reader.Dispose();
-            reader = new SaveReader(new MemoryStream());
-            using (MemoryStream restStream = new MemoryStream(rest))
-                Zlib.Decompress(restStream, reader.Stream);
+            SaveReader reader = new SaveReader(new MemoryStream());
+            Zlib.Decompress(stream, reader.Stream);
             reader.Position = 0;
 
             ushort paletteVersion = reader.ReadUInt16();
@@ -124,8 +121,6 @@
 
             if (levels.Count + segmentCount != levelsPlusCustomBlocks)
                 throw new Exception($"Levels ({levels.Count}) + Custom blocks ({segmentCount}) != Saved levels + custom blocks count ({levelsPlusCustomBlocks})");
-            else if (reader.BytesLeft > 0)
-                throw new Exception($"{reader.BytesLeft} bytes were left, this probably means the level was loaded incorrectly");
 
             Game game = new Game(name)
             {
