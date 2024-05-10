@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FancadeLoaderLib
+﻿namespace FancadeLoaderLib
 {
     public class BlockLoadingList
     {
@@ -38,9 +31,9 @@ namespace FancadeLoaderLib
         /// </summary>
         /// <param name="startId">Used when <paramref name="paletteVersion"/> is 0</param>
         /// <returns></returns>
-        public BlockList Finalize(ushort paletteVersion, Level[] levels, ushort startId = 0)
+        public BlockList Finalize(ushort paletteVersion, int levelCount, ushort startId = 0)
         {
-            ushort id = paletteVersion == 0 ? startId : (ushort)(Block.GetCustomBlockOffset(paletteVersion) + levels.Length);
+            ushort id = paletteVersion == 0 ? startId : (ushort)(Block.GetFirstCustomBlockId(paletteVersion) + levelCount);
 
             Dictionary<ushort, BlockSegment> segments = new Dictionary<ushort, BlockSegment>();
 

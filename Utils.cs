@@ -1,23 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FancadeLoaderLib
+﻿namespace FancadeLoaderLib
 {
     public static class Utils
     {
-        public static bool ArrayEquals<T> (this T[] a, T[] b, Func<T, T, bool> compare)
+        public static bool ArrayEquals<T>(this T[] a, T[] b, Func<T, T, bool> compare)
         {
             if (a is null && b is null)
                 return true;
             else if (a is null || b is null)
                 return false;
-            else if (a.Length != b.Length) 
+            else if (a.Length != b.Length)
                 return false;
-            else {
+            else
+            {
                 for (int i = 0; i < a.Length; i++)
                     if (!compare(a[i], b[i]))
                         return false;
@@ -45,7 +39,8 @@ namespace FancadeLoaderLib
             byte b0 = reader.ReadUInt8();
             byte[] bytes = reader.ReadBytes(2);
             if (levelStart.ArrayEquals(bytes, (a, b) => a == b)
-                || levelStart2.ArrayEquals(bytes, (a, b) => a == b)) {
+                || levelStart2.ArrayEquals(bytes, (a, b) => a == b))
+            {
                 if (seek)
                     reader.Position -= 3;
                 o = new byte[] { b0, bytes[0], bytes[1] };
@@ -53,7 +48,8 @@ namespace FancadeLoaderLib
             }
             reader.Position -= 3;
 
-            if (BlockAttribs.TryLoad(reader, seek, out BlockAttribs attribs, out _)) {
+            if (BlockAttribs.TryLoad(reader, seek, out BlockAttribs attribs, out _))
+            {
                 o = attribs;
                 return 2;
             }

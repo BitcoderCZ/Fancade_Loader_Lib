@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace FancadeLoaderLib
 {
@@ -35,7 +31,8 @@ namespace FancadeLoaderLib
         //     (0,0,0).
         public static Vector3I Zero
         {
-            get {
+            get
+            {
                 return default(Vector3I);
             }
         }
@@ -49,7 +46,8 @@ namespace FancadeLoaderLib
         //     (1,1,1).
         public static Vector3I One
         {
-            get {
+            get
+            {
                 return new Vector3I(1, 1, 1);
             }
         }
@@ -62,7 +60,8 @@ namespace FancadeLoaderLib
         //     The vector (1,0,0).
         public static Vector3I UnitX
         {
-            get {
+            get
+            {
                 return new Vector3I(1, 0, 0);
             }
         }
@@ -75,7 +74,8 @@ namespace FancadeLoaderLib
         //     The vector (0,1,0).
         public static Vector3I UnitY
         {
-            get {
+            get
+            {
                 return new Vector3I(0, 1, 0);
             }
         }
@@ -88,7 +88,8 @@ namespace FancadeLoaderLib
         //     The vector (0,0,1).
         public static Vector3I UnitZ
         {
-            get {
+            get
+            {
                 return new Vector3I(0, 0, 1);
             }
         }
@@ -119,7 +120,8 @@ namespace FancadeLoaderLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj)
         {
-            if (!(obj is Vector3I)) {
+            if (!(obj is Vector3I))
+            {
                 return false;
             }
 
@@ -195,7 +197,8 @@ namespace FancadeLoaderLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Length()
         {
-            if (Vector.IsHardwareAccelerated) {
+            if (Vector.IsHardwareAccelerated)
+            {
                 float num = Dot(this, this);
                 return (int)Math.Sqrt(num);
             }
@@ -213,7 +216,8 @@ namespace FancadeLoaderLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float LengthSquared()
         {
-            if (Vector.IsHardwareAccelerated) {
+            if (Vector.IsHardwareAccelerated)
+            {
                 return Dot(this, this);
             }
 
@@ -236,7 +240,8 @@ namespace FancadeLoaderLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Distance(Vector3I value1, Vector3I value2)
         {
-            if (Vector.IsHardwareAccelerated) {
+            if (Vector.IsHardwareAccelerated)
+            {
                 Vector3I vector = value1 - value2;
                 float num = Dot(vector, vector);
                 return (float)Math.Sqrt(num);
@@ -265,7 +270,8 @@ namespace FancadeLoaderLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float DistanceSquared(Vector3I value1, Vector3I value2)
         {
-            if (Vector.IsHardwareAccelerated) {
+            if (Vector.IsHardwareAccelerated)
+            {
                 Vector3I vector = value1 - value2;
                 return Dot(vector, vector);
             }
@@ -290,7 +296,8 @@ namespace FancadeLoaderLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3I Normalize(Vector3I value)
         {
-            if (Vector.IsHardwareAccelerated) {
+            if (Vector.IsHardwareAccelerated)
+            {
                 int num = value.Length();
                 return value / num;
             }
@@ -596,7 +603,7 @@ namespace FancadeLoaderLib
         //
         //   z:
         //     The additional value to assign to the System.Numerics.Vector3I.Z field.
-        
+
         public Vector3I(Vector2 value, int z)
             : this((int)value.X, (int)value.Y, z)
         {
@@ -641,7 +648,7 @@ namespace FancadeLoaderLib
         //   T:System.RankException:
         //     array is multidimensional.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        
+
         public void CopyTo(float[] array)
         {
             CopyTo(array, 0);
@@ -674,15 +681,18 @@ namespace FancadeLoaderLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(float[] array, int index)
         {
-            if (array == null) {
+            if (array == null)
+            {
                 throw new NullReferenceException();
             }
 
-            if (index < 0 || index >= array.Length) {
+            if (index < 0 || index >= array.Length)
+            {
                 throw new ArgumentOutOfRangeException();
             }
 
-            if (array.Length - index < 3) {
+            if (array.Length - index < 3)
+            {
                 throw new ArgumentException();
             }
 
@@ -703,7 +713,8 @@ namespace FancadeLoaderLib
         //     true if the two vectors are equal; otherwise, false.
         public bool Equals(Vector3I other)
         {
-            if (X == other.X && Y == other.Y) {
+            if (X == other.X && Y == other.Y)
+            {
                 return Z == other.Z;
             }
 
@@ -970,7 +981,8 @@ namespace FancadeLoaderLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Vector3I left, Vector3I right)
         {
-            if (left.X == right.X && left.Y == right.Y) {
+            if (left.X == right.X && left.Y == right.Y)
+            {
                 return left.Z == right.Z;
             }
 
@@ -993,7 +1005,8 @@ namespace FancadeLoaderLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Vector3I left, Vector3I right)
         {
-            if (left.X == right.X && left.Y == right.Y) {
+            if (left.X == right.X && left.Y == right.Y)
+            {
                 return left.Z != right.Z;
             }
 

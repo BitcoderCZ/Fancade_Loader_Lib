@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace FancadeLoaderLib
 {
@@ -36,7 +31,7 @@ namespace FancadeLoaderLib
         public SaveReader(string _path)
         {
             if (!File.Exists(_path))
-                 throw new FileNotFoundException($"File \"{_path}\" doesn't exist", _path);
+                throw new FileNotFoundException($"File \"{_path}\" doesn't exist", _path);
 
             Stream = new FileStream(_path, FileMode.Open, FileAccess.Read);
             if (!Stream.CanRead)

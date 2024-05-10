@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FancadeLoaderLib
+﻿namespace FancadeLoaderLib
 {
     public class BlockList
     {
         private Dictionary<ushort, Block> blocks = new Dictionary<ushort, Block>();
         private Dictionary<ushort, BlockSegment> segments = new Dictionary<ushort, BlockSegment>();
+
+        public int BlockCount => blocks.Count;
+        public int SegmentCount => segments.Count;
 
         public BlockList()
         { }
@@ -55,7 +52,7 @@ namespace FancadeLoaderLib
             for (int i = 0; i < count; i++)
                 Block.Load(reader, loadingList, segmentCount);
 
-            return loadingList.Finalize(0, null, startId);
+            return loadingList.Finalize(0, 0, startId);
         }
 
         public BlockList(Dictionary<ushort, BlockSegment> _segments)
@@ -179,7 +176,7 @@ namespace FancadeLoaderLib
                 segmentId = ushort.MaxValue;
                 return false;
             }
-            
+
             // get id the segment will have
             Vector3I size = Vector3I.Max(block.GetSize(), pos + Vector3I.One);
             segmentId = section.Id;
@@ -298,7 +295,7 @@ namespace FancadeLoaderLib
         public void FixIds(Level[] levels)
         {
             ushort lowestID = LowestSegmentID();
-            ushort idOffset = (ushort)(Block.GetCustomBlockOffset(Game.CurrentBlockPaletteVersion) + levels.Length);
+            ushort idOffset = (ushort)(Block.GetFirstCustomBlockId(Game.CurrentBlockPaletteVersion) + levels.Length);
             if (lowestID >= idOffset)
                 return;
 

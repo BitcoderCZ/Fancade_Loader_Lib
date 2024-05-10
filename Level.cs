@@ -1,13 +1,4 @@
-﻿using FancadeLoaderLib.Exceptions;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FancadeLoaderLib
+﻿namespace FancadeLoaderLib
 {
     public class Level : BlockContainer
     {
@@ -47,8 +38,8 @@ namespace FancadeLoaderLib
         }
 
         public static Level Load(SaveReader reader)
-		{
-			reader.NextThing(false, out object _info);
+        {
+            reader.NextThing(false, out object _info);
             byte[] info = (byte[])_info;
 
             string name = reader.ReadString();
@@ -62,7 +53,7 @@ namespace FancadeLoaderLib
 
             var (blockIds, values, connections) = load(reader, hasBlocks: (info[0] & 0b_0000_0100) != 0, hasValues: (info[0] & 0b_0000_0010) != 0, hasConnections: (info[0] & 0b_0000_0001) != 0);
 
-			return new Level(name)
+            return new Level(name)
             {
                 unknownFlag = (info[0] & 0b_0010_0000) != 0,
                 BackgroundColor = backgroundColor,

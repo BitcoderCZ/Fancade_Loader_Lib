@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 
 namespace FancadeLoaderLib
 {
     public class Block : BlockContainer
     {
         const int NumbSubBlocks = 8 * 8 * 8;
+        public const int OGFirstCustomId = 512;
 
         public static class Opptions
         {
@@ -59,20 +55,20 @@ namespace FancadeLoaderLib
             }
         }
 
-        public static ushort GetCustomBlockOffset(ushort paletteVersion)
+        public static int GetBlocksAdded(ushort paletteVersion)
         {
             switch (paletteVersion)
             {
                 case 27:
-                    return 556;
+                    return 44;
                 case 28:
-                    return 584;
+                    return 72;
                 case 29:
-                    return 588;
+                    return 76;
                 case 30:
-                    return 596;
+                    return 84;
                 case 31:
-                    return 597;
+                    return 85;
                 default:
                     if (Opptions.ExceptionWhenUnknownCustomBlockOffset)
                         throw new Exception($"Unknown block palette version: {paletteVersion} (unknown custom block offset)");
@@ -80,6 +76,8 @@ namespace FancadeLoaderLib
                         return 0;
             }
         }
+        public static ushort GetFirstCustomBlockId(ushort paletteVersion)
+            => (ushort)(OGFirstCustomId + GetBlocksAdded(paletteVersion));
 
         public void Save(SaveWriter writer, Vector3I pos, bool isMain)
         {

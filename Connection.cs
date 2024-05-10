@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FancadeLoaderLib
+﻿namespace FancadeLoaderLib
 {
     /// <summary>
     /// if From/To.XYZ == 32769 && in block = one side of connection is outside

@@ -1,15 +1,4 @@
-﻿using FancadeLoaderLib.Exceptions;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FancadeLoaderLib
+﻿namespace FancadeLoaderLib
 {
     public class Game
     {
@@ -25,10 +14,6 @@ namespace FancadeLoaderLib
         public string Description;
 
         public ushort PaletteVersion;
-        /// <summary>
-        /// Custom block ids in levels will be incremented by 85 - [value] (really weird, might not be true)
-        /// </summary>
-        public byte BlockIdOffset;
 
         public List<Level> Levels;
         public BlockList CustomBlocks = new BlockList();
@@ -41,7 +26,6 @@ namespace FancadeLoaderLib
             PaletteVersion = CurrentBlockPaletteVersion;
             CustomBlocks = new BlockList();
             Levels = new List<Level>();
-            BlockIdOffset = 85;
         }
 
         public void Save(Stream stream)
@@ -60,7 +44,7 @@ namespace FancadeLoaderLib
             writer.WriteString(Name);
             writer.WriteString(Author);
             writer.WriteString(Description);
-            writer.WriteUInt8(BlockIdOffset);
+            writer.WriteInt8((sbyte)Block.GetBlocksAdded(PaletteVersion));
             writer.WriteUInt8(0x02);
 
             writer.WriteUInt16(GetLevelsPlusCustomBlocks());
@@ -104,13 +88,16 @@ namespace FancadeLoaderLib
 
             ushort paletteVersion = reader.ReadUInt16();
 
+            if (paletteVersion > CurrentBlockPaletteVersion)
+                throw new Exception($"Palette version {paletteVersion} isn't supported, highest supported is {CurrentBlockPaletteVersion}");
+
             string name = reader.ReadString();
             string author = reader.ReadString();
             string description = reader.ReadString();
 
-            byte blockIdOffset = reader.ReadUInt8();
+            sbyte blockIdOffset = reader.ReadInt8();
 
-            reader.ReadBytes(1);
+            reader.ReadUInt8(); // only seen 2 (when blockIdOffset +) and 1 (when blockIdOffset -)
 
             ushort levelsPlusCustomBlocks = reader.ReadUInt16();
 
@@ -145,13 +132,12 @@ namespace FancadeLoaderLib
                 Author = author,
                 Description = description,
                 PaletteVersion = paletteVersion,
-                BlockIdOffset = blockIdOffset,
                 Levels = levels,
-                CustomBlocks = customBlocks.Finalize(paletteVersion, levels.ToArray(), 0),
+                CustomBlocks = customBlocks.Finalize(paletteVersion, levels.Count, 0),
             };
 
             if (Opptions.AutofixBlockIdOffset)
-                game.FixBlockIdOffset();
+                game.fixBlockIdOffset(blockIdOffset);
 
             return game;
         }
@@ -177,7 +163,7 @@ namespace FancadeLoaderLib
             // segment id, to how the blocks origin moved
             Dictionary<ushort, Vector3I> idToOriginMove = new Dictionary<ushort, Vector3I>();
 
-            ushort id = (ushort)(Block.GetCustomBlockOffset(PaletteVersion) + Levels.Count);
+            ushort id = (ushort)(Block.GetFirstCustomBlockId(PaletteVersion) + Levels.Count);
             CustomBlocks.EnumerateBlocksSorted(item =>
             {
                 Block block = item.Value;
@@ -246,7 +232,7 @@ namespace FancadeLoaderLib
             CustomBlocks = newCustomBlocks;
 
             // fix connections
-            minId = (ushort)(Block.GetCustomBlockOffset(PaletteVersion) + Levels.Count);
+            minId = (ushort)(Block.GetFirstCustomBlockId(PaletteVersion) + Levels.Count);
 
             for (int i = 0; i < Levels.Count; i++)
             {
@@ -282,16 +268,11 @@ namespace FancadeLoaderLib
             }
         }
 
-        public void FixBlockIdOffset()
+        private void fixBlockIdOffset(sbyte blockIdOffset)
         {
-            if (BlockIdOffset > 85)
-                throw new Exception($"Invalid {nameof(BlockIdOffset)}");
-            else if (BlockIdOffset == 85)
-                return; // BlockIdOffset is already correct
+            ushort offset = (ushort)(-blockIdOffset + Block.GetBlocksAdded(PaletteVersion));
 
-            ushort offset = (ushort)(85 - BlockIdOffset);
-
-            ushort minCustomId = Block.GetCustomBlockOffset(PaletteVersion);
+            ushort minCustomId = (ushort)(Block.GetFirstCustomBlockId(PaletteVersion) + Levels.Count);
 
             Parallel.For(0, Levels.Count, i =>
             {
@@ -309,8 +290,6 @@ namespace FancadeLoaderLib
                     if (block.BlockIds[i] + offset >= minCustomId)
                         block.BlockIds[i] += offset;
             });
-
-            BlockIdOffset = 85;
         }
 
         public ushort GetLevelsPlusCustomBlocks()
