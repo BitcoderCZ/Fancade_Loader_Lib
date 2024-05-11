@@ -16,14 +16,25 @@ namespace FancadeLoaderLib
 
         public ushort MainId;
         public BlockAttribs Attribs;
-        public string Name;
-        public Dictionary<Vector3I, BlockSection> Sections = new Dictionary<Vector3I, BlockSection>();
+        private string name;
+        public string Name
+        {
+            get => name;
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                name = value;
+            }
+        }
+        public Dictionary<Vector3I, BlockSection> Sections { get; internal set; } = new Dictionary<Vector3I, BlockSection>();
 
-        public Block(ushort id, string name)
+        public Block(ushort id, string _name)
             : base()
         {
+            ArgumentNullException.ThrowIfNull(_name, nameof(_name));
+
             MainId = id;
-            Name = name;
+            name = _name;
 
             Attribs = BlockAttribs.Default;
 
@@ -33,10 +44,12 @@ namespace FancadeLoaderLib
             };
         }
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private Block()
         {
             mainLoaded = false;
         }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         internal void UpdateId(short _value)
         {
@@ -79,6 +92,12 @@ namespace FancadeLoaderLib
         public static ushort GetFirstCustomBlockId(ushort paletteVersion)
             => (ushort)(OGFirstCustomId + GetBlocksAdded(paletteVersion));
 
+        /// <summary>
+        /// Saves <see cref="BlockSection"/> at <paramref name="pos"/> to <paramref name="writer"/>
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="pos"></param>
+        /// <param name="isMain"></param>
         public void Save(SaveWriter writer, Vector3I pos, bool isMain)
         {
             UpdateAttribs();
@@ -142,10 +161,16 @@ namespace FancadeLoaderLib
             }
         }
 
-        public static void Load(SaveReader reader, BlockLoadingList customBlocks, int sectionCount)
+        /// <summary>
+        /// Loads <see cref="Block"/> from <paramref name="reader"/>
+        /// </summary>
+        /// <param name="reader"><see cref="SaveReader"/> to read data from</param>
+        /// <param name="customBlocks"><see cref="BlockLoadingList"/> to add the loaded block to</param>
+        /// <exception cref="InvalidDataException"></exception>
+        public static void Load(SaveReader reader, BlockLoadingList customBlocks)
         {
-            if (!BlockAttribs.TryLoad(reader, false, out BlockAttribs attribs, out string name))
-                throw new Exception("Invalid block header");
+            if (!BlockAttribs.TryLoad(reader, false, out BlockAttribs attribs, out string? name))
+                throw new InvalidDataException("Invalid block header");
 
             bool isMain = attribs.IsMain;
 
@@ -184,19 +209,10 @@ namespace FancadeLoaderLib
 
             if ((isMain && thisBlock.mainLoaded) || (thisBlock.mainLoaded && !thisBlock.Attribs.IsMultiBlock)
                 || (!newBlock && !attribs.IsMultiBlock))
-            {
-                // very bad, something went really wrong
-                // thisBlock? more like """"thisBlock""" hahahhahahahahhahahha
-                if (!thisBlock.Attribs.IsMultiBlock)
-                    throw new Exception($"Loaded main, but main was aleardy loaded for: {thisBlock}, case: 0");
-                else if (!attribs.IsMultiBlock)
-                    throw new Exception($"Loaded main, but main was aleardy loaded for: {thisBlock}, case: 1");
-                else // we're fucked, the id was actually specified
-                    throw new Exception($"Loaded main, but main was aleardy loaded for: {thisBlock}, case: 2");
-            }
+                throw new InvalidDataException("Invalid block data");
             else if (isMain)
             {
-                thisBlock.Name = name;
+                thisBlock.Name = name!;
                 thisBlock.Attribs = attribs;
                 thisBlock.mainLoaded = true;
             }
@@ -273,7 +289,7 @@ namespace FancadeLoaderLib
         public static bool operator !=(Block a, Block b)
             => !a?.Equals(b) ?? (a is null != b is null);
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is Block other)
                 return Equals(other);
@@ -286,7 +302,7 @@ namespace FancadeLoaderLib
             else return MainId == other.MainId && Name == other.Name;
         }
 
-        public override int GetHashCode() => MainId ^ Name.GetHashCode();
+        public override int GetHashCode() => HashCode.Combine(MainId, Name.GetHashCode());
 
         public override string ToString() => $"[{Name}, Attribs: {Attribs}]";
     }
@@ -356,11 +372,9 @@ namespace FancadeLoaderLib
         public override string ToString()
             => $"{{BlockId: {Block.MainId}, Pos: {Pos}, IsMain: {IsMain}}}";
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            if (obj == null)
-                return false;
-            else if (obj is BlockSegment other)
+            if (obj is BlockSegment other)
                 return Equals(other);
             else
                 return false;
@@ -368,7 +382,7 @@ namespace FancadeLoaderLib
         public bool Equals(BlockSegment other)
             => Pos == other.Pos && IsMain == other.IsMain && Block == other.Block;
 
-        public override int GetHashCode() => Block.GetHashCode() ^ Pos.GetHashCode();
+        public override int GetHashCode() => HashCode.Combine(Block.GetHashCode(), Pos.GetHashCode());
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -1,4 +1,6 @@
-﻿namespace FancadeLoaderLib
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace FancadeLoaderLib
 {
     public struct BlockAttribs
     {
@@ -38,20 +40,20 @@
         {
             if (mainSave)
                 writer.WriteUInt8((byte)(
-                      (ConnectionsInside ? 0b_0000_0001 : 0)
-                    | (ValuesInside ? 0b_0000_0010 : 0)
-                    | (BlocksInside ? 0b_0000_0100 : 0)
-                    | (IsMultiBlock ? 0b_0001_0000 : 0)
-                    | (Uneditable ? 0b_0100_0000 : 0)
-                    | (Unknown ? 0b_1000_0000 : 0)
-                    | Collider.Value
+                    (ConnectionsInside ? 0b_0000_0001 : 0) |
+                    (ValuesInside ? 0b_0000_0010 : 0) |
+                    (BlocksInside ? 0b_0000_0100 : 0) |
+                    (IsMultiBlock ? 0b_0001_0000 : 0) |
+                    (Uneditable ? 0b_0100_0000 : 0) |
+                    (Unknown ? 0b_1000_0000 : 0) |
+                    Collider.Value
                     ));
             else
                 writer.WriteUInt8((byte)(
-                      0b_0001_0000 //IsMultiBlock should always be true
-                    | (Uneditable ? 0b_0100_0000 : 0)
-                    | (Unknown ? 0b_1000_0000 : 0)
-                    | Collider.Value
+                    0b_0001_0000 | //IsMultiBlock should always be true
+                    (Uneditable ? 0b_0100_0000 : 0) |
+                    (Unknown ? 0b_1000_0000 : 0) |
+                    Collider.Value
                     ));
 
             if (!mainSave)
@@ -63,21 +65,27 @@
                     writer.WriteUInt8(0x08);
                     break;
                 case Type_T.Physics:
-                    writer.WriteUInt8(0x18);
-                    writer.WriteUInt8(0x01);
+                    {
+                        writer.WriteUInt8(0x18);
+                        writer.WriteUInt8(0x01);
+                    }
                     break;
                 case Type_T.Script:
-                    writer.WriteUInt8(0x18);
-                    writer.WriteUInt8(0x02);
-                    break;
-                case Type_T.Section:
-                    if (mainAttribs.Type == Type_T.Script)
                     {
-                        writer.WriteUInt8(0x10);
+                        writer.WriteUInt8(0x18);
                         writer.WriteUInt8(0x02);
                     }
-                    else
-                        writer.WriteUInt8(0x00);
+                    break;
+                case Type_T.Section:
+                    {
+                        if (mainAttribs.Type == Type_T.Script)
+                        {
+                            writer.WriteUInt8(0x10);
+                            writer.WriteUInt8(0x02);
+                        }
+                        else
+                            writer.WriteUInt8(0x00);
+                    }
                     break;
             }
 
@@ -88,7 +96,7 @@
                 writer.WriteUInt8(mainAttribs.Collider.AdditionalValue);
         }
 
-        public static bool TryLoad(SaveReader reader, bool seek, out BlockAttribs blockAttribs, out string name)
+        public static bool TryLoad(SaveReader reader, bool seek, out BlockAttribs blockAttribs, out string? name)
         {
             blockAttribs = default;
             name = "";

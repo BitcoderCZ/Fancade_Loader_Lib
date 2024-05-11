@@ -1,8 +1,8 @@
 ﻿namespace FancadeLoaderLib
 {
-    /// <summary>
-    /// if From/To.XYZ == 32769 && in block = one side of connection is outside
-    /// </summary>
+    /// <remarks>
+    /// if From/To.XYZ == 32769 AND in block -> one side of connection is outside
+    /// </remarks>
     public struct Connection
     {
         public Vector3S From;

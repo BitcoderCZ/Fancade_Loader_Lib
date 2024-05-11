@@ -39,6 +39,9 @@ namespace FancadeLoaderLib
             Position = 0;
         }
 
+        /// <summary>
+        /// Sets position of <see cref="Stream"/> to 0
+        /// </summary>
         public void Reset() => Stream.Position = 0;
 
         public byte[] ReadBytes(int count)

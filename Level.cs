@@ -4,32 +4,42 @@
     {
         private bool unknownFlag; // aditional byte after the color (so far only seen 0, in ECVV_SET_ANG_LIMITS_E)
 
-        public string Name;
-        public byte BackgroundColor;
+        private string name;
+        public string Name
+        {
+            get => name;
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                name = value;
+            }
+        }
+        public FancadeColor BackgroundColor;
         public bool LevelUnEditable;
 
-        public Level(string name)
+        public Level(string _name)
             : base()
         {
-            Name = name;
-            BackgroundColor = 26;
+            ArgumentNullException.ThrowIfNull(_name, nameof(_name));
+            name = _name;
+            BackgroundColor = FancadeColorE.Default;
             LevelUnEditable = false;
         }
 
         public void Save(SaveWriter writer)
         {
             writer.WriteUInt8((byte)(
-                  (LevelUnEditable ? 0b_0100_0000 : 0)
-                | (unknownFlag ? 0b_0100_0000 : 0)
-                | (BlockIds.Size.X > 0 ? 0b_0100 : 0)
-                | (BlockValues.Count > 0 ? 0b_0010 : 0)
-                | (Connections.Count > 0 ? 0b_0001 : 0)
-                ));
-            writer.WriteUInt8((byte)(BackgroundColor == 26 ? 0x18 : 0x19));
+                (LevelUnEditable ? 0b_0100_0000 : 0) |
+                (unknownFlag ? 0b_0100_0000 : 0) |
+                (BlockIds.Size.X > 0 ? 0b_0100 : 0) |
+                (BlockValues.Count > 0 ? 0b_0010 : 0) |
+                (Connections.Count > 0 ? 0b_0001 : 0)
+            ));
+            writer.WriteUInt8((byte)(BackgroundColor == FancadeColorE.Default ? 0x18 : 0x19));
             writer.WriteUInt8(0x03);
             writer.WriteString(Name);
-            if (BackgroundColor != 26)
-                writer.WriteUInt8(BackgroundColor);
+            if (BackgroundColor != FancadeColorE.Default)
+                writer.WriteUInt8((byte)BackgroundColor);
 
             if (unknownFlag)
                 writer.WriteUInt8(0);
@@ -44,9 +54,9 @@
 
             string name = reader.ReadString();
 
-            byte backgroundColor = 26;
+            FancadeColor backgroundColor = FancadeColorE.Default;
             if ((info[1] & 0b_0000_0001) != 0)
-                backgroundColor = reader.ReadUInt8();
+                backgroundColor = (FancadeColor)reader.ReadUInt8();
 
             if ((info[0] & 0b_0010_0000) != 0)
                 reader.ReadUInt8();

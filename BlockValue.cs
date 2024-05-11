@@ -8,9 +8,10 @@ namespace FancadeLoaderLib
     public struct BlockValue
     {
         public byte ValueIndex; // first, second...
-                                // TODO: make enum
+        // TODO: make enum
         public byte Type;
         public Vector3S Position;
+        // TODO: validate that Value type == this.Type
         public object Value;
 
         public void Save(SaveWriter writer)

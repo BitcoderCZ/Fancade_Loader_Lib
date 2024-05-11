@@ -1,4 +1,6 @@
-﻿namespace FancadeLoaderLib
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace FancadeLoaderLib
 {
     public class BlockList
     {
@@ -47,10 +49,9 @@
             uint count = reader.ReadUInt32();
             ushort startId = reader.ReadUInt16();
 
-            int segmentCount = 0;
             BlockLoadingList loadingList = new BlockLoadingList();
             for (int i = 0; i < count; i++)
-                Block.Load(reader, loadingList, segmentCount);
+                Block.Load(reader, loadingList);
 
             return loadingList.Finalize(0, 0, startId);
         }
@@ -85,10 +86,14 @@
         }
         public void AddSegment(BlockSegment segment)
         {
+            ushort? idOffset = segment.GetIDOffset();
+            if (idOffset is null)
+                throw new ArgumentException($"{nameof(segment)}.{nameof(segment.Block)} must contain {nameof(segment)}", nameof(segment));
+
             if (!blocks.ContainsKey(segment.Block.MainId))
                 blocks.Add(segment.Block.MainId, segment.Block);
 
-            segments.Add((ushort)(segment.Block.MainId + segment.GetIDOffset()), segment);
+            segments.Add((ushort)(segment.Block.MainId + idOffset), segment);
         }
         public void AddSegment(ushort id, BlockSegment segment)
         {
@@ -106,7 +111,7 @@
             => blocks[id] = value;
         public void SetSegment(ushort id, BlockSegment value)
             => segments[id] = value;
-        public bool TryGetBlock(ushort id, out Block block)
+        public bool TryGetBlock(ushort id, [MaybeNullWhen(false)] out Block? block)
             => blocks.TryGetValue(id, out block);
         public bool TryGetSegment(ushort id, out BlockSegment segment)
             => segments.TryGetValue(id, out segment);
@@ -138,10 +143,10 @@
                         else if (block.Sections.ContainsKey(new Vector3I(x, y, z)))
                             segmentId++;
 
-                        exit:
+        exit:
 
             // increment ids
-            updateAfter((ushort)(segmentId - 1), 1);
+            UpdateAfter((ushort)(segmentId - 1), 1);
 
             // increment the block's segment ids
             bool hitBlock = false;
@@ -152,7 +157,7 @@
                         Vector3I cPos = new Vector3I(x, y, z);
                         if (cPos == pos)
                             hitBlock = true;
-                        else if (hitBlock && block.Sections.TryGetValue(cPos, out BlockSection section))
+                        else if (hitBlock && block.Sections.TryGetValue(cPos, out BlockSection? section))
                             section.Id++;
                     }
 
@@ -171,7 +176,7 @@
         public bool RemoveSegmentFromBlock(ushort id, Vector3I pos, out ushort segmentId)
         {
             Block block = blocks[id];
-            if (!block.Sections.TryGetValue(pos, out BlockSection section))
+            if (!block.Sections.TryGetValue(pos, out BlockSection? section))
             {
                 segmentId = ushort.MaxValue;
                 return false;
@@ -186,7 +191,7 @@
             block.Sections.Remove(pos);
 
             // decrement ids
-            updateAfter(segmentId, -1);
+            UpdateAfter(segmentId, -1);
 
             // decrement the block's segment ids
             bool hitBlock = false;
@@ -197,18 +202,18 @@
                         Vector3I cPos = new Vector3I(x, y, z);
                         if (cPos == pos)
                             hitBlock = true;
-                        else if (hitBlock && block.Sections.TryGetValue(cPos, out BlockSection bs))
+                        else if (hitBlock && block.Sections.TryGetValue(cPos, out BlockSection? bs))
                             bs.Id--;
                     }
 
             return true;
         }
 
-        private void updateAfter(ushort id, short value)
+        internal void UpdateAfter(ushort id, short value)
         {
             List<ushort> segmentsToUpdate = new List<ushort>();
             foreach (var item in segments)
-                if (item.Key > id)
+                if (item.Key > id || id == ushort.MaxValue)
                     segmentsToUpdate.Add(item.Key);
 
             segmentsToUpdate.Sort();

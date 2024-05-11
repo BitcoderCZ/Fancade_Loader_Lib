@@ -4,30 +4,80 @@ namespace FancadeLoaderLib
 {
     public class Game
     {
-        public static readonly ushort CurrentBlockPaletteVersion = 31;
+        public const ushort OldestBlockPaletteVersion = 27;
+        public const ushort CurrentBlockPaletteVersion = 31;
 
         public static class Opptions
         {
-            public static bool AutofixBlockIdOffset = true;
+            //public static bool FixBlockIdOffset = true;
         }
 
-        public string Name;
-        public string Author;
-        public string Description;
-
-        public ushort PaletteVersion;
-
-        public List<Level> Levels;
-        public BlockList CustomBlocks = new BlockList();
-
-        public Game(string name)
+        private string name;
+        public string Name
         {
-            Name = name;
-            Author = "Unknown Author";
-            Description = string.Empty;
+            get => name;
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                name = value;
+            }
+        }
+        private string author;
+        public string Author
+        {
+            get => author;
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                author = value;
+            }
+        }
+        private string description;
+        public string Description
+        {
+            get => description;
+            set
+            {
+                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                description = value;
+            }
+        }
+
+        private ushort paletteVersion;
+        public ushort PaletteVersion
+        {
+            get => paletteVersion;
+            set
+            {
+                if (value < OldestBlockPaletteVersion || value > CurrentBlockPaletteVersion)
+                    throw new ArgumentOutOfRangeException(nameof(value), $"{nameof(PaletteVersion)} must be between {OldestBlockPaletteVersion} and newest supported ({CurrentBlockPaletteVersion})");
+
+                paletteVersion = value;
+            }
+        }
+
+        public List<Level> Levels { get; private set; }
+        public BlockList CustomBlocks { get; private set; }
+
+        public Game(string _name)
+        {
+            ArgumentNullException.ThrowIfNull(_name, nameof(_name));
+            name = _name;
+            author = "Unknown Author";
+            description = string.Empty;
             PaletteVersion = CurrentBlockPaletteVersion;
-            CustomBlocks = new BlockList();
             Levels = new List<Level>();
+            CustomBlocks = new BlockList();
+        }
+
+        private Game(string _name, string _author, string _description, ushort _paletteVersion, List<Level> _levels, BlockList _customBlocks)
+        {
+            name = _name;
+            author = _author;
+            description = _description;
+            PaletteVersion = _paletteVersion;
+            Levels = _levels;
+            CustomBlocks = _customBlocks;
         }
 
         public void Save(Stream stream)
@@ -65,7 +115,7 @@ namespace FancadeLoaderLib
             // decompress
             SaveReader reader = new SaveReader(new MemoryStream());
             Zlib.Decompress(stream, reader.Stream);
-            reader.Position = 0;
+            reader.Reset();
 
             ushort paletteVersion = reader.ReadUInt16();
 
@@ -81,7 +131,7 @@ namespace FancadeLoaderLib
             // decompress
             SaveReader reader = new SaveReader(new MemoryStream());
             Zlib.Decompress(stream, reader.Stream);
-            reader.Position = 0;
+            reader.Reset();
 
             ushort paletteVersion = reader.ReadUInt16();
 
@@ -113,7 +163,8 @@ namespace FancadeLoaderLib
                         levels.Add(Level.Load(reader));
                         break;
                     case 2:
-                        Block.Load(reader, customBlocks, segmentCount++);
+                        Block.Load(reader, customBlocks);
+                        segmentCount++;
                         break;
                 }
             }
@@ -122,17 +173,13 @@ namespace FancadeLoaderLib
             if (levels.Count + segmentCount != levelsPlusCustomBlocks)
                 throw new Exception($"Levels ({levels.Count}) + Custom blocks ({segmentCount}) != Saved levels + custom blocks count ({levelsPlusCustomBlocks})");
 
-            Game game = new Game(name)
-            {
-                Author = author,
-                Description = description,
-                PaletteVersion = paletteVersion,
-                Levels = levels,
-                CustomBlocks = customBlocks.Finalize(paletteVersion, levels.Count, 0),
-            };
+            Game game = new Game(name, author, description, paletteVersion, levels, customBlocks.Finalize(paletteVersion, levels.Count, 0));
 
-            if (Opptions.AutofixBlockIdOffset)
+            if (/*Opptions.FixBlockIdOffset*/true)
+            {
                 game.fixBlockIdOffset(blockIdOffset);
+                game.updateToVersion(CurrentBlockPaletteVersion);
+            }
 
             return game;
         }
@@ -287,6 +334,25 @@ namespace FancadeLoaderLib
             });
         }
 
+        private void updateToVersion(ushort newPaletteVersion)
+        {
+            if (newPaletteVersion < PaletteVersion) throw new ArgumentOutOfRangeException(nameof(newPaletteVersion), $"{nameof(newPaletteVersion)} ({newPaletteVersion}) must be >= {nameof(PaletteVersion)} ({PaletteVersion})");
+            else if (newPaletteVersion == PaletteVersion) return;
+
+            ushort offset = (ushort)(Block.GetFirstCustomBlockId(newPaletteVersion) + Levels.Count - CustomBlocks.LowestSegmentID());
+
+            ushort minCustomId = (ushort)(Block.GetFirstCustomBlockId(PaletteVersion) + Levels.Count);
+
+            CustomBlocks.UpdateAfter(ushort.MaxValue, (short)offset);
+            Parallel.For(0, Levels.Count, i =>
+            {
+                Level level = Levels[i];
+                for (int j = 0; j < level.BlockIds.Length; j++)
+                    if (level.BlockIds[j] >= minCustomId)
+                        level.BlockIds[j] += offset;
+            });
+        }
+
         public ushort GetLevelsPlusCustomBlocks()
         {
             int numb = Levels.Count;
@@ -301,6 +367,6 @@ namespace FancadeLoaderLib
             return (ushort)numb;
         }
 
-        public override string ToString() => $"[{Name}, Author: {Author}, Description: {Description}]";
+        public override string ToString() => $"[Name: {Name}, Author: {Author}, Description: {Description}]";
     }
 }
