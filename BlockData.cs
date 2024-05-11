@@ -1,4 +1,7 @@
-﻿namespace FancadeLoaderLib
+﻿using System;
+using System.Threading.Tasks;
+
+namespace FancadeLoaderLib
 {
     public class BlockData
     {

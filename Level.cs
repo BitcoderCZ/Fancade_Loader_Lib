@@ -1,4 +1,6 @@
-﻿namespace FancadeLoaderLib
+﻿using System;
+
+namespace FancadeLoaderLib
 {
     public class Level : BlockContainer
     {
@@ -10,7 +12,8 @@
             get => name;
             set
             {
-                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                if (value is null) throw new ArgumentNullException(nameof(value));
+
                 name = value;
             }
         }
@@ -20,7 +23,8 @@
         public Level(string _name)
             : base()
         {
-            ArgumentNullException.ThrowIfNull(_name, nameof(_name));
+            if (_name is null) throw new ArgumentNullException(nameof(_name));
+
             name = _name;
             BackgroundColor = FancadeColorE.Default;
             LevelUnEditable = false;

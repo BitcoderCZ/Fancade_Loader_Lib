@@ -1,4 +1,6 @@
-﻿namespace FancadeLoaderLib
+﻿using System;
+
+namespace FancadeLoaderLib
 {
     public static class Utils
     {

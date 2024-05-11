@@ -1,4 +1,5 @@
-﻿using zlib;
+﻿using System.IO;
+using zlib;
 
 namespace FancadeLoaderLib
 {

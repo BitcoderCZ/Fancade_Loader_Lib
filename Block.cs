@@ -1,4 +1,7 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace FancadeLoaderLib
 {
@@ -22,16 +25,17 @@ namespace FancadeLoaderLib
             get => name;
             set
             {
-                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                if (value is null) throw new ArgumentNullException(nameof(value));
+
                 name = value;
             }
         }
-        public Dictionary<Vector3I, BlockSection> Sections { get; internal set; } = new Dictionary<Vector3I, BlockSection>();
+        public Dictionary<Vector3I, BlockSection> Sections = new Dictionary<Vector3I, BlockSection>();
 
         public Block(ushort id, string _name)
             : base()
         {
-            ArgumentNullException.ThrowIfNull(_name, nameof(_name));
+            if (_name is null) throw new ArgumentNullException(nameof(_name));
 
             MainId = id;
             name = _name;
@@ -90,7 +94,10 @@ namespace FancadeLoaderLib
             }
         }
         public static ushort GetFirstCustomBlockId(ushort paletteVersion)
-            => (ushort)(OGFirstCustomId + GetBlocksAdded(paletteVersion));
+        {
+            int added = GetBlocksAdded(paletteVersion);
+            return (ushort)(added == 0 ? 0 : (OGFirstCustomId + added));
+        }
 
         /// <summary>
         /// Saves <see cref="BlockSection"/> at <paramref name="pos"/> to <paramref name="writer"/>

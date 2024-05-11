@@ -1,4 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace FancadeLoaderLib
 {
@@ -9,7 +13,11 @@ namespace FancadeLoaderLib
 
         public static class Opptions
         {
-            //public static bool FixBlockIdOffset = true;
+            /// <summary>
+            /// Fixes block id offset and updates the game to the newest version<br></br>
+            /// It is <b>highly</b> recommended you leave this as <see langword="true"/>
+            /// </summary>
+            public static bool FixBlockIdOffset = true;
         }
 
         private string name;
@@ -18,7 +26,8 @@ namespace FancadeLoaderLib
             get => name;
             set
             {
-                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                if (value is null) throw new ArgumentNullException(nameof(value));
+
                 name = value;
             }
         }
@@ -28,7 +37,8 @@ namespace FancadeLoaderLib
             get => author;
             set
             {
-                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                if (value is null) throw new ArgumentNullException(nameof(value));
+
                 author = value;
             }
         }
@@ -38,7 +48,8 @@ namespace FancadeLoaderLib
             get => description;
             set
             {
-                ArgumentNullException.ThrowIfNull(value, nameof(value));
+                if (value is null) throw new ArgumentNullException(nameof(value));
+
                 description = value;
             }
         }
@@ -61,7 +72,8 @@ namespace FancadeLoaderLib
 
         public Game(string _name)
         {
-            ArgumentNullException.ThrowIfNull(_name, nameof(_name));
+            if (_name is null) throw new ArgumentNullException(nameof(_name));
+
             name = _name;
             author = "Unknown Author";
             description = string.Empty;
@@ -175,7 +187,7 @@ namespace FancadeLoaderLib
 
             Game game = new Game(name, author, description, paletteVersion, levels, customBlocks.Finalize(paletteVersion, levels.Count, 0));
 
-            if (/*Opptions.FixBlockIdOffset*/true)
+            if (Opptions.FixBlockIdOffset)
             {
                 game.fixBlockIdOffset(blockIdOffset);
                 game.updateToVersion(CurrentBlockPaletteVersion);

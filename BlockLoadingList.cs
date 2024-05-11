@@ -1,4 +1,6 @@
-﻿namespace FancadeLoaderLib
+﻿using System.Collections.Generic;
+
+namespace FancadeLoaderLib
 {
     public class BlockLoadingList
     {

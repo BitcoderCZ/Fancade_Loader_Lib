@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.34607.79
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FancadeLoaderLib", "FancadeLoaderLib.csproj", "{8D92EF06-ADFE-47CF-A8AE-F3E0B55C72C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FancadeLoaderLib", "FancadeLoaderLib.csproj", "{B1BFBF64-A1D8-40AE-AE1A-334C2BC142A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8D92EF06-ADFE-47CF-A8AE-F3E0B55C72C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D92EF06-ADFE-47CF-A8AE-F3E0B55C72C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D92EF06-ADFE-47CF-A8AE-F3E0B55C72C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D92EF06-ADFE-47CF-A8AE-F3E0B55C72C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1BFBF64-A1D8-40AE-AE1A-334C2BC142A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1BFBF64-A1D8-40AE-AE1A-334C2BC142A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1BFBF64-A1D8-40AE-AE1A-334C2BC142A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1BFBF64-A1D8-40AE-AE1A-334C2BC142A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {CEBBB243-4274-48BF-A5A3-16248535EE6A}
+		SolutionGuid = {5460B83A-CFC4-4E3E-9ABB-95DCBB9C229B}
 	EndGlobalSection
 EndGlobal

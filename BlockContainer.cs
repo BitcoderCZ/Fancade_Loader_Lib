@@ -1,4 +1,7 @@
-﻿namespace FancadeLoaderLib
+﻿using System.Collections.Generic;
+using System.Linq;
+
+namespace FancadeLoaderLib
 {
     public abstract class BlockContainer
     {
