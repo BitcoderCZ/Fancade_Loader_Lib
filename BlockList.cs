@@ -240,7 +240,7 @@ namespace FancadeLoaderLib
 
             List<ushort> blocksToUpdate = new List<ushort>();
             foreach (var item in blocks)
-                if (item.Key > id)
+                if (item.Key > id || id == ushort.MaxValue)
                     blocksToUpdate.Add(item.Key);
 
             blocksToUpdate.Sort();

@@ -13,11 +13,7 @@ namespace FancadeLoaderLib
 
         public static class Opptions
         {
-            /// <summary>
-            /// Fixes block id offset and updates the game to the newest version<br></br>
-            /// It is <b>highly</b> recommended you leave this as <see langword="true"/>
-            /// </summary>
-            public static bool FixBlockIdOffset = true;
+            public static bool FixAndUpdate = true;
         }
 
         private string name;
@@ -69,6 +65,23 @@ namespace FancadeLoaderLib
 
         public List<Level> Levels { get; private set; }
         public BlockList CustomBlocks { get; private set; }
+
+        public bool Editable
+        {
+            set
+            {
+                bool b = !value;
+                Author = "Unknown Author";
+                CustomBlocks.EnumerateBlocks(item =>
+                {
+                    item.Value.Attribs.Uneditable = b;
+                    foreach (KeyValuePair<Vector3I, BlockSection> item2 in item.Value.Sections)
+                        item2.Value.Attribs.Uneditable = b;
+                });
+                foreach (Level level in Levels)
+                    level.LevelUnEditable = b;
+            }
+        }
 
         public Game(string _name)
         {
@@ -156,7 +169,7 @@ namespace FancadeLoaderLib
 
             sbyte blockIdOffset = reader.ReadInt8();
 
-            reader.ReadUInt8(); // only seen 2 (when blockIdOffset +) and 1 (when blockIdOffset -)
+            reader.ReadUInt8(); // only seen 2 (when blockIdOffset is positive) and 1 (when blockIdOffset is negative)
 
             ushort levelsPlusCustomBlocks = reader.ReadUInt16();
 
@@ -187,21 +200,27 @@ namespace FancadeLoaderLib
 
             Game game = new Game(name, author, description, paletteVersion, levels, customBlocks.Finalize(paletteVersion, levels.Count, 0));
 
-            if (Opptions.FixBlockIdOffset)
+            if (Opptions.FixAndUpdate)
             {
                 game.fixBlockIdOffset(blockIdOffset);
-                game.updateToVersion(CurrentBlockPaletteVersion);
+                game.FixIds(CurrentBlockPaletteVersion);
             }
 
             return game;
         }
 
         /// <summary>
-        /// Reorders custom block ids in order to make more sense
+        /// Reorders custom block ids in order to make more sense, updates <see cref="PaletteVersion"/> if <paramref name="newVersion"/> isn't <see cref="ushort.MaxValue"/>
         /// </summary>
-        public void FixIds()
+        /// <param name="newVersion">New <see cref="PaletteVersion"/> or <see cref="ushort.MaxValue"/> to not change the version</param>
+        public void FixIds(ushort newVersion = ushort.MaxValue)
         {
             ushort minId = ushort.MaxValue;
+
+            if (newVersion == ushort.MaxValue)
+                newVersion = PaletteVersion;
+            else if (newVersion < PaletteVersion || newVersion > CurrentBlockPaletteVersion)
+                throw new ArgumentOutOfRangeException(nameof(newVersion), $"{nameof(newVersion)} must be between {PaletteVersion} (PaletteVersion) and newest supported ({CurrentBlockPaletteVersion})");
 
             Dictionary<(ushort id, Vector3I pos), ushort> sectionToId = new Dictionary<(ushort id, Vector3I pos), ushort>();
             CustomBlocks.EnumerateSegments(item =>
@@ -217,7 +236,7 @@ namespace FancadeLoaderLib
             // segment id, to how the blocks origin moved
             Dictionary<ushort, Vector3I> idToOriginMove = new Dictionary<ushort, Vector3I>();
 
-            ushort id = (ushort)(Block.GetFirstCustomBlockId(PaletteVersion) + Levels.Count);
+            ushort id = (ushort)(Block.GetFirstCustomBlockId(newVersion) + Levels.Count);
             CustomBlocks.EnumerateBlocksSorted(item =>
             {
                 Block block = item.Value;
@@ -313,6 +332,9 @@ namespace FancadeLoaderLib
                     item.Value.Connections[i] = con;
                 }
             });
+
+            PaletteVersion = newVersion;
+
             void fixConnection(BlockContainer container, ref Vector3S pos)
             {
                 ushort id = container.BlockIds.GetSegment(pos);
@@ -343,25 +365,6 @@ namespace FancadeLoaderLib
                 for (int i = 0; i < block.BlockIds.Length; i++)
                     if (block.BlockIds[i] + offset >= minCustomId)
                         block.BlockIds[i] += offset;
-            });
-        }
-
-        private void updateToVersion(ushort newPaletteVersion)
-        {
-            if (newPaletteVersion < PaletteVersion) throw new ArgumentOutOfRangeException(nameof(newPaletteVersion), $"{nameof(newPaletteVersion)} ({newPaletteVersion}) must be >= {nameof(PaletteVersion)} ({PaletteVersion})");
-            else if (newPaletteVersion == PaletteVersion) return;
-
-            ushort offset = (ushort)(Block.GetFirstCustomBlockId(newPaletteVersion) + Levels.Count - CustomBlocks.LowestSegmentID());
-
-            ushort minCustomId = (ushort)(Block.GetFirstCustomBlockId(PaletteVersion) + Levels.Count);
-
-            CustomBlocks.UpdateAfter(ushort.MaxValue, (short)offset);
-            Parallel.For(0, Levels.Count, i =>
-            {
-                Level level = Levels[i];
-                for (int j = 0; j < level.BlockIds.Length; j++)
-                    if (level.BlockIds[j] >= minCustomId)
-                        level.BlockIds[j] += offset;
             });
         }
 
