@@ -50,38 +50,10 @@ namespace FancadeLoaderLib
             }
         }
 
-        private ushort paletteVersion;
-        public ushort PaletteVersion
-        {
-            get => paletteVersion;
-            set
-            {
-                if (value < OldestBlockPaletteVersion || value > CurrentBlockPaletteVersion)
-                    throw new ArgumentOutOfRangeException(nameof(value), $"{nameof(PaletteVersion)} must be between {OldestBlockPaletteVersion} and newest supported ({CurrentBlockPaletteVersion})");
-
-                paletteVersion = value;
-            }
-        }
+        public ushort PaletteVersion { get; private set; }
 
         public List<Level> Levels { get; private set; }
         public BlockList CustomBlocks { get; private set; }
-
-        public bool Editable
-        {
-            set
-            {
-                bool b = !value;
-                Author = "Unknown Author";
-                CustomBlocks.EnumerateBlocks(item =>
-                {
-                    item.Value.Attribs.Uneditable = b;
-                    foreach (KeyValuePair<Vector3I, BlockSection> item2 in item.Value.Sections)
-                        item2.Value.Attribs.Uneditable = b;
-                });
-                foreach (Level level in Levels)
-                    level.LevelUnEditable = b;
-            }
-        }
 
         public Game(string _name)
         {
@@ -210,6 +182,28 @@ namespace FancadeLoaderLib
         }
 
         /// <summary>
+        /// Sets Uneditable to !<paramref name="editable"/> on <see cref="CustomBlocks"/> and <see cref="Levels"/>
+        /// </summary>
+        /// <param name="editable">If this <see cref="Game"/> should be editable or not</param>
+        /// <param name="changeAuthor">If this and <paramref name="editable"/> are both <see href="true"/>, <see cref="Author"/> gets set to "Unknown Author"</param>
+        public void SetEditable(bool editable, bool changeAuthor)
+        {
+            bool b = !editable;
+            if (editable && changeAuthor)
+                Author = "Unknown Author";
+
+            CustomBlocks.EnumerateBlocks(item =>
+            {
+                item.Value.Attribs.Uneditable = b;
+                foreach (KeyValuePair<Vector3I, BlockSection> item2 in item.Value.Sections)
+                    item2.Value.Attribs.Uneditable = b;
+            });
+
+            foreach (Level level in Levels)
+                level.Uneditable = b;
+        }
+
+        /// <summary>
         /// Reorders custom block ids in order to make more sense, updates <see cref="PaletteVersion"/> if <paramref name="newVersion"/> isn't <see cref="ushort.MaxValue"/>
         /// </summary>
         /// <param name="newVersion">New <see cref="PaletteVersion"/> or <see cref="ushort.MaxValue"/> to not change the version</param>
@@ -220,7 +214,7 @@ namespace FancadeLoaderLib
             if (newVersion == ushort.MaxValue)
                 newVersion = PaletteVersion;
             else if (newVersion < PaletteVersion || newVersion > CurrentBlockPaletteVersion)
-                throw new ArgumentOutOfRangeException(nameof(newVersion), $"{nameof(newVersion)} must be between {PaletteVersion} (PaletteVersion) and newest supported ({CurrentBlockPaletteVersion})");
+                throw new ArgumentOutOfRangeException(nameof(newVersion), $"{nameof(newVersion)}) must be between current {nameof(PaletteVersion)} ({PaletteVersion}) and newest supported ({CurrentBlockPaletteVersion})");
 
             Dictionary<(ushort id, Vector3I pos), ushort> sectionToId = new Dictionary<(ushort id, Vector3I pos), ushort>();
             CustomBlocks.EnumerateSegments(item =>

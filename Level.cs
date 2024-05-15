@@ -18,7 +18,7 @@ namespace FancadeLoaderLib
             }
         }
         public FancadeColor BackgroundColor;
-        public bool LevelUnEditable;
+        public bool Uneditable;
 
         public Level(string _name)
             : base()
@@ -27,13 +27,13 @@ namespace FancadeLoaderLib
 
             name = _name;
             BackgroundColor = FancadeColorE.Default;
-            LevelUnEditable = false;
+            Uneditable = false;
         }
 
         public void Save(SaveWriter writer)
         {
             writer.WriteUInt8((byte)(
-                (LevelUnEditable ? 0b_0100_0000 : 0) |
+                (Uneditable ? 0b_0100_0000 : 0) |
                 (unknownFlag ? 0b_0100_0000 : 0) |
                 (BlockIds.Size.X > 0 ? 0b_0100 : 0) |
                 (BlockValues.Count > 0 ? 0b_0010 : 0) |
@@ -71,7 +71,7 @@ namespace FancadeLoaderLib
             {
                 unknownFlag = (info[0] & 0b_0010_0000) != 0,
                 BackgroundColor = backgroundColor,
-                LevelUnEditable = (info[0] & 0b_0100_0000) != 0,
+                Uneditable = (info[0] & 0b_0100_0000) != 0,
                 BlockIds = blockIds,
                 BlockValues = values,
                 Connections = connections

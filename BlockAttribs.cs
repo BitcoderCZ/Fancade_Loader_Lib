@@ -5,6 +5,17 @@ namespace FancadeLoaderLib
 {
     public struct BlockAttribs
     {
+        private static class BitMask
+        {
+            public const int ConnectionsInside = 0b_0000_0001;
+            public const int ValuesInside = 0b_0000_0010;
+            public const int BlocksInside = 0b_0000_0100;
+            public const int IsMultiBlock = 0b_0001_0000;
+            public const int Uneditable = 0b_0100_0000;
+            public const int Unknown = 0b_1000_0000;
+        }
+
+        // TODO: most of these only needed when loading, remove, add as out parameters on load method and grab from block when saving
         public bool Unknown;
         public bool Uneditable;
         public bool IsMultiBlock;
@@ -41,21 +52,21 @@ namespace FancadeLoaderLib
         {
             if (mainSave)
                 writer.WriteUInt8((byte)(
-                    (ConnectionsInside ? 0b_0000_0001 : 0) |
-                    (ValuesInside ? 0b_0000_0010 : 0) |
-                    (BlocksInside ? 0b_0000_0100 : 0) |
-                    (IsMultiBlock ? 0b_0001_0000 : 0) |
-                    (Uneditable ? 0b_0100_0000 : 0) |
-                    (Unknown ? 0b_1000_0000 : 0) |
+                    (ConnectionsInside ? BitMask.ConnectionsInside : 0) |
+                    (ValuesInside ? BitMask.ValuesInside : 0) |
+                    (BlocksInside ? BitMask.BlocksInside : 0) |
+                    (IsMultiBlock ? BitMask.IsMultiBlock : 0) |
+                    (Uneditable ? BitMask.Uneditable : 0) |
+                    (Unknown ? BitMask.Unknown : 0) |
                     Collider.Value
-                    ));
+                ));
             else
                 writer.WriteUInt8((byte)(
-                    0b_0001_0000 | //IsMultiBlock should always be true
-                    (Uneditable ? 0b_0100_0000 : 0) |
-                    (Unknown ? 0b_1000_0000 : 0) |
+                    BitMask.IsMultiBlock | //IsMultiBlock should always be true
+                    (Uneditable ? BitMask.Uneditable : 0) |
+                    (Unknown ? BitMask.Unknown : 0) |
                     Collider.Value
-                    ));
+                ));
 
             if (!mainSave)
                 Type = Type_T.Section; // would break things when loading
@@ -109,22 +120,19 @@ namespace FancadeLoaderLib
 
             byte b1 = reader.ReadUInt8();
 
-            bool unknown = (b1 & 0b_1000_0000) != 0;
-            bool uneditable = (b1 & 0b_0100_0000) != 0;
-            bool isMultiBlock = (b1 & 0b_0001_0000) != 0;
-            bool blocksInside = (b1 & 0b_0000_0100) != 0;
-            bool valuesInside = (b1 & 0b_0000_0010) != 0;
-            bool connectionsInside = (b1 & 0b_0000_0001) != 0;
+            bool unknown = (b1 & BitMask.Unknown) != 0;
+            bool uneditable = (b1 & BitMask.Uneditable) != 0;
+            bool isMultiBlock = (b1 & BitMask.IsMultiBlock) != 0;
+            bool blocksInside = (b1 & BitMask.BlocksInside) != 0;
+            bool valuesInside = (b1 & BitMask.ValuesInside) != 0;
+            bool connectionsInside = (b1 & BitMask.ConnectionsInside) != 0;
             b1 &= 0b_0010_1000;
 
             Collider_T collider;
-            if (b1 == 0x28)
-                collider = new Collider_T(b1);
-            else if (b1 == 0x08)
-                collider = new Collider_T(b1);
-            else if (b1 == 0x48)
-                collider = new Collider_T(b1);
-            else if (b1 == 0x68)
+            if (
+                b1 == 0x28 ||
+                b1 == 0x08
+            )
                 collider = new Collider_T(b1);
             else
             {
@@ -186,6 +194,13 @@ namespace FancadeLoaderLib
                     reader.ReadBytes(1);
             }
 
+            // if name is "New Block" and is single block -> doesn't have a name or position
+            if (type == Type_T.Section && !isMultiBlock)
+            {
+                type = Type_T.Normal;
+                name = "New Block";
+            }
+
             if (seek)
                 reader.Position = startPos;
 
@@ -225,6 +240,29 @@ namespace FancadeLoaderLib
                 get => (Value & 0b_0010_0000) != 0;
             }
 
+            public ColliderEnum Enum
+            {
+                get
+                {
+                    if (AddtionalUsed && !AdditionalSet)
+                        return ColliderEnum.AddtionalRequired;
+
+                    if (Value == 0x08)
+                        return ColliderEnum.Box;
+                    else if (Value == 0x28)
+                    {
+                        if (additionalValue == 0x00)
+                            return ColliderEnum.None;
+                        else if (additionalValue == 0x02)
+                            return ColliderEnum.Sphere;
+                        else
+                            return ColliderEnum.Unknown;
+                    }
+                    else
+                        return ColliderEnum.Unknown;
+                }
+            }
+
             public Collider_T(byte _value)
             {
                 Value = _value;
@@ -253,28 +291,8 @@ namespace FancadeLoaderLib
                 }
             }
 
-            public ColliderEnum ToEnum()
-            {
-                if (AddtionalUsed && !AdditionalSet)
-                    return ColliderEnum.AddtionalRequired;
-
-                if (Value == 0x08)
-                    return ColliderEnum.Box;
-                else if (Value == 0x28)
-                {
-                    if (additionalValue == 0x00)
-                        return ColliderEnum.None;
-                    else if (additionalValue == 0x02)
-                        return ColliderEnum.Sphere;
-                    else
-                        return ColliderEnum.Unknown;
-                }
-                else
-                    return ColliderEnum.Unknown;
-            }
-
             public override string ToString()
-                => $"{{{ToEnum()}}}";
+                => $"{{{Enum}}}";
         }
         public enum ColliderEnum
         {

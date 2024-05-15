@@ -109,6 +109,9 @@ namespace FancadeLoaderLib
         {
             UpdateAttribs();
 
+            // TODO: if name is "New Block" and is single block -> doesn't have a name or position
+            // doesn't matter, loads anyways, but would be better if we replicated this behaviour
+
             if (isMain)
             {
                 Attribs.Save(writer, Attribs, Name, true);
