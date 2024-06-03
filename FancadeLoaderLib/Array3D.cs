@@ -77,6 +77,11 @@ namespace FancadeLoaderLib
             => Index(pos.X, pos.Y, pos.Z);
         public int Index(int x, int y, int z)
             => x + y * LengthX + z * size2;
+        public Vector3I Index(int index)
+        {
+            int remaining = index % size2;
+            return new Vector3I(remaining % LengthX, remaining / LengthX, index / size2);
+        }
 
         public T Get(int x, int y, int z)
             => array[Index(x, y, z)];

@@ -170,7 +170,7 @@ namespace FancadeLoaderLib
             if (levels.Count + segmentCount != levelsPlusCustomBlocks)
                 throw new Exception($"Levels ({levels.Count}) + Custom blocks ({segmentCount}) != Saved levels + custom blocks count ({levelsPlusCustomBlocks})");
 
-            Game game = new Game(name, author, description, paletteVersion, levels, customBlocks.Finalize(paletteVersion, levels.Count, 0));
+            Game game = new Game(name, author, description, paletteVersion, levels, customBlocks.Finalize(paletteVersion, levels.Count));
 
             if (Opptions.FixAndUpdate)
             {

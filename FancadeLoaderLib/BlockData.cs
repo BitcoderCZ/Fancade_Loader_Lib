@@ -34,6 +34,8 @@ namespace FancadeLoaderLib
         public bool InBounds(int x, int y, int z)
             => segments.InBounds(x, y, z);
 
+        public Vector3I Index(int i)
+            => segments.Index(i);
         public int Index(Vector3I pos)
             => segments.Index(pos);
         public int Index(int x, int y, int z)

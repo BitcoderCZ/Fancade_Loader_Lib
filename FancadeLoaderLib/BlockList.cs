@@ -264,6 +264,8 @@ namespace FancadeLoaderLib
                 }
         }
 
+        public IEnumerable<ushort> GetBlockIds()
+            => blocks.Select(item => item.Key);
         public void EnumerateBlocks(Action<KeyValuePair<ushort, Block>> action)
         {
             foreach (KeyValuePair<ushort, Block> item in blocks)
@@ -281,6 +283,8 @@ namespace FancadeLoaderLib
             foreach (KeyValuePair<ushort, BlockSegment> item in segments)
                 action(item);
         }
+        public IEnumerable<ushort> GetSegmentIds()
+            => segments.Select(item => item.Key);
         public void EnumerateSegmentsSorted(Action<KeyValuePair<ushort, BlockSegment>> action)
         {
             KeyValuePair<ushort, BlockSegment>[] array = segments.ToArray();

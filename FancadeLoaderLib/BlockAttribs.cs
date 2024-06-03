@@ -200,7 +200,7 @@ namespace FancadeLoaderLib
                 type = Type_T.Normal;
                 name = "New Block";
 
-                // TODO: somehow figure this out
+                // TODO: somehow figure this out, in game 66070F87C95DB2FE
                 if (collider.AddtionalUsed)
                     throw new NotImplementedException("collider.AddtionalUsed isn't implemente for default block");//collider.AdditionalValue = reader.ReadUInt8();
             }
