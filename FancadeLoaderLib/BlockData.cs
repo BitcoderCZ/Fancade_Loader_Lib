@@ -41,6 +41,8 @@ namespace FancadeLoaderLib
         public int Index(int x, int y, int z)
             => segments.Index(x, y, z);
 
+        public void SetBlock(Vector3I pos, Block block)
+            => setBlock(pos.X, pos.Y, pos.Z, block);
         public void SetBlock(int x, int y, int z, Block block)
             => setBlock(x, y, z, block);
         private void setBlock(int x, int y, int z, Block block)
@@ -63,6 +65,8 @@ namespace FancadeLoaderLib
                     }
         }
 
+        public void SetSegment(Vector3I pos, ushort id)
+            => SetSegment(pos.X, pos.Y, pos.Z, id);
         public void SetSegment(int x, int y, int z, ushort id)
         {
             if (id > 0)
