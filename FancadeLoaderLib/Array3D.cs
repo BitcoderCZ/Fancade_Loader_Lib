@@ -67,6 +67,15 @@ namespace FancadeLoaderLib
             if (Length != LengthX * LengthY * LengthZ)
                 throw new ArgumentException($"collection length must sizeX * sizeY * sizeZ", "collection");
         }
+        public Array3D(Array3D<T> _array)
+        {
+            LengthX = _array.LengthX;
+            LengthY = _array.LengthY;
+            LengthZ = _array.LengthZ;
+            size2 = _array.size2;
+
+            array = (T[])_array.array.Clone();
+        }
 
         public bool InBounds(Vector3I pos)
             => InBounds(pos.X, pos.Y, pos.Z);
@@ -116,11 +125,14 @@ namespace FancadeLoaderLib
                 => x >= 0 && x < newX && y >= 0 && y < newY && z >= 0 && z < newZ;
         }
 
-        public IEnumerator GetEnumerator()
-            => array.GetEnumerator();
+        public Array3D<T> Clone()
+            => new Array3D<T>(this);
 
         public void CopyTo(Array array, int index)
             => array.CopyTo(array, index);
+
+        public IEnumerator GetEnumerator()
+            => array.GetEnumerator();
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
             => ((IEnumerable<T>)array).GetEnumerator();

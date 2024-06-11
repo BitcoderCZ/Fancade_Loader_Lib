@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace FancadeLoaderLib
@@ -274,6 +275,35 @@ namespace FancadeLoaderLib
             Attribs.ConnectionsInside = Connections.Count > 0;
         }
 
+        public Block Clone(ushort? newId)
+        {
+            newId ??= MainId;
+
+            var newSecctions = new Dictionary<Vector3I, BlockSection>(this.Sections.Select(item => new KeyValuePair<Vector3I, BlockSection>(item.Key, item.Value.Clone())));
+
+            ushort id = newId.Value;
+            Vector3I size = GetSize();
+            for (int z = 0; z < size.Z; z++)
+                for (int y = 0; y < size.Y; y++)
+                    for (int x = 0; x < size.X; x++)
+                        if (newSecctions.TryGetValue(new Vector3I(x, y, z), out BlockSection section))
+                            section.Id = id++;
+
+            Block block = new Block()
+            {
+                MainId = newId.Value,
+                Name = this.Name,
+                Attribs = this.Attribs,
+                BlockIds = this.BlockIds.Clone(),
+                BlockValues = new List<BlockValue>(this.BlockValues),
+                Connections = new List<Connection>(this.Connections),
+                Sections = newSecctions,
+                mainLoaded = this.mainLoaded,
+            };
+
+            return block;
+        }
+
         public Vector3I GetSize()
         {
             int highX = 0;
@@ -334,6 +364,9 @@ namespace FancadeLoaderLib
             => Index(pos.X, pos.Y, pos.Z);
         public int Index(int x, int y, int z)
             => x + y * 8 + z * 64;
+
+        public BlockSection Clone()
+            => new BlockSection((SubBlock[])Blocks.Clone(), Attribs, Id);
 
         public override string ToString()
             => $"{{Id: {Id}}}";

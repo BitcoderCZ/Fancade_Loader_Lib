@@ -162,6 +162,14 @@ namespace FancadeLoaderLib
             Size = maxBlockPos + Vector3I.One;
         }
 
+        public BlockData Clone()
+            => new BlockData()
+            {
+                segments = this.segments.Clone(),
+                Size = this.Size,
+                maxBlockPos = this.maxBlockPos,
+            };
+
         private int useBlock(int i, int blockSize)
         {
             int mod = i % blockSize;
