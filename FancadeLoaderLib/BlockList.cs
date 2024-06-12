@@ -123,7 +123,7 @@ namespace FancadeLoaderLib
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">Id of the block to add the segment to</param>
         /// <param name="pos"></param>
         /// <param name="segmentId">Id of the segment that was added</param>
         /// <returns><see langword="true"/>If the segment was added, <see langword="false"/> if the block already has a segment at pos</returns>
@@ -173,7 +173,7 @@ namespace FancadeLoaderLib
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">Id of the block to remove the segment from</param>
         /// <param name="pos"></param>
         /// <param name="segmentId">Id of the segment that was removed</param>
         /// <returns><see langword="true"/>If the segment was removed, <see langword="false"/> if the block already has a segment at pos</returns>
@@ -211,6 +211,24 @@ namespace FancadeLoaderLib
                     }
 
             return true;
+        }
+
+        /// <summary>
+        /// Removes a block (and all it's segments) and decrements ids of blocks after it
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns>Ids of segments that were removed</returns>
+        public IEnumerable<ushort> RemoveBlock(ushort id)
+        {
+            Block block = blocks[id];
+            blocks.Remove(id);
+
+            foreach (var item in block.Sections)
+                segments.Remove(item.Value.Id);
+
+            UpdateAfter(id, (short)(-block.Sections.Count));
+
+            return block.Sections.Select(item => item.Value.Id);
         }
 
         internal void UpdateAfter(ushort id, short value)
