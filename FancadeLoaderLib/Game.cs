@@ -10,7 +10,7 @@ namespace FancadeLoaderLib
     public class Game
     {
         public const ushort OldestBlockPaletteVersion = 27;
-        public const ushort CurrentBlockPaletteVersion = 31;
+        public static readonly ushort CurrentBlockPaletteVersion = 31;
 
         public static class Opptions
         {
