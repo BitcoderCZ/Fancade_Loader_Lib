@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MathUtils.Vectors;
+using System;
 using System.Numerics;
 
 namespace FancadeLoaderLib
@@ -11,7 +12,7 @@ namespace FancadeLoaderLib
         public byte ValueIndex; // first, second...
         // TODO: make enum
         public byte Type;
-        public Vector3S Position;
+        public Vector3US Position;
         // TODO: validate that Value type == this.Type
         public object Value;
 
@@ -65,7 +66,7 @@ namespace FancadeLoaderLib
         {
             byte valueIndex = reader.ReadUInt8();
             byte type = reader.ReadUInt8();
-            Vector3S pos = new Vector3S(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+            Vector3US pos = new Vector3US(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
             object value;
 
             switch (type)

@@ -1,14 +1,16 @@
-﻿namespace FancadeLoaderLib
+﻿using MathUtils.Vectors;
+
+namespace FancadeLoaderLib
 {
     /// <remarks>
     /// if From/To.XYZ == 32769 AND in block -> one side of connection is outside
     /// </remarks>
     public struct Connection
     {
-        public Vector3S From;
-        public Vector3S To;
-        public Vector3S FromConnector; // local position of the connector in SubBlock space
-        public Vector3S ToConnector; // local position of the connector in SubBlock space
+        public Vector3US From;
+        public Vector3US To;
+        public Vector3US FromConnector; // local position of the connector in SubBlock space
+        public Vector3US ToConnector; // local position of the connector in SubBlock space
 
         public void Save(SaveWriter writer)
         {
@@ -28,10 +30,10 @@
 
         public static Connection Load(SaveReader reader)
         {
-            Vector3S from = new Vector3S(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
-            Vector3S to = new Vector3S(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
-            Vector3S fromConnector = new Vector3S(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
-            Vector3S toConnector = new Vector3S(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+            Vector3US from = new Vector3US(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+            Vector3US to = new Vector3US(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+            Vector3US fromConnector = new Vector3US(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+            Vector3US toConnector = new Vector3US(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
 
             return new Connection()
             {

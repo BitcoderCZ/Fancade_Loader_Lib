@@ -330,12 +330,12 @@ namespace FancadeLoaderLib
 
             PaletteVersion = newVersion;
 
-            void fixConnection(BlockContainer container, ref Vector3S pos)
+            void fixConnection(BlockContainer container, ref Vector3US pos)
             {
                 ushort id = container.BlockIds.GetSegment(pos);
 
                 if (id >= minId)
-                    pos += idToOriginMove[id];
+                    pos = (Vector3US)(pos + idToOriginMove[id]);
             }
         }
 
