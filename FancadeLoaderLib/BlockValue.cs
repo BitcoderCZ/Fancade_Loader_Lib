@@ -36,7 +36,7 @@ namespace FancadeLoaderLib
                     writer.WriteFloat((float)Value);
                     break;
                 case 5: // vec3, rot
-                    Vector3 vec = (Vector3)Value;
+                    Vector3F vec = (Vector3F)Value;
                     writer.WriteFloat(vec.X);
                     writer.WriteFloat(vec.Y);
                     writer.WriteFloat(vec.Z);
@@ -81,7 +81,7 @@ namespace FancadeLoaderLib
                     value = reader.ReadFloat();
                     break;
                 case 5: // vec3, rot
-                    value = new Vector3(reader.ReadFloat(), reader.ReadFloat(), reader.ReadFloat());
+                    value = new Vector3F(reader.ReadFloat(), reader.ReadFloat(), reader.ReadFloat());
                     break;
                 // TODO: test
                 // I think this also describes the connector type and if it's in/out
