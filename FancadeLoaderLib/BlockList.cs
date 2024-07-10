@@ -148,7 +148,7 @@ namespace FancadeLoaderLib
                         else if (block.Sections.ContainsKey(new Vector3I(x, y, z)))
                             segmentId++;
 
-        exit:
+                        exit:
 
             // increment ids
             UpdateAfter((ushort)(segmentId - 1), 1);
