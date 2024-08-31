@@ -27,9 +27,9 @@ namespace FancadeLoaderLib
         }
         public BlockData(Array3D<ushort> blocks)
         {
+            Array = blocks;
             detectMaxBlockPos();
             ensureSizeAndMaxPos(blocks.LengthX - 1, blocks.LengthY - 1, blocks.LengthZ - 1);
-            Array = blocks;
         }
         public BlockData(BlockData data)
         {

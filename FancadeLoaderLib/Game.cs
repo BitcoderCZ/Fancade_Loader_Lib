@@ -61,6 +61,8 @@ namespace FancadeLoaderLib
             if (changeAuthor)
                 Author = "Unknown Author";
 
+            for (int i = 0; i < Prefabs.Count; i++)
+                Prefabs[i].Editable = true;
         }
 
         public RawGame ToRaw(bool clonePrefabs)

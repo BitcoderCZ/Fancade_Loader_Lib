@@ -9,4 +9,10 @@
     <ProjectReference Include="..\FancadeLoaderLib\FancadeLoaderLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="MathUtils">
+      <HintPath>..\MathUtils.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
