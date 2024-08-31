@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MathUtils.Vectors;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,20 +8,13 @@ namespace FancadeLoaderLib.Editing
 {
     public static class U
     {
-        public static bool IsEmpty(this Block block)
+        public static bool IsEmpty(this Prefab prefab)
         {
-            if (block.Sections.Count == 0) return true;
+            if (prefab.Voxels is null)
+                return true;
 
-            foreach (var item in block.Sections)
-                if (!item.Value.IsEmpty())
-                    return false;
-
-            return true;
-        }
-        public static bool IsEmpty(this BlockSection section)
-        {
-            for (int i = 0; i < section.Voxels.Length; i++)
-                if (!section.Voxels[i].IsEmpty)
+            for (int i = 0; i < prefab.Voxels.Length; i++)
+                if (!prefab.Voxels[i].IsEmpty)
                     return false;
 
             return true;

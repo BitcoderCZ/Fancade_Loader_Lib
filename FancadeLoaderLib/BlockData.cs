@@ -31,6 +31,12 @@ namespace FancadeLoaderLib
             ensureSizeAndMaxPos(blocks.LengthX - 1, blocks.LengthY - 1, blocks.LengthZ - 1);
             Array = blocks;
         }
+        public BlockData(BlockData data)
+        {
+            Array = data.Array.Clone();
+            Size = data.Size;
+            maxBlockPos = data.maxBlockPos;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool InBounds(Vector3I pos)
@@ -174,12 +180,7 @@ namespace FancadeLoaderLib
         }
 
         public BlockData Clone()
-            => new BlockData()
-            {
-                blocks = this.Array.Clone(),
-                Size = this.Size,
-                maxBlockPos = this.maxBlockPos,
-            };
+            => new BlockData(this);
 
         private int useBlock(int i, int blockSize)
         {
