@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace FancadeLoaderLib
@@ -86,5 +87,15 @@ namespace FancadeLoaderLib
 
             return new Game(game.Name, game.Author, game.Description, prefabs);
         }
+
+        public void Save(FcBinaryWriter writer)
+            => ToRaw(false).Save(writer);
+        public void SaveCompressed(Stream stream)
+            => ToRaw(false).SaveCompressed(stream);
+
+        public static Game Load(FcBinaryReader reader)
+            => FromRaw(RawGame.Load(reader), false);
+        public static Game LoadCompressed(Stream stream)
+            => FromRaw(RawGame.LoadCompressed(stream), false);
     }
 }
