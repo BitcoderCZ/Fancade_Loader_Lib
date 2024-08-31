@@ -2,14 +2,16 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace FancadeLoaderLib
 {
     public class Array3D<T> : IEnumerable<T>
     {
-        public readonly T[] Array;
+        public T[] Array { get; private set; }
 
         public int LengthX { get; private set; }
         public int LengthY { get; private set; }
@@ -55,7 +57,7 @@ namespace FancadeLoaderLib
 
             Array = collection.ToArray();
             if (Length != LengthX * LengthY * LengthZ)
-                throw new ArgumentException($"collection length must sizeX * sizeY * sizeZ", "collection");
+                throw new ArgumentException($"{nameof(collection)} length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", "collection");
         }
         public Array3D(T[] array, int sizeX, int sizeY, int sizeZ)
         {
@@ -66,7 +68,7 @@ namespace FancadeLoaderLib
 
             Array = array;
             if (Length != LengthX * LengthY * LengthZ)
-                throw new ArgumentException($"collection length must sizeX * sizeY * sizeZ", "collection");
+                throw new ArgumentException($"{nameof(array)}.Length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", "collection");
         }
         public Array3D(Array3D<T> _array)
         {
@@ -78,24 +80,31 @@ namespace FancadeLoaderLib
             Array = (T[])_array.Array.Clone();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool InBounds(Vector3I pos)
             => InBounds(pos.X, pos.Y, pos.Z);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool InBounds(int x, int y, int z)
             => x >= 0 && x < LengthX && y >= 0 && y < LengthY && z >= 0 && z < LengthZ;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Index(Vector3I pos)
             => Index(pos.X, pos.Y, pos.Z);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Index(int x, int y, int z)
             => x + y * LengthX + z * size2;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3I Index(int index)
         {
             int remaining = index % size2;
             return new Vector3I(remaining % LengthX, remaining / LengthX, index / size2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Get(int x, int y, int z)
             => Array[Index(x, y, z)];
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(int x, int y, int z, T value)
             => Array[Index(x, y, z)] = value;
 
@@ -113,7 +122,7 @@ namespace FancadeLoaderLib
                             newArray[index(x, y, z)] = Array[Index(x, y, z)];
             });
 
-            array = newArray;
+            Array = newArray;
 
             LengthX = newX;
             LengthY = newY;

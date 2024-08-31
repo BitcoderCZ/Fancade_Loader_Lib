@@ -5,7 +5,7 @@ VisualStudioVersion = 17.10.34607.79
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FancadeLoaderLib", "FancadeLoaderLib\FancadeLoaderLib.csproj", "{B1BFBF64-A1D8-40AE-AE1A-334C2BC142A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FancadeLoaderLib.Editing", "FancadeLoaderLib.Editing\FancadeLoaderLib.Editing.csproj", "{8CD4131B-EBEE-44FF-8F80-DF7469C1E521}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FancadeLoaderLib.Editing", "FancadeLoaderLib.Editing\FancadeLoaderLib.Editing.csproj", "{8CD4131B-EBEE-44FF-8F80-DF7469C1E521}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

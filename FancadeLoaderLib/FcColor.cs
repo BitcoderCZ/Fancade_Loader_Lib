@@ -1,6 +1,6 @@
 ﻿namespace FancadeLoaderLib
 {
-    public enum FancadeColor : byte
+    public enum FcColor : byte
     {
         LightBrown = 9,
         Brown = 8,
@@ -37,8 +37,8 @@
         Black = 1
     }
 
-    public static class FancadeColorE
+    public static class FcColorE
     {
-        public const FancadeColor Default = FancadeColor.Blue;
+        public const FcColor Default = FcColor.Blue;
     }
 }

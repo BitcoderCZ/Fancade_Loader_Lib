@@ -1,5 +1,6 @@
 ﻿using MathUtils.Vectors;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace FancadeLoaderLib
@@ -8,95 +9,104 @@ namespace FancadeLoaderLib
     {
         private const int blockSize = 8;
 
-        public int Length => segments.Length;
+        public int Length => Array.Length;
         public Vector3I Size { get; private set; }
         private Vector3I maxBlockPos;
 
-        private Array3D<ushort> segments = new Array3D<ushort>(blockSize, blockSize, blockSize);
+        public readonly Array3D<ushort> Array;
         public ushort this[int index]
         {
-            get => segments[index];
-            set => segments[index] = value;
+            get => Array[index];
+            set => Array[index] = value;
         }
 
         public BlockData()
         {
+            Array = new Array3D<ushort>(blockSize, blockSize, blockSize);
             maxBlockPos = -Vector3I.One;
         }
-        public BlockData(Array3D<ushort> _segments)
+        public BlockData(Array3D<ushort> blocks)
         {
             detectMaxBlockPos();
-            ensureSizeAndMaxPos(_segments.LengthX - 1, _segments.LengthY - 1, _segments.LengthZ - 1);
-            segments = _segments;
+            ensureSizeAndMaxPos(blocks.LengthX - 1, blocks.LengthY - 1, blocks.LengthZ - 1);
+            Array = blocks;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool InBounds(Vector3I pos)
-            => segments.InBounds(pos.X, pos.Y, pos.Z);
+            => Array.InBounds(pos.X, pos.Y, pos.Z);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool InBounds(int x, int y, int z)
-            => segments.InBounds(x, y, z);
+            => Array.InBounds(x, y, z);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3I Index(int i)
-            => segments.Index(i);
+            => Array.Index(i);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Index(Vector3I pos)
-            => segments.Index(pos);
+            => Array.Index(pos);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Index(int x, int y, int z)
-            => segments.Index(x, y, z);
+            => Array.Index(x, y, z);
 
-        public void SetBlock(Vector3I pos, Block block)
-            => setBlock(pos.X, pos.Y, pos.Z, block);
-        public void SetBlock(int x, int y, int z, Block block)
-            => setBlock(x, y, z, block);
-        private void setBlock(int x, int y, int z, Block block)
-        {
-            ushort id = block.MainId;
-            Vector3I size = block.GetSize();
+        //public void SetGroup(Vector3I pos, Block block)
+        //    => setGroup(pos.X, pos.Y, pos.Z, block);
+        //public void SetBlock(int x, int y, int z, Block block)
+        //    => setGroup(x, y, z, block);
+        //private void setGroup(int x, int y, int z, Block block)
+        //{
+        //    ushort id = block.MainId;
+        //    Vector3I size = block.GetSize();
 
-            ensureSizeAndMaxPos(x + (size.X - 1), y + (size.Y - 1), z + (size.Z - 1));
+        //    ensureSizeAndMaxPos(x + (size.X - 1), y + (size.Y - 1), z + (size.Z - 1));
 
-            for (int _z = 0; _z < size.Z; _z++)
-                for (int _y = 0; _y < size.Y; _y++)
-                    for (int _x = 0; _x < size.X; _x++)
-                    {
-                        Vector3I pos = new Vector3I(_x, _y, _z);
-                        if (!block.Sections.ContainsKey(pos))
-                            continue;
+        //    for (int _z = 0; _z < size.Z; _z++)
+        //        for (int _y = 0; _y < size.Y; _y++)
+        //            for (int _x = 0; _x < size.X; _x++)
+        //            {
+        //                Vector3I pos = new Vector3I(_x, _y, _z);
+        //                if (!block.Sections.ContainsKey(pos))
+        //                    continue;
 
-                        setSegment(x + _x, y + _y, z + _z, id);
-                        id++;
-                    }
-        }
+        //                setPrefab(x + _x, y + _y, z + _z, id);
+        //                id++;
+        //            }
+        //}
 
-        public void SetSegment(Vector3I pos, ushort id)
-            => SetSegment(pos.X, pos.Y, pos.Z, id);
-        public void SetSegment(int x, int y, int z, ushort id)
+        // TODO: make making smaller optional, add EnsureSize(size) and Trim() methods
+        public void SetPrefab(Vector3I pos, ushort id)
+            => SetPrefab(pos.X, pos.Y, pos.Z, id);
+        public void SetPrefab(int x, int y, int z, ushort id)
         {
             if (id > 0)
             {
                 ensureSizeAndMaxPos(x, y, z);
-                setSegment(x, y, z, id);
+                setPrefab(x, y, z, id);
             }
             else
             {
-                setSegment(x, y, z, id);
+                setPrefab(x, y, z, id);
                 makeSmallerIfRemoved(x, y, z);
             }
         }
-        private void setSegment(int x, int y, int z, ushort id)
-            => segments[x, y, z] = id;
+        private void setPrefab(int x, int y, int z, ushort id)
+            => Array[x, y, z] = id;
 
-        public ushort GetSegment(Vector3I pos)
-            => GetSegment(pos.X, pos.Y, pos.Z);
-        public ushort GetSegment(int x, int y, int z)
-            => segments[x, y, z];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ushort GetPrefabId(Vector3I pos)
+            => Array[pos.X, pos.Y, pos.Z];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ushort GetPrefabId(int x, int y, int z)
+            => Array[x, y, z];
 
         private void ensureSizeAndMaxPos(int x, int y, int z)
         {
-            if (x >= segments.LengthX || y >= segments.LengthY || z >= segments.LengthZ)
+            if (x >= Array.LengthX || y >= Array.LengthY || z >= Array.LengthZ)
             {
-                segments.Resize(
-                    Math.Max(useBlock(x + 1, blockSize), segments.LengthX),
-                    Math.Max(useBlock(y + 1, blockSize), segments.LengthY),
-                    Math.Max(useBlock(z + 1, blockSize), segments.LengthZ)
+                Array.Resize(
+                    Math.Max(useBlock(x + 1, blockSize), Array.LengthX),
+                    Math.Max(useBlock(y + 1, blockSize), Array.LengthY),
+                    Math.Max(useBlock(z + 1, blockSize), Array.LengthZ)
                 );
             }
 
@@ -125,7 +135,7 @@ namespace FancadeLoaderLib
                 return;
 
             detectMaxBlockPos();
-            segments.Resize(
+            Array.Resize(
                 useBlock(maxBlockPos.X + 1, blockSize),
                 useBlock(maxBlockPos.Y + 1, blockSize),
                 useBlock(maxBlockPos.Z + 1, blockSize)
@@ -137,13 +147,13 @@ namespace FancadeLoaderLib
             maxBlockPos = -Vector3I.One;
             object myLock = new object();
 
-            Parallel.For(0, segments.LengthX, x =>
+            Parallel.For(0, Array.LengthX, x =>
             {
-                for (int y = 0; y < segments.LengthY; y++)
+                for (int y = 0; y < Array.LengthY; y++)
                 {
-                    for (int z = 0; z < segments.LengthZ; z++)
+                    for (int z = 0; z < Array.LengthZ; z++)
                     {
-                        ushort id = GetSegment(x, y, z);
+                        ushort id = GetPrefabId(x, y, z);
                         if (id == 0)
                             continue;
 
@@ -166,7 +176,7 @@ namespace FancadeLoaderLib
         public BlockData Clone()
             => new BlockData()
             {
-                segments = this.segments.Clone(),
+                blocks = this.Array.Clone(),
                 Size = this.Size,
                 maxBlockPos = this.maxBlockPos,
             };

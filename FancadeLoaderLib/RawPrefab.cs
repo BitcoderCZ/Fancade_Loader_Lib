@@ -204,7 +204,7 @@ namespace FancadeLoaderLib
             if (hasData2)
                 data2 = reader.ReadUInt32();
 
-            byte backgroundColor = (byte)FancadeColorE.Default;
+            byte backgroundColor = (byte)FcColorE.Default;
             if (nonDefaultBackgroundColor)
                 backgroundColor = reader.ReadUInt8();
 

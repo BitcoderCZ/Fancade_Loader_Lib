@@ -14,9 +14,9 @@ namespace FancadeLoaderLib
         public static readonly ushort CurrentFileVersion = 31;
         public static readonly ushort CurrentNumbStockPrefabs = 597;
 
-        private string Name;
-        private string Author;
-        private string Description;
+        public string Name;
+        public string Author;
+        public string Description;
 
         public ushort IdOffset;
 
@@ -32,8 +32,13 @@ namespace FancadeLoaderLib
             Prefabs = new List<RawPrefab>();
         }
 
-        private RawGame(string _name, string _author, string _description, ushort _idOffset, List<RawPrefab> _prefabs)
+        public RawGame(string _name, string _author, string _description, ushort _idOffset, List<RawPrefab> _prefabs)
         {
+            if (_name is null) throw new ArgumentNullException(nameof(_name));
+            if (_author is null) throw new ArgumentNullException(nameof(_author));
+            if (_description is null) throw new ArgumentNullException(nameof(_description));
+            if (_prefabs is null) throw new ArgumentNullException(nameof(_prefabs));
+
             Name = _name;
             Author = _author;
             Description = _description;
@@ -112,28 +117,6 @@ namespace FancadeLoaderLib
                 prefabs.Add(RawPrefab.Load(reader));
 
             return new RawGame(name, author, description, idOffset, prefabs);
-        }
-
-        /// <summary>
-        /// Sets Uneditable to !<paramref name="editable"/> on <see cref="CustomBlocks"/> and <see cref="Levels"/>
-        /// </summary>
-        /// <param name="editable">If this <see cref="RawGame"/> should be editable or not</param>
-        /// <param name="changeAuthor">If this and <paramref name="editable"/> are both <see href="true"/>, <see cref="Author"/> gets set to "Unknown Author"</param>
-        public void SetEditable(bool editable, bool changeAuthor)
-        {
-            bool b = !editable;
-            if (editable && changeAuthor)
-                Author = "Unknown Author";
-
-            CustomBlocks.EnumerateBlocks(item =>
-            {
-                item.Value.Attribs.Uneditable = b;
-                foreach (KeyValuePair<Vector3I, BlockSection> item2 in item.Value.Sections)
-                    item2.Value.Attribs.Uneditable = b;
-            });
-
-            foreach (Level level in Levels)
-                level.Uneditable = b;
         }
 
         public override string ToString() => $"[Name: {Name}, Author: {Author}, Description: {Description}]";
