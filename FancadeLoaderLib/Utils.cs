@@ -29,7 +29,7 @@ namespace FancadeLoaderLib
         /// <param name="seek"></param>
         /// <param name="o"></param>
         /// <returns>0-nothing left, 1-Level, 2-Block, 3-Custom block subblock group, <see cref="int.MaxValue"/>-Unknown</returns>
-        public static int NextThing(this SaveReader reader, bool seek, out object o)
+        public static int NextThing(this FcBinaryReader reader, bool seek, out object o)
         {
             o = null;
 

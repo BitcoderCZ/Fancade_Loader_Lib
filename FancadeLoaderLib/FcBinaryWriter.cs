@@ -1,10 +1,11 @@
-﻿using System;
+﻿using MathUtils.Vectors;
+using System;
 using System.IO;
 using System.Text;
 
 namespace FancadeLoaderLib
 {
-    public class SaveWriter : IDisposable
+    public class FcBinaryWriter : IDisposable
     {
         private Stream stream;
 
@@ -12,7 +13,7 @@ namespace FancadeLoaderLib
 
         public long Length => stream.Length;
 
-        public SaveWriter(byte[] _bytes)
+        public FcBinaryWriter(byte[] _bytes)
         {
             stream = new MemoryStream(_bytes);
             if (!stream.CanWrite)
@@ -20,7 +21,7 @@ namespace FancadeLoaderLib
             Position = 0;
         }
 
-        public SaveWriter(Stream _stream)
+        public FcBinaryWriter(Stream _stream)
         {
             stream = _stream;
             if (!stream.CanWrite)
@@ -28,7 +29,7 @@ namespace FancadeLoaderLib
             Position = 0;
         }
 
-        public SaveWriter(string _path, bool clear)
+        public FcBinaryWriter(string _path, bool clear)
         {
             if (!File.Exists(_path) || clear)
                 File.WriteAllBytes(_path, new byte[] { });
@@ -99,6 +100,40 @@ namespace FancadeLoaderLib
                 throw new Exception($"String too long ({bytes.Length}) max {byte.MaxValue}, string: \"{value}\"");
             WriteUInt8((byte)bytes.Length);
             WriteBytes(bytes);
+        }
+
+        public void WriteVec3B(Vector3B value)
+        {
+            WriteUInt8(value.X);
+            WriteUInt8(value.Y);
+            WriteUInt8(value.Z);
+        }
+
+        public void WriteVec3S(Vector3S value)
+        {
+            WriteInt16(value.X);
+            WriteInt16(value.Y);
+            WriteInt16(value.Z);
+        }
+        public void WriteVec3US(Vector3US value)
+        {
+            WriteUInt16(value.X);
+            WriteUInt16(value.Y);
+            WriteUInt16(value.Z);
+        }
+
+        public void WriteVec3I(Vector3I value)
+        {
+            WriteInt32(value.X);
+            WriteInt32(value.Y);
+            WriteInt32(value.Z);
+        }
+
+        public void WriteVec3F(Vector3F value)
+        {
+            WriteFloat(value.X);
+            WriteFloat(value.Y);
+            WriteFloat(value.Z);
         }
 
         public void Flush() => stream.Flush();

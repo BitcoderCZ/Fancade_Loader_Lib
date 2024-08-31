@@ -1,12 +1,13 @@
-﻿using System;
+﻿using MathUtils.Vectors;
+using System;
 using System.IO;
 using System.Text;
 
 namespace FancadeLoaderLib
 {
-    public class SaveReader : IDisposable
+    public class FcBinaryReader : IDisposable
     {
-        public Stream Stream;
+        public readonly Stream Stream;
 
         public long Position { get => Stream.Position; set => Stream.Position = value; }
 
@@ -14,7 +15,7 @@ namespace FancadeLoaderLib
 
         public long BytesLeft => Stream.Length - Position;
 
-        public SaveReader(byte[] _bytes)
+        public FcBinaryReader(byte[] _bytes)
         {
             Stream = new MemoryStream(_bytes);
             if (!Stream.CanRead)
@@ -22,7 +23,7 @@ namespace FancadeLoaderLib
             Position = 0;
         }
 
-        public SaveReader(Stream _stream)
+        public FcBinaryReader(Stream _stream)
         {
             Stream = _stream;
             if (!Stream.CanRead)
@@ -30,7 +31,7 @@ namespace FancadeLoaderLib
             Position = 0;
         }
 
-        public SaveReader(string _path)
+        public FcBinaryReader(string _path)
         {
             if (!File.Exists(_path))
                 throw new FileNotFoundException($"File \"{_path}\" doesn't exist", _path);
@@ -106,6 +107,20 @@ namespace FancadeLoaderLib
             byte length = ReadUInt8();
             return Encoding.ASCII.GetString(ReadBytes(length));
         }
+
+        public Vector3B ReadVec3B()
+            => new Vector3B(ReadUInt8(), ReadUInt8(), ReadUInt8());
+
+        public Vector3S ReadVec3S()
+            => new Vector3S(ReadInt16(), ReadInt16(), ReadInt16());
+        public Vector3US ReadVec3US()
+            => new Vector3US(ReadUInt16(), ReadUInt16(), ReadUInt16());
+
+        public Vector3I ReadVec3I()
+            => new Vector3I(ReadInt32(), ReadInt32(), ReadInt32());
+
+        public Vector3F ReadVec3F()
+            => new Vector3F(ReadFloat(), ReadFloat(), ReadFloat());
 
         public void Dispose()
         {

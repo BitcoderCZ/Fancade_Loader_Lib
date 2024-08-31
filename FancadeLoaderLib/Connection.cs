@@ -9,42 +9,36 @@ namespace FancadeLoaderLib
     {
         public Vector3US From;
         public Vector3US To;
-        public Vector3US FromConnector; // local position of the connector in SubBlock space
-        public Vector3US ToConnector; // local position of the connector in SubBlock space
+        public Vector3US FromVoxel; // local position of the connector in SubBlock space
+        public Vector3US ToVoxel; // local position of the connector in SubBlock space
 
-        public void Save(SaveWriter writer)
+        public Connection(Vector3US _from, Vector3US _to, Vector3US _fromVoxel, Vector3US _toVoxel)
         {
-            writer.WriteUInt16(From.X);
-            writer.WriteUInt16(From.Y);
-            writer.WriteUInt16(From.Z);
-            writer.WriteUInt16(To.X);
-            writer.WriteUInt16(To.Y);
-            writer.WriteUInt16(To.Z);
-            writer.WriteUInt16(FromConnector.X);
-            writer.WriteUInt16(FromConnector.Y);
-            writer.WriteUInt16(FromConnector.Z);
-            writer.WriteUInt16(ToConnector.X);
-            writer.WriteUInt16(ToConnector.Y);
-            writer.WriteUInt16(ToConnector.Z);
+            From = _from;
+            To = _to;
+            FromVoxel = _fromVoxel;
+            ToVoxel = _toVoxel;
         }
 
-        public static Connection Load(SaveReader reader)
+        public void Save(FcBinaryWriter writer)
         {
-            Vector3US from = new Vector3US(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
-            Vector3US to = new Vector3US(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
-            Vector3US fromConnector = new Vector3US(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
-            Vector3US toConnector = new Vector3US(reader.ReadUInt16(), reader.ReadUInt16(), reader.ReadUInt16());
+            writer.WriteVec3US(From);
+            writer.WriteVec3US(To);
+            writer.WriteVec3US(FromVoxel);
+            writer.WriteVec3US(ToVoxel);
+        }
 
-            return new Connection()
-            {
-                From = from,
-                To = to,
-                FromConnector = fromConnector,
-                ToConnector = toConnector
-            };
+        public static Connection Load(FcBinaryReader reader)
+        {
+            Vector3US from = reader.ReadVec3US();
+            Vector3US to = reader.ReadVec3US();
+            Vector3US fromVoxel = reader.ReadVec3US();
+            Vector3US toVoxel = reader.ReadVec3US();
+
+            return new Connection(from, to, fromVoxel, toVoxel);
         }
 
         public override string ToString()
-            => $"[From: {From}, To: {To}, FromCon.: {FromConnector}, ToCon.: {ToConnector}]";
+            => $"[From: {From}, To: {To}, FromVox: {FromVoxel}, ToVox: {ToVoxel}]";
     }
 }

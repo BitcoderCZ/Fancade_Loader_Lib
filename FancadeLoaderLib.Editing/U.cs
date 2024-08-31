@@ -19,8 +19,8 @@ namespace FancadeLoaderLib.Editing
         }
         public static bool IsEmpty(this BlockSection section)
         {
-            for (int i = 0; i < section.Blocks.Length; i++)
-                if (!section.Blocks[i].IsEmpty)
+            for (int i = 0; i < section.Voxels.Length; i++)
+                if (!section.Voxels[i].IsEmpty)
                     return false;
 
             return true;

@@ -9,13 +9,13 @@ namespace FancadeLoaderLib
 {
     public class Array3D<T> : IEnumerable<T>
     {
-        private T[] array;
+        public readonly T[] Array;
 
         public int LengthX { get; private set; }
         public int LengthY { get; private set; }
         public int LengthZ { get; private set; }
-        public int Length => array.Length;
-        public int Count => array.Length;
+        public int Length => Array.Length;
+        public int Count => Array.Length;
         private int size2;
 
         public bool IsSynchronized => true;
@@ -28,8 +28,8 @@ namespace FancadeLoaderLib
 
         public T this[int i]
         {
-            get => array[i];
-            set => array[i] = value;
+            get => Array[i];
+            set => Array[i] = value;
         }
         public T this[int x, int y, int z]
         {
@@ -44,7 +44,7 @@ namespace FancadeLoaderLib
             LengthZ = sizeZ;
             size2 = sizeX * sizeY;
 
-            array = new T[sizeX * sizeY * sizeZ];
+            Array = new T[sizeX * sizeY * sizeZ];
         }
         public Array3D(IEnumerable<T> collection, int sizeX, int sizeY, int sizeZ)
         {
@@ -53,18 +53,18 @@ namespace FancadeLoaderLib
             LengthZ = sizeZ;
             size2 = sizeX * sizeY;
 
-            array = collection.ToArray();
+            Array = collection.ToArray();
             if (Length != LengthX * LengthY * LengthZ)
                 throw new ArgumentException($"collection length must sizeX * sizeY * sizeZ", "collection");
         }
-        public Array3D(T[] _array, int sizeX, int sizeY, int sizeZ)
+        public Array3D(T[] array, int sizeX, int sizeY, int sizeZ)
         {
             LengthX = sizeX;
             LengthY = sizeY;
             LengthZ = sizeZ;
             size2 = sizeX * sizeY;
 
-            array = (T[])_array.Clone();
+            Array = array;
             if (Length != LengthX * LengthY * LengthZ)
                 throw new ArgumentException($"collection length must sizeX * sizeY * sizeZ", "collection");
         }
@@ -75,7 +75,7 @@ namespace FancadeLoaderLib
             LengthZ = _array.LengthZ;
             size2 = _array.size2;
 
-            array = (T[])_array.array.Clone();
+            Array = (T[])_array.Array.Clone();
         }
 
         public bool InBounds(Vector3I pos)
@@ -94,10 +94,10 @@ namespace FancadeLoaderLib
         }
 
         public T Get(int x, int y, int z)
-            => array[Index(x, y, z)];
+            => Array[Index(x, y, z)];
 
         public void Set(int x, int y, int z, T value)
-            => array[Index(x, y, z)] = value;
+            => Array[Index(x, y, z)] = value;
 
         public void Resize(int newX, int newY, int newZ)
         {
@@ -110,7 +110,7 @@ namespace FancadeLoaderLib
                 for (int y = 0; y < newX; y++)
                     for (int z = 0; z < newZ; z++)
                         if (InBounds(x, y, z) && inBounds(x, y, z))
-                            newArray[index(x, y, z)] = array[Index(x, y, z)];
+                            newArray[index(x, y, z)] = Array[Index(x, y, z)];
             });
 
             array = newArray;
@@ -133,9 +133,9 @@ namespace FancadeLoaderLib
             => array.CopyTo(array, index);
 
         public IEnumerator GetEnumerator()
-            => array.GetEnumerator();
+            => Array.GetEnumerator();
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
-            => ((IEnumerable<T>)array).GetEnumerator();
+            => ((IEnumerable<T>)Array).GetEnumerator();
     }
 }
