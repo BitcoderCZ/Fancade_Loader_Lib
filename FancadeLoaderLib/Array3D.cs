@@ -2,7 +2,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -110,16 +109,41 @@ namespace FancadeLoaderLib
 
         public void Resize(int newX, int newY, int newZ)
         {
+            if (newX < 0 || newY < 0 || newZ < 0)
+                throw new ArgumentOutOfRangeException();
+            else if (newX == 0 || newY == 0 || newZ == 0)
+            {
+                Array = new T[0];
+
+                LengthX = 0;
+                LengthY = 0;
+                LengthZ = 0;
+                size2 = 0;
+
+                return;
+            }
+
             T[] newArray = new T[newX * newY * newZ];
 
             int newSize2 = newX * newY;
 
-            Parallel.For(0, newX, new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount }, x =>
+            int minX = Math.Min(LengthX, newX);
+
+            //Parallel.For(0, newX, new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount }, x =>
+            //{
+            //    for (int y = 0; y < newX; y++)
+            //        for (int z = 0; z < newZ; z++)
+            //            if (InBounds(x, y, z) && inBounds(x, y, z))
+            //                newArray[index(x, y, z)] = Array[Index(x, y, z)];
+            //});
+
+            Parallel.For(0, newZ, new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount }, z =>
             {
-                for (int y = 0; y < newX; y++)
-                    for (int z = 0; z < newZ; z++)
-                        if (InBounds(x, y, z) && inBounds(x, y, z))
-                            newArray[index(x, y, z)] = Array[Index(x, y, z)];
+                for (int y = 0; y < newY; y++)
+                {
+                    if (InBounds(0, y, z) && inBounds(y, z))
+                        Buffer.BlockCopy(Array, Index(0, y, z), newArray, index(0, y, z), minX);
+                }
             });
 
             Array = newArray;
@@ -131,8 +155,8 @@ namespace FancadeLoaderLib
 
             int index(int x, int y, int z)
                 => x + y * newX + z * newSize2;
-            bool inBounds(int x, int y, int z)
-                => x >= 0 && x < newX && y >= 0 && y < newY && z >= 0 && z < newZ;
+            bool inBounds(int y, int z)
+                => y >= 0 && y < newY && z >= 0 && z < newZ;
         }
 
         public Array3D<T> Clone()

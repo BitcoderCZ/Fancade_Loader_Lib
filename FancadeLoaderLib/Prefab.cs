@@ -1,17 +1,26 @@
 ﻿using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Xml.Linq;
-using static System.Collections.Specialized.BitVector32;
 
 namespace FancadeLoaderLib
 {
     public class Prefab
     {
         public const int NumbVoxels = 8 * 8 * 8;
+        public static ImmutableArray<Vector3S> SideToOffset =
+            new Vector3S[6]
+            {
+                new Vector3S(1, 0, 0),
+                new Vector3S(-1, 0, 0),
+                new Vector3S(0, 1, 0),
+                new Vector3S(0, -1, 0),
+                new Vector3S(0, 0, 1),
+                new Vector3S(0, 0, -1),
+            }.ToImmutableArray();
 
         private string name;
         public string Name
@@ -117,7 +126,7 @@ namespace FancadeLoaderLib
         /// <param name="rawPrefab">The <see cref="RawPrefab"/> to convert</param>
         /// <param name="idOffset"></param>
         /// <param name="idOffsetAddition"></param>
-        /// <param name="clone">If true clones Blocks, Settings and Connections else leaves <paramref name="rawPrefab"/> in unknown state, but is faster</param>
+        /// <param name="clone">If true clones Blocks, Settings and Connections else the values are assigned directly and <paramref name="rawPrefab"/> shouldn't be used anymore</param>
         /// <returns>The converted <see cref="Prefab"/></returns>
         /// <exception cref="ArgumentException"></exception>
         public static unsafe Prefab FromRaw(RawPrefab rawPrefab, ushort idOffset, short idOffsetAddition, bool clone = true)
@@ -279,9 +288,6 @@ namespace FancadeLoaderLib
         Normal = 0,
         Physics = 1,
         Script = 2,
-        /// <summary>
-        /// Not sure about this
-        /// </summary>
         Level = 3,
     }
 

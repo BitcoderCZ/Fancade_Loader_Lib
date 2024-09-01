@@ -80,22 +80,30 @@ namespace FancadeLoaderLib
         //}
 
         // TODO: make making smaller optional, add EnsureSize(size) and Trim() methods
-        public void SetPrefab(Vector3I pos, ushort id)
-            => SetPrefab(pos.X, pos.Y, pos.Z, id);
-        public void SetPrefab(int x, int y, int z, ushort id)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetBlock(Vector3I pos, ushort id, bool trim = false)
+            => SetBlock(pos.X, pos.Y, pos.Z, id, trim);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetBlock(int index, ushort id, bool trim = false)
+        {
+            Vector3I pos = Index(index);
+            SetBlock(pos.X, pos.Y, pos.Z, id, trim);
+        }
+        public void SetBlock(int x, int y, int z, ushort id, bool trim = false)
         {
             if (id > 0)
             {
                 ensureSizeAndMaxPos(x, y, z);
-                setPrefab(x, y, z, id);
+                setBlock(x, y, z, id);
             }
             else
             {
-                setPrefab(x, y, z, id);
-                makeSmallerIfRemoved(x, y, z);
+                setBlock(x, y, z, id);
+                if (trim)
+                    makeSmallerIfRemoved(x, y, z);
             }
         }
-        private void setPrefab(int x, int y, int z, ushort id)
+        private void setBlock(int x, int y, int z, ushort id)
             => Array[x, y, z] = id;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

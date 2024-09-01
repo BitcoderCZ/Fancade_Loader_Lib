@@ -1,10 +1,7 @@
 ﻿using FancadeLoaderLib.Exceptions;
-using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection.Emit;
-using System.Threading.Tasks;
 
 namespace FancadeLoaderLib
 {

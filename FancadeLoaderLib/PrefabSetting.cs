@@ -1,8 +1,5 @@
-﻿using MathUtils.Measures;
-using MathUtils.Vectors;
+﻿using MathUtils.Vectors;
 using System;
-using System.Data;
-using System.Numerics;
 
 namespace FancadeLoaderLib
 {
