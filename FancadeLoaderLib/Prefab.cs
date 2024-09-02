@@ -10,6 +10,9 @@ namespace FancadeLoaderLib
     public class Prefab : ICloneable
     {
         public const int NumbVoxels = 8 * 8 * 8;
+        public const byte ColorMask = 0b_0111_1111;
+        public const byte GlueMask = 0b_1000_0000;
+
         public static ImmutableArray<Vector3S> SideToOffset =
             new Vector3S[6]
             {
@@ -128,12 +131,12 @@ namespace FancadeLoaderLib
                 for (int i = 0; i < NumbVoxels; i++)
                 {
                     Voxel voxel = Voxels[i];
-                    voxels[i + NumbVoxels * 0] = (byte)(voxel.Colors[0] | voxel.Attribs[0] << 6);
-                    voxels[i + NumbVoxels * 1] = (byte)(voxel.Colors[1] | voxel.Attribs[1] << 6);
-                    voxels[i + NumbVoxels * 2] = (byte)(voxel.Colors[2] | voxel.Attribs[2] << 6);
-                    voxels[i + NumbVoxels * 3] = (byte)(voxel.Colors[3] | voxel.Attribs[3] << 6);
-                    voxels[i + NumbVoxels * 4] = (byte)(voxel.Colors[4] | voxel.Attribs[4] << 6);
-                    voxels[i + NumbVoxels * 5] = (byte)(voxel.Colors[5] | voxel.Attribs[5] << 6);
+                    voxels[i + NumbVoxels * 0] = (byte)(voxel.Colors[0] | voxel.Attribs[0] << 7);
+                    voxels[i + NumbVoxels * 1] = (byte)(voxel.Colors[1] | voxel.Attribs[1] << 7);
+                    voxels[i + NumbVoxels * 2] = (byte)(voxel.Colors[2] | voxel.Attribs[2] << 7);
+                    voxels[i + NumbVoxels * 3] = (byte)(voxel.Colors[3] | voxel.Attribs[3] << 7);
+                    voxels[i + NumbVoxels * 4] = (byte)(voxel.Colors[4] | voxel.Attribs[4] << 7);
+                    voxels[i + NumbVoxels * 5] = (byte)(voxel.Colors[5] | voxel.Attribs[5] << 7);
                 }
             }
 
@@ -204,18 +207,18 @@ namespace FancadeLoaderLib
                     byte s4 = rawPrefab.Voxels[i + NumbVoxels * 4];
                     byte s5 = rawPrefab.Voxels[i + NumbVoxels * 5];
 
-                    voxel.Colors[0] = (byte)(s0 & 0b_0011_1111);
-                    voxel.Colors[1] = (byte)(s1 & 0b_0011_1111);
-                    voxel.Colors[2] = (byte)(s2 & 0b_0011_1111);
-                    voxel.Colors[3] = (byte)(s3 & 0b_0011_1111);
-                    voxel.Colors[4] = (byte)(s4 & 0b_0011_1111);
-                    voxel.Colors[5] = (byte)(s5 & 0b_0011_1111);
-                    voxel.Attribs[0] = (byte)((s0 & 0b_1100_0000) >> 6);
-                    voxel.Attribs[1] = (byte)((s1 & 0b_1100_0000) >> 6);
-                    voxel.Attribs[2] = (byte)((s2 & 0b_1100_0000) >> 6);
-                    voxel.Attribs[3] = (byte)((s3 & 0b_1100_0000) >> 6);
-                    voxel.Attribs[4] = (byte)((s4 & 0b_1100_0000) >> 6);
-                    voxel.Attribs[5] = (byte)((s5 & 0b_1100_0000) >> 6);
+                    voxel.Colors[0] = (byte)(s0 & ColorMask);
+                    voxel.Colors[1] = (byte)(s1 & ColorMask);
+                    voxel.Colors[2] = (byte)(s2 & ColorMask);
+                    voxel.Colors[3] = (byte)(s3 & ColorMask);
+                    voxel.Colors[4] = (byte)(s4 & ColorMask);
+                    voxel.Colors[5] = (byte)(s5 & ColorMask);
+                    voxel.Attribs[0] = (byte)((s0 & GlueMask) >> 6);
+                    voxel.Attribs[1] = (byte)((s1 & GlueMask) >> 6);
+                    voxel.Attribs[2] = (byte)((s2 & GlueMask) >> 6);
+                    voxel.Attribs[3] = (byte)((s3 & GlueMask) >> 6);
+                    voxel.Attribs[4] = (byte)((s4 & GlueMask) >> 6);
+                    voxel.Attribs[5] = (byte)((s5 & GlueMask) >> 6);
 
                     voxels[i] = voxel;
                 }
