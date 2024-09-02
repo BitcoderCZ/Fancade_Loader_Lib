@@ -9,7 +9,7 @@ using System.Text;
 
 namespace FancadeLoaderLib
 {
-    public class PrefabGroup : ICloneable, IDictionary<Vector3B, Prefab>
+    public class PrefabGroup : IDictionary<Vector3B, Prefab>, ICloneable
     {
         public ushort Id { get; private set; }
         public Vector3B Size { get; private set; }
@@ -94,19 +94,24 @@ namespace FancadeLoaderLib
             findSize();
         }
 
-        public PrefabGroup(PrefabGroup group)
+        public PrefabGroup(PrefabGroup group, bool deepCopy)
         {
-            prefabs = new Dictionary<Vector3B, Prefab>(group.prefabs);
+            if (deepCopy)
+                prefabs = new Dictionary<Vector3B, Prefab>(group.prefabs.Select(item => new KeyValuePair<Vector3B, Prefab>(item.Key, item.Value.Clone())));
+            else
+                prefabs = new Dictionary<Vector3B, Prefab>(group.prefabs);
             Size = group.Size;
         }
 
         public void SwapPositions(Vector3B posA, Vector3B posB)
         {
-            Prefab a = this[posA];
-            Prefab b = this[posB];
+            TryGetValue(posA, out Prefab? a);
+            TryGetValue(posB, out Prefab? b);
 
-            a.PosInGroup = posB;
-            b.PosInGroup = posA;
+            if (!(a is null))
+                a.PosInGroup = posB;
+            if (!(b is null))
+                b.PosInGroup = posA;
 
             this[posA] = b;
             this[posB] = a;
@@ -114,7 +119,7 @@ namespace FancadeLoaderLib
 
         public void Add(Vector3B key, Prefab value)
         {
-            prefabs.Add(key, value);
+            prefabs.Add(key, validate(value));
 
             Size = Vector3B.Max(Size, key + Vector3B.One);
         }
@@ -144,6 +149,10 @@ namespace FancadeLoaderLib
 
         void ICollection<KeyValuePair<Vector3B, Prefab>>.Add(KeyValuePair<Vector3B, Prefab> item)
         {
+            Prefab res = validate(item.Value);
+            if (!ReferenceEquals(item.Value, res))
+                item = new KeyValuePair<Vector3B, Prefab>(item.Key, res);
+
             ((ICollection<KeyValuePair<Vector3B, Prefab>>)prefabs).Add(item);
 
             Size = Vector3B.Max(Size, item.Key + Vector3B.One);
@@ -171,10 +180,10 @@ namespace FancadeLoaderLib
         IEnumerator IEnumerable.GetEnumerator()
             => prefabs.GetEnumerator();
 
-        public PrefabGroup Clone()
-            => new PrefabGroup(this);
+        public PrefabGroup Clone(bool deepCopy)
+            => new PrefabGroup(this, deepCopy);
         object ICloneable.Clone()
-            => new PrefabGroup(this);
+            => new PrefabGroup(this, true);
 
         private void findSize()
         {

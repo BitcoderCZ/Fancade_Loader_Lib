@@ -17,7 +17,7 @@ namespace FancadeLoaderLib
         public int LengthZ { get; private set; }
         public int Length => Array.Length;
         public int Count => Array.Length;
-        private int size2;
+        private int layerSize;
 
         public T this[int i]
         {
@@ -35,7 +35,7 @@ namespace FancadeLoaderLib
             LengthX = sizeX;
             LengthY = sizeY;
             LengthZ = sizeZ;
-            size2 = sizeX * sizeY;
+            layerSize = sizeX * sizeY;
 
             Array = new T[sizeX * sizeY * sizeZ];
         }
@@ -44,7 +44,7 @@ namespace FancadeLoaderLib
             LengthX = sizeX;
             LengthY = sizeY;
             LengthZ = sizeZ;
-            size2 = sizeX * sizeY;
+            layerSize = sizeX * sizeY;
 
             Array = collection.ToArray();
             if (Length != LengthX * LengthY * LengthZ)
@@ -55,7 +55,7 @@ namespace FancadeLoaderLib
             LengthX = sizeX;
             LengthY = sizeY;
             LengthZ = sizeZ;
-            size2 = sizeX * sizeY;
+            layerSize = sizeX * sizeY;
 
             Array = array;
             if (Length != LengthX * LengthY * LengthZ)
@@ -66,7 +66,7 @@ namespace FancadeLoaderLib
             LengthX = _array.LengthX;
             LengthY = _array.LengthY;
             LengthZ = _array.LengthZ;
-            size2 = _array.size2;
+            layerSize = _array.layerSize;
 
             Array = (T[])_array.Array.Clone();
         }
@@ -83,12 +83,12 @@ namespace FancadeLoaderLib
             => Index(pos.X, pos.Y, pos.Z);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Index(int x, int y, int z)
-            => x + y * LengthX + z * size2;
+            => x + y * LengthX + z * layerSize;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3I Index(int index)
         {
-            int remaining = index % size2;
-            return new Vector3I(remaining % LengthX, remaining / LengthX, index / size2);
+            int remaining = index % layerSize;
+            return new Vector3I(remaining % LengthX, remaining / LengthX, index / layerSize);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -112,7 +112,7 @@ namespace FancadeLoaderLib
                 LengthX = 0;
                 LengthY = 0;
                 LengthZ = 0;
-                size2 = 0;
+                layerSize = 0;
 
                 return;
             }
@@ -141,7 +141,7 @@ namespace FancadeLoaderLib
             LengthX = newX;
             LengthY = newY;
             LengthZ = newZ;
-            size2 = LengthX * LengthY;
+            layerSize = LengthX * LengthY;
 
             int index(int x, int y, int z)
                 => x + y * newX + z * newSize2;

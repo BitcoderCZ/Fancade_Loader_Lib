@@ -52,8 +52,10 @@ namespace FancadeLoaderLib
         public int Index(int x, int y, int z)
             => Array.Index(x, y, z);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetGroup(Vector3I pos, PrefabGroup group)
             => setGroup(pos.X, pos.Y, pos.Z, group);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetBlock(int x, int y, int z, PrefabGroup group)
             => setGroup(x, y, z, group);
         private void setGroup(int x, int y, int z, PrefabGroup group)

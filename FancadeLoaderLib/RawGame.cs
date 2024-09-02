@@ -7,7 +7,6 @@ namespace FancadeLoaderLib
 {
     public class RawGame
     {
-        public const ushort OldestBlockPaletteVersion = 27;
         public static readonly ushort CurrentFileVersion = 31;
         public static readonly ushort CurrentNumbStockPrefabs = 597;
 
@@ -116,6 +115,7 @@ namespace FancadeLoaderLib
             return new RawGame(name, author, description, idOffset, prefabs);
         }
 
-        public override string ToString() => $"[Name: {Name}, Author: {Author}, Description: {Description}]";
+        public override string ToString()
+            => $"{{Name: {Name}, Author: {Author}, Description: {Description}}}";
     }
 }

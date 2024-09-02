@@ -51,6 +51,10 @@ namespace FancadeLoaderLib
         {
         }
         public Game(string name, string author, string description, IEnumerable<Prefab> prefabs)
+            : this(name, author, description, new PrefabList(prefabs))
+        {
+        }
+        public Game(string name, string author, string description, PrefabList prefabs)
         {
             if (prefabs is null)
                 throw new ArgumentNullException(nameof(prefabs));
@@ -58,10 +62,10 @@ namespace FancadeLoaderLib
             Name = name;
             Author = author;
             Description = description;
-            Prefabs = new PrefabList(prefabs);
+            Prefabs = prefabs;
         }
-        public Game(Game game)
-            : this(game.Name, game.Author, game.Description, game.Prefabs.Select(prefab => prefab.Clone()))
+        public Game(Game game, bool deepCopy)
+            : this(game.Name, game.Author, game.Description, deepCopy ? game.Prefabs.Clone(true) : game.Prefabs)
         {
         }
 
@@ -106,9 +110,9 @@ namespace FancadeLoaderLib
         public static Game LoadCompressed(Stream stream)
             => FromRaw(RawGame.LoadCompressed(stream), false);
 
-        public Game Clone()
-            => new Game(this);
+        public Game Clone(bool deepCopy)
+            => new Game(this, deepCopy);
         object ICloneable.Clone()
-            => new Game(this);
+            => new Game(this, true);
     }
 }

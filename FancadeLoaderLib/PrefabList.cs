@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -9,7 +10,7 @@ namespace FancadeLoaderLib
     /// <summary>
     /// <see cref="List{T}"/> wrapper for easier <see cref="Prefab"/> handeling
     /// </summary>
-    public class PrefabList : IList<Prefab>
+    public class PrefabList : IList<Prefab>, ICloneable
     {
         public ushort IdOffset = RawGame.CurrentNumbStockPrefabs;
 
@@ -36,6 +37,13 @@ namespace FancadeLoaderLib
         public PrefabList(IEnumerable<Prefab> collection)
         {
             list = new List<Prefab>(collection);
+        }
+        public PrefabList(PrefabList list, bool deepCopy)
+        {
+            if (deepCopy)
+                this.list = new List<Prefab>(list.Select(prefab => prefab.Clone()));
+            else
+                this.list = new List<Prefab>(list);
         }
 
         public void Save(FcBinaryWriter writer)
@@ -164,6 +172,11 @@ namespace FancadeLoaderLib
 
         IEnumerator IEnumerable.GetEnumerator()
             => list.GetEnumerator();
+
+        public PrefabList Clone(bool deepCopy)
+            => new PrefabList(this, deepCopy);
+        object ICloneable.Clone()
+            => new PrefabList(this, true);
 
         private void increaseAfter(int index, ushort amount)
         {

@@ -12,7 +12,7 @@ namespace FancadeLoaderLib
         public bool HasBlocks;
         public bool HasVoxels;
         /// <summary>
-        /// True for custom blocks larger than 1x1x1
+        /// True for blocks larger than 1x1x1
         /// </summary>
         public bool IsInGroup;
         public bool HasColliderByte;
