@@ -1,7 +1,6 @@
 ﻿using MathUtils.Vectors;
 using System;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace FancadeLoaderLib
 {
@@ -11,7 +10,6 @@ namespace FancadeLoaderLib
 
         public int Length => Array.Length;
         public Vector3I Size { get; private set; }
-        private Vector3I maxBlockPos;
 
         public readonly Array3D<ushort> Array;
         public ushort this[int index]
@@ -23,19 +21,18 @@ namespace FancadeLoaderLib
         public BlockData()
         {
             Array = new Array3D<ushort>(blockSize, blockSize, blockSize);
-            maxBlockPos = -Vector3I.One;
         }
         public BlockData(Array3D<ushort> blocks)
         {
             Array = blocks;
-            detectMaxBlockPos();
-            ensureSizeAndMaxPos(blocks.LengthX - 1, blocks.LengthY - 1, blocks.LengthZ - 1);
+
+            Size = new Vector3I(Array.LengthX, Array.LengthY, Array.LengthZ);
+            Trim();
         }
         public BlockData(BlockData data)
         {
             Array = data.Array.Clone();
             Size = data.Size;
-            maxBlockPos = data.maxBlockPos;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -79,121 +76,178 @@ namespace FancadeLoaderLib
         //            }
         //}
 
-        // TODO: make making smaller optional, add EnsureSize(size) and Trim() methods
+        #region SetBlock
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetBlock(Vector3I pos, ushort id, bool trim = false)
-            => SetBlock(pos.X, pos.Y, pos.Z, id, trim);
+        public void SetBlock(Vector3I pos, ushort id)
+            => SetBlock(pos.X, pos.Y, pos.Z, id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetBlock(int index, ushort id, bool trim = false)
+        public void SetBlock(int index, ushort id)
         {
             Vector3I pos = Index(index);
-            SetBlock(pos.X, pos.Y, pos.Z, id, trim);
+            SetBlock(pos.X, pos.Y, pos.Z, id);
         }
-        public void SetBlock(int x, int y, int z, ushort id, bool trim = false)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetBlock(int x, int y, int z, ushort id)
         {
-            if (id > 0)
-            {
-                ensureSizeAndMaxPos(x, y, z);
-                setBlock(x, y, z, id);
-            }
-            else
-            {
-                setBlock(x, y, z, id);
-                if (trim)
-                    makeSmallerIfRemoved(x, y, z);
-            }
+            if (id != 0)
+                EnsureSize(x, y, z); // not placing "air"
+
+            setBlock(x, y, z, id);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetBlockUnchecked(Vector3I pos, ushort id)
+            => SetBlockUnchecked(pos.X, pos.Y, pos.Z, id);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetBlockUnchecked(int index, ushort id)
+        {
+            Vector3I pos = Index(index);
+            SetBlockUnchecked(pos.X, pos.Y, pos.Z, id);
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetBlockUnchecked(int x, int y, int z, ushort id)
+            => setBlock(x, y, z, id);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void setBlock(int x, int y, int z, ushort id)
             => Array[x, y, z] = id;
+        #endregion
 
+        #region GetBlock
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ushort GetPrefabId(Vector3I pos)
+        public ushort GetBlock(Vector3I pos)
             => Array[pos.X, pos.Y, pos.Z];
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ushort GetPrefabId(int x, int y, int z)
+        public ushort GetBlock(int x, int y, int z)
             => Array[x, y, z];
+        #endregion
 
-        private void ensureSizeAndMaxPos(int x, int y, int z)
+        public void Trim()
         {
-            if (x >= Array.LengthX || y >= Array.LengthY || z >= Array.LengthZ)
+            if (Size == Vector3I.Zero)
+                return;
+
+            int maxX = int.MaxValue;
+            int maxY = int.MaxValue;
+            int maxZ = int.MaxValue;
+
+            Vector3I scanPos = Size - Vector3I.One;
+
+            while (true)
+            {
+                if (maxX == int.MaxValue)
+                {
+                    for (int y = 0; y <= scanPos.Y; y++)
+                    {
+                        for (int z = 0; z <= scanPos.Z; z++)
+                        {
+                            if (Array[Index(scanPos.X, y, z)] != 0)
+                            {
+                                maxX = scanPos.X;
+                                goto endX;
+                            }
+                        }
+                    }
+                }
+            endX:
+
+                if (maxY == int.MaxValue)
+                {
+                    for (int x = 0; x <= scanPos.X; x++)
+                    {
+                        for (int z = 0; z <= scanPos.Z; z++)
+                        {
+                            if (Array[Index(x, scanPos.Y, z)] != 0)
+                            {
+                                maxY = scanPos.Y;
+                                goto endY;
+                            }
+                        }
+                    }
+                }
+            endY:
+
+                if (maxZ == int.MaxValue)
+                {
+                    for (int x = 0; x <= scanPos.X; x++)
+                    {
+                        for (int y = 0; y <= scanPos.Y; y++)
+                        {
+                            if (Array[Index(x, y, scanPos.Z)] != 0)
+                            {
+                                maxZ = scanPos.Z;
+                                goto endZ;
+                            }
+                        }
+                    }
+                }
+            endZ:
+
+                if (maxX != int.MaxValue && maxY != int.MaxValue && maxZ != int.MaxValue)
+                {
+                    resize(new Vector3I(maxX + 1, maxY + 1, maxZ + 1));
+                    return;
+                }
+                else if (scanPos.X == 1 && scanPos.Y == 1 && scanPos.Z == 1)
+                {
+                    // no blocks
+                    resize(Vector3I.Zero);
+                    return;
+                }
+
+                scanPos = new Vector3I(Math.Max(1, scanPos.X - 1), Math.Max(1, scanPos.Y - 1), Math.Max(1, scanPos.Z - 1));
+            }
+        }
+
+        private void EnsureSize(Vector3I pos)
+            => EnsureSize(pos.X, pos.Y, pos.Z);
+        private void EnsureSize(int posX, int posY, int posZ)
+        {
+            if (posX >= Array.LengthX || posY >= Array.LengthY || posZ >= Array.LengthZ)
             {
                 Array.Resize(
-                    Math.Max(useBlock(x + 1, blockSize), Array.LengthX),
-                    Math.Max(useBlock(y + 1, blockSize), Array.LengthY),
-                    Math.Max(useBlock(z + 1, blockSize), Array.LengthZ)
+                    Math.Max(useBlock(posX + 1, blockSize), Array.LengthX),
+                    Math.Max(useBlock(posY + 1, blockSize), Array.LengthY),
+                    Math.Max(useBlock(posZ + 1, blockSize), Array.LengthZ)
                 );
             }
 
             Vector3I size = Size;
-            if (x > maxBlockPos.X)
+            if (posX >= size.X)
+                size.X = posX + 1;
+            if (posY >= size.Y)
+                size.Y = posY + 1;
+            if (posZ >= size.Z)
+                size.Z = posZ + 1;
+
+            if (size != Size)
             {
-                maxBlockPos.X = x;
-                size.X = x + 1;
+                // only resize if actually needed
+                if (size.X > Array.LengthX || size.Y > Array.LengthY || size.Z > Array.LengthZ)
+                    resize(size);
+                else
+                    Size = size;
             }
-            if (y > maxBlockPos.Y)
-            {
-                maxBlockPos.Y = y;
-                size.Y = y + 1;
-            }
-            if (z > maxBlockPos.Z)
-            {
-                maxBlockPos.Z = z;
-                size.Z = z + 1;
-            }
-            Size = size;
-        }
-        private void makeSmallerIfRemoved(int x, int y, int z)
-        {
-            Vector3I pos = new Vector3I(x, y, z);
-            if (pos != maxBlockPos)
-                return;
-
-            detectMaxBlockPos();
-            Array.Resize(
-                useBlock(maxBlockPos.X + 1, blockSize),
-                useBlock(maxBlockPos.Y + 1, blockSize),
-                useBlock(maxBlockPos.Z + 1, blockSize)
-            );
-        }
-
-        private void detectMaxBlockPos()
-        {
-            maxBlockPos = -Vector3I.One;
-            object myLock = new object();
-
-            Parallel.For(0, Array.LengthX, x =>
-            {
-                for (int y = 0; y < Array.LengthY; y++)
-                {
-                    for (int z = 0; z < Array.LengthZ; z++)
-                    {
-                        ushort id = GetPrefabId(x, y, z);
-                        if (id == 0)
-                            continue;
-
-                        lock (myLock)
-                        {
-                            if (z > maxBlockPos.Z)
-                                maxBlockPos.Z = z;
-                            if (y > maxBlockPos.Y)
-                                maxBlockPos.Y = y;
-                            if (x > maxBlockPos.X)
-                                maxBlockPos.X = x;
-                        }
-                    }
-                }
-            });
-
-            Size = maxBlockPos + Vector3I.One;
         }
 
         public BlockData Clone()
             => new BlockData(this);
 
-        private int useBlock(int i, int blockSize)
+        #region Utils
+        private void resize(Vector3I size)
         {
-            int mod = i % blockSize;
-            return Math.Max(mod == 0 ? i : i + (blockSize - mod), blockSize);
+            Array.Resize(
+                useBlock(size.X, blockSize),
+                useBlock(size.Y, blockSize),
+                useBlock(size.Z, blockSize)
+            );
+
+            Size = size;
         }
+
+        private int useBlock(int numb, int blockSize)
+        {
+            int mod = numb % blockSize;
+            return Math.Max(mod == 0 ? numb : numb + (blockSize - mod), blockSize);
+        }
+        #endregion
     }
 }

@@ -19,14 +19,6 @@ namespace FancadeLoaderLib
         public int Count => Array.Length;
         private int size2;
 
-        public bool IsSynchronized => true;
-
-        public object SyncRoot => syncRoot;
-
-        public bool IsReadOnly => false;
-
-        private static object syncRoot = new object();
-
         public T this[int i]
         {
             get => Array[i];
@@ -122,6 +114,8 @@ namespace FancadeLoaderLib
 
                 return;
             }
+            else if (newX == LengthX && newY == LengthY && newZ == LengthZ)
+                return; // same length
 
             T[] newArray = new T[newX * newY * newZ];
 
@@ -129,15 +123,7 @@ namespace FancadeLoaderLib
 
             int minX = Math.Min(LengthX, newX);
 
-            //Parallel.For(0, newX, new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount }, x =>
-            //{
-            //    for (int y = 0; y < newX; y++)
-            //        for (int z = 0; z < newZ; z++)
-            //            if (InBounds(x, y, z) && inBounds(x, y, z))
-            //                newArray[index(x, y, z)] = Array[Index(x, y, z)];
-            //});
-
-            Parallel.For(0, newZ, new ParallelOptions() { MaxDegreeOfParallelism = Environment.ProcessorCount }, z =>
+            Parallel.For(0, newZ, new ParallelOptions() { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2) }, z =>
             {
                 for (int y = 0; y < newY; y++)
                 {
