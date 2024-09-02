@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace FancadeLoaderLib
 {
-    public class Prefab
+    public class Prefab : ICloneable
     {
         public const int NumbVoxels = 8 * 8 * 8;
         public static ImmutableArray<Vector3S> SideToOffset =
@@ -67,6 +67,7 @@ namespace FancadeLoaderLib
             Collider = PrefabCollider.Box;
             Type = PrefabType.Normal;
             Editable = true;
+            GroupId = ushort.MaxValue;
 
             Blocks = new BlockData();
             Settings = new List<PrefabSetting>();
@@ -90,6 +91,31 @@ namespace FancadeLoaderLib
             Blocks = blocks ?? new BlockData();
             Settings = settings ?? new List<PrefabSetting>();
             Connections = connections ?? new List<Connection>();
+        }
+
+        public Prefab(Prefab prefab)
+            : this(prefab.name, prefab.Collider, prefab.Type, prefab.BackgroundColor, prefab.Editable, prefab.GroupId, prefab.PosInGroup, prefab.Voxels is null ? null : (Voxel[])prefab.Voxels.Clone(), prefab.Blocks.Clone(), new List<PrefabSetting>(prefab.Settings), new List<Connection>(prefab.Connections))
+        {
+        }
+
+        public static Prefab CreateBlock(string name)
+        {
+            Prefab prefab = new Prefab();
+
+            prefab.Name = name;
+            prefab.voxels = new Voxel[NumbVoxels];
+
+            return prefab;
+        }
+        public static Prefab CreateLevel(string name)
+        {
+            Prefab prefab = new Prefab();
+
+            prefab.Name = name;
+            prefab.Collider = PrefabCollider.None;
+            prefab.Type = PrefabType.Level;
+
+            return prefab;
         }
 
         public unsafe RawPrefab ToRaw(bool clone)
@@ -273,6 +299,11 @@ namespace FancadeLoaderLib
 
             return new Prefab(name, collider, type, backgroundColor, editable, groupId, posInGroup, voxels, blocks, settings, connections);
         }
+
+        public Prefab Clone()
+            => new Prefab(this);
+        object ICloneable.Clone()
+            => new Prefab(this);
     }
 
     public enum PrefabCollider : byte

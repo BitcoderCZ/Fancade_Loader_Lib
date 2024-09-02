@@ -11,7 +11,7 @@ namespace FancadeLoaderLib
     /// </summary>
     public class PrefabList : IList<Prefab>
     {
-        public int IdOffset = RawGame.CurrentNumbStockPrefabs;
+        public ushort IdOffset = RawGame.CurrentNumbStockPrefabs;
 
         private List<Prefab> list;
 
@@ -36,6 +36,30 @@ namespace FancadeLoaderLib
         public PrefabList(IEnumerable<Prefab> collection)
         {
             list = new List<Prefab>(collection);
+        }
+
+        public void Save(FcBinaryWriter writer)
+        {
+            writer.WriteUInt32((uint)Count);
+            writer.WriteUInt16(IdOffset);
+
+            for (int i = 0; i < Count; i++)
+                this[i].ToRaw(false).Save(writer);
+        }
+        public static PrefabList Load(FcBinaryReader reader)
+        {
+            uint count = reader.ReadUInt32();
+            ushort idOffset = reader.ReadUInt16();
+
+            List<Prefab> list = new List<Prefab>((int)count);
+
+            for (int i = 0; i < count; i++)
+                list.Add(Prefab.FromRaw(RawPrefab.Load(reader), ushort.MaxValue, 0, false));
+
+            return new PrefabList(list)
+            {
+                IdOffset = idOffset,
+            };
         }
 
         public void Add(Prefab item)

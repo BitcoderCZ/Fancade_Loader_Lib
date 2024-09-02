@@ -52,29 +52,29 @@ namespace FancadeLoaderLib
         public int Index(int x, int y, int z)
             => Array.Index(x, y, z);
 
-        //public void SetGroup(Vector3I pos, Block block)
-        //    => setGroup(pos.X, pos.Y, pos.Z, block);
-        //public void SetBlock(int x, int y, int z, Block block)
-        //    => setGroup(x, y, z, block);
-        //private void setGroup(int x, int y, int z, Block block)
-        //{
-        //    ushort id = block.MainId;
-        //    Vector3I size = block.GetSize();
+        public void SetGroup(Vector3I pos, PrefabGroup group)
+            => setGroup(pos.X, pos.Y, pos.Z, group);
+        public void SetBlock(int x, int y, int z, PrefabGroup group)
+            => setGroup(x, y, z, group);
+        private void setGroup(int x, int y, int z, PrefabGroup group)
+        {
+            ushort id = group.Id;
+            Vector3B size = group.Size;
 
-        //    ensureSizeAndMaxPos(x + (size.X - 1), y + (size.Y - 1), z + (size.Z - 1));
+            EnsureSize(x + (size.X - 1), y + (size.Y - 1), z + (size.Z - 1));
 
-        //    for (int _z = 0; _z < size.Z; _z++)
-        //        for (int _y = 0; _y < size.Y; _y++)
-        //            for (int _x = 0; _x < size.X; _x++)
-        //            {
-        //                Vector3I pos = new Vector3I(_x, _y, _z);
-        //                if (!block.Sections.ContainsKey(pos))
-        //                    continue;
+            for (byte _z = 0; _z < size.Z; _z++)
+                for (byte _y = 0; _y < size.Y; _y++)
+                    for (byte _x = 0; _x < size.X; _x++)
+                    {
+                        Vector3B pos = new Vector3B(_x, _y, _z);
+                        if (!group.ContainsKey(pos))
+                            continue;
 
-        //                setPrefab(x + _x, y + _y, z + _z, id);
-        //                id++;
-        //            }
-        //}
+                        setBlock(x + _x, y + _y, z + _z, id);
+                        id++;
+                    }
+        }
 
         #region SetBlock
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -197,19 +197,10 @@ namespace FancadeLoaderLib
             }
         }
 
-        private void EnsureSize(Vector3I pos)
+        public void EnsureSize(Vector3I pos)
             => EnsureSize(pos.X, pos.Y, pos.Z);
-        private void EnsureSize(int posX, int posY, int posZ)
+        public void EnsureSize(int posX, int posY, int posZ)
         {
-            if (posX >= Array.LengthX || posY >= Array.LengthY || posZ >= Array.LengthZ)
-            {
-                Array.Resize(
-                    Math.Max(useBlock(posX + 1, blockSize), Array.LengthX),
-                    Math.Max(useBlock(posY + 1, blockSize), Array.LengthY),
-                    Math.Max(useBlock(posZ + 1, blockSize), Array.LengthZ)
-                );
-            }
-
             Vector3I size = Size;
             if (posX >= size.X)
                 size.X = posX + 1;

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace FancadeLoaderLib
 {
-    public class Game
+    public class Game : ICloneable
     {
         private string name;
         public string Name
@@ -45,6 +46,10 @@ namespace FancadeLoaderLib
 
         public readonly PrefabList Prefabs;
 
+        public Game(string name)
+            : this(name, "Unknown Author", string.Empty, Enumerable.Empty<Prefab>())
+        {
+        }
         public Game(string name, string author, string description, IEnumerable<Prefab> prefabs)
         {
             if (prefabs is null)
@@ -54,6 +59,10 @@ namespace FancadeLoaderLib
             Author = author;
             Description = description;
             Prefabs = new PrefabList(prefabs);
+        }
+        public Game(Game game)
+            : this(game.Name, game.Author, game.Description, game.Prefabs.Select(prefab => prefab.Clone()))
+        {
         }
 
         public void MakeEditable(bool changeAuthor)
@@ -96,5 +105,10 @@ namespace FancadeLoaderLib
             => FromRaw(RawGame.Load(reader), false);
         public static Game LoadCompressed(Stream stream)
             => FromRaw(RawGame.LoadCompressed(stream), false);
+
+        public Game Clone()
+            => new Game(this);
+        object ICloneable.Clone()
+            => new Game(this);
     }
 }

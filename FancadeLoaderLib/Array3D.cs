@@ -105,6 +105,8 @@ namespace FancadeLoaderLib
                 throw new ArgumentOutOfRangeException();
             else if (newX == 0 || newY == 0 || newZ == 0)
             {
+                Console.WriteLine($"Resize {new Vector3I(LengthX, LengthY, LengthZ)} -> {new Vector3I(newX, newY, newZ)}");
+
                 Array = new T[0];
 
                 LengthX = 0;
@@ -123,14 +125,16 @@ namespace FancadeLoaderLib
 
             int minX = Math.Min(LengthX, newX);
 
-            Parallel.For(0, newZ, new ParallelOptions() { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2) }, z =>
+            for (int z = 0; z < newZ; z++)
             {
                 for (int y = 0; y < newY; y++)
                 {
                     if (InBounds(0, y, z) && inBounds(y, z))
-                        Buffer.BlockCopy(Array, Index(0, y, z), newArray, index(0, y, z), minX);
+                    {
+                        System.Array.Copy(Array, Index(0, y, z), newArray, index(0, y, z), minX);
+                    }
                 }
-            });
+            }
 
             Array = newArray;
 
