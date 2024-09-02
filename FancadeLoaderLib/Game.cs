@@ -43,9 +43,9 @@ namespace FancadeLoaderLib
             }
         }
 
-        public readonly List<Prefab> Prefabs;
+        public readonly PrefabList Prefabs;
 
-        public Game(string name, string author, string description, List<Prefab> prefabs)
+        public Game(string name, string author, string description, IEnumerable<Prefab> prefabs)
         {
             if (prefabs is null)
                 throw new ArgumentNullException(nameof(prefabs));
@@ -53,7 +53,7 @@ namespace FancadeLoaderLib
             Name = name;
             Author = author;
             Description = description;
-            Prefabs = prefabs;
+            Prefabs = new PrefabList(prefabs);
         }
 
         public void MakeEditable(bool changeAuthor)

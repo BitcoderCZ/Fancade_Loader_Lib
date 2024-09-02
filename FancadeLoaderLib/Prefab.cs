@@ -111,7 +111,7 @@ namespace FancadeLoaderLib
                 }
             }
 
-            return new RawPrefab(hasConnections: Connections != null && Connections.Count > 0, hasSettings: Settings != null && Settings.Count > 0, hasBlocks: !(Blocks is null) && Blocks.Length > 0, hasVoxels: Type != PrefabType.Level && Voxels != null, isInGroup: GroupId != ushort.MaxValue, hasColliderByte: Collider != PrefabCollider.Box, unEditable: !Editable, unEditable2: !Editable, nonDefaultBackgroundColor: BackgroundColor != FcColorE.Default, hasData2: false, hasData1: false, Name != "New Block", hasTypeByte: Type != 0, typeByte: (byte)Type, name: Name, data1: 0, data2: 0, backgroundColor: (byte)BackgroundColor, colliderByte: (byte)Collider, groupId: GroupId, posInGroup: PosInGroup,
+            return new RawPrefab(hasConnections: !(Connections is null) && Connections.Count > 0, hasSettings: !(Settings is null) && Settings.Count > 0, hasBlocks: !(Blocks is null) && Blocks.Length > 0, hasVoxels: Type != PrefabType.Level && !(Voxels is null), isInGroup: GroupId != ushort.MaxValue, hasColliderByte: Collider != PrefabCollider.Box, unEditable: !Editable, unEditable2: !Editable, nonDefaultBackgroundColor: BackgroundColor != FcColorE.Default, hasData2: false, hasData1: false, Name != "New Block", hasTypeByte: Type != 0, typeByte: (byte)Type, name: Name, data1: 0, data2: 0, backgroundColor: (byte)BackgroundColor, colliderByte: (byte)Collider, groupId: GroupId, posInGroup: PosInGroup,
                 voxels: voxels,
                 blocks: Blocks is null ? null : (clone ? Blocks.Array.Clone() : Blocks.Array),
                 settings: clone ? new List<PrefabSetting>(Settings) : Settings,
