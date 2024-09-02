@@ -12,12 +12,12 @@ namespace FancadeLoaderLib
         public Vector3US FromVoxel; // local position of the connector in SubBlock space
         public Vector3US ToVoxel; // local position of the connector in SubBlock space
 
-        public Connection(Vector3US _from, Vector3US _to, Vector3US _fromVoxel, Vector3US _toVoxel)
+        public Connection(Vector3US from, Vector3US to, Vector3US fromVoxel, Vector3US toVoxel)
         {
-            From = _from;
-            To = _to;
-            FromVoxel = _fromVoxel;
-            ToVoxel = _toVoxel;
+            From = from;
+            To = to;
+            FromVoxel = fromVoxel;
+            ToVoxel = toVoxel;
         }
 
         public void Save(FcBinaryWriter writer)

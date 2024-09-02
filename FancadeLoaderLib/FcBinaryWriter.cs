@@ -13,28 +13,28 @@ namespace FancadeLoaderLib
 
         public long Length => stream.Length;
 
-        public FcBinaryWriter(byte[] _bytes)
+        public FcBinaryWriter(byte[] bytes)
         {
-            stream = new MemoryStream(_bytes);
+            stream = new MemoryStream(bytes);
             if (!stream.CanWrite)
                 throw new Exception("Can't write to stream");
             Position = 0;
         }
 
-        public FcBinaryWriter(Stream _stream)
+        public FcBinaryWriter(Stream stream)
         {
-            stream = _stream;
-            if (!stream.CanWrite)
+            this.stream = stream;
+            if (!this.stream.CanWrite)
                 throw new Exception("Can't write to stream");
             Position = 0;
         }
 
-        public FcBinaryWriter(string _path, bool clear)
+        public FcBinaryWriter(string path, bool clear)
         {
-            if (!File.Exists(_path) || clear)
-                File.WriteAllBytes(_path, new byte[] { });
+            if (!File.Exists(path) || clear)
+                File.WriteAllBytes(path, new byte[] { });
 
-            stream = new FileStream(_path, FileMode.OpenOrCreate, FileAccess.Write);
+            stream = new FileStream(path, FileMode.Create, FileAccess.Write);
             if (!stream.CanWrite)
                 throw new Exception("Can't write to stream");
             Position = 0;

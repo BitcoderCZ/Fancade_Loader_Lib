@@ -65,15 +65,15 @@ namespace FancadeLoaderLib
 
             EnsureSize(x + (size.X - 1), y + (size.Y - 1), z + (size.Z - 1));
 
-            for (byte _z = 0; _z < size.Z; _z++)
-                for (byte _y = 0; _y < size.Y; _y++)
-                    for (byte _x = 0; _x < size.X; _x++)
+            for (byte zIndex = 0; zIndex < size.Z; zIndex++)
+                for (byte yIndex = 0; yIndex < size.Y; yIndex++)
+                    for (byte xIndex = 0; xIndex < size.X; xIndex++)
                     {
-                        Vector3B pos = new Vector3B(_x, _y, _z);
+                        Vector3B pos = new Vector3B(xIndex, yIndex, zIndex);
                         if (!group.ContainsKey(pos))
                             continue;
 
-                        setBlock(x + _x, y + _y, z + _z, id);
+                        setBlock(x + xIndex, y + yIndex, z + zIndex, id);
                         id++;
                     }
         }

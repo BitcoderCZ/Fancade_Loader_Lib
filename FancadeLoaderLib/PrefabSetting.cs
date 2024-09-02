@@ -35,15 +35,15 @@ namespace FancadeLoaderLib
             }
         }
 
-        public PrefabSetting(byte _index, SettingType _type, Vector3US _pos, object _value)
+        public PrefabSetting(byte index, SettingType type, Vector3US pos, object value)
         {
-            if (!IsValueValid(_value, _type))
-                throw new ArgumentException($"Type of value '{_value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(_type)} '{_type}'", nameof(_value));
+            if (!IsValueValid(value, type))
+                throw new ArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(type)} '{type}'", nameof(value));
 
-            Index = _index;
-            type = _type;
-            Position = _pos;
-            value = _value;
+            Index = index;
+            this.type = type;
+            Position = pos;
+            this.value = value;
         }
 
         public void SetValue(SettingType type, object value)

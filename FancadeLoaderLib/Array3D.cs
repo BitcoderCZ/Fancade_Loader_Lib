@@ -61,14 +61,14 @@ namespace FancadeLoaderLib
             if (Length != LengthX * LengthY * LengthZ)
                 throw new ArgumentException($"{nameof(array)}.Length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", "collection");
         }
-        public Array3D(Array3D<T> _array)
+        public Array3D(Array3D<T> array)
         {
-            LengthX = _array.LengthX;
-            LengthY = _array.LengthY;
-            LengthZ = _array.LengthZ;
-            layerSize = _array.layerSize;
+            LengthX = array.LengthX;
+            LengthY = array.LengthY;
+            LengthZ = array.LengthZ;
+            layerSize = array.layerSize;
 
-            Array = (T[])_array.Array.Clone();
+            Array = (T[])array.Array.Clone();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

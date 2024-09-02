@@ -18,28 +18,28 @@ namespace FancadeLoaderLib
 
         public readonly List<RawPrefab> Prefabs;
 
-        public RawGame(string _name)
+        public RawGame(string name)
         {
-            if (_name is null) throw new ArgumentNullException(nameof(_name));
+            if (name is null) throw new ArgumentNullException(nameof(name));
 
-            Name = _name;
+            Name = name;
             Author = "Unknown Author";
             Description = string.Empty;
             Prefabs = new List<RawPrefab>();
         }
 
-        public RawGame(string _name, string _author, string _description, ushort _idOffset, List<RawPrefab> _prefabs)
+        public RawGame(string name, string author, string description, ushort idOffset, List<RawPrefab> prefabs)
         {
-            if (_name is null) throw new ArgumentNullException(nameof(_name));
-            if (_author is null) throw new ArgumentNullException(nameof(_author));
-            if (_description is null) throw new ArgumentNullException(nameof(_description));
-            if (_prefabs is null) throw new ArgumentNullException(nameof(_prefabs));
+            if (name is null) throw new ArgumentNullException(nameof(name));
+            if (author is null) throw new ArgumentNullException(nameof(author));
+            if (description is null) throw new ArgumentNullException(nameof(description));
+            if (prefabs is null) throw new ArgumentNullException(nameof(prefabs));
 
-            Name = _name;
-            Author = _author;
-            Description = _description;
-            IdOffset = _idOffset;
-            Prefabs = _prefabs;
+            Name = name;
+            Author = author;
+            Description = description;
+            IdOffset = idOffset;
+            Prefabs = prefabs;
         }
 
         public void SaveCompressed(Stream stream)

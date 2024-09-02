@@ -6,10 +6,10 @@ namespace FancadeLoaderLib.Exceptions
     {
         public int Version { get; private set; }
 
-        public UnsupportedVersionException(int _version)
-            : base(_version > RawGame.CurrentFileVersion ? $"File version '{_version}' isn't supported, highest supported version is {RawGame.CurrentFileVersion}." : $"File version '{_version}' isn't supported.")
+        public UnsupportedVersionException(int version)
+            : base(version > RawGame.CurrentFileVersion ? $"File version '{version}' isn't supported, highest supported version is {RawGame.CurrentFileVersion}." : $"File version '{version}' isn't supported.")
         {
-            Version = _version;
+            Version = version;
         }
     }
 }

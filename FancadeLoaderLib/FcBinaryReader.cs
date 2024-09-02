@@ -15,28 +15,28 @@ namespace FancadeLoaderLib
 
         public long BytesLeft => Stream.Length - Position;
 
-        public FcBinaryReader(byte[] _bytes)
+        public FcBinaryReader(byte[] bytes)
         {
-            Stream = new MemoryStream(_bytes);
+            Stream = new MemoryStream(bytes);
             if (!Stream.CanRead)
                 throw new Exception("Can't read from stream");
             Position = 0;
         }
 
-        public FcBinaryReader(Stream _stream)
+        public FcBinaryReader(Stream stream)
         {
-            Stream = _stream;
+            Stream = stream;
             if (!Stream.CanRead)
                 throw new Exception("Can't read from stream");
             Position = 0;
         }
 
-        public FcBinaryReader(string _path)
+        public FcBinaryReader(string path)
         {
-            if (!File.Exists(_path))
-                throw new FileNotFoundException($"File \"{_path}\" doesn't exist", _path);
+            if (!File.Exists(path))
+                throw new FileNotFoundException($"File \"{path}\" doesn't exist", path);
 
-            Stream = new FileStream(_path, FileMode.Open, FileAccess.Read);
+            Stream = new FileStream(path, FileMode.Open, FileAccess.Read);
             if (!Stream.CanRead)
                 throw new Exception("Can't read from stream");
             Position = 0;
