@@ -131,12 +131,12 @@ namespace FancadeLoaderLib
                 for (int i = 0; i < NumbVoxels; i++)
                 {
                     Voxel voxel = Voxels[i];
-                    voxels[i + NumbVoxels * 0] = (byte)(voxel.Colors[0] | voxel.Attribs[0] << 7);
-                    voxels[i + NumbVoxels * 1] = (byte)(voxel.Colors[1] | voxel.Attribs[1] << 7);
-                    voxels[i + NumbVoxels * 2] = (byte)(voxel.Colors[2] | voxel.Attribs[2] << 7);
-                    voxels[i + NumbVoxels * 3] = (byte)(voxel.Colors[3] | voxel.Attribs[3] << 7);
-                    voxels[i + NumbVoxels * 4] = (byte)(voxel.Colors[4] | voxel.Attribs[4] << 7);
-                    voxels[i + NumbVoxels * 5] = (byte)(voxel.Colors[5] | voxel.Attribs[5] << 7);
+                    voxels[i + NumbVoxels * 0] = (byte)(voxel.Colors[0] | voxel.NotGlued[0] << 7);
+                    voxels[i + NumbVoxels * 1] = (byte)(voxel.Colors[1] | voxel.NotGlued[1] << 7);
+                    voxels[i + NumbVoxels * 2] = (byte)(voxel.Colors[2] | voxel.NotGlued[2] << 7);
+                    voxels[i + NumbVoxels * 3] = (byte)(voxel.Colors[3] | voxel.NotGlued[3] << 7);
+                    voxels[i + NumbVoxels * 4] = (byte)(voxel.Colors[4] | voxel.NotGlued[4] << 7);
+                    voxels[i + NumbVoxels * 5] = (byte)(voxel.Colors[5] | voxel.NotGlued[5] << 7);
                 }
             }
 
@@ -213,12 +213,12 @@ namespace FancadeLoaderLib
                     voxel.Colors[3] = (byte)(s3 & ColorMask);
                     voxel.Colors[4] = (byte)(s4 & ColorMask);
                     voxel.Colors[5] = (byte)(s5 & ColorMask);
-                    voxel.Attribs[0] = (byte)((s0 & GlueMask) >> 6);
-                    voxel.Attribs[1] = (byte)((s1 & GlueMask) >> 6);
-                    voxel.Attribs[2] = (byte)((s2 & GlueMask) >> 6);
-                    voxel.Attribs[3] = (byte)((s3 & GlueMask) >> 6);
-                    voxel.Attribs[4] = (byte)((s4 & GlueMask) >> 6);
-                    voxel.Attribs[5] = (byte)((s5 & GlueMask) >> 6);
+                    voxel.NotGlued[0] = (byte)((s0 & GlueMask) >> 6);
+                    voxel.NotGlued[1] = (byte)((s1 & GlueMask) >> 6);
+                    voxel.NotGlued[2] = (byte)((s2 & GlueMask) >> 6);
+                    voxel.NotGlued[3] = (byte)((s3 & GlueMask) >> 6);
+                    voxel.NotGlued[4] = (byte)((s4 & GlueMask) >> 6);
+                    voxel.NotGlued[5] = (byte)((s5 & GlueMask) >> 6);
 
                     voxels[i] = voxel;
                 }
@@ -334,12 +334,12 @@ namespace FancadeLoaderLib
         //  Z
         // -Z
         public fixed byte Colors[6];
-        public fixed byte Attribs[6]; // "legos"/glue
+        public fixed byte NotGlued[6]; // "legos"/glue
 
         public bool IsEmpty => Colors[0] == 0;
 
         public override string ToString() =>
             $"[{Colors[0]}, {Colors[1]}, {Colors[2]}, {Colors[3]}, {Colors[4]}, {Colors[5]}; Attribs:" +
-            $"{Attribs[0]}, {Attribs[1]}, {Attribs[2]}, {Attribs[3]}, {Attribs[4]}, {Attribs[5]}]";
+            $"{NotGlued[0]}, {NotGlued[1]}, {NotGlued[2]}, {NotGlued[3]}, {NotGlued[4]}, {NotGlued[5]}]";
     }
 }

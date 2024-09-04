@@ -78,6 +78,12 @@ namespace FancadeLoaderLib
                 Prefabs[i].Editable = true;
         }
 
+        public void TrimPrefabs()
+        {
+            foreach (var prefab in Prefabs)
+                prefab.Blocks.Trim();
+        }
+
         public RawGame ToRaw(bool clonePrefabs)
         {
             List<RawPrefab> prefabs = new List<RawPrefab>(Prefabs.Count);

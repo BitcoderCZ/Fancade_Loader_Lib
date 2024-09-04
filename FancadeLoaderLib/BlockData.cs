@@ -185,13 +185,13 @@ namespace FancadeLoaderLib
 
                 if (maxX != int.MaxValue && maxY != int.MaxValue && maxZ != int.MaxValue)
                 {
-                    resize(new Vector3I(maxX + 1, maxY + 1, maxZ + 1));
+                    resize(new Vector3I(maxX + 1, maxY + 1, maxZ + 1), false);
                     return;
                 }
                 else if (scanPos.X == 1 && scanPos.Y == 1 && scanPos.Z == 1)
                 {
                     // no blocks
-                    resize(Vector3I.Zero);
+                    resize(Vector3I.Zero, false);
                     return;
                 }
 
@@ -225,18 +225,21 @@ namespace FancadeLoaderLib
             => new BlockData(this);
 
         #region Utils
-        private void resize(Vector3I size)
+        private void resize(Vector3I size, bool useBlock = true)
         {
-            Array.Resize(
-                useBlock(size.X, blockSize),
-                useBlock(size.Y, blockSize),
-                useBlock(size.Z, blockSize)
-            );
+            if (useBlock)
+                Array.Resize(
+                    ceilToMultiple(size.X, blockSize),
+                    ceilToMultiple(size.Y, blockSize),
+                    ceilToMultiple(size.Z, blockSize)
+                );
+            else
+                Array.Resize(size.X, size.Y, size.Z);
 
             Size = size;
         }
 
-        private int useBlock(int numb, int blockSize)
+        private int ceilToMultiple(int numb, int blockSize)
         {
             int mod = numb % blockSize;
             return Math.Max(mod == 0 ? numb : numb + (blockSize - mod), blockSize);
