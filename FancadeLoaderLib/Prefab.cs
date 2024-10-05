@@ -213,12 +213,12 @@ namespace FancadeLoaderLib
                     voxel.Colors[3] = (byte)(s3 & ColorMask);
                     voxel.Colors[4] = (byte)(s4 & ColorMask);
                     voxel.Colors[5] = (byte)(s5 & ColorMask);
-                    voxel.NotGlued[0] = (byte)((s0 & GlueMask) >> 6);
-                    voxel.NotGlued[1] = (byte)((s1 & GlueMask) >> 6);
-                    voxel.NotGlued[2] = (byte)((s2 & GlueMask) >> 6);
-                    voxel.NotGlued[3] = (byte)((s3 & GlueMask) >> 6);
-                    voxel.NotGlued[4] = (byte)((s4 & GlueMask) >> 6);
-                    voxel.NotGlued[5] = (byte)((s5 & GlueMask) >> 6);
+                    voxel.NotGlued[0] = (byte)((s0 & GlueMask) >> 7);
+                    voxel.NotGlued[1] = (byte)((s1 & GlueMask) >> 7);
+                    voxel.NotGlued[2] = (byte)((s2 & GlueMask) >> 7);
+                    voxel.NotGlued[3] = (byte)((s3 & GlueMask) >> 7);
+                    voxel.NotGlued[4] = (byte)((s4 & GlueMask) >> 7);
+                    voxel.NotGlued[5] = (byte)((s5 & GlueMask) >> 7);
 
                     voxels[i] = voxel;
                 }
