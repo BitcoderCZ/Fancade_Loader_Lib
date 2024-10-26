@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FancadeLoaderLib.Raw;
+using System;
 
 namespace FancadeLoaderLib.Exceptions
 {

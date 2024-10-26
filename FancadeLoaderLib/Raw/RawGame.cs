@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace FancadeLoaderLib
+namespace FancadeLoaderLib.Raw
 {
     public class RawGame
     {

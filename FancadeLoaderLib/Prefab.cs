@@ -1,4 +1,5 @@
-﻿using MathUtils.Vectors;
+﻿using FancadeLoaderLib.Raw;
+using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -43,7 +44,7 @@ namespace FancadeLoaderLib
 
         public bool Editable;
 
-        public bool IsInGourp => GroupId != ushort.MaxValue;
+        public bool IsInGroup => GroupId != ushort.MaxValue;
         public ushort GroupId;
         public Vector3B PosInGroup;
 

@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace FancadeLoaderLib
+namespace FancadeLoaderLib.Raw
 {
     public class RawPrefab
     {
@@ -75,8 +75,7 @@ namespace FancadeLoaderLib
 
         public unsafe void Save(FcBinaryWriter writer)
         {
-            // actually ushort, but I'd need to cast it everywhere, so I used int
-            int header = 0;
+            ushort header = 0;
 
             if (HasTypeByte)
                 header |= 0b0001000000000000;
@@ -110,7 +109,7 @@ namespace FancadeLoaderLib
             if (HasConnections)
                 header |= 0b1;
 
-            writer.WriteUInt16((ushort)header);
+            writer.WriteUInt16(header);
 
             if (HasTypeByte)
                 writer.WriteUInt8(TypeByte);

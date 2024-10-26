@@ -5,9 +5,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FancadeLoaderLib
+namespace FancadeLoaderLib.Partial
 {
-    public class PrefabGroup : IDictionary<Vector3B, Prefab>, ICloneable
+    /// <summary>
+    /// <see cref="PrefabGroup"/> for <see cref="PartialPrefab"/>, usefull for when just the dimensions of groups are needed.
+    /// </summary>
+    public class PartialPrefabGroup : IDictionary<Vector3B, PartialPrefab>, ICloneable
     {
         public ushort Id { get; private set; }
         public Vector3B Size { get; private set; }
@@ -15,27 +18,27 @@ namespace FancadeLoaderLib
         public InvalidGroupIdBehaviour InvalidGroupIdBehaviour { get; set; } = InvalidGroupIdBehaviour.ThrowException;
 
         public ICollection<Vector3B> Keys => prefabs.Keys;
-        public ICollection<Prefab> Values => prefabs.Values;
+        public ICollection<PartialPrefab> Values => prefabs.Values;
 
         public int Count => prefabs.Count;
 
         public bool IsReadOnly => false;
 
-        public Prefab this[Vector3B index]
+        public PartialPrefab this[Vector3B index]
         {
             get => prefabs[index];
             set => prefabs[index] = validate(value);
         }
 
-        private readonly Dictionary<Vector3B, Prefab> prefabs;
+        private readonly Dictionary<Vector3B, PartialPrefab> prefabs;
 
-        public PrefabGroup()
+        public PartialPrefabGroup()
         {
-            prefabs = new Dictionary<Vector3B, Prefab>();
+            prefabs = new Dictionary<Vector3B, PartialPrefab>();
             Size = Vector3B.Zero;
         }
 
-        public PrefabGroup(IEnumerable<Prefab> collection)
+        public PartialPrefabGroup(IEnumerable<PartialPrefab> collection)
         {
             if (!collection.Any())
                 throw new ArgumentNullException(nameof(collection), $"{nameof(collection)} cannot be empty.");
@@ -62,7 +65,7 @@ namespace FancadeLoaderLib
             findSize();
         }
 
-        public PrefabGroup(IEnumerable<Prefab> collection, ushort id)
+        public PartialPrefabGroup(IEnumerable<PartialPrefab> collection, ushort id)
         {
             if (id == ushort.MaxValue)
                 throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(id)} cannot be {ushort.MaxValue}");
@@ -72,7 +75,7 @@ namespace FancadeLoaderLib
             if (!collection.Any())
             {
                 Size = Vector3B.Zero;
-                prefabs = new Dictionary<Vector3B, Prefab>();
+                prefabs = new Dictionary<Vector3B, PartialPrefab>();
                 return;
             }
 
@@ -80,7 +83,7 @@ namespace FancadeLoaderLib
             {
                 // validate
                 if (prefab.PosInGroup.X < 0 || prefab.PosInGroup.Y < 0 || prefab.PosInGroup.Z < 0)
-                    throw new ArgumentOutOfRangeException(nameof(collection), $"{nameof(Prefab.PosInGroup)} cannot be negative.");
+                    throw new ArgumentOutOfRangeException(nameof(collection), $"{nameof(PartialPrefab.PosInGroup)} cannot be negative.");
                 else if (!prefab.IsInGroup)
                     throw new ArgumentException($"All prefabs in {nameof(collection)} must be in group", nameof(collection));
                 else if (prefab.GroupId != Id)
@@ -92,19 +95,20 @@ namespace FancadeLoaderLib
             findSize();
         }
 
-        public PrefabGroup(PrefabGroup group, bool deepCopy)
+        public PartialPrefabGroup(PartialPrefabGroup group, bool deepCopy)
         {
             if (deepCopy)
-                prefabs = new Dictionary<Vector3B, Prefab>(group.prefabs.Select(item => new KeyValuePair<Vector3B, Prefab>(item.Key, item.Value.Clone())));
+                prefabs = new Dictionary<Vector3B, PartialPrefab>(group.prefabs.Select(item => new KeyValuePair<Vector3B, PartialPrefab>(item.Key, item.Value.Clone())));
             else
-                prefabs = new Dictionary<Vector3B, Prefab>(group.prefabs);
+                prefabs = new Dictionary<Vector3B, PartialPrefab>(group.prefabs);
+
             Size = group.Size;
         }
 
         public void SwapPositions(Vector3B posA, Vector3B posB)
         {
-            TryGetValue(posA, out Prefab? a);
-            TryGetValue(posB, out Prefab? b);
+            TryGetValue(posA, out PartialPrefab? a);
+            TryGetValue(posB, out PartialPrefab? b);
 
             if (!(a is null))
                 a.PosInGroup = posB;
@@ -115,7 +119,7 @@ namespace FancadeLoaderLib
             this[posB] = a;
         }
 
-        public void Add(Vector3B key, Prefab value)
+        public void Add(Vector3B key, PartialPrefab value)
         {
             prefabs.Add(key, validate(value));
 
@@ -135,7 +139,7 @@ namespace FancadeLoaderLib
             return val;
         }
 
-        public bool TryGetValue(Vector3B key, out Prefab value)
+        public bool TryGetValue(Vector3B key, out PartialPrefab value)
             => prefabs.TryGetValue(key, out value);
 
         public void Clear()
@@ -145,26 +149,26 @@ namespace FancadeLoaderLib
             Size = Vector3B.Zero;
         }
 
-        void ICollection<KeyValuePair<Vector3B, Prefab>>.Add(KeyValuePair<Vector3B, Prefab> item)
+        void ICollection<KeyValuePair<Vector3B, PartialPrefab>>.Add(KeyValuePair<Vector3B, PartialPrefab> item)
         {
-            Prefab res = validate(item.Value);
+            PartialPrefab res = validate(item.Value);
             if (!ReferenceEquals(item.Value, res))
-                item = new KeyValuePair<Vector3B, Prefab>(item.Key, res);
+                item = new KeyValuePair<Vector3B, PartialPrefab>(item.Key, res);
 
-            ((ICollection<KeyValuePair<Vector3B, Prefab>>)prefabs).Add(item);
+            ((ICollection<KeyValuePair<Vector3B, PartialPrefab>>)prefabs).Add(item);
 
             Size = Vector3B.Max(Size, item.Key + Vector3B.One);
         }
 
-        bool ICollection<KeyValuePair<Vector3B, Prefab>>.Contains(KeyValuePair<Vector3B, Prefab> item)
-            => ((ICollection<KeyValuePair<Vector3B, Prefab>>)prefabs).Contains(item);
+        bool ICollection<KeyValuePair<Vector3B, PartialPrefab>>.Contains(KeyValuePair<Vector3B, PartialPrefab> item)
+            => ((ICollection<KeyValuePair<Vector3B, PartialPrefab>>)prefabs).Contains(item);
 
-        void ICollection<KeyValuePair<Vector3B, Prefab>>.CopyTo(KeyValuePair<Vector3B, Prefab>[] array, int arrayIndex)
-            => ((ICollection<KeyValuePair<Vector3B, Prefab>>)prefabs).CopyTo(array, arrayIndex);
+        void ICollection<KeyValuePair<Vector3B, PartialPrefab>>.CopyTo(KeyValuePair<Vector3B, PartialPrefab>[] array, int arrayIndex)
+            => ((ICollection<KeyValuePair<Vector3B, PartialPrefab>>)prefabs).CopyTo(array, arrayIndex);
 
-        bool ICollection<KeyValuePair<Vector3B, Prefab>>.Remove(KeyValuePair<Vector3B, Prefab> item)
+        bool ICollection<KeyValuePair<Vector3B, PartialPrefab>>.Remove(KeyValuePair<Vector3B, PartialPrefab> item)
         {
-            bool val = ((ICollection<KeyValuePair<Vector3B, Prefab>>)prefabs).Remove(item);
+            bool val = ((ICollection<KeyValuePair<Vector3B, PartialPrefab>>)prefabs).Remove(item);
 
             if (val)
                 findSize();
@@ -172,16 +176,16 @@ namespace FancadeLoaderLib
             return val;
         }
 
-        public IEnumerator<KeyValuePair<Vector3B, Prefab>> GetEnumerator()
+        public IEnumerator<KeyValuePair<Vector3B, PartialPrefab>> GetEnumerator()
             => prefabs.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
             => prefabs.GetEnumerator();
 
-        public PrefabGroup Clone(bool deepCopy)
-            => new PrefabGroup(this, deepCopy);
+        public PartialPrefabGroup Clone(bool deepCopy)
+            => new PartialPrefabGroup(this, deepCopy);
         object ICloneable.Clone()
-            => new PrefabGroup(this, true);
+            => new PartialPrefabGroup(this, true);
 
         private void findSize()
         {
@@ -191,7 +195,7 @@ namespace FancadeLoaderLib
                 Size = Vector3B.Max(Size, pos + Vector3B.One);
         }
 
-        private Prefab validate(Prefab prefab)
+        private PartialPrefab validate(PartialPrefab prefab)
         {
             if (prefab.GroupId != Id)
             {
@@ -202,7 +206,7 @@ namespace FancadeLoaderLib
                         break;
                     case InvalidGroupIdBehaviour.CloneAndChangeGroupId:
                         {
-                            Prefab newPrefab = prefab.Clone();
+                            PartialPrefab newPrefab = prefab.Clone();
                             newPrefab.GroupId = Id;
                             return newPrefab;
                         }
@@ -214,12 +218,5 @@ namespace FancadeLoaderLib
 
             return prefab;
         }
-    }
-
-    public enum InvalidGroupIdBehaviour
-    {
-        ThrowException,
-        ChangeGroupId,
-        CloneAndChangeGroupId,
     }
 }

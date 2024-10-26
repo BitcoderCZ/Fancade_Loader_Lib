@@ -1,4 +1,5 @@
-﻿using MathUtils.Vectors;
+﻿using FancadeLoaderLib.Partial;
+using MathUtils.Vectors;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -52,13 +53,12 @@ namespace FancadeLoaderLib
         public int Index(int x, int y, int z)
             => Array.Index(x, y, z);
 
+        #region SetGroup
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetGroup(Vector3I pos, PrefabGroup group)
-            => setGroup(pos.X, pos.Y, pos.Z, group);
+            => SetGroup(pos.X, pos.Y, pos.Z, group);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetBlock(int x, int y, int z, PrefabGroup group)
-            => setGroup(x, y, z, group);
-        private void setGroup(int x, int y, int z, PrefabGroup group)
+        public void SetGroup(int x, int y, int z, PrefabGroup group)
         {
             ushort id = group.Id;
             Vector3B size = group.Size;
@@ -77,6 +77,31 @@ namespace FancadeLoaderLib
                         id++;
                     }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetGroup(Vector3I pos, PartialPrefabGroup group)
+            => SetGroup(pos.X, pos.Y, pos.Z, group);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetGroup(int x, int y, int z, PartialPrefabGroup group)
+        {
+            ushort id = group.Id;
+            Vector3B size = group.Size;
+
+            EnsureSize(x + (size.X - 1), y + (size.Y - 1), z + (size.Z - 1));
+
+            for (byte zIndex = 0; zIndex < size.Z; zIndex++)
+                for (byte yIndex = 0; yIndex < size.Y; yIndex++)
+                    for (byte xIndex = 0; xIndex < size.X; xIndex++)
+                    {
+                        Vector3B pos = new Vector3B(xIndex, yIndex, zIndex);
+                        if (!group.ContainsKey(pos))
+                            continue;
+
+                        setBlock(x + xIndex, y + yIndex, z + zIndex, id);
+                        id++;
+                    }
+        }
+        #endregion
 
         #region SetBlock
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -4,19 +4,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FancadeLoaderLib
+namespace FancadeLoaderLib.Partial
 {
     /// <summary>
-    /// <see cref="List{T}"/> wrapper for easier <see cref="Prefab"/> handeling.
-    /// Also allows for saving/loading.
+    /// <see cref="PrefabList"/> for <see cref="PartialPrefab"/>.
     /// </summary>
-    public class PrefabList : IList<Prefab>, ICloneable
+    public class PartialPrefabList : IList<PartialPrefab>, ICloneable
     {
         public ushort IdOffset = RawGame.CurrentNumbStockPrefabs;
 
-        private List<Prefab> list;
+        private List<PartialPrefab> list;
 
-        public Prefab this[int index]
+        public PartialPrefab this[int index]
         {
             get => list[index];
             set => list[index] = value;
@@ -26,26 +25,26 @@ namespace FancadeLoaderLib
 
         public bool IsReadOnly => false;
 
-        public PrefabList()
+        public PartialPrefabList()
         {
-            list = new List<Prefab>();
+            list = new List<PartialPrefab>();
         }
-        public PrefabList(int capacity)
+        public PartialPrefabList(int capacity)
         {
-            list = new List<Prefab>(capacity);
+            list = new List<PartialPrefab>(capacity);
         }
-        public PrefabList(IEnumerable<Prefab> collection)
+        public PartialPrefabList(IEnumerable<PartialPrefab> collection)
         {
-            list = new List<Prefab>(collection);
+            list = new List<PartialPrefab>(collection);
         }
-        public PrefabList(PrefabList list, bool deepCopy)
+        public PartialPrefabList(PartialPrefabList list, bool deepCopy)
         {
             if (deepCopy)
-                this.list = new List<Prefab>(list.Select(prefab => prefab.Clone()));
+                this.list = new List<PartialPrefab>(list.Select(prefab => prefab.Clone()));
             else
-                this.list = new List<Prefab>(list);
+                this.list = new List<PartialPrefab>(list);
         }
-        private PrefabList(List<Prefab> list)
+        private PartialPrefabList(List<PartialPrefab> list)
         {
             this.list = list;
         }
@@ -56,93 +55,93 @@ namespace FancadeLoaderLib
             writer.WriteUInt16(IdOffset);
 
             for (int i = 0; i < Count; i++)
-                this[i].ToRaw(false).Save(writer);
+                this[i].Save(writer);
         }
-        public static PrefabList Load(FcBinaryReader reader)
+        public static PartialPrefabList Load(FcBinaryReader reader)
         {
             uint count = reader.ReadUInt32();
             ushort idOffset = reader.ReadUInt16();
 
-            List<Prefab> list = new List<Prefab>((int)count);
+            List<PartialPrefab> list = new List<PartialPrefab>((int)count);
 
             for (int i = 0; i < count; i++)
-                list.Add(Prefab.FromRaw(RawPrefab.Load(reader), ushort.MaxValue, 0, false));
+                list.Add(PartialPrefab.Load(reader));
 
-            return new PrefabList(list)
+            return new PartialPrefabList(list)
             {
                 IdOffset = idOffset,
             };
         }
 
-        public void Add(Prefab item)
+        public void Add(PartialPrefab item)
             => list.Add(item);
-        public void AddRange(IEnumerable<Prefab> collection)
+        public void AddRange(IEnumerable<PartialPrefab> collection)
             => list.AddRange(collection);
 
         public void Clear()
             => list.Clear();
 
-        public bool Contains(Prefab item)
+        public bool Contains(PartialPrefab item)
             => list.Contains(item);
 
-        public void CopyTo(Prefab[] array, int arrayIndex)
+        public void CopyTo(PartialPrefab[] array, int arrayIndex)
             => list.CopyTo(array, arrayIndex);
-        public void CopyTo(Prefab[] array)
+        public void CopyTo(PartialPrefab[] array)
             => list.CopyTo(array);
-        public void CopyTo(int index, Prefab[] array, int arrayIndex, int count)
+        public void CopyTo(int index, PartialPrefab[] array, int arrayIndex, int count)
             => list.CopyTo(index, array, arrayIndex, count);
 
-        public bool Exists(Predicate<Prefab> match)
+        public bool Exists(Predicate<PartialPrefab> match)
             => list.Exists(match);
 
-        public Prefab Find(Predicate<Prefab> match)
+        public PartialPrefab Find(Predicate<PartialPrefab> match)
             => list.Find(match);
-        public List<Prefab> FindAll(Predicate<Prefab> match)
+        public List<PartialPrefab> FindAll(Predicate<PartialPrefab> match)
             => list.FindAll(match);
 
-        public int FindIndex(int startIndex, int count, Predicate<Prefab> match)
+        public int FindIndex(int startIndex, int count, Predicate<PartialPrefab> match)
             => list.FindIndex(startIndex, count, match);
-        public int FindIndex(int startIndex, Predicate<Prefab> match)
+        public int FindIndex(int startIndex, Predicate<PartialPrefab> match)
             => list.FindIndex(startIndex, match);
-        public int FindIndex(Predicate<Prefab> match)
+        public int FindIndex(Predicate<PartialPrefab> match)
             => list.FindIndex(match);
 
-        public Prefab FindLast(Predicate<Prefab> match)
+        public PartialPrefab FindLast(Predicate<PartialPrefab> match)
             => list.FindLast(match);
 
-        public int FindLastIndex(int startIndex, int count, Predicate<Prefab> match)
+        public int FindLastIndex(int startIndex, int count, Predicate<PartialPrefab> match)
             => list.FindLastIndex(startIndex, count, match);
-        public int FindLastIndex(int startIndex, Predicate<Prefab> match)
+        public int FindLastIndex(int startIndex, Predicate<PartialPrefab> match)
             => list.FindLastIndex(startIndex, match);
-        public int FindLastIndex(Predicate<Prefab> match)
+        public int FindLastIndex(Predicate<PartialPrefab> match)
             => list.FindLastIndex(match);
 
-        public void Insert(int index, Prefab item)
+        public void Insert(int index, PartialPrefab item)
         {
             list.Insert(index, item);
             increaseAfter(index, 1);
         }
 
-        public void InsertRange(int index, IEnumerable<Prefab> collection)
+        public void InsertRange(int index, IEnumerable<PartialPrefab> collection)
         {
             list.InsertRange(index, collection);
             int count = collection.Count();
             increaseAfter(index + count - 1, (ushort)count);
         }
 
-        public int LastIndexOf(Prefab item)
+        public int LastIndexOf(PartialPrefab item)
             => list.LastIndexOf(item);
 
-        public int LastIndexOf(Prefab item, int index)
+        public int LastIndexOf(PartialPrefab item, int index)
             => list.LastIndexOf(item, index);
 
-        public int LastIndexOf(Prefab item, int index, int count)
+        public int LastIndexOf(PartialPrefab item, int index, int count)
             => list.LastIndexOf(item, index, count);
 
-        public int IndexOf(Prefab item)
+        public int IndexOf(PartialPrefab item)
             => list.IndexOf(item);
 
-        public bool Remove(Prefab item)
+        public bool Remove(PartialPrefab item)
         {
             int index = list.IndexOf(item);
             if (index < 0) return false;
@@ -165,22 +164,22 @@ namespace FancadeLoaderLib
             decreaseAfter(index - 1, (ushort)count);
         }
 
-        public bool TrueForAll(Predicate<Prefab> match)
+        public bool TrueForAll(Predicate<PartialPrefab> match)
             => list.TrueForAll(match);
 
-        public Prefab[] ToArray()
+        public PartialPrefab[] ToArray()
             => list.ToArray();
 
-        public IEnumerator<Prefab> GetEnumerator()
+        public IEnumerator<PartialPrefab> GetEnumerator()
             => list.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
             => list.GetEnumerator();
 
-        public PrefabList Clone(bool deepCopy)
-            => new PrefabList(this, deepCopy);
+        public PartialPrefabList Clone(bool deepCopy)
+            => new PartialPrefabList(this, deepCopy);
         object ICloneable.Clone()
-            => new PrefabList(this, true);
+            => new PartialPrefabList(this, true);
 
         private void increaseAfter(int index, ushort amount)
         {
@@ -188,19 +187,10 @@ namespace FancadeLoaderLib
 
             for (int i = index; i < list.Count; i++)
             {
-                Prefab prefab = this[i];
+                PartialPrefab prefab = this[i];
 
                 if (prefab.IsInGroup)
                     prefab.GroupId += amount;
-
-                if (!(prefab.Blocks is null))
-                {
-                    ushort[] array = prefab.Blocks.Array.Array;
-
-                    for (int j = 0; j < array.Length; j++)
-                        if (array[j] > index)
-                            array[j] += amount;
-                }
             }
         }
 
@@ -210,19 +200,10 @@ namespace FancadeLoaderLib
 
             for (int i = index; i < list.Count; i++)
             {
-                Prefab prefab = this[i];
+                PartialPrefab prefab = this[i];
 
                 if (prefab.IsInGroup)
                     prefab.GroupId -= amount;
-
-                if (!(prefab.Blocks is null))
-                {
-                    ushort[] array = prefab.Blocks.Array.Array;
-
-                    for (int j = 0; j < array.Length; j++)
-                        if (array[j] > index)
-                            array[j] -= amount;
-                }
             }
         }
     }
