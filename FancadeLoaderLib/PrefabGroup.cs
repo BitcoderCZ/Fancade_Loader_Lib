@@ -9,7 +9,18 @@ namespace FancadeLoaderLib
 {
     public class PrefabGroup : IDictionary<Vector3B, Prefab>, ICloneable
     {
-        public ushort Id { get; private set; }
+        private ushort id;
+        public ushort Id
+        {
+            get => id;
+            set
+            {
+                foreach (var prefab in Values)
+                    prefab.GroupId = value;
+
+                id = value;
+            }
+        }
         public Vector3B Size { get; private set; }
 
         public InvalidGroupIdBehaviour InvalidGroupIdBehaviour { get; set; } = InvalidGroupIdBehaviour.ThrowException;
@@ -177,6 +188,21 @@ namespace FancadeLoaderLib
 
         IEnumerator IEnumerable.GetEnumerator()
             => prefabs.GetEnumerator();
+
+        public IEnumerable<Prefab> EnumerateInIdOrder()
+        {
+            for (byte z = 0; z < Size.Z; z++)
+            {
+                for (byte y = 0; y < Size.Y; y++)
+                {
+                    for (byte x = 0; x < Size.X; x++)
+                    {
+                        if (prefabs.TryGetValue(new Vector3B(x, y, z), out var prefab))
+                            yield return prefab;
+                    }
+                }
+            }
+        }
 
         public PrefabGroup Clone(bool deepCopy)
             => new PrefabGroup(this, deepCopy);

@@ -77,6 +77,11 @@ namespace FancadeLoaderLib.Partial
             => list.Add(item);
         public void AddRange(IEnumerable<PartialPrefab> collection)
             => list.AddRange(collection);
+        public void AddGroup(PartialPrefabGroup group)
+        {
+            group.Id = (ushort)list.Count;
+            list.AddRange(group.EnumerateInIdOrder());
+        }
 
         public void Clear()
             => list.Clear();
@@ -118,15 +123,22 @@ namespace FancadeLoaderLib.Partial
 
         public void Insert(int index, PartialPrefab item)
         {
-            list.Insert(index, item);
             increaseAfter(index, 1);
+            list.Insert(index, item);
         }
 
         public void InsertRange(int index, IEnumerable<PartialPrefab> collection)
         {
-            list.InsertRange(index, collection);
             int count = collection.Count();
-            increaseAfter(index + count - 1, (ushort)count);
+            increaseAfter(index, (ushort)count);
+            list.InsertRange(index, collection);
+        }
+
+        public void InsertGroup(int index, PartialPrefabGroup group)
+        {
+            increaseAfter(index, (ushort)group.Count);
+            group.Id = (ushort)index;
+            list.InsertRange(index, group.EnumerateInIdOrder());
         }
 
         public int LastIndexOf(PartialPrefab item)
@@ -185,11 +197,11 @@ namespace FancadeLoaderLib.Partial
         {
             index += IdOffset;
 
-            for (int i = index; i < list.Count; i++)
+            for (int i = 0; i < list.Count; i++)
             {
                 PartialPrefab prefab = this[i];
 
-                if (prefab.IsInGroup)
+                if (prefab.IsInGroup && prefab.GroupId >= index)
                     prefab.GroupId += amount;
             }
         }
@@ -198,11 +210,11 @@ namespace FancadeLoaderLib.Partial
         {
             index += IdOffset;
 
-            for (int i = index; i < list.Count; i++)
+            for (int i = 0; i < list.Count; i++)
             {
                 PartialPrefab prefab = this[i];
 
-                if (prefab.IsInGroup)
+                if (prefab.IsInGroup && prefab.GroupId >= index)
                     prefab.GroupId -= amount;
             }
         }

@@ -78,6 +78,11 @@ namespace FancadeLoaderLib
             => list.Add(item);
         public void AddRange(IEnumerable<Prefab> collection)
             => list.AddRange(collection);
+        public void AddGroup(PrefabGroup group)
+        {
+            group.Id = (ushort)list.Count;
+            list.AddRange(group.EnumerateInIdOrder());
+        }
 
         public void Clear()
             => list.Clear();
@@ -119,15 +124,22 @@ namespace FancadeLoaderLib
 
         public void Insert(int index, Prefab item)
         {
-            list.Insert(index, item);
             increaseAfter(index, 1);
+            list.Insert(index, item);
         }
 
         public void InsertRange(int index, IEnumerable<Prefab> collection)
         {
-            list.InsertRange(index, collection);
             int count = collection.Count();
-            increaseAfter(index + count - 1, (ushort)count);
+            increaseAfter(index, (ushort)count);
+            list.InsertRange(index, collection);
+        }
+
+        public void InsertGroup(int index, PrefabGroup group)
+        {
+            increaseAfter(index, (ushort)group.Count);
+            group.Id = (ushort)index;
+            list.InsertRange(index, group.EnumerateInIdOrder());
         }
 
         public int LastIndexOf(Prefab item)
@@ -186,11 +198,11 @@ namespace FancadeLoaderLib
         {
             index += IdOffset;
 
-            for (int i = index; i < list.Count; i++)
+            for (int i = 0; i < list.Count; i++)
             {
                 Prefab prefab = this[i];
 
-                if (prefab.IsInGroup)
+                if (prefab.IsInGroup && prefab.GroupId >= index)
                     prefab.GroupId += amount;
 
                 if (!(prefab.Blocks is null))
@@ -198,7 +210,7 @@ namespace FancadeLoaderLib
                     ushort[] array = prefab.Blocks.Array.Array;
 
                     for (int j = 0; j < array.Length; j++)
-                        if (array[j] > index)
+                        if (array[j] >= index)
                             array[j] += amount;
                 }
             }
@@ -208,11 +220,11 @@ namespace FancadeLoaderLib
         {
             index += IdOffset;
 
-            for (int i = index; i < list.Count; i++)
+            for (int i = 0; i < list.Count; i++)
             {
                 Prefab prefab = this[i];
 
-                if (prefab.IsInGroup)
+                if (prefab.IsInGroup && prefab.GroupId >= index)
                     prefab.GroupId -= amount;
 
                 if (!(prefab.Blocks is null))
@@ -220,7 +232,7 @@ namespace FancadeLoaderLib
                     ushort[] array = prefab.Blocks.Array.Array;
 
                     for (int j = 0; j < array.Length; j++)
-                        if (array[j] > index)
+                        if (array[j] >= index)
                             array[j] -= amount;
                 }
             }

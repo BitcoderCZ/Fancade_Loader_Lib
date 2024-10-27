@@ -12,7 +12,18 @@ namespace FancadeLoaderLib.Partial
     /// </summary>
     public class PartialPrefabGroup : IDictionary<Vector3B, PartialPrefab>, ICloneable
     {
-        public ushort Id { get; private set; }
+        private ushort id;
+        public ushort Id
+        {
+            get => id;
+            set
+            {
+                foreach (var prefab in Values)
+                    prefab.GroupId = value;
+
+                id = value;
+            }
+        }
         public Vector3B Size { get; private set; }
 
         public InvalidGroupIdBehaviour InvalidGroupIdBehaviour { get; set; } = InvalidGroupIdBehaviour.ThrowException;
@@ -181,6 +192,21 @@ namespace FancadeLoaderLib.Partial
 
         IEnumerator IEnumerable.GetEnumerator()
             => prefabs.GetEnumerator();
+
+        public IEnumerable<PartialPrefab> EnumerateInIdOrder()
+        {
+            for (byte z = 0; z < Size.Z; z++)
+            {
+                for (byte y = 0; y < Size.Y; y++)
+                {
+                    for (byte x = 0; x < Size.X; x++)
+                    {
+                        if (prefabs.TryGetValue(new Vector3B(x, y, z), out var prefab))
+                            yield return prefab;
+                    }
+                }
+            }
+        }
 
         public PartialPrefabGroup Clone(bool deepCopy)
             => new PartialPrefabGroup(this, deepCopy);
