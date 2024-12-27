@@ -18,11 +18,14 @@ public static class Zlib
 		int read;
 
 		while ((read = stream.read(buffer, 0, buffer.Length)) > 0)
+		{
 			ms.Write(buffer, 0, read);
+		}
 
 		ms.Position = 0;
 		ms.CopyTo(to);
 	}
+
 	public static byte[] Decompress(Stream from)
 	{
 		using ZInputStream stream = new ZInputStream(from);
@@ -32,7 +35,9 @@ public static class Zlib
 		int read;
 
 		while ((read = stream.read(buffer, 0, buffer.Length)) > 0)
+		{
 			ms.Write(buffer, 0, read);
+		}
 
 		return ms.ToArray();
 	}
@@ -49,6 +54,7 @@ public static class Zlib
 
 		stream.Write(bytes, 0, bytes.Length);
 	}
+
 	public static byte[] Compress(Stream from)
 	{
 		from.Position = 0;

@@ -36,7 +36,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 
 	public PartialPrefabList(PartialPrefabList list, bool deepCopy)
 	{
-		_list = deepCopy 
+		_list = deepCopy
 			? [.. list.Select(prefab => prefab.Clone())]
 			: [.. list];
 	}

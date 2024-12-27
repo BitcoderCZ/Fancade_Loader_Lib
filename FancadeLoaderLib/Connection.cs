@@ -6,8 +6,11 @@ using MathUtils.Vectors;
 
 namespace FancadeLoaderLib;
 
+/// <summary>
+/// Represents a connection (wire) between 2 terminals.
+/// </summary>
 /// <remarks>
-/// if From/To.XYZ == 32769 AND in block -> one side of connection is outside
+/// if From/To.XYZ == 32769 AND in block -> one side of connection is outside.
 /// </remarks>
 public struct Connection
 {
@@ -24,14 +27,6 @@ public struct Connection
 		ToVoxel = toVoxel;
 	}
 
-	public void Save(FcBinaryWriter writer)
-	{
-		writer.WriteVec3US(From);
-		writer.WriteVec3US(To);
-		writer.WriteVec3US(FromVoxel);
-		writer.WriteVec3US(ToVoxel);
-	}
-
 	public static Connection Load(FcBinaryReader reader)
 	{
 		ushort3 from = reader.ReadVec3US();
@@ -42,6 +37,14 @@ public struct Connection
 		return new Connection(from, to, fromVoxel, toVoxel);
 	}
 
-	public override string ToString()
+	public readonly void Save(FcBinaryWriter writer)
+	{
+		writer.WriteVec3US(From);
+		writer.WriteVec3US(To);
+		writer.WriteVec3US(FromVoxel);
+		writer.WriteVec3US(ToVoxel);
+	}
+
+	public readonly override string ToString()
 		=> $"[From: {From}, To: {To}, FromVox: {FromVoxel}, ToVox: {ToVoxel}]";
 }

@@ -6,6 +6,7 @@ namespace FancadeLoaderLib;
 
 public enum FcColor : byte
 {
+#pragma warning disable SA1602 // Enumeration items should be documented
 	LightBrown = 9,
 	Brown = 8,
 	DarkBrown = 7,
@@ -38,9 +39,11 @@ public enum FcColor : byte
 	Gray2 = 4,
 	Gray3 = 3,
 	Gray4 = 2,
-	Black = 1
+	Black = 1,
+#pragma warning restore SA1602 // Enumeration items should be documented
 }
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1649:File name should match first type name", Justification = "Bug in analyzer?")]
 public static class FcColorE
 {
 	public const FcColor Default = FcColor.Blue;

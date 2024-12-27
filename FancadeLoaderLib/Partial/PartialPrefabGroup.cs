@@ -144,21 +144,26 @@ public class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
 
 	public void SwapPositions(byte3 posA, byte3 posB)
 	{
-		TryGetValue(posA, out PartialPrefab? a);
-		TryGetValue(posB, out PartialPrefab? b);
-
-		if (a is not null)
+		if (TryGetValue(posA, out PartialPrefab? a))
 		{
 			a.PosInGroup = posB;
+			this[posB] = a;
 		}
 
-		if (b is not null)
+		if (TryGetValue(posB, out PartialPrefab? b))
 		{
 			b.PosInGroup = posA;
+			this[posA] = b;
+		}
+		else
+		{
+			Remove(posA);
 		}
 
-		this[posA] = b;
-		this[posB] = a;
+		if (a is null)
+		{
+			Remove(posB);
+		}
 	}
 
 	public void Add(byte3 key, PartialPrefab value)

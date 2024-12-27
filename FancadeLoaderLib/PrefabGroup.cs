@@ -141,21 +141,26 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 
 	public void SwapPositions(byte3 posA, byte3 posB)
 	{
-		TryGetValue(posA, out Prefab? a);
-		TryGetValue(posB, out Prefab? b);
-
-		if (a is not null)
+		if (TryGetValue(posA, out Prefab? a))
 		{
 			a.PosInGroup = posB;
+			this[posB] = a;
 		}
 
-		if (b is not null)
+		if (TryGetValue(posB, out Prefab? b))
 		{
 			b.PosInGroup = posA;
+			this[posA] = b;
+		}
+		else
+		{
+			Remove(posA);
 		}
 
-		this[posA] = b;
-		this[posB] = a;
+		if (a is null)
+		{
+			Remove(posB);
+		}
 	}
 
 	public void Add(byte3 key, Prefab value)
@@ -197,7 +202,7 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		{
 			item = new KeyValuePair<byte3, Prefab>(item.Key, res);
 		}
-		
+
 		((ICollection<KeyValuePair<byte3, Prefab>>)_prefabs).Add(item);
 
 		Size = byte3.Max(Size, item.Key + byte3.One);

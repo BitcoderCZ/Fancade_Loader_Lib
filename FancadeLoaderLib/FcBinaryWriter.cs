@@ -44,40 +44,43 @@ public class FcBinaryWriter : IDisposable
 
 	public long Length => _stream.Length;
 
-	public void Reset() 
+	public void Reset()
 		=> _stream.Position = 0;
 
-	public void WriteBytes(byte[] bytes) 
+	public void WriteBytes(byte[] bytes)
 		=> WriteBytes(bytes, 0, bytes.Length);
 
-	public void WriteBytes(byte[] bytes, int offset, int count) 
+	public void WriteBytes(byte[] bytes, int offset, int count)
 		=> _stream.Write(bytes, offset, count);
 
-	public void WriteInt8(sbyte value) 
+	public void WriteSpan(ReadOnlySpan<byte> bytes)
+		=> _stream.Write(bytes);
+
+	public void WriteInt8(sbyte value)
 		=> WriteBytes([(byte)value]);
 
-	public void WriteUInt8(byte value) 
+	public void WriteUInt8(byte value)
 		=> WriteBytes([value]);
 
-	public void WriteInt16(short value) 
+	public void WriteInt16(short value)
 		=> WriteBytes(BitConverter.GetBytes(value));
 
-	public void WriteUInt16(ushort value) 
+	public void WriteUInt16(ushort value)
 		=> WriteBytes(BitConverter.GetBytes(value));
 
-	public void WriteInt32(int value) 
+	public void WriteInt32(int value)
 		=> WriteBytes(BitConverter.GetBytes(value));
 
-	public void WriteUInt32(uint value) 
+	public void WriteUInt32(uint value)
 		=> WriteBytes(BitConverter.GetBytes(value));
 
 	public void WriteInt64(long value)
 		=> WriteBytes(BitConverter.GetBytes(value));
 
-	public void WriteUInt64(ulong value) 
+	public void WriteUInt64(ulong value)
 		=> WriteBytes(BitConverter.GetBytes(value));
 
-	public void WriteFloat(float value) 
+	public void WriteFloat(float value)
 		=> WriteBytes(BitConverter.GetBytes(value));
 
 	public void WriteString(string value)

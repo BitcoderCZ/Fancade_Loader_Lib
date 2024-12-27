@@ -57,11 +57,22 @@ public class FcBinaryReader : IDisposable
 	public void Reset()
 		=> Stream.Position = 0;
 
+	public void ReadSpan(Span<byte> span)
+	{
+		if (BytesLeft < span.Length)
+		{
+			throw new EndOfStreamException("Reached end of stream.");
+		}
+
+		int read = Stream.Read(span);
+		Debug.Assert(read == span.Length, "The number of bytes read should always be equal to the length of the span.");
+	}
+
 	public byte[] ReadBytes(int count)
 	{
 		if (BytesLeft < count)
 		{
-			throw new EndOfStreamException("Reached end of stream");
+			throw new EndOfStreamException("Reached end of stream.");
 		}
 
 		byte[] bytes = new byte[count];
