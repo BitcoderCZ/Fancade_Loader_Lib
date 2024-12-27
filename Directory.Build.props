@@ -1,0 +1,13 @@
+<Project>
+	<PropertyGroup>
+		<Authors>BitcoderCZ</Authors>
+	</PropertyGroup>
+	<PropertyGroup>
+		<TrimMode>partial</TrimMode>
+		<SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
+		<DebugSymbols>False</DebugSymbols>
+		<DebugType>None</DebugType>
+	</PropertyGroup>
+</Project>
