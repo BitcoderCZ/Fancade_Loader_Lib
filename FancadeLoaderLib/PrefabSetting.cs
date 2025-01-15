@@ -26,7 +26,7 @@ public struct PrefabSetting
 	{
 		if (!IsValueValid(value, type))
 		{
-			throw new ArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(type)} '{type}'", nameof(value));
+			throw new ArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for type '{type}'", nameof(value));
 		}
 
 		Index = index;

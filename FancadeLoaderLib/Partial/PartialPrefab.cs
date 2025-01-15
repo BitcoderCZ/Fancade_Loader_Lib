@@ -13,33 +13,67 @@ namespace FancadeLoaderLib.Partial;
 /// </summary>
 public class PartialPrefab : ICloneable
 {
+	/// <summary>
+	/// Type of the prefab.
+	/// </summary>
 	public PrefabType Type;
 
+	/// <summary>
+	/// Id of the group this prefab is in or <see cref="ushort.MaxValue"/> if it isn't in a group.
+	/// </summary>
 	public ushort GroupId;
+
+	/// <summary>
+	/// Position of this prefab in it's group, if it is in one.
+	/// </summary>
 	public byte3 PosInGroup;
 
 	private string _name;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PartialPrefab"/> class.
+	/// </summary>
+	/// <param name="other">The <see cref="PartialPrefab"/> to copy values from.</param>
 	public PartialPrefab(PartialPrefab other)
 		: this(other._name, other.Type, other.GroupId, other.PosInGroup)
 	{
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PartialPrefab"/> class.
+	/// </summary>
+	/// <param name="other">The <see cref="Prefab"/> to copy values from.</param>
 	public PartialPrefab(Prefab other)
 		: this(other.Name, other.Type, other.GroupId, other.PosInGroup)
 	{
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PartialPrefab"/> class.
+	/// </summary>
+	/// <param name="other">The <see cref="RawPrefab"/> to copy values from.</param>
 	public PartialPrefab(RawPrefab other)
 		: this(other.Name, other.HasTypeByte ? (PrefabType)other.TypeByte : PrefabType.Normal, other.GroupId, other.PosInGroup)
 	{
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PartialPrefab"/> class.
+	/// </summary>
+	/// <param name="name">The name of this prefab.</param>
+	/// <param name="type">The type of this prefab.</param>
 	public PartialPrefab(string name, PrefabType type)
 		: this(name, type, ushort.MaxValue, default)
 	{
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PartialPrefab"/> class.
+	/// </summary>
+	/// <param name="name">The name of this prefab.</param>
+	/// <param name="type">The type of this prefab.</param>
+	/// <param name="groupid">Id of the group this prefab is in or <see cref="ushort.MaxValue"/> if it isn't in a group.</param>
+	/// <param name="posInGroup">Position of this prefab in it's group, if it is in one.</param>
 	public PartialPrefab(string name, PrefabType type, ushort groupid, byte3 posInGroup)
 	{
 		if (string.IsNullOrEmpty(name))
@@ -53,6 +87,10 @@ public class PartialPrefab : ICloneable
 		PosInGroup = posInGroup;
 	}
 
+	/// <summary>
+	/// Gets or sets the name of this prefab.
+	/// </summary>
+	/// <value>The name of this prefab.</value>
 	public string Name
 	{
 		get => _name;
@@ -67,8 +105,17 @@ public class PartialPrefab : ICloneable
 		}
 	}
 
+	/// <summary>
+	/// Gets a value indicating whether this prifab is in a group.
+	/// </summary>
+	/// <value><see langword="true"/> if this prefab is in a group; otherwise, <see langword="false"/>.</value>
 	public bool IsInGroup => GroupId != ushort.MaxValue;
 
+	/// <summary>
+	/// Loads a <see cref="PartialPrefab"/> from a <see cref="FcBinaryReader"/>.
+	/// </summary>
+	/// <param name="reader">The reader to read the <see cref="PartialPrefab"/> from.</param>
+	/// <returns>A <see cref="PartialPrefab"/> read from <paramref name="reader"/>.</returns>
 	public static PartialPrefab Load(FcBinaryReader reader)
 	{
 		byte header = reader.ReadUInt8();
@@ -100,6 +147,10 @@ public class PartialPrefab : ICloneable
 		return new PartialPrefab(name, type, groupId, posInGroup);
 	}
 
+	/// <summary>
+	/// Writes a <see cref="PartialPrefab"/> into a <see cref="FcBinaryWriter"/>.
+	/// </summary>
+	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
 		byte header = 0;
@@ -138,9 +189,14 @@ public class PartialPrefab : ICloneable
 		}
 	}
 
+	/// <summary>
+	/// Creates a copy of this <see cref="PartialPrefab"/>.
+	/// </summary>
+	/// <returns>A copy of this <see cref="PartialPrefab"/>.</returns>
 	public PartialPrefab Clone()
 		=> new PartialPrefab(this);
 
+	/// <inheritdoc/>
 	object ICloneable.Clone()
 		=> new PartialPrefab(this);
 }

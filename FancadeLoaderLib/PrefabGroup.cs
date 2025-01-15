@@ -7,7 +7,9 @@ using MathUtils.Vectors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace FancadeLoaderLib;
 
@@ -17,9 +19,10 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 
 	private ushort _id;
 
-	public PrefabGroup()
+	public PrefabGroup(ushort id)
 	{
 		_prefabs = [];
+		_id = id;
 		Size = byte3.Zero;
 	}
 
@@ -53,7 +56,7 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 			return prefab.PosInGroup;
 		});
 
-		Id = id!.Value;
+		_id = id!.Value;
 
 		CalculateSize();
 	}
@@ -65,7 +68,7 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 			throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(id)} cannot be {ushort.MaxValue}");
 		}
 
-		Id = id;
+		_id = id;
 
 		if (!collection.Any())
 		{
@@ -98,11 +101,13 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 
 	public PrefabGroup(PrefabGroup group, bool deepCopy)
 	{
-#pragma warning disable IDE0028 // Simplify collection initialization - no it fucking can't be 
+#pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
 		_prefabs = deepCopy
 			? new Dictionary<byte3, Prefab>(group._prefabs.Select(item => new KeyValuePair<byte3, Prefab>(item.Key, item.Value.Clone())))
 			: new Dictionary<byte3, Prefab>(group._prefabs);
-#pragma warning restore IDE0028
+#pragma warning restore IDE0306
+
+		_id = group.Id;
 
 		Size = group.Size;
 	}
@@ -122,8 +127,6 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	}
 
 	public byte3 Size { get; private set; }
-
-	public InvalidGroupIdBehaviour InvalidGroupIdBehaviour { get; set; } = InvalidGroupIdBehaviour.ThrowException;
 
 	public ICollection<byte3> Keys => _prefabs.Keys;
 
@@ -185,7 +188,7 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		return val;
 	}
 
-	public bool TryGetValue(byte3 key, out Prefab value)
+	public bool TryGetValue(byte3 key, [NotNullWhen(true)] out Prefab? value)
 		=> _prefabs.TryGetValue(key, out value);
 
 	public void Clear()
@@ -265,25 +268,7 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 
 	private Prefab Validate(Prefab prefab)
 	{
-		if (prefab.GroupId != Id)
-		{
-			switch (InvalidGroupIdBehaviour)
-			{
-				case InvalidGroupIdBehaviour.ChangeGroupId:
-					prefab.GroupId = Id;
-					break;
-				case InvalidGroupIdBehaviour.CloneAndChangeGroupId:
-					{
-						Prefab newPrefab = prefab.Clone();
-						newPrefab.GroupId = Id;
-						return newPrefab;
-					}
-
-				case InvalidGroupIdBehaviour.ThrowException:
-				default:
-					throw new InvalidGroupIdException(Id, prefab.GroupId);
-			}
-		}
+		prefab.GroupId = Id;
 
 		return prefab;
 	}

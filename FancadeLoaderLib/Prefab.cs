@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
 
@@ -83,6 +84,13 @@ public class Prefab : ICloneable
 	{
 	}
 
+	/// <summary>
+	/// Gets or sets the name of the prefab.
+	/// </summary>
+	/// <remarks>
+	/// Cannot be longer than 255 bytes when encoded as UTF8.
+	/// </remarks>
+	/// <value>Name of the prefab.</value>
 	public string Name
 	{
 		get => _name;
@@ -211,12 +219,12 @@ public class Prefab : ICloneable
 				voxel.Colors[3] = (byte)(s3 & ColorMask);
 				voxel.Colors[4] = (byte)(s4 & ColorMask);
 				voxel.Colors[5] = (byte)(s5 & ColorMask);
-				voxel.NotGlued[0] = (byte)((s0 & GlueMask) >> 7);
-				voxel.NotGlued[1] = (byte)((s1 & GlueMask) >> 7);
-				voxel.NotGlued[2] = (byte)((s2 & GlueMask) >> 7);
-				voxel.NotGlued[3] = (byte)((s3 & GlueMask) >> 7);
-				voxel.NotGlued[4] = (byte)((s4 & GlueMask) >> 7);
-				voxel.NotGlued[5] = (byte)((s5 & GlueMask) >> 7);
+				voxel.Attribs[0] = Unsafe.BitCast<byte, bool>((byte)((s0 & GlueMask) >> 7));
+				voxel.Attribs[1] = Unsafe.BitCast<byte, bool>((byte)((s1 & GlueMask) >> 7));
+				voxel.Attribs[2] = Unsafe.BitCast<byte, bool>((byte)((s2 & GlueMask) >> 7));
+				voxel.Attribs[3] = Unsafe.BitCast<byte, bool>((byte)((s3 & GlueMask) >> 7));
+				voxel.Attribs[4] = Unsafe.BitCast<byte, bool>((byte)((s4 & GlueMask) >> 7));
+				voxel.Attribs[5] = Unsafe.BitCast<byte, bool>((byte)((s5 & GlueMask) >> 7));
 
 				voxels[i] = voxel;
 			}
@@ -315,14 +323,16 @@ public class Prefab : ICloneable
 			for (int i = 0; i < NumbVoxels; i++)
 			{
 				Voxel voxel = Voxels[i];
-				voxels[i + (NumbVoxels * 0)] = (byte)(voxel.Colors[0] | voxel.NotGlued[0] << 7);
-				voxels[i + (NumbVoxels * 1)] = (byte)(voxel.Colors[1] | voxel.NotGlued[1] << 7);
-				voxels[i + (NumbVoxels * 2)] = (byte)(voxel.Colors[2] | voxel.NotGlued[2] << 7);
-				voxels[i + (NumbVoxels * 3)] = (byte)(voxel.Colors[3] | voxel.NotGlued[3] << 7);
-				voxels[i + (NumbVoxels * 4)] = (byte)(voxel.Colors[4] | voxel.NotGlued[4] << 7);
-				voxels[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | voxel.NotGlued[5] << 7);
+				voxels[i + (NumbVoxels * 0)] = (byte)(voxel.Colors[0] | Unsafe.BitCast<bool, byte>(voxel.Attribs[0]) << 7);
+				voxels[i + (NumbVoxels * 1)] = (byte)(voxel.Colors[1] | Unsafe.BitCast<bool,byte>(voxel.Attribs[1]) << 7);
+				voxels[i + (NumbVoxels * 2)] = (byte)(voxel.Colors[2] | Unsafe.BitCast<bool,byte>(voxel.Attribs[2]) << 7);
+				voxels[i + (NumbVoxels * 3)] = (byte)(voxel.Colors[3] | Unsafe.BitCast<bool,byte>(voxel.Attribs[3]) << 7);
+				voxels[i + (NumbVoxels * 4)] = (byte)(voxel.Colors[4] | Unsafe.BitCast<bool,byte>(voxel.Attribs[4]) << 7);
+				voxels[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | Unsafe.BitCast<bool,byte>(voxel.Attribs[5]) << 7);
 			}
 		}
+
+		Blocks.Trim();
 
 		return new RawPrefab(
 			hasConnections: !(Connections is null) && Connections.Count > 0,

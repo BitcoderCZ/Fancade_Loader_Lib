@@ -9,19 +9,53 @@ using System.IO;
 
 namespace FancadeLoaderLib.Raw;
 
+/// <summary>
+/// Directly represents a fancade game.
+/// </summary>
 public class RawGame
 {
+	/// <summary>
+	/// The current file version.
+	/// </summary>
 	public static readonly ushort CurrentFileVersion = 31;
+
+	/// <summary>
+	/// The current ammount of stock/built in prefabs in fancade.
+	/// </summary>
 	public static readonly ushort CurrentNumbStockPrefabs = 597;
 
+	/// <summary>
+	/// The prefabs of this game.
+	/// </summary>
 	public readonly List<RawPrefab> Prefabs;
 
+	/// <summary>
+	/// The name of this game.
+	/// </summary>
 	public string Name;
+
+	/// <summary>
+	/// Username of the author of this game.
+	/// </summary>
 	public string Author;
+
+	/// <summary>
+	/// The description of this game.
+	/// </summary>
 	public string Description;
 
+	/// <summary>
+	/// The id offset of prefabs in this game, specifies the amoung of stock prefabs at the time the game was save.
+	/// </summary>
+	/// <remarks>
+	/// Not used when saving, <see cref="CurrentNumbStockPrefabs"/> is used instead.
+	/// </remarks>
 	public ushort IdOffset;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="RawGame"/> class.
+	/// </summary>
+	/// <param name="name">Name of this game.</param>
 	public RawGame(string name)
 	{
 		if (name is null)
@@ -33,8 +67,18 @@ public class RawGame
 		Author = "Unknown Author";
 		Description = string.Empty;
 		Prefabs = [];
+		IdOffset = CurrentNumbStockPrefabs;
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="RawGame"/> class.
+	/// </summary>
+	/// <param name="name">Name of this game.</param>
+	/// <param name="author">Username of the author of this game.</param>
+	/// <param name="description">Decsription of this game.</param>
+	/// <param name="idOffset">Id offset of this game.</param>
+	/// <param name="prefabs">Prefabs of this game.</param>
+	/// <exception cref="ArgumentNullException">Thrown when any of the arguments is null.</exception>
 	public RawGame(string name, string author, string description, ushort idOffset, List<RawPrefab> prefabs)
 	{
 		if (name is null)
@@ -64,6 +108,11 @@ public class RawGame
 		Prefabs = prefabs;
 	}
 
+	/// <summary>
+	/// Loads the info about a game from a compressed stream.
+	/// </summary>
+	/// <param name="stream">The stream to load from.</param>
+	/// <returns>The info about a game.</returns>
 	public static (ushort FileVersion, string Name, string Author, string Description) LoadInfoCompressed(Stream stream)
 	{
 		// decompress
@@ -80,6 +129,11 @@ public class RawGame
 		return (fileVersion, name, author, description);
 	}
 
+	/// <summary>
+	/// Loads a game from a compressed stream.
+	/// </summary>
+	/// <param name="stream">The stream to load from.</param>
+	/// <returns>The loaded game.</returns>
 	public static RawGame LoadCompressed(Stream stream)
 	{
 		// decompress
@@ -90,6 +144,11 @@ public class RawGame
 		return Load(reader);
 	}
 
+	/// <summary>
+	/// Loads a game from a reader.
+	/// </summary>
+	/// <param name="reader">The reader to load from.</param>
+	/// <returns>The loaded game.</returns>
 	public static RawGame Load(FcBinaryReader reader)
 	{
 		ushort fileVersion = reader.ReadUInt16();
@@ -120,6 +179,10 @@ public class RawGame
 		return new RawGame(name, author, description, idOffset, prefabs);
 	}
 
+	/// <summary>
+	/// Saves and compresses game to a stream.
+	/// </summary>
+	/// <param name="stream">The stream to save to.</param>
 	public void SaveCompressed(Stream stream)
 	{
 		using (MemoryStream writerStream = new MemoryStream())
@@ -127,10 +190,15 @@ public class RawGame
 		{
 			Save(writer);
 
+			writerStream.Position = 0;
 			Zlib.Compress(writerStream, stream);
 		}
 	}
 
+	/// <summary>
+	/// Saves a game to a writer.
+	/// </summary>
+	/// <param name="writer">The writer to save to.</param>
 	public void Save(FcBinaryWriter writer)
 	{
 		writer.WriteUInt16(CurrentFileVersion);
@@ -147,6 +215,10 @@ public class RawGame
 		}
 	}
 
+	/// <summary>
+	/// Returns the string representation of the current instance.
+	/// </summary>
+	/// <returns>The string representation of the current instance.</returns>
 	public override string ToString()
 		=> $"{{Name: {Name}, Author: {Author}, Description: {Description}}}";
 }

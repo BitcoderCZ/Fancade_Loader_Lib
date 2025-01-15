@@ -30,7 +30,7 @@ public enum SettingType : byte
 	Float = 4,
 
 	/// <summary>
-	/// The type of this setting's value is <see cref="float3"/> (vector or rotaion).
+	/// The type of this setting's value is <see cref="float3"/> (vector or rotation).
 	/// </summary>
 	Vec3 = 5,
 

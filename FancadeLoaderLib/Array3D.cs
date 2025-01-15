@@ -11,10 +11,20 @@ using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
 
+/// <summary>
+/// Represents a 3D array.
+/// </summary>
+/// <typeparam name="T">The type of the items.</typeparam>
 public class Array3D<T> : IEnumerable<T>
 {
 	private int _layerSize;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Array3D{T}"/> class.
+	/// </summary>
+	/// <param name="sizeX">X size of the array.</param>
+	/// <param name="sizeY">Y size of the array.</param>
+	/// <param name="sizeZ">Z size of the array.</param>
 	public Array3D(int sizeX, int sizeY, int sizeZ)
 	{
 		LengthX = sizeX;
@@ -25,6 +35,13 @@ public class Array3D<T> : IEnumerable<T>
 		Array = new T[sizeX * sizeY * sizeZ];
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Array3D{T}"/> class.
+	/// </summary>
+	/// <param name="collection">The collection to contruct the array from.</param>
+	/// <param name="sizeX">X size of the array.</param>
+	/// <param name="sizeY">Y size of the array.</param>
+	/// <param name="sizeZ">Z size of the array.</param>
 	public Array3D(IEnumerable<T> collection, int sizeX, int sizeY, int sizeZ)
 	{
 		LengthX = sizeX;
@@ -32,13 +49,20 @@ public class Array3D<T> : IEnumerable<T>
 		LengthZ = sizeZ;
 		_layerSize = sizeX * sizeY;
 
-		Array = collection.ToArray();
+		Array = [.. collection];
 		if (Length != LengthX * LengthY * LengthZ)
 		{
 			throw new ArgumentException($"{nameof(collection)} length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", "collection");
 		}
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Array3D{T}"/> class.
+	/// </summary>
+	/// <param name="array">The array to contruct this <see cref="Array3D{T}"/> from.</param>
+	/// <param name="sizeX">X size of the array.</param>
+	/// <param name="sizeY">Y size of the array.</param>
+	/// <param name="sizeZ">Z size of the array.</param>
 	public Array3D(T[] array, int sizeX, int sizeY, int sizeZ)
 	{
 		LengthX = sizeX;
@@ -53,6 +77,10 @@ public class Array3D<T> : IEnumerable<T>
 		}
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Array3D{T}"/> class.
+	/// </summary>
+	/// <param name="array">The <see cref="Array3D{T}"/> to copy.</param>
 	public Array3D(Array3D<T> array)
 	{
 		LengthX = array.LengthX;
@@ -63,46 +91,111 @@ public class Array3D<T> : IEnumerable<T>
 		Array = (T[])array.Array.Clone();
 	}
 
+	/// <summary>
+	/// Gets the underlying array.
+	/// </summary>
+	/// <value>Theu nderlying array.</value>
 	public T[] Array { get; private set; }
 
+	/// <summary>
+	/// Gets the X size of this array.
+	/// </summary>
+	/// <value>The X size of this array.</value>
 	public int LengthX { get; private set; }
 
+	/// <summary>
+	/// Gets the Y size of this array.
+	/// </summary>
+	/// <value>The Y size of this array.</value>
 	public int LengthY { get; private set; }
 
+	/// <summary>
+	/// Gets the Z size of this array.
+	/// </summary>
+	/// <value>The Z size of this array.</value>
 	public int LengthZ { get; private set; }
 
+	/// <summary>
+	/// Gets the size of this array.
+	/// </summary>
+	/// <value>The size of this array.</value>
+	public int3 Size => new int3(LengthX, LengthY, LengthZ);
+
+	/// <summary>
+	/// Gets the total length of this array.
+	/// </summary>
+	/// <value>The total length of this array.</value>
 	public int Length => Array.Length;
 
-	public int Count => Array.Length;
-
-	public T this[int i]
+	/// <summary>
+	/// Gets or sets the item at the specified index.
+	/// </summary>
+	/// <param name="index">Index of the item.</param>
+	/// <returns>Item at the specified index.</returns>
+	public T this[int index]
 	{
-		get => Array[i];
-		set => Array[i] = value;
+		get => Array[index];
+		set => Array[index] = value;
 	}
 
+	/// <summary>
+	/// Gets or sets the item at the specified index.
+	/// </summary>
+	/// <param name="x">X index of the item.</param>
+	/// <param name="y">Y index of the item.</param>
+	/// <param name="z">Z index of the item.</param>
+	/// <returns>Item at the specified index.</returns>
 	public T this[int x, int y, int z]
 	{
 		get => Get(x, y, z);
 		set => Set(x, y, z, value);
 	}
 
+	/// <summary>
+	/// Determines if the specified position is inside the bounds of this array.
+	/// </summary>
+	/// <param name="pos">The position to check.</param>
+	/// <returns><see langword="true"/> if <paramref name="pos"/> is inside the bounds of this array; otherwise, <see langword="false"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool InBounds(int3 pos)
 		=> InBounds(pos.X, pos.Y, pos.Z);
 
+	/// <summary>
+	/// Determines if the specified position is inside the bounds of this array.
+	/// </summary>
+	/// <param name="x">The x postition.</param>
+	/// <param name="y">The y postition.</param>
+	/// <param name="z">The z postition.</param>
+	/// <returns><see langword="true"/> if the position is inside the bounds of this array; otherwise, <see langword="false"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool InBounds(int x, int y, int z)
 		=> x >= 0 && x < LengthX && y >= 0 && y < LengthY && z >= 0 && z < LengthZ;
 
+	/// <summary>
+	/// Converts <paramref name="pos"/> into an index.
+	/// </summary>
+	/// <param name="pos">The position to convert.</param>
+	/// <returns>Index into <see cref="Array"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Index(int3 pos)
 		=> Index(pos.X, pos.Y, pos.Z);
 
+	/// <summary>
+	/// Converts a position into an index.
+	/// </summary>
+	/// <param name="x">The x postition.</param>
+	/// <param name="y">The y postition.</param>
+	/// <param name="z">The z postition.</param>
+	/// <returns>Index into <see cref="Array"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Index(int x, int y, int z)
 		=> x + (y * LengthX) + (z * _layerSize);
 
+	/// <summary>
+	/// Converts an index into a position.
+	/// </summary>
+	/// <param name="index">The index to convert.</param>
+	/// <returns>Position interpretation of <paramref name="index"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int3 Index(int index)
 	{
@@ -110,14 +203,35 @@ public class Array3D<T> : IEnumerable<T>
 		return new int3(remaining % LengthX, remaining / LengthX, index / _layerSize);
 	}
 
+	/// <summary>
+	/// Gets the item at the specified index.
+	/// </summary>
+	/// <param name="x">X index of the item.</param>
+	/// <param name="y">Y index of the item.</param>
+	/// <param name="z">Z index of the item.</param>
+	/// <returns>Item at the specified index.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public T Get(int x, int y, int z)
 		=> Array[Index(x, y, z)];
 
+	/// <summary>
+	/// Sets the item at the specified index.
+	/// </summary>
+	/// <param name="x">X index of the item.</param>
+	/// <param name="y">Y index of the item.</param>
+	/// <param name="z">Z index of the item.</param>
+	/// <param name="value">The value to set at the specified position.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void Set(int x, int y, int z, T value)
 		=> Array[Index(x, y, z)] = value;
 
+	/// <summary>
+	/// Changes the size of this array.
+	/// </summary>
+	/// <param name="newX">The new x size.</param>
+	/// <param name="newY">The new y size.</param>
+	/// <param name="newZ">The new z size.</param>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="newX"/>, <paramref name="newY"/> or <paramref name="newZ"/> are negative.</exception>
 	public void Resize(int newX, int newY, int newZ)
 	{
 		if (newX < 0 || newY < 0 || newZ < 0)
@@ -175,15 +289,18 @@ public class Array3D<T> : IEnumerable<T>
 		}
 	}
 
+	/// <summary>
+	/// Creates a copy of this array.
+	/// </summary>
+	/// <returns>A copy of this array.</returns>
 	public Array3D<T> Clone()
 		=> new Array3D<T>(this);
 
-	public void CopyTo(Array array, int index)
-		=> array.CopyTo(array, index);
-
+	/// <inheritdoc/>
 	public IEnumerator GetEnumerator()
 		=> Array.GetEnumerator();
 
+	/// <inheritdoc/>
 	IEnumerator<T> IEnumerable<T>.GetEnumerator()
 		=> ((IEnumerable<T>)Array).GetEnumerator();
 }

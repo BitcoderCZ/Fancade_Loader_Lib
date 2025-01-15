@@ -18,7 +18,7 @@ public class PrefabList : IList<Prefab>, ICloneable
 {
 	public ushort IdOffset = RawGame.CurrentNumbStockPrefabs;
 
-	private readonly List<Prefab> _list;
+	internal readonly List<Prefab> _list;
 
 	public PrefabList()
 	{
@@ -116,7 +116,7 @@ public class PrefabList : IList<Prefab>, ICloneable
 	public bool Exists(Predicate<Prefab> match)
 		=> _list.Exists(match);
 
-	public Prefab Find(Predicate<Prefab> match)
+	public Prefab? Find(Predicate<Prefab> match)
 		=> _list.Find(match);
 
 	public List<Prefab> FindAll(Predicate<Prefab> match)
@@ -131,7 +131,7 @@ public class PrefabList : IList<Prefab>, ICloneable
 	public int FindIndex(Predicate<Prefab> match)
 		=> _list.FindIndex(match);
 
-	public Prefab FindLast(Predicate<Prefab> match)
+	public Prefab? FindLast(Predicate<Prefab> match)
 		=> _list.FindLast(match);
 
 	public int FindLastIndex(int startIndex, int count, Predicate<Prefab> match)

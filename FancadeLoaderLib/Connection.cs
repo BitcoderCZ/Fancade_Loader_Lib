@@ -11,6 +11,7 @@ namespace FancadeLoaderLib;
 /// </summary>
 /// <remarks>
 /// if From/To.XYZ == 32769 AND in block -> one side of connection is outside.
+/// <para>When connected to a prefab group, <see cref="From"/>/<see cref="To"/> point to the main prefab of the group (<see cref="Prefab.PosInGroup"/> == <see cref="byte3.Zero"/>).</para>
 /// </remarks>
 public struct Connection
 {
@@ -19,6 +20,13 @@ public struct Connection
 	public ushort3 FromVoxel; // local position of the connector in SubBlock space
 	public ushort3 ToVoxel; // local position of the connector in SubBlock space
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Connection"/> struct.
+	/// </summary>
+	/// <param name="from"></param>
+	/// <param name="to"></param>
+	/// <param name="fromVoxel"></param>
+	/// <param name="toVoxel"></param>
 	public Connection(ushort3 from, ushort3 to, ushort3 fromVoxel, ushort3 toVoxel)
 	{
 		From = from;
