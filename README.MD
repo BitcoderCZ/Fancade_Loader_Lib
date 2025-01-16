@@ -7,9 +7,9 @@ using FancadeLoaderLib;
 
 // Load game
 Game game;
-using (FileStream a = File.OpenRead("game.fcg"))
+using (FileStream fs = File.OpenRead("game.fcg"))
 {
-	game = Game.LoadCompressed(a);
+	game = Game.LoadCompressed(fs);
 }
 
 // Add a level
@@ -20,8 +20,8 @@ level.Blocks.SetBlock(0, 0, 0, 1);
 game.Prefabs.Add(level);
 
 // Save game
-using (FileStream a = File.OpenWrite("game.fcg"))
+using (FileStream fs = File.OpenWrite("game.fcg"))
 {
-    game.SaveCompressed(a);
+	game.SaveCompressed(fs);
 }
 ```
