@@ -4,6 +4,9 @@
 
 namespace FancadeLoaderLib;
 
+/// <summary>
+/// Represents the type of a prefab.
+/// </summary>
 public enum PrefabType : byte
 {
 	/// <summary>

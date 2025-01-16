@@ -112,7 +112,7 @@ public class RawPrefab
 	public uint Data2;
 
 	/// <summary>
-	/// The background color of this prefab.
+	/// The background color of this prefab, see <see cref="FcColor"/>.
 	/// </summary>
 	public byte BackgroundColor;
 
@@ -271,7 +271,7 @@ public class RawPrefab
 			data2 = reader.ReadUInt32();
 		}
 
-		byte backgroundColor = (byte)FcColorE.Default;
+		byte backgroundColor = (byte)FcColorUtils.DefaultBackgroundColor;
 		if (nonDefaultBackgroundColor)
 		{
 			backgroundColor = reader.ReadUInt8();
@@ -466,7 +466,7 @@ public class RawPrefab
 		if (IsInGroup)
 		{
 			writer.WriteUInt16(GroupId);
-			writer.WriteVec3B(PosInGroup);
+			writer.WriteByte3(PosInGroup);
 		}
 
 		if (HasVoxels)
@@ -476,7 +476,7 @@ public class RawPrefab
 
 		if (HasBlocks)
 		{
-			writer.WriteVec3US(new ushort3(Blocks!.LengthX, Blocks!.LengthY, Blocks!.LengthZ));
+			writer.WriteUshort3(new ushort3(Blocks!.LengthX, Blocks!.LengthY, Blocks!.LengthZ));
 
 			if (BitConverter.IsLittleEndian)
 			{

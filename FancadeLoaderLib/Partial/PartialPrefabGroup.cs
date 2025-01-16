@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Exceptions;
 using MathUtils.Vectors;
 using System;
 using System.Collections;
@@ -300,7 +299,7 @@ public class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
 	/// <summary>
 	/// Enumerates the prefabs in this group in the order of their ids.
 	/// </summary>
-	/// <returns>An enumerator that can iterate through this groups in id order.</returns>
+	/// <returns>An enumerator that iterates through this groups in id order.</returns>
 	public IEnumerable<PartialPrefab> EnumerateInIdOrder()
 	{
 		for (byte z = 0; z < Size.Z; z++)

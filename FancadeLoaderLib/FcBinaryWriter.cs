@@ -4,138 +4,293 @@
 
 using MathUtils.Vectors;
 using System;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 
 namespace FancadeLoaderLib;
 
+/// <summary>
+/// A class for writing primitives in fancade format.
+/// </summary>
 public class FcBinaryWriter : IDisposable
 {
-	private readonly Stream _stream;
+	/// <summary>
+	/// The underlying stream.
+	/// </summary>
+	public readonly Stream Stream;
 
+	private readonly bool _leaveOpen;
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FcBinaryWriter"/> class.
+	/// </summary>
+	/// <param name="bytes">The array to write to.</param>
 	public FcBinaryWriter(byte[] bytes)
 	{
-		_stream = new MemoryStream(bytes);
-		Debug.Assert(_stream.CanWrite, $"{nameof(MemoryStream)} should always be writeable.");
+		Stream = new MemoryStream(bytes);
+		Debug.Assert(Stream.CanWrite, $"{nameof(MemoryStream)} should always be writeable.");
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FcBinaryWriter"/> class.
+	/// </summary>
+	/// <param name="stream">The stream to write to.</param>
 	public FcBinaryWriter(Stream stream)
+		: this(stream, false)
+	{
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FcBinaryWriter"/> class.
+	/// </summary>
+	/// <param name="stream">The stream to write to.</param>
+	/// <param name="leaveOpen">If <paramref name="stream"/> should be left open after <see cref="Dispose"/> is called.</param>
+	public FcBinaryWriter(Stream stream, bool leaveOpen)
 	{
 		if (!stream.CanRead)
 		{
 			throw new ArgumentException($"{nameof(stream)} isn't writeable.");
 		}
 
-		_stream = stream;
+		Stream = stream;
+		_leaveOpen = leaveOpen;
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FcBinaryWriter"/> class.
+	/// </summary>
+	/// <param name="path">Path of the file to write to.</param>
 	public FcBinaryWriter(string path)
 	{
-		_stream = new FileStream(path, FileMode.Create, FileAccess.Write);
+		Stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);
 
-		if (!_stream.CanRead)
+		if (!Stream.CanRead)
 		{
 			throw new IOException("Can't write to stream.");
 		}
 	}
 
-	public long Position { get => _stream.Position; set => _stream.Position = value; }
+	/// <summary>
+	/// Gets or sets the current position in <see cref="Stream"/>.
+	/// </summary>
+	/// <value>Current position in <see cref="Stream"/>.</value>
+	public long Position { get => Stream.Position; set => Stream.Position = value; }
 
-	public long Length => _stream.Length;
+	/// <summary>
+	/// Gets the length of <see cref="Stream"/>.
+	/// </summary>
+	/// <value>Length of <see cref="Stream"/>.</value>
+	public long Length => Stream.Length;
 
+	/// <summary>
+	/// Resets <see cref="Position"/> to 0.
+	/// </summary>
 	public void Reset()
-		=> _stream.Position = 0;
+		=> Stream.Position = 0;
 
-	public void WriteBytes(byte[] bytes)
-		=> WriteBytes(bytes, 0, bytes.Length);
+	/// <summary>
+	/// Writes a byte array to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteBytes(byte[] value)
+		=> WriteBytes(value, 0, value.Length);
 
-	public void WriteBytes(byte[] bytes, int offset, int count)
-		=> _stream.Write(bytes, offset, count);
+	/// <summary>
+	/// Writes a byte array to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	/// <param name="offset">The start index in <paramref name="value"/> to start reading from.</param>
+	/// <param name="count">The number of items to read from <paramref name="value"/>.</param>
+	public void WriteBytes(byte[] value, int offset, int count)
+		=> Stream.Write(value, offset, count);
 
-	public void WriteSpan(ReadOnlySpan<byte> bytes)
-		=> _stream.Write(bytes);
+	/// <summary>
+	/// Writes a span to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteSpan(ReadOnlySpan<byte> value)
+		=> Stream.Write(value);
 
+	/// <summary>
+	/// Writes an int8 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
 	public void WriteInt8(sbyte value)
-		=> WriteBytes([(byte)value]);
+		=> WriteSpan([(byte)value]);
 
+	/// <summary>
+	/// Writes a uint8 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
 	public void WriteUInt8(byte value)
-		=> WriteBytes([value]);
+		=> WriteSpan([value]);
 
+	/// <summary>
+	/// Writes an int16 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
 	public void WriteInt16(short value)
-		=> WriteBytes(BitConverter.GetBytes(value));
-
-	public void WriteUInt16(ushort value)
-		=> WriteBytes(BitConverter.GetBytes(value));
-
-	public void WriteInt32(int value)
-		=> WriteBytes(BitConverter.GetBytes(value));
-
-	public void WriteUInt32(uint value)
-		=> WriteBytes(BitConverter.GetBytes(value));
-
-	public void WriteInt64(long value)
-		=> WriteBytes(BitConverter.GetBytes(value));
-
-	public void WriteUInt64(ulong value)
-		=> WriteBytes(BitConverter.GetBytes(value));
-
-	public void WriteFloat(float value)
-		=> WriteBytes(BitConverter.GetBytes(value));
-
-	public void WriteString(string value)
 	{
-		byte[] bytes = Encoding.ASCII.GetBytes(value);
-		if (bytes.Length > byte.MaxValue)
-		{
-			throw new ArgumentException($"String too long ({bytes.Length}) max {byte.MaxValue}, string: \"{value}\"", nameof(value));
-		}
-
-		WriteUInt8((byte)bytes.Length);
-		WriteBytes(bytes);
+		Span<byte> buffer = stackalloc byte[2];
+		BinaryPrimitives.WriteInt16LittleEndian(buffer, value);
+		WriteSpan(buffer);
 	}
 
-	public void WriteVec3B(byte3 value)
+	/// <summary>
+	/// Writes a uint16 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteUInt16(ushort value)
+	{
+		Span<byte> buffer = stackalloc byte[2];
+		BinaryPrimitives.WriteUInt16LittleEndian(buffer, value);
+		WriteSpan(buffer);
+	}
+
+	/// <summary>
+	/// Writes an int32 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteInt32(int value)
+	{
+		Span<byte> buffer = stackalloc byte[4];
+		BinaryPrimitives.WriteInt32LittleEndian(buffer, value);
+		WriteSpan(buffer);
+	}
+
+	/// <summary>
+	/// Writes a uint32 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteUInt32(uint value)
+	{
+		Span<byte> buffer = stackalloc byte[4];
+		BinaryPrimitives.WriteUInt32LittleEndian(buffer, value);
+		WriteSpan(buffer);
+	}
+
+	/// <summary>
+	/// Writes an int64 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteInt64(long value)
+	{
+		Span<byte> buffer = stackalloc byte[8];
+		BinaryPrimitives.WriteInt64LittleEndian(buffer, value);
+		WriteSpan(buffer);
+	}
+
+	/// <summary>
+	/// Writes a uint64 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteUInt64(ulong value)
+	{
+		Span<byte> buffer = stackalloc byte[8];
+		BinaryPrimitives.WriteUInt64LittleEndian(buffer, value);
+		WriteSpan(buffer);
+	}
+
+	/// <summary>
+	/// Writes a single to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteFloat(float value)
+	{
+		Span<byte> buffer = stackalloc byte[4];
+		BinaryPrimitives.WriteSingleLittleEndian(buffer, value);
+		WriteSpan(buffer);
+	}
+
+	/// <summary>
+	/// Writes a string to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write, must be shorter than 256.</param>
+	public void WriteString(string value)
+	{
+		Span<byte> buffer = stackalloc byte[byte.MaxValue + 1];
+		int written = Encoding.ASCII.GetBytes(value, buffer);
+		if (written > byte.MaxValue)
+		{
+			throw new ArgumentException($"{nameof(value)}, when encoded as ASCII is too long, maximum length is 255.", nameof(value));
+		}
+
+		WriteUInt8((byte)written);
+		WriteSpan(buffer[..written]);
+	}
+
+	/// <summary>
+	/// Writes a byte3 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteByte3(byte3 value)
 	{
 		WriteUInt8(value.X);
 		WriteUInt8(value.Y);
 		WriteUInt8(value.Z);
 	}
 
-	public void WriteVec3S(short3 value)
+	/// <summary>
+	/// Writes a short3 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteShort3(short3 value)
 	{
 		WriteInt16(value.X);
 		WriteInt16(value.Y);
 		WriteInt16(value.Z);
 	}
 
-	public void WriteVec3US(ushort3 value)
+	/// <summary>
+	/// Writes a ushort3 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteUshort3(ushort3 value)
 	{
 		WriteUInt16(value.X);
 		WriteUInt16(value.Y);
 		WriteUInt16(value.Z);
 	}
 
-	public void WriteVec3I(int3 value)
+	/// <summary>
+	/// Writes a int3 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteInt3(int3 value)
 	{
 		WriteInt32(value.X);
 		WriteInt32(value.Y);
 		WriteInt32(value.Z);
 	}
 
-	public void WriteVec3F(float3 value)
+	/// <summary>
+	/// Writes a float3 to the underlying stream.
+	/// </summary>
+	/// <param name="value">The value to write.</param>
+	public void WriteFloat3(float3 value)
 	{
 		WriteFloat(value.X);
 		WriteFloat(value.Y);
 		WriteFloat(value.Z);
 	}
 
+	/// <summary>
+	/// Flushes the underlying stream.
+	/// </summary>
 	public void Flush()
-		=> _stream.Flush();
+		=> Stream.Flush();
 
+	/// <summary>
+	/// Releases all the resources used by the <see cref="FcBinaryWriter"/>.
+	/// </summary>
 	public void Dispose()
 	{
-		_stream.Close();
-		_stream.Dispose();
+		if (!_leaveOpen)
+		{
+			Stream.Close();
+			Stream.Dispose();
+		}
 	}
 }

@@ -185,7 +185,7 @@ public class PartialPrefab : ICloneable
 		if (IsInGroup)
 		{
 			writer.WriteUInt16(GroupId);
-			writer.WriteVec3B(PosInGroup);
+			writer.WriteByte3(PosInGroup);
 		}
 	}
 

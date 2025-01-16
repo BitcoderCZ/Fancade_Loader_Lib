@@ -6,49 +6,87 @@ using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
 
+/// <summary>
+/// Represents a prefab (block or level), processed for easier manipulation.
+/// </summary>
 public class Prefab : ICloneable
 {
+	/// <summary>
+	/// The number of voxels in a prefab.
+	/// </summary>
 	public const int NumbVoxels = 8 * 8 * 8;
+
+	/// <summary>
+	/// A mask to get the color from a voxel side.
+	/// </summary>
 	public const byte ColorMask = 0b_0111_1111;
-	public const byte GlueMask = 0b_1000_0000;
 
-	public static ImmutableArray<short3> SideToOffset =
-	[
-		new short3(1, 0, 0),
-		new short3(-1, 0, 0),
-		new short3(0, 1, 0),
-		new short3(0, -1, 0),
-		new short3(0, 0, 1),
-		new short3(0, 0, -1),
-	];
+	/// <summary>
+	/// A mask to get the attribs from a voxel side.
+	/// </summary>
+	public const byte AttribsMask = 0b_1000_0000;
 
+	/// <summary>
+	/// The blocks inside this prefab.
+	/// </summary>
 	public readonly BlockData Blocks;
+
+	/// <summary>
+	/// Settings of the blocks inside this prefab.
+	/// </summary>
 	public readonly List<PrefabSetting> Settings;
+
+	/// <summary>
+	/// Connections between blocks inside this prefab, block-block and block-outside of this prefab.
+	/// </summary>
 	public readonly List<Connection> Connections;
 
+	/// <summary>
+	/// The collider of this prefab.
+	/// </summary>
 	public PrefabCollider Collider;
+
+	/// <summary>
+	/// The type of this prefab.
+	/// </summary>
 	public PrefabType Type;
+
+	/// <summary>
+	/// The background color of this prefab.
+	/// </summary>
 	public FcColor BackgroundColor;
 
+	/// <summary>
+	/// If this prefab is editable.
+	/// </summary>
 	public bool Editable;
 
+	/// <summary>
+	/// Group id of this prefab if it is in a group; otherwise, <see cref="ushort.MaxValue"/>.
+	/// </summary>
 	public ushort GroupId;
+
+	/// <summary>
+	/// Position of this prefab in group.
+	/// </summary>
 	public byte3 PosInGroup;
 
 	private string _name;
 
 	private Voxel[]? _voxels;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Prefab"/> class.
+	/// </summary>
 	public Prefab()
 	{
 		_name = "New Block";
-		BackgroundColor = FcColorE.Default;
+		BackgroundColor = FcColorUtils.DefaultBackgroundColor;
 		Collider = PrefabCollider.Box;
 		Type = PrefabType.Normal;
 		Editable = true;
@@ -59,11 +97,37 @@ public class Prefab : ICloneable
 		Connections = [];
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Prefab"/> class.
+	/// </summary>
+	/// <param name="name">Name of this prefab.</param>
+	/// <param name="collider">The collider of this prefab.</param>
+	/// <param name="type">The type of this prefab.</param>
+	/// <param name="backgroundColor">The background color of this prefab.</param>
+	/// <param name="editable">If this prefab is editable.</param>
+	/// <param name="voxels">Voxels/model of this prefab.</param>
+	/// <param name="blocks">The blocks inside this prefab.</param>
+	/// <param name="settings">Settings of the blocks inside this prefab.</param>
+	/// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
 	public Prefab(string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, Voxel[]? voxels, BlockData? blocks, List<PrefabSetting>? settings, List<Connection>? connections)
 		: this(name, collider, type, backgroundColor, editable, ushort.MaxValue, default, voxels, blocks, settings, connections)
 	{
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Prefab"/> class.
+	/// </summary>
+	/// <param name="name">Name of this prefab.</param>
+	/// <param name="collider">The collider of this prefab.</param>
+	/// <param name="type">The type of this prefab.</param>
+	/// <param name="backgroundColor">The background color of this prefab.</param>
+	/// <param name="editable">If this prefab is editable.</param>
+	/// <param name="groupId">Id of the group this prefab is in.</param>
+	/// <param name="posInGroup">The position of this prefab in it's group.</param>
+	/// <param name="voxels">Voxels/model of this prefab.</param>
+	/// <param name="blocks">The blocks inside this prefab.</param>
+	/// <param name="settings">Settings of the blocks inside this prefab.</param>
+	/// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
 	public Prefab(string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, ushort groupId, byte3 posInGroup, Voxel[]? voxels, BlockData? blocks, List<PrefabSetting>? settings, List<Connection>? connections)
 	{
 		_name = name;
@@ -79,6 +143,10 @@ public class Prefab : ICloneable
 		Connections = connections ?? [];
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Prefab"/> class.
+	/// </summary>
+	/// <param name="prefab">The prefab to copy.</param>
 	public Prefab(Prefab prefab)
 		: this(prefab._name, prefab.Collider, prefab.Type, prefab.BackgroundColor, prefab.Editable, prefab.GroupId, prefab.PosInGroup, prefab.Voxels is null ? null : (Voxel[])prefab.Voxels.Clone(), prefab.Blocks.Clone(), [.. prefab.Settings], [.. prefab.Connections])
 	{
@@ -105,8 +173,20 @@ public class Prefab : ICloneable
 		}
 	}
 
+	/// <summary>
+	/// Gets a value indicating whether this prefab is in a group.
+	/// </summary>
+	/// <value><see langword="true"/> if this prifab is in a group; otherwise, <see langword="false"/>.</value>
 	public bool IsInGroup => GroupId != ushort.MaxValue;
 
+	/// <summary>
+	/// Gets or sets the voxels/model of this prefab.
+	/// </summary>
+	/// <remarks>
+	/// <para>Must be 8*8*8*6 (3072) long.</para>
+	/// <para>The voxels are in XYZ order.</para>
+	/// </remarks>
+	/// <value>Voxels/model of this prefab.</value>
 	public Voxel[]? Voxels
 	{
 		get => _voxels;
@@ -121,6 +201,11 @@ public class Prefab : ICloneable
 		}
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Prefab"/> class, with the default values for a block.
+	/// </summary>
+	/// <param name="name">Name of the prefab.</param>
+	/// <returns>The new instance of <see cref="Prefab"/>.</returns>
 	public static Prefab CreateBlock(string name)
 	{
 		Prefab prefab = new Prefab();
@@ -131,6 +216,11 @@ public class Prefab : ICloneable
 		return prefab;
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="Prefab"/> class, with the default values for a level.
+	/// </summary>
+	/// <param name="name">Name of the prefab.</param>
+	/// <returns>The new instance of <see cref="Prefab"/>.</returns>
 	public static Prefab CreateLevel(string name)
 	{
 		Prefab prefab = new Prefab();
@@ -165,7 +255,7 @@ public class Prefab : ICloneable
 			name = rawPrefab.Name;
 		}
 
-		FcColor backgroundColor = FcColorE.Default;
+		FcColor backgroundColor = FcColorUtils.DefaultBackgroundColor;
 		if (rawPrefab.NonDefaultBackgroundColor)
 		{
 			backgroundColor = (FcColor)rawPrefab.BackgroundColor;
@@ -219,12 +309,12 @@ public class Prefab : ICloneable
 				voxel.Colors[3] = (byte)(s3 & ColorMask);
 				voxel.Colors[4] = (byte)(s4 & ColorMask);
 				voxel.Colors[5] = (byte)(s5 & ColorMask);
-				voxel.Attribs[0] = Unsafe.BitCast<byte, bool>((byte)((s0 & GlueMask) >> 7));
-				voxel.Attribs[1] = Unsafe.BitCast<byte, bool>((byte)((s1 & GlueMask) >> 7));
-				voxel.Attribs[2] = Unsafe.BitCast<byte, bool>((byte)((s2 & GlueMask) >> 7));
-				voxel.Attribs[3] = Unsafe.BitCast<byte, bool>((byte)((s3 & GlueMask) >> 7));
-				voxel.Attribs[4] = Unsafe.BitCast<byte, bool>((byte)((s4 & GlueMask) >> 7));
-				voxel.Attribs[5] = Unsafe.BitCast<byte, bool>((byte)((s5 & GlueMask) >> 7));
+				voxel.Attribs[0] = Unsafe.BitCast<byte, bool>((byte)((s0 & AttribsMask) >> 7));
+				voxel.Attribs[1] = Unsafe.BitCast<byte, bool>((byte)((s1 & AttribsMask) >> 7));
+				voxel.Attribs[2] = Unsafe.BitCast<byte, bool>((byte)((s2 & AttribsMask) >> 7));
+				voxel.Attribs[3] = Unsafe.BitCast<byte, bool>((byte)((s3 & AttribsMask) >> 7));
+				voxel.Attribs[4] = Unsafe.BitCast<byte, bool>((byte)((s4 & AttribsMask) >> 7));
+				voxel.Attribs[5] = Unsafe.BitCast<byte, bool>((byte)((s5 & AttribsMask) >> 7));
 
 				voxels[i] = voxel;
 			}
@@ -267,11 +357,11 @@ public class Prefab : ICloneable
 		}
 
 		// add settings to stock prefabs
-		if (!(blockData is null) && !(settings is null) && blockData.Length != 0)
+		if (!(blockData is null) && !(settings is null) && blockData.Size != int3.Zero)
 		{
-			for (int i = 0; i < blockData.Length; i++)
+			for (int i = 0; i < blockData.Array.Length; i++)
 			{
-				int id = blockData[i];
+				int id = blockData.Array[i];
 
 				if (id != 0)
 				{
@@ -313,6 +403,11 @@ public class Prefab : ICloneable
 		return new Prefab(name, collider, type, backgroundColor, editable, groupId, posInGroup, voxels, blockData, settings, connections);
 	}
 
+	/// <summary>
+	/// Converts this <see cref="Prefab"/> into <see cref="RawPrefab"/>.
+	/// </summary>
+	/// <param name="clone">If the prefabs should be copied, if <see langword="true"/>, this <see cref="Game"/> instance shouldn't be used anymore.</param>
+	/// <returns>A new instance of the <see cref="RawPrefab"/> class from this <see cref="game"/>.</returns>
 	public unsafe RawPrefab ToRaw(bool clone)
 	{
 		byte[]? voxels = null;
@@ -324,11 +419,11 @@ public class Prefab : ICloneable
 			{
 				Voxel voxel = Voxels[i];
 				voxels[i + (NumbVoxels * 0)] = (byte)(voxel.Colors[0] | Unsafe.BitCast<bool, byte>(voxel.Attribs[0]) << 7);
-				voxels[i + (NumbVoxels * 1)] = (byte)(voxel.Colors[1] | Unsafe.BitCast<bool,byte>(voxel.Attribs[1]) << 7);
-				voxels[i + (NumbVoxels * 2)] = (byte)(voxel.Colors[2] | Unsafe.BitCast<bool,byte>(voxel.Attribs[2]) << 7);
-				voxels[i + (NumbVoxels * 3)] = (byte)(voxel.Colors[3] | Unsafe.BitCast<bool,byte>(voxel.Attribs[3]) << 7);
-				voxels[i + (NumbVoxels * 4)] = (byte)(voxel.Colors[4] | Unsafe.BitCast<bool,byte>(voxel.Attribs[4]) << 7);
-				voxels[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | Unsafe.BitCast<bool,byte>(voxel.Attribs[5]) << 7);
+				voxels[i + (NumbVoxels * 1)] = (byte)(voxel.Colors[1] | Unsafe.BitCast<bool, byte>(voxel.Attribs[1]) << 7);
+				voxels[i + (NumbVoxels * 2)] = (byte)(voxel.Colors[2] | Unsafe.BitCast<bool, byte>(voxel.Attribs[2]) << 7);
+				voxels[i + (NumbVoxels * 3)] = (byte)(voxel.Colors[3] | Unsafe.BitCast<bool, byte>(voxel.Attribs[3]) << 7);
+				voxels[i + (NumbVoxels * 4)] = (byte)(voxel.Colors[4] | Unsafe.BitCast<bool, byte>(voxel.Attribs[4]) << 7);
+				voxels[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | Unsafe.BitCast<bool, byte>(voxel.Attribs[5]) << 7);
 			}
 		}
 
@@ -337,13 +432,13 @@ public class Prefab : ICloneable
 		return new RawPrefab(
 			hasConnections: !(Connections is null) && Connections.Count > 0,
 			hasSettings: !(Settings is null) && Settings.Count > 0,
-			hasBlocks: !(Blocks is null) && Blocks.Length > 0,
+			hasBlocks: !(Blocks is null) && Blocks.Size != int3.Zero,
 			hasVoxels: Type != PrefabType.Level && !(Voxels is null),
 			isInGroup: GroupId != ushort.MaxValue,
 			hasColliderByte: Collider != PrefabCollider.Box,
 			unEditable: !Editable,
 			unEditable2: !Editable,
-			nonDefaultBackgroundColor: BackgroundColor != FcColorE.Default,
+			nonDefaultBackgroundColor: BackgroundColor != FcColorUtils.DefaultBackgroundColor,
 			hasData2: false,
 			hasData1: false,
 			Name != "New Block",
@@ -362,9 +457,14 @@ public class Prefab : ICloneable
 			connections: clone && Connections is not null ? [.. Connections] : Connections);
 	}
 
+	/// <summary>
+	/// Creates a deep copy of this <see cref="Prefab"/>.
+	/// </summary>
+	/// <returns>A deep copy of this <see cref="Prefab"/>.</returns>
 	public Prefab Clone()
 		=> new Prefab(this);
 
+	/// <inheritdoc/>
 	object ICloneable.Clone()
 		=> new Prefab(this);
 }

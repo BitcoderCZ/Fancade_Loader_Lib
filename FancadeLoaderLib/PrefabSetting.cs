@@ -16,7 +16,17 @@ namespace FancadeLoaderLib;
 /// </remarks>
 public struct PrefabSetting
 {
+	/// <summary>
+	/// The index of this setting.
+	/// </summary>
+	/// <remarks>
+	/// Used when a block has multiple settings.
+	/// </remarks>
 	public byte Index;
+
+	/// <summary>
+	/// The position of the block this setting applies to.
+	/// </summary>
 	public ushort3 Position;
 
 	private SettingType _type;
@@ -35,6 +45,10 @@ public struct PrefabSetting
 		_value = value;
 	}
 
+	/// <summary>
+	/// Gets or sets the type of this setting.
+	/// </summary>
+	/// <value>Type of this setting.</value>
 	public SettingType Type
 	{
 		readonly get => _type;
@@ -49,6 +63,10 @@ public struct PrefabSetting
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the value of this setting.
+	/// </summary>
+	/// <value>Value of this setting.</value>
 	public object Value
 	{
 		readonly get => _value;
@@ -63,6 +81,12 @@ public struct PrefabSetting
 		}
 	}
 
+	/// <summary>
+	/// Gets if a value is valid for a <see cref="SettingType"/>.
+	/// </summary>
+	/// <param name="value">The value to test.</param>
+	/// <param name="type">The type to test <paramref name="value"/> for.</param>
+	/// <returns><see langword="true"/> if <paramref name="value"/> is valid for <paramref name="type"/>; otherwise, <see langword="false"/>.</returns>
 	public static bool IsValueValid(object value, SettingType type)
 		=> type switch
 		{
@@ -74,6 +98,11 @@ public struct PrefabSetting
 			_ => value is string,
 		};
 
+	/// <summary>
+	/// Gets the default value for a <see cref="SettingType"/>.
+	/// </summary>
+	/// <param name="type">The type to get the default value for.</param>
+	/// <returns>The default value for <paramref name="type"/>.</returns>
 	public static object GetDefaultValueForType(SettingType type)
 		=> type switch
 		{
@@ -85,6 +114,11 @@ public struct PrefabSetting
 			_ => string.Empty,
 		};
 
+	/// <summary>
+	/// Loads a <see cref="PrefabSetting"/> from a <see cref="FcBinaryReader"/>.
+	/// </summary>
+	/// <param name="reader">The reader to read the <see cref="PrefabSetting"/> from.</param>
+	/// <returns>A <see cref="PrefabSetting"/> read from <paramref name="reader"/>.</returns>
 	public static PrefabSetting Load(FcBinaryReader reader)
 	{
 		byte valueIndex = reader.ReadUInt8();
@@ -109,11 +143,15 @@ public struct PrefabSetting
 		};
 	}
 
+	/// <summary>
+	/// Writes a <see cref="PrefabSetting"/> into a <see cref="FcBinaryWriter"/>.
+	/// </summary>
+	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public readonly void Save(FcBinaryWriter writer)
 	{
 		writer.WriteUInt8(Index);
 		writer.WriteUInt8((byte)Type);
-		writer.WriteVec3US(Position);
+		writer.WriteUshort3(Position);
 
 		switch (Type)
 		{
@@ -130,7 +168,7 @@ public struct PrefabSetting
 				writer.WriteFloat((float)Value);
 				break;
 			case SettingType.Vec3: // vec3 or rot (euler angles)
-				writer.WriteVec3F((float3)Value);
+				writer.WriteFloat3((float3)Value);
 				break;
 			case SettingType.String:
 			default: // string (string value (6) or terminal name (7+))
@@ -139,6 +177,12 @@ public struct PrefabSetting
 		}
 	}
 
+	/// <summary>
+	/// Sets the value and type of this setting.
+	/// </summary>
+	/// <param name="type">The new type of this setting.</param>
+	/// <param name="value">The new value of this setting.</param>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="value"/> is not valid for <paramref name="type"/>.</exception>
 	public void SetValue(SettingType type, object value)
 	{
 		if (!IsValueValid(value, type))
@@ -150,6 +194,10 @@ public struct PrefabSetting
 		_value = value;
 	}
 
+	/// <summary>
+	/// Returns the string representation of the current instance.
+	/// </summary>
+	/// <returns>The string representation of the current instance.</returns>
 	public readonly override string ToString()
-		=> $"[Type: {Type}, Value: {Value}, Pos: {Position}]";
+		=> $"Type: {Type}, Value: {Value}, Pos: {Position}";
 }

@@ -15,18 +15,33 @@ namespace FancadeLoaderLib;
 /// </remarks>
 public struct Connection
 {
+	/// <summary>
+	/// Position of the first block.
+	/// </summary>
 	public ushort3 From;
+
+	/// <summary>
+	/// Position of the second block.
+	/// </summary>
 	public ushort3 To;
-	public ushort3 FromVoxel; // local position of the connector in SubBlock space
-	public ushort3 ToVoxel; // local position of the connector in SubBlock space
+
+	/// <summary>
+	/// Postition of the voxel that this connection connects from, from <see cref="From"/>.
+	/// </summary>
+	public ushort3 FromVoxel;
+
+	/// <summary>
+	/// Postition of the voxel that this connection connects to, from <see cref="To"/>.
+	/// </summary>
+	public ushort3 ToVoxel;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="Connection"/> struct.
 	/// </summary>
-	/// <param name="from"></param>
-	/// <param name="to"></param>
-	/// <param name="fromVoxel"></param>
-	/// <param name="toVoxel"></param>
+	/// <param name="from">Position of the first block.</param>
+	/// <param name="to">Position of the second block.</param>
+	/// <param name="fromVoxel">Postition of the voxel that this connection connects from, from <paramref name="from"/>.</param>
+	/// <param name="toVoxel">Postition of the voxel that this connection connects to, from <paramref name="to"/>.</param>
 	public Connection(ushort3 from, ushort3 to, ushort3 fromVoxel, ushort3 toVoxel)
 	{
 		From = from;
@@ -35,6 +50,11 @@ public struct Connection
 		ToVoxel = toVoxel;
 	}
 
+	/// <summary>
+	/// Loads a <see cref="Connection"/> from a <see cref="FcBinaryReader"/>.
+	/// </summary>
+	/// <param name="reader">The reader to read the <see cref="Connection"/> from.</param>
+	/// <returns>A <see cref="Connection"/> read from <paramref name="reader"/>.</returns>
 	public static Connection Load(FcBinaryReader reader)
 	{
 		ushort3 from = reader.ReadVec3US();
@@ -45,14 +65,22 @@ public struct Connection
 		return new Connection(from, to, fromVoxel, toVoxel);
 	}
 
+	/// <summary>
+	/// Writes a <see cref="Connection"/> into a <see cref="FcBinaryWriter"/>.
+	/// </summary>
+	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public readonly void Save(FcBinaryWriter writer)
 	{
-		writer.WriteVec3US(From);
-		writer.WriteVec3US(To);
-		writer.WriteVec3US(FromVoxel);
-		writer.WriteVec3US(ToVoxel);
+		writer.WriteUshort3(From);
+		writer.WriteUshort3(To);
+		writer.WriteUshort3(FromVoxel);
+		writer.WriteUshort3(ToVoxel);
 	}
 
+	/// <summary>
+	/// Returns the string representation of the current instance.
+	/// </summary>
+	/// <returns>The string representation of the current instance.</returns>
 	public readonly override string ToString()
-		=> $"[From: {From}, To: {To}, FromVox: {FromVoxel}, ToVox: {ToVoxel}]";
+		=> $"From: {From}, To: {To}, FromVox: {FromVoxel}, ToVox: {ToVoxel}";
 }

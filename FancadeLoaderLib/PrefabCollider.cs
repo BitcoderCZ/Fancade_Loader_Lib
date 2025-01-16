@@ -4,6 +4,9 @@
 
 namespace FancadeLoaderLib;
 
+/// <summary>
+/// Represents the type of a prefab's collider.
+/// </summary>
 public enum PrefabCollider : byte
 {
 	/// <summary>

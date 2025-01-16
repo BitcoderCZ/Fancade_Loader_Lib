@@ -2,23 +2,28 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Exceptions;
 using MathUtils.Vectors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Security.Cryptography;
 
 namespace FancadeLoaderLib;
 
+/// <summary>
+/// Represents a group of prefabs - a block made from multiple prefabs.
+/// </summary>
 public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 {
 	private readonly Dictionary<byte3, Prefab> _prefabs;
 
 	private ushort _id;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PrefabGroup"/> class.
+	/// </summary>
+	/// <param name="id">Id of this group.</param>
 	public PrefabGroup(ushort id)
 	{
 		_prefabs = [];
@@ -26,6 +31,10 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		Size = byte3.Zero;
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PrefabGroup"/> class.
+	/// </summary>
+	/// <param name="collection">The prefabs to be placed in this group, must all have the same id.</param>
 	public PrefabGroup(IEnumerable<Prefab> collection)
 	{
 		if (!collection.Any())
@@ -61,6 +70,11 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		CalculateSize();
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PrefabGroup"/> class.
+	/// </summary>
+	/// <param name="collection">The prefabs to be placed in this group, group id must be <paramref name="id"/>.</param>
+	/// <param name="id">Id of this group.</param>
 	public PrefabGroup(IEnumerable<Prefab> collection, ushort id)
 	{
 		if (id == ushort.MaxValue)
@@ -99,6 +113,11 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		CalculateSize();
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PrefabGroup"/> class.
+	/// </summary>
+	/// <param name="group">The <see cref="PrefabGroup"/> to copy values from.</param>
+	/// <param name="deepCopy">If deep copy should be performed.</param>
 	public PrefabGroup(PrefabGroup group, bool deepCopy)
 	{
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
@@ -112,6 +131,10 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		Size = group.Size;
 	}
 
+	/// <summary>
+	/// Gets or sets the id of this groups.
+	/// </summary>
+	/// <value>Id of this group.</value>
 	public ushort Id
 	{
 		get => _id;
@@ -126,22 +149,36 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		}
 	}
 
+	/// <summary>
+	/// Gets the size of this group.
+	/// </summary>
+	/// <value>Size of this group.</value>
 	public byte3 Size { get; private set; }
 
+	/// <inheritdoc/>
 	public ICollection<byte3> Keys => _prefabs.Keys;
 
+	/// <inheritdoc/>
 	public ICollection<Prefab> Values => _prefabs.Values;
 
+	/// <inheritdoc/>
 	public int Count => _prefabs.Count;
 
+	/// <inheritdoc/>
 	public bool IsReadOnly => false;
 
+	/// <inheritdoc/>
 	public Prefab this[byte3 index]
 	{
 		get => _prefabs[index];
 		set => _prefabs[index] = Validate(value);
 	}
 
+	/// <summary>
+	/// Swaps 2 postitions.
+	/// </summary>
+	/// <param name="posA">The first postition.</param>
+	/// <param name="posB">The second postion.</param>
 	public void SwapPositions(byte3 posA, byte3 posB)
 	{
 		if (TryGetValue(posA, out Prefab? a))
@@ -166,6 +203,7 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		}
 	}
 
+	/// <inheritdoc/>
 	public void Add(byte3 key, Prefab value)
 	{
 		_prefabs.Add(key, Validate(value));
@@ -173,9 +211,11 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		Size = byte3.Max(Size, key + byte3.One);
 	}
 
+	/// <inheritdoc/>
 	public bool ContainsKey(byte3 key)
 		=> _prefabs.ContainsKey(key);
 
+	/// <inheritdoc/>
 	public bool Remove(byte3 key)
 	{
 		bool val = _prefabs.Remove(key);
@@ -188,9 +228,11 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		return val;
 	}
 
+	/// <inheritdoc/>
 	public bool TryGetValue(byte3 key, [NotNullWhen(true)] out Prefab? value)
 		=> _prefabs.TryGetValue(key, out value);
 
+	/// <inheritdoc/>
 	public void Clear()
 	{
 		_prefabs.Clear();
@@ -198,6 +240,7 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		Size = byte3.Zero;
 	}
 
+	/// <inheritdoc/>
 	void ICollection<KeyValuePair<byte3, Prefab>>.Add(KeyValuePair<byte3, Prefab> item)
 	{
 		Prefab res = Validate(item.Value);
@@ -211,12 +254,15 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		Size = byte3.Max(Size, item.Key + byte3.One);
 	}
 
+	/// <inheritdoc/>
 	bool ICollection<KeyValuePair<byte3, Prefab>>.Contains(KeyValuePair<byte3, Prefab> item)
 		=> ((ICollection<KeyValuePair<byte3, Prefab>>)_prefabs).Contains(item);
 
+	/// <inheritdoc/>
 	void ICollection<KeyValuePair<byte3, Prefab>>.CopyTo(KeyValuePair<byte3, Prefab>[] array, int arrayIndex)
 		=> ((ICollection<KeyValuePair<byte3, Prefab>>)_prefabs).CopyTo(array, arrayIndex);
 
+	/// <inheritdoc/>
 	bool ICollection<KeyValuePair<byte3, Prefab>>.Remove(KeyValuePair<byte3, Prefab> item)
 	{
 		bool val = ((ICollection<KeyValuePair<byte3, Prefab>>)_prefabs).Remove(item);
@@ -229,12 +275,18 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		return val;
 	}
 
+	/// <inheritdoc/>
 	public IEnumerator<KeyValuePair<byte3, Prefab>> GetEnumerator()
 		=> _prefabs.GetEnumerator();
 
+	/// <inheritdoc/>
 	IEnumerator IEnumerable.GetEnumerator()
 		=> _prefabs.GetEnumerator();
 
+	/// <summary>
+	/// Enumerates the prefabs in this group in the order of their ids.
+	/// </summary>
+	/// <returns>An enumerator that iterates through this groups in id order.</returns>
 	public IEnumerable<Prefab> EnumerateInIdOrder()
 	{
 		for (byte z = 0; z < Size.Z; z++)
@@ -252,9 +304,15 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		}
 	}
 
+	/// <summary>
+	/// Creates a copy of this <see cref="PrefabGroup"/>.
+	/// </summary>
+	/// <param name="deepCopy">If deep copy should be performed.</param>
+	/// <returns>A copy of this <see cref="PrefabGroup"/>.</returns>
 	public PrefabGroup Clone(bool deepCopy)
 		=> new PrefabGroup(this, deepCopy);
 
+	/// <inheritdoc/>
 	object ICloneable.Clone()
 		=> new PrefabGroup(this, true);
 

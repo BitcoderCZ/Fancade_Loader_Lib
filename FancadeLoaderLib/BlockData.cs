@@ -58,17 +58,6 @@ public class BlockData
 	public int3 Size { get; private set; }
 
 	/// <summary>
-	/// Gets or sets the block at the specified index.
-	/// </summary>
-	/// <param name="index">Index of the block.</param>
-	/// <returns>Block at the specified index.</returns>
-	public ushort this[int index]
-	{
-		get => Array[index];
-		set => Array[index] = value;
-	}
-
-	/// <summary>
 	/// Determines if the specified position is inside the bounds of this data.
 	/// </summary>
 	/// <param name="pos">The position to check.</param>

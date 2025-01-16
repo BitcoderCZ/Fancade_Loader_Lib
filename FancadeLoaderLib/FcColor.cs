@@ -4,6 +4,9 @@
 
 namespace FancadeLoaderLib;
 
+/// <summary>
+/// Represents a fancade color.
+/// </summary>
 public enum FcColor : byte
 {
 #pragma warning disable SA1602 // Enumeration items should be documented
@@ -43,8 +46,14 @@ public enum FcColor : byte
 #pragma warning restore SA1602 // Enumeration items should be documented
 }
 
+/// <summary>
+/// Utils for working with <see cref="FcColor"/>.
+/// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1649:File name should match first type name", Justification = "Bug in analyzer?")]
-public static class FcColorE
+public static class FcColorUtils
 {
-	public const FcColor Default = FcColor.Blue;
+	/// <summary>
+	/// The default prefab background color.
+	/// </summary>
+	public const FcColor DefaultBackgroundColor = FcColor.Blue;
 }

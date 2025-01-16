@@ -6,6 +6,9 @@ using MathUtils.Vectors;
 
 namespace FancadeLoaderLib;
 
+/// <summary>
+/// Represents the type of a setting.
+/// </summary>
 public enum SettingType : byte
 {
 	/// <summary>

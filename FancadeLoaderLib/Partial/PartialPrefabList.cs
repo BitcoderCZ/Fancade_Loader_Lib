@@ -201,7 +201,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is out of range.</exception>
 	public void Insert(int index, PartialPrefab item)
 	{
-		if (index < 0 || index  > _list.Count)
+		if (index < 0 || index > _list.Count)
 		{
 			throw new ArgumentOutOfRangeException(nameof(index));
 		}
