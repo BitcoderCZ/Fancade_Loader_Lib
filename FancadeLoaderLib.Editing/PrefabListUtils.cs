@@ -6,7 +6,7 @@ using FancadeLoaderLib.Partial;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FancadeLoaderLib.Editing.Utils;
+namespace FancadeLoaderLib.Editing;
 
 /// <summary>
 /// Utils for working with <see cref="PrefabList"/>.

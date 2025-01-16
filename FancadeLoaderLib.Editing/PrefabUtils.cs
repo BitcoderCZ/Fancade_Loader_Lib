@@ -2,7 +2,7 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace FancadeLoaderLib.Editing.Utils;
+namespace FancadeLoaderLib.Editing;
 
 /// <summary>
 /// Utils for working with <see cref="Prefab"/>.
