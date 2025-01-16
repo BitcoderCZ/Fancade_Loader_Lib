@@ -1,5 +1,5 @@
-﻿// <copyright file="PrefabListUtils.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
+﻿// <copyright file="PrefabListUtils.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
 using FancadeLoaderLib.Partial;

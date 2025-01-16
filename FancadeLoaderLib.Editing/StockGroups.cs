@@ -1,4 +1,8 @@
-﻿using FancadeLoaderLib.Partial;
+﻿// <copyright file="StockGroups.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using FancadeLoaderLib.Partial;
 using MathUtils.Vectors;
 
 namespace FancadeLoaderLib.Editing;
