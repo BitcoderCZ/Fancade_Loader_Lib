@@ -27,11 +27,21 @@ public struct PrefabSetting
 	/// <summary>
 	/// The position of the block this setting applies to.
 	/// </summary>
+	/// <remarks>
+	/// When apllied to a group, this should point to the block with group pos 0,0,0.
+	/// </remarks>
 	public ushort3 Position;
 
 	private SettingType _type;
 	private object _value;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PrefabSetting"/> struct.
+	/// </summary>
+	/// <param name="index">The index of this setting.</param>
+	/// <param name="type">Type of this setting.</param>
+	/// <param name="pos">The position of the block this setting applies to.</param>
+	/// <param name="value">Value of this setting.</param>
 	public PrefabSetting(byte index, SettingType type, ushort3 pos, object value)
 	{
 		if (!IsValueValid(value, type))

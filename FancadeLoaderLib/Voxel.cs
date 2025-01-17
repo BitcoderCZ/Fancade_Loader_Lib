@@ -12,13 +12,21 @@ namespace FancadeLoaderLib;
 /// Represents a single voxel of a prefab.
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
+#if NET8_0_OR_GREATER
 public struct Voxel
+#else
+public unsafe struct Voxel
+#endif
 {
 	/// <summary>
 	/// Colors of the sides of the voxel in the following order:
 	/// <para>+X, -X, +Y, -Y, +Z, -Z.</para>
 	/// </summary>
+#if NET8_0_OR_GREATER
 	public Array6<byte> Colors;
+#else
+	public fixed byte Colors[6];
+#endif
 
 	/// <summary>
 	/// <see langword="true"/> if the side does NOT have glue/"lego" on it - connects to other voxels; otherwise, <see langword="false"/>./prefabs. 
@@ -26,7 +34,11 @@ public struct Voxel
 	/// <remarks>
 	/// In the same order as <see cref="Colors"/>.
 	/// </remarks>
+#if NET8_0_OR_GREATER
 	public Array6<bool> Attribs;
+#else
+	public fixed bool Attribs[6];
+#endif
 
 	/// <summary>
 	/// Gets a value indicating whether this voxel is empty.
@@ -71,6 +83,11 @@ public struct Voxel
 		return builder.ToString();
 	}
 
+#if NET8_0_OR_GREATER
+	/// <summary>
+	/// Struct array with 6 items.
+	/// </summary>
+	/// <typeparam name="T">The item type.</typeparam>
 	[InlineArray(6)]
 	public struct Array6<T>
 		where T : unmanaged
@@ -79,4 +96,5 @@ public struct Voxel
 		private T _element0;
 #pragma warning restore IDE0044
 	}
+#endif
 }

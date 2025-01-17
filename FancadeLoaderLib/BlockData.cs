@@ -205,7 +205,7 @@ public class BlockData
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetBlock(int3 pos, ushort id)
 	{
-		CheckBounds(pos);
+		CheckBounds(pos, nameof(pos));
 
 		if (id != 0)
 		{
@@ -290,7 +290,7 @@ public class BlockData
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ushort GetBlock(int3 pos)
 	{
-		CheckBounds(pos);
+		CheckBounds(pos, nameof(pos));
 
 		return Array[pos.X, pos.Y, pos.Z];
 	}
@@ -318,7 +318,7 @@ public class BlockData
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ushort GetBlockUnchecked(int3 pos)
 	{
-		CheckBounds(pos);
+		CheckBounds(pos, nameof(pos));
 
 		return Array[pos.X, pos.Y, pos.Z];
 	}
@@ -475,7 +475,7 @@ public class BlockData
 
 	#region Utils
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void CheckBounds(int3 pos, [CallerArgumentExpression(nameof(pos))] string? argumentName = null)
+	private void CheckBounds(int3 pos, string argumentName)
 	{
 		if (!InBounds(pos))
 		{

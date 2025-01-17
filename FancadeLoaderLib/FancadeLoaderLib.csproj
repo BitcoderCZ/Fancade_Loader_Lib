@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <OutputType>Library</OutputType>
@@ -34,6 +34,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.0" />
+    <PackageReference Include="zlib.net-mutliplatform" Version="1.0.8" />
   </ItemGroup>
 
   <ItemGroup>

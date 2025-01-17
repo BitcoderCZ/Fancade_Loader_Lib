@@ -237,7 +237,11 @@ public class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
 	}
 
 	/// <inheritdoc/>
+#if NET6_0_OR_GREATER
 	public bool TryGetValue(byte3 key, [NotNullWhen(true)] out PartialPrefab? value)
+#else
+	public bool TryGetValue(byte3 key, out PartialPrefab value)
+#endif
 		=> _prefabs.TryGetValue(key, out value);
 
 	/// <inheritdoc/>

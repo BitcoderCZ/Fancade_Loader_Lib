@@ -127,7 +127,12 @@ public class FcBinaryReader : IDisposable
 		}
 
 		byte[] bytes = new byte[count];
-		Stream.Read(bytes, 0, count);
+		int index = 0;
+		while (index < bytes.Length)
+		{
+			index += Stream.Read(bytes, index, bytes.Length - index);
+		}
+
 		return bytes;
 	}
 
@@ -236,7 +241,11 @@ public class FcBinaryReader : IDisposable
 	{
 		Span<byte> span = stackalloc byte[4];
 		ReadSpan(span);
+#if NET5_0_OR_GREATER
 		return BinaryPrimitives.ReadSingleLittleEndian(span);
+#else
+		return BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(span));
+#endif
 	}
 
 	/// <summary>

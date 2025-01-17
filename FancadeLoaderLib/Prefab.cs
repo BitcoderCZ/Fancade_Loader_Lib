@@ -7,7 +7,6 @@ using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
 
@@ -309,12 +308,12 @@ public class Prefab : ICloneable
 				voxel.Colors[3] = (byte)(s3 & ColorMask);
 				voxel.Colors[4] = (byte)(s4 & ColorMask);
 				voxel.Colors[5] = (byte)(s5 & ColorMask);
-				voxel.Attribs[0] = Unsafe.BitCast<byte, bool>((byte)((s0 & AttribsMask) >> 7));
-				voxel.Attribs[1] = Unsafe.BitCast<byte, bool>((byte)((s1 & AttribsMask) >> 7));
-				voxel.Attribs[2] = Unsafe.BitCast<byte, bool>((byte)((s2 & AttribsMask) >> 7));
-				voxel.Attribs[3] = Unsafe.BitCast<byte, bool>((byte)((s3 & AttribsMask) >> 7));
-				voxel.Attribs[4] = Unsafe.BitCast<byte, bool>((byte)((s4 & AttribsMask) >> 7));
-				voxel.Attribs[5] = Unsafe.BitCast<byte, bool>((byte)((s5 & AttribsMask) >> 7));
+				voxel.Attribs[0] = UnsafeUtils.BitCast<byte, bool>((byte)((s0 & AttribsMask) >> 7));
+				voxel.Attribs[1] = UnsafeUtils.BitCast<byte, bool>((byte)((s1 & AttribsMask) >> 7));
+				voxel.Attribs[2] = UnsafeUtils.BitCast<byte, bool>((byte)((s2 & AttribsMask) >> 7));
+				voxel.Attribs[3] = UnsafeUtils.BitCast<byte, bool>((byte)((s3 & AttribsMask) >> 7));
+				voxel.Attribs[4] = UnsafeUtils.BitCast<byte, bool>((byte)((s4 & AttribsMask) >> 7));
+				voxel.Attribs[5] = UnsafeUtils.BitCast<byte, bool>((byte)((s5 & AttribsMask) >> 7));
 
 				voxels[i] = voxel;
 			}
@@ -418,12 +417,12 @@ public class Prefab : ICloneable
 			for (int i = 0; i < NumbVoxels; i++)
 			{
 				Voxel voxel = Voxels[i];
-				voxels[i + (NumbVoxels * 0)] = (byte)(voxel.Colors[0] | Unsafe.BitCast<bool, byte>(voxel.Attribs[0]) << 7);
-				voxels[i + (NumbVoxels * 1)] = (byte)(voxel.Colors[1] | Unsafe.BitCast<bool, byte>(voxel.Attribs[1]) << 7);
-				voxels[i + (NumbVoxels * 2)] = (byte)(voxel.Colors[2] | Unsafe.BitCast<bool, byte>(voxel.Attribs[2]) << 7);
-				voxels[i + (NumbVoxels * 3)] = (byte)(voxel.Colors[3] | Unsafe.BitCast<bool, byte>(voxel.Attribs[3]) << 7);
-				voxels[i + (NumbVoxels * 4)] = (byte)(voxel.Colors[4] | Unsafe.BitCast<bool, byte>(voxel.Attribs[4]) << 7);
-				voxels[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | Unsafe.BitCast<bool, byte>(voxel.Attribs[5]) << 7);
+				voxels[i + (NumbVoxels * 0)] = (byte)(voxel.Colors[0] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[0]) << 7);
+				voxels[i + (NumbVoxels * 1)] = (byte)(voxel.Colors[1] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[1]) << 7);
+				voxels[i + (NumbVoxels * 2)] = (byte)(voxel.Colors[2] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[2]) << 7);
+				voxels[i + (NumbVoxels * 3)] = (byte)(voxel.Colors[3] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[3]) << 7);
+				voxels[i + (NumbVoxels * 4)] = (byte)(voxel.Colors[4] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[4]) << 7);
+				voxels[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[5]) << 7);
 			}
 		}
 

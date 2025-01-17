@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <Version>1.1.0</Version>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

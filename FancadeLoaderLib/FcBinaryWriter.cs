@@ -200,7 +200,11 @@ public class FcBinaryWriter : IDisposable
 	public void WriteFloat(float value)
 	{
 		Span<byte> buffer = stackalloc byte[4];
+#if NET5_0_OR_GREATER
 		BinaryPrimitives.WriteSingleLittleEndian(buffer, value);
+#else
+		BinaryPrimitives.WriteInt32LittleEndian(buffer, BitConverter.SingleToInt32Bits(value));
+#endif
 		WriteSpan(buffer);
 	}
 
