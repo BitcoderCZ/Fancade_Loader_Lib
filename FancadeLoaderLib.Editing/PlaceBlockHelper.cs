@@ -32,17 +32,17 @@ public static partial class PlaceBlockHelper
 		switch (value)
 		{
 			case bool b:
-				group = b ? StockGroups.TrueLiteral : StockGroups.FalseLiteral;
+				group = b ? StockBlocks.Values.True.Prefab : StockBlocks.Values.False.Prefab;
 				hasSetting = false;
 				break;
 			case float:
-				group = StockGroups.FloatLiteral;
+				group = StockBlocks.Values.Number.Prefab;
 				break;
 			case float3:
-				group = StockGroups.VectorLiteral;
+				group = StockBlocks.Values.Vector.Prefab;
 				break;
 			case Rotation:
-				group = StockGroups.RotationLiteral;
+				group = StockBlocks.Values.Rotation.Prefab;
 				break;
 			default:
 				throw new ArgumentException($"{nameof(value)} is not a valid fancade literal.", nameof(value));
