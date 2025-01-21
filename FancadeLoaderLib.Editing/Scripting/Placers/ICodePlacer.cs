@@ -2,7 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-namespace FancadeLoaderLib.Editing.Scripting;
+namespace FancadeLoaderLib.Editing.Scripting.Placers;
 
 public interface ICodePlacer
 {

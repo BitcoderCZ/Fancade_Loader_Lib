@@ -5,7 +5,7 @@
 using FancadeLoaderLib.Editing.Utils;
 using System;
 
-namespace FancadeLoaderLib.Editing.Scripting;
+namespace FancadeLoaderLib.Editing.Scripting.Placers;
 
 public interface IScopedCodePlacer : ICodePlacer
 {
