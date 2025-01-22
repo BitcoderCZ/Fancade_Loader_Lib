@@ -19,4 +19,6 @@ public readonly struct AbsolutePositionTerminal : ITerminal
 	public int TerminalIndex { get; init; }
 
 	public int3? VoxelPosition { get; }
+
+	public WireType WireType { get; init; }
 }

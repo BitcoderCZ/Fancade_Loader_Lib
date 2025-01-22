@@ -4,6 +4,7 @@
 
 using MathUtils.Vectors;
 using System;
+using System.Numerics;
 
 namespace FancadeLoaderLib;
 
@@ -122,6 +123,23 @@ public struct PrefabSetting
 			SettingType.Float => default(float),
 			SettingType.Vec3 => default(float3),
 			_ => string.Empty,
+		};
+
+	/// <summary>
+	/// Gets the <see cref="SettingType"/> for <paramref name="value"/>.
+	/// </summary>
+	/// <param name="value">The type to get the type of.</param>
+	/// <returns>The <see cref="SettingType"/> for <paramref name="value"/> or null if <paramref name="value"/> isn't a valid <see cref="PrefabSetting"/> value.</returns>
+	public static SettingType? GetTypeForValue(object value)
+		=> value switch
+		{
+			byte => SettingType.Byte,
+			ushort => SettingType.Ushort,
+			int => SettingType.Int,
+			float => SettingType.Float,
+			Vector3 or Rotation => SettingType.Vec3,
+			string => SettingType.String,
+			_ => throw new ArgumentException(nameof(value)),
 		};
 
 	/// <summary>

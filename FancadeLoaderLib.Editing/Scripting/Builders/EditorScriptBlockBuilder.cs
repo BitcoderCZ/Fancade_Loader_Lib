@@ -172,9 +172,9 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
 
 		builder.AppendLine("updateChanges();");
 
-		for (int i = 0; i < values.Count; i++)
+		for (int i = 0; i < settings.Count; i++)
 		{
-			ValueRecord set = values[i];
+			SettingRecord set = settings[i];
 
 			string val = set.Value switch
 			{
@@ -236,10 +236,10 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
 				writer.WriteInt32(block.Type.Prefab.Id);
 			}
 
-			writer.WriteInt32(values.Count);
-			for (int i = 0; i < values.Count; i++)
+			writer.WriteInt32(settings.Count);
+			for (int i = 0; i < settings.Count; i++)
 			{
-				ValueRecord val = values[i];
+				SettingRecord val = settings[i];
 				writer.WriteInt32(val.Block.Position.X);
 				writer.WriteInt32(val.Block.Position.Y);
 				writer.WriteInt32(val.Block.Position.Z);

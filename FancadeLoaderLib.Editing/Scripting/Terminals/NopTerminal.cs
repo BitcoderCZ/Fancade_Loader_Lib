@@ -19,4 +19,6 @@ internal sealed class NopTerminal : ITerminal
 	public int TerminalIndex => -1;
 
 	public int3? VoxelPosition => new int3(-1, -1, -1);
+
+	public WireType WireType => WireType.Error;
 }

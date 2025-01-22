@@ -13,4 +13,6 @@ public interface ITerminal
 	int TerminalIndex { get; }
 
 	int3? VoxelPosition { get; }
+
+	WireType WireType { get; }
 }

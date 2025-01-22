@@ -17,7 +17,7 @@ public abstract class BlockBuilder
 	protected List<BlockSegment> segments = [];
 	protected List<Block> highlightedBlocks = [];
 	protected List<ConnectionRecord> connections = [];
-	protected List<ValueRecord> values = [];
+	protected List<SettingRecord> settings = [];
 
 	public virtual void AddBlockSegments(IEnumerable<Block> blocks)
 	{
@@ -50,8 +50,8 @@ public abstract class BlockBuilder
 		}
 	}
 
-	public virtual void SetBlockValue(Block block, int valueIndex, object value)
-		=> values.Add(new ValueRecord(block, valueIndex, value));
+	public virtual void SetSetting(Block block, int settingIndex, object value)
+		=> settings.Add(new SettingRecord(block, settingIndex, value));
 
 	public abstract object Build(int3 posToBuildAt);
 
@@ -59,7 +59,7 @@ public abstract class BlockBuilder
 	{
 		segments.Clear();
 		connections.Clear();
-		values.Clear();
+		settings.Clear();
 	}
 
 	protected Block[] PreBuild(int3 posToBuildAt, bool sortByPos)
@@ -125,7 +125,7 @@ public abstract class BlockBuilder
 
 	protected readonly record struct ConnectionRecord(ITerminal From, ITerminal To);
 
-	protected readonly record struct ValueRecord(Block Block, int ValueIndex, object Value);
+	protected readonly record struct SettingRecord(Block Block, int ValueIndex, object Value);
 
 	protected class BlockSegment
 	{
@@ -138,7 +138,7 @@ public abstract class BlockBuilder
 				throw new ArgumentNullException(nameof(blocks));
 			}
 
-			Blocks = blocks.ToImmutableArray();
+			Blocks = [.. blocks];
 			if (Blocks.Length == 0)
 			{
 				throw new ArgumentOutOfRangeException(nameof(blocks), $"{nameof(blocks)} cannot be empty.");

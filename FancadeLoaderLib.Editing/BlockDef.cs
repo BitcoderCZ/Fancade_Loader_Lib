@@ -6,6 +6,7 @@ using FancadeLoaderLib.Editing.Utils;
 using FancadeLoaderLib.Partial;
 using MathUtils.Vectors;
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace FancadeLoaderLib.Editing;
@@ -57,4 +58,20 @@ public sealed class BlockDef
 	public int3 Size => Prefab.Size;
 
 	public bool IsGroup => Size != int3.One;
+
+	public TerminalDef this[string terminalName]
+	{
+		get
+		{
+			foreach (var terminal in Terminals)
+			{
+				if (terminal.Name == terminalName)
+				{
+					return terminal;
+				}
+			}
+
+			throw new KeyNotFoundException($"This block doesn't contain a terminal with the name '{terminalName}'.");
+		}
+	}
 }

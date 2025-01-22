@@ -26,6 +26,12 @@ public readonly struct TerminalStore : ITerminalStore
 		_out = [new BlockTerminal(@out, outTerminal)];
 	}
 
+	public TerminalStore(Block @in, string inTerminalName, Block @out, string outTerminalName)
+	{
+		In = new BlockTerminal(@in, @in.Type[inTerminalName]);
+		_out = [new BlockTerminal(@out, @out.Type[outTerminalName])];
+	}
+
 	public TerminalStore(ITerminal @in, ITerminal[] @out)
 	{
 		In = @in;

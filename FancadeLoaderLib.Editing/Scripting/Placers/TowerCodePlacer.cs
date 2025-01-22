@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Editing.Scripting.Builders;
+using FancadeLoaderLib.Editing.Scripting.Terminals;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
@@ -62,6 +63,12 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
 
 		return block;
 	}
+
+	public void Connect(ITerminal from, ITerminal to)
+		=> _builder.Connect(from, to);
+
+	public void SetSetting(Block block, int settingIndex, object value)
+		=> _builder.SetSetting(block, settingIndex, value);
 
 	public void EnterStatementBlock()
 		=> _statementDepth++;

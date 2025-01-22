@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Editing.Scripting.Builders;
+using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Utils;
 using MathUtils.Vectors;
 using System;
@@ -62,6 +63,12 @@ public class GroundCodePlacer : IScopedCodePlacer
 
 		return block;
 	}
+
+	public void Connect(ITerminal from, ITerminal to)
+		=> _builder.Connect(from, to);
+
+	public void SetSetting(Block block, int settingIndex, object value)
+		=> _builder.SetSetting(block, settingIndex, value);
 
 	public void EnterStatementBlock()
 	{

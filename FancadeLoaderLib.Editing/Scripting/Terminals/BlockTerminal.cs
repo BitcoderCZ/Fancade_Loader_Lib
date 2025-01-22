@@ -17,9 +17,17 @@ public readonly struct BlockTerminal : ITerminal
 		Terminal = terminal;
 	}
 
+	public BlockTerminal(Block block, string terminalName)
+	{
+		Block = block;
+		Terminal = block.Type[terminalName];
+	}
+
 	public int3 BlockPosition => Block.Position;
 
 	public int TerminalIndex => Terminal.Index;
 
 	public int3? VoxelPosition => Terminal.Position;
+
+	public WireType WireType => Terminal.WireType;
 }

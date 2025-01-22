@@ -117,9 +117,9 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 			}
 		}
 
-		for (int i = 0; i < values.Count; i++)
+		for (int i = 0; i < settings.Count; i++)
 		{
-			ValueRecord set = values[i];
+			SettingRecord set = settings[i];
 			prefab.Settings.Add(new PrefabSetting()
 			{
 				Index = (byte)set.ValueIndex,
