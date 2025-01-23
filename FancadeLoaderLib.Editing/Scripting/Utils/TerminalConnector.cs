@@ -36,4 +36,10 @@ public sealed class TerminalConnector
 		_firstStore ??= store;
 		_lastStore = store;
 	}
+
+	public void Clear()
+	{
+		_firstStore = null;
+		_lastStore = null;
+	}
 }

@@ -12,7 +12,7 @@ public sealed class BreakBlockCache
 {
 	private readonly int _maxUsesPerAxis;
 
-	private Block _lastBlock;
+	private Block? _lastBlock;
 	private bool _invalid = false;
 
 	private int _xUseCount;
@@ -48,7 +48,8 @@ public sealed class BreakBlockCache
 
 	public bool TryGet([NotNullWhen(true)] out Block? breakBlock)
 	{
-		if (CheckAndInc(0) &&
+		if (_lastBlock is not null &&
+			CheckAndInc(0) &&
 			CheckAndInc(1) &&
 			CheckAndInc(2))
 		{
@@ -62,8 +63,14 @@ public sealed class BreakBlockCache
 		}
 	}
 
-	public bool TryGetAxis(int axis, [NotNullWhen(true)] out ITerminalStore? emitStore)
+	public bool TryGetAxis(int axis, [NotNullWhen(true)] out ITerminalStore? store)
 	{
+		if (_lastBlock is null)
+		{
+			store = null;
+			return false;
+		}
+
 		if (axis < 0 || axis > 2)
 		{
 			throw new ArgumentOutOfRangeException(nameof(axis));
@@ -72,27 +79,27 @@ public sealed class BreakBlockCache
 		if (CheckAndInc(axis))
 		{
 			// x - 2, y - 1, z - 0
-			emitStore = TerminalStore.COut(_lastBlock, _lastBlock.Type.Terminals[2 - axis]);
+			store = TerminalStore.COut(_lastBlock, _lastBlock.Type.Terminals[2 - axis]);
 			return true;
 		}
 		else
 		{
-			emitStore = null;
+			store = null;
 			return false;
 		}
 	}
 
-	private static Block ValidateBlock(Block? breakBlock, string argumentName)
+	private static Block? ValidateBlock(Block? breakBlock, string argumentName)
 	{
 		if (breakBlock is null)
 		{
-			throw new ArgumentNullException(argumentName);
+			return breakBlock;
 		}
 
 		BlockDef type = breakBlock.Type;
 		return type == StockBlocks.Math.Break_Vector || type == StockBlocks.Math.Break_Rotation
 			? breakBlock
-			: throw new ArgumentException(nameof(breakBlock), $"{nameof(breakBlock)} must be {nameof(StockBlocks.Math.Break_Vector)} or {nameof(StockBlocks.Math.Break_Rotation)}.");
+			: throw new ArgumentException(argumentName, $"{argumentName} must be {nameof(StockBlocks.Math.Break_Vector)} or {nameof(StockBlocks.Math.Break_Rotation)}.");
 	}
 
 	private bool CheckAndInc(int axis)

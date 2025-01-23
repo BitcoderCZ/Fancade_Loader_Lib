@@ -23,6 +23,12 @@ public readonly struct BlockTerminal : ITerminal
 		Terminal = block.Type[terminalName];
 	}
 
+	public BlockTerminal(Block block, int terminalIndex)
+	{
+		Block = block;
+		Terminal = block.Type.Terminals[terminalIndex];
+	}
+
 	public int3 BlockPosition => Block.Position;
 
 	public int TerminalIndex => Terminal.Index;

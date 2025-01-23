@@ -268,8 +268,8 @@ public static class StockBlocks
 		public static readonly BlockDef List_Con = new BlockDef("List Constraint", 473, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.ConPtr, TerminalType.Out, "Element").Add(WireType.Float, TerminalType.In, "Index").Add(WireType.ConPtr, TerminalType.In, "Variable"));
 		#endregion
 #pragma warning restore SA1310 // Field names should not contain underscore
-		public static readonly BlockDef PlusPlusFloat = new BlockDef("Increase Number", 556, BlockType.Active, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Float, TerminalType.In, "Variable").Add(WireType.Void, TerminalType.In, "Before"));
-		public static readonly BlockDef MinusMinusFloat = new BlockDef("Decrease Number", 558, BlockType.Active, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Float, TerminalType.In, "Variable").Add(WireType.Void, TerminalType.In, "Before"));
+		public static readonly BlockDef IncrementNumber = new BlockDef("Increase Number", 556, BlockType.Active, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Float, TerminalType.In, "Variable").Add(WireType.Void, TerminalType.In, "Before"));
+		public static readonly BlockDef DecrementNumber = new BlockDef("Decrease Number", 558, BlockType.Active, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Float, TerminalType.In, "Variable").Add(WireType.Void, TerminalType.In, "Before"));
 
 		public static BlockDef GetVariableByType(WireType type)
 			=> type.ToNotPointer() switch
