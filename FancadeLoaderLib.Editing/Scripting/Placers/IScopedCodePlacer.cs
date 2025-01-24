@@ -9,33 +9,38 @@ namespace FancadeLoaderLib.Editing.Scripting.Placers;
 
 public interface IScopedCodePlacer : ICodePlacer
 {
-	void EnterStatementBlock();
+	int CurrentCodeBlockBlocks { get; }
 
-	virtual IDisposable StatementBlock()
-	{
-		EnterStatementBlock();
-		return new Disposable(ExitStatementBlock);
-	}
+	void EnterStatementBlock();
 
 	void ExitStatementBlock();
 
 	void EnterExpressionBlock();
 
-	virtual IDisposable ExpressionBlock()
-	{
-		EnterExpressionBlock();
-		return new Disposable(ExitExpressionBlock);
-	}
-
 	void ExitExpressionBlock();
 
 	void EnterHighlight();
 
-	virtual IDisposable HighlightBlock()
+	void ExitHightlight();
+}
+
+public static class IScopedCodePlacerUtils
+{
+	public static IDisposable StatementBlock(this IScopedCodePlacer placer)
 	{
-		EnterExpressionBlock();
-		return new Disposable(ExitExpressionBlock);
+		placer.EnterStatementBlock();
+		return new Disposable(placer.ExitStatementBlock);
 	}
 
-	void ExitHightlight();
+	public static IDisposable ExpressionBlock(this IScopedCodePlacer placer)
+	{
+		placer.EnterExpressionBlock();
+		return new Disposable(placer.ExitExpressionBlock);
+	}
+
+	public static IDisposable HighlightBlock(this IScopedCodePlacer placer)
+	{
+		placer.EnterHighlight();
+		return new Disposable(placer.ExitHightlight);
+	}
 }

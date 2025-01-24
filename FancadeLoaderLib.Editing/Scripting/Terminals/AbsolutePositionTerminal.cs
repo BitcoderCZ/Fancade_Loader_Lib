@@ -8,17 +8,16 @@ namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 
 public readonly struct AbsolutePositionTerminal : ITerminal
 {
-	public AbsolutePositionTerminal(int3 blockPosition, int3 voxelPosition)
+	public AbsolutePositionTerminal(int3 blockPosition)
 	{
 		BlockPosition = blockPosition;
-		VoxelPosition = voxelPosition;
 	}
 
 	public int3 BlockPosition { get; }
 
 	public int TerminalIndex { get; init; }
 
-	public int3? VoxelPosition { get; }
+	public int3? VoxelPosition { get; init; }
 
 	public WireType WireType { get; init; }
 }

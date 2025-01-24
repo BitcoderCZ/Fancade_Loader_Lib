@@ -137,7 +137,7 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
 		Base64,
 	}
 
-	public CompressionType Compression { get; init; }
+	public CompressionType Compression { get; init; } = CompressionType.Base64;
 
 #if NET5_0_OR_GREATER
 	public override string Build(int3 startPos)

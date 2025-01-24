@@ -320,7 +320,7 @@ public sealed class CodeWriter
 		return (new TerminalStore(block), new BlockTerminal(block, "Do"), new BlockTerminal(block, "Counter"));
 	}
 
-	public ITerminalStore PlaceIncrementNumber(Func<ITerminal> getVariableTerminalFunc)
+	public ITerminalStore PlaceIncrementNumber(Func<ITerminal> getVariableTerminalFunc)		
 	{
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.IncrementNumber);
 

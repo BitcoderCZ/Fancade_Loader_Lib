@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Editing.Scripting.Builders;
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Utils;
 using MathUtils.Vectors;
@@ -28,6 +27,10 @@ public class GroundCodePlacer : IScopedCodePlacer
 	{
 		_builder = builder;
 	}
+
+	public int CurrentCodeBlockBlocks => expressions.Count != 0 ? expressions.Peek().BlockCount : statements.Peek().BlockCount;
+
+	public int PlacedBlockCount { get; private set; }
 
 	/// <summary>
 	/// Gets the horizontal space between blocks of code (minimum value and default is 3).
@@ -60,6 +63,8 @@ public class GroundCodePlacer : IScopedCodePlacer
 		{
 			block = expressions.Count != 0 ? expressions.Peek().PlaceBlock(blockDef) : statements.Peek().PlaceBlock(blockDef);
 		}
+
+		PlacedBlockCount++;
 
 		return block;
 	}

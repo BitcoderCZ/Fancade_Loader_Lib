@@ -10,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace FancadeLoaderLib.Editing.Scripting.Builders;
+namespace FancadeLoaderLib.Editing.Scripting;
 
 public abstract class BlockBuilder
 {
@@ -102,7 +102,7 @@ public abstract class BlockBuilder
 		{
 			BlockSegment segment = segments[i];
 
-			segment.Move((segmentPositions[i] + posToBuildAt + off) - segment.MinPos);
+			segment.Move(segmentPositions[i] + posToBuildAt + off - segment.MinPos);
 
 			segment.Blocks.CopyTo(blocks, index);
 			index += segment.Blocks.Length;
@@ -151,7 +151,7 @@ public abstract class BlockBuilder
 
 		public int3 MaxPos { get; private set; }
 
-		public int3 Size => (MaxPos - MinPos) + int3.One;
+		public int3 Size => MaxPos - MinPos + int3.One;
 
 		public void Move(int3 move)
 		{

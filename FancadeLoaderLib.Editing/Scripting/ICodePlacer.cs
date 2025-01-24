@@ -5,10 +5,12 @@
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Scripting.TerminalStores;
 
-namespace FancadeLoaderLib.Editing.Scripting.Placers;
+namespace FancadeLoaderLib.Editing.Scripting;
 
 public interface ICodePlacer
 {
+	int PlacedBlockCount { get; }
+
 	Block PlaceBlock(BlockDef blockType);
 
 	void Connect(ITerminal from, ITerminal to);

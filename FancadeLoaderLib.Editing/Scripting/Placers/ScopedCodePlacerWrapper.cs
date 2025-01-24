@@ -6,14 +6,20 @@ using FancadeLoaderLib.Editing.Scripting.Terminals;
 
 namespace FancadeLoaderLib.Editing.Scripting.Placers;
 
-internal sealed class ScopedCodePlacerWrapper : IScopedCodePlacer
+public sealed class ScopedCodePlacerWrapper : IScopedCodePlacer
 {
 	private readonly ICodePlacer _placer;
+	private readonly IScopedCodePlacer? _scoped;
 
 	public ScopedCodePlacerWrapper(ICodePlacer placer)
 	{
 		_placer = placer;
+		_scoped = _placer as IScopedCodePlacer;
 	}
+
+	public int CurrentCodeBlockBlocks => _scoped is null ? _placer.PlacedBlockCount : _scoped.CurrentCodeBlockBlocks;
+
+	public int PlacedBlockCount => _placer.PlacedBlockCount;
 
 	public Block PlaceBlock(BlockDef blockType)
 		=> _placer.PlaceBlock(blockType);
@@ -25,26 +31,20 @@ internal sealed class ScopedCodePlacerWrapper : IScopedCodePlacer
 		=> _placer.SetSetting(block, settingIndex, value);
 
 	public void EnterExpressionBlock()
-	{
-	}
+		=> _scoped?.EnterExpressionBlock();
 
 	public void EnterHighlight()
-	{
-	}
+		=> _scoped?.EnterHighlight();
 
 	public void EnterStatementBlock()
-	{
-	}
+		=> _scoped?.EnterStatementBlock();
 
 	public void ExitExpressionBlock()
-	{
-	}
+		=> _scoped?.ExitExpressionBlock();
 
 	public void ExitHightlight()
-	{
-	}
+		=> _scoped?.ExitHightlight();
 
 	public void ExitStatementBlock()
-	{
-	}
+		=> _scoped?.ExitStatementBlock();
 }

@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Editing.Scripting.Builders;
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using MathUtils.Vectors;
 using System;
@@ -29,6 +28,10 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
 		X,
 		Z,
 	}
+
+	public int CurrentCodeBlockBlocks => _blocks.Count;
+
+	public int PlacedBlockCount => _blocks.Count;
 
 	public int MaxHeight
 	{

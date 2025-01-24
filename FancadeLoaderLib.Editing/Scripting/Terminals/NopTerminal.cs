@@ -6,7 +6,7 @@ using MathUtils.Vectors;
 
 namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 
-internal sealed class NopTerminal : ITerminal
+public sealed class NopTerminal : ITerminal
 {
 	public static readonly NopTerminal Instance = new NopTerminal();
 
