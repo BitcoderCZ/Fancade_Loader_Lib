@@ -127,6 +127,8 @@ public class BlockData
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetGroup(int x, int y, int z, PrefabGroup group)
 	{
+		CheckLowerBounds(new int3(x, y, z), "x, y, z");
+
 		ushort id = group.Id;
 		byte3 size = group.Size;
 
@@ -170,6 +172,8 @@ public class BlockData
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetGroup(int x, int y, int z, PartialPrefabGroup group)
 	{
+		CheckLowerBounds(new int3(x, y, z), "x, y, z");
+
 		ushort id = group.Id;
 		byte3 size = group.Size;
 
@@ -205,11 +209,15 @@ public class BlockData
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetBlock(int3 pos, ushort id)
 	{
-		CheckBounds(pos, nameof(pos));
+		CheckLowerBounds(pos, nameof(pos));
 
 		if (id != 0)
 		{
 			EnsureSize(pos); // not placing "air"
+		}
+		else
+		{
+			CheckUpperBounds(pos, nameof(pos));
 		}
 
 		SetBlockInternal(pos.X, pos.Y, pos.Z, id);
@@ -237,11 +245,15 @@ public class BlockData
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetBlock(int x, int y, int z, ushort id)
 	{
-		CheckBounds(new int3(x, y, z), "x, y, z");
+		CheckLowerBounds(new int3(x, y, z), "x, y, z");
 
 		if (id != 0)
 		{
 			EnsureSize(x, y, z); // not placing "air"
+		}
+		else
+		{
+			CheckUpperBounds(new int3(x, y, z), "x, y, z");
 		}
 
 		SetBlockInternal(x, y, z, id);
@@ -475,9 +487,27 @@ public class BlockData
 
 	#region Utils
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void CheckLowerBounds(int3 pos, string argumentName)
+	{
+		if (pos.X < 0 || pos.Y < 0 || pos.Z < 0)
+		{
+			throw new ArgumentOutOfRangeException(argumentName);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void CheckBounds(int3 pos, string argumentName)
 	{
 		if (!InBounds(pos))
+		{
+			throw new ArgumentOutOfRangeException(argumentName);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void CheckUpperBounds(int3 pos, string argumentName)
+	{
+		if (pos.X >= Size.X || pos.Y >= Size.Y || pos.Z >= Size.Z)
 		{
 			throw new ArgumentOutOfRangeException(argumentName);
 		}
