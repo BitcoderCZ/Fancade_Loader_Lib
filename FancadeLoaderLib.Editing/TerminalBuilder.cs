@@ -9,7 +9,9 @@ using System.Runtime.InteropServices;
 
 namespace FancadeLoaderLib.Editing;
 
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public readonly struct TerminalBuilder
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
 	public static readonly TerminalBuilder Empty = new TerminalBuilder(0);
 

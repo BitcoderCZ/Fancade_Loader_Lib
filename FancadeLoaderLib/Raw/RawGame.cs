@@ -27,7 +27,9 @@ public class RawGame
 	/// <summary>
 	/// The prefabs of this game.
 	/// </summary>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public readonly List<RawPrefab> Prefabs;
+#pragma warning restore CA1002
 
 	/// <summary>
 	/// The name of this game.
@@ -79,7 +81,9 @@ public class RawGame
 	/// <param name="idOffset">Id offset of this game.</param>
 	/// <param name="prefabs">Prefabs of this game.</param>
 	/// <exception cref="ArgumentNullException">Thrown when any of the arguments is null.</exception>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public RawGame(string name, string author, string description, ushort idOffset, List<RawPrefab> prefabs)
+#pragma warning restore CA1002
 	{
 		if (name is null)
 		{
@@ -116,9 +120,12 @@ public class RawGame
 	public static (ushort FileVersion, string Name, string Author, string Description) LoadInfoCompressed(Stream stream)
 	{
 		// decompress
-		FcBinaryReader reader = new FcBinaryReader(new MemoryStream());
-		Zlib.Decompress(stream, reader.Stream);
-		reader.Reset();
+		using MemoryStream ms = new MemoryStream();
+
+		Zlib.Decompress(stream, ms);
+		ms.Position = 0;
+
+		using FcBinaryReader reader = new FcBinaryReader(ms);
 
 		ushort fileVersion = reader.ReadUInt16();
 
@@ -137,9 +144,12 @@ public class RawGame
 	public static RawGame LoadCompressed(Stream stream)
 	{
 		// decompress
-		FcBinaryReader reader = new FcBinaryReader(new MemoryStream());
-		Zlib.Decompress(stream, reader.Stream);
-		reader.Reset();
+		using MemoryStream ms = new MemoryStream();
+
+		Zlib.Decompress(stream, ms);
+		ms.Position = 0;
+
+		using FcBinaryReader reader = new FcBinaryReader(ms);
 
 		return Load(reader);
 	}
@@ -151,6 +161,11 @@ public class RawGame
 	/// <returns>The loaded game.</returns>
 	public static RawGame Load(FcBinaryReader reader)
 	{
+		if (reader is null)
+		{
+			throw new ArgumentNullException(nameof(reader));
+		}
+
 		ushort fileVersion = reader.ReadUInt16();
 
 		if (fileVersion > CurrentFileVersion || fileVersion < 26)
@@ -201,6 +216,11 @@ public class RawGame
 	/// <param name="writer">The writer to save to.</param>
 	public void Save(FcBinaryWriter writer)
 	{
+		if (writer is null)
+		{
+			throw new ArgumentNullException(nameof(writer));
+		}
+
 		writer.WriteUInt16(CurrentFileVersion);
 		writer.WriteString(Name);
 		writer.WriteString(Author);

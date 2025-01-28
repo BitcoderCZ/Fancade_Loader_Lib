@@ -83,6 +83,11 @@ public sealed class CodeWriter
 
 	public ITerminalStore SetVariable(string name, ITerminal terminal)
 	{
+		if (terminal is null)
+		{
+			throw new ArgumentNullException(nameof(terminal));
+		}
+
 		var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminal.WireType));
 
 		_codePlacer.Connect(terminal, new BlockTerminal(block, "Value"));
@@ -94,6 +99,11 @@ public sealed class CodeWriter
 
 	public ITerminalStore SetVariable(string name, Func<ITerminal> getTerminalFunc, WireType terminalType)
 	{
+		if (getTerminalFunc is null)
+		{
+			throw new ArgumentNullException(nameof(getTerminalFunc));
+		}
+
 		var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminalType));
 
 		_codePlacer.Connect(getTerminalFunc(), new BlockTerminal(block, "Value"));
@@ -240,6 +250,11 @@ public sealed class CodeWriter
 
 	public (ITerminalStore Store, ITerminal TrueTerminal, ITerminal FalseTerminal) PlaceIf(Func<ITerminal> getConditionTerminalFunc)
 	{
+		if (getConditionTerminalFunc is null)
+		{
+			throw new ArgumentNullException(nameof(getConditionTerminalFunc));
+		}
+
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Control.If);
 
 		ITerminal condition = getConditionTerminalFunc();
@@ -274,7 +289,7 @@ public sealed class CodeWriter
 	{
 		if (touchFinger < 0 || touchFinger > FancadeConstants.TouchSensorMaxFinger)
 		{
-			throw new ArgumentOutOfRangeException(nameof(touchFinger));
+			throw new ArgumentNullException(nameof(touchFinger));
 		}
 
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Control.TouchSensor);
@@ -303,6 +318,11 @@ public sealed class CodeWriter
 
 	public (ITerminalStore Store, ITerminal CollidedTerminal, ITerminal SecondObjectTerminal, ITerminal ImpulseTerminal, ITerminal NormalTerminal) PlaceCollision(Func<ITerminal> getFirstObjectTerminalFunc)
 	{
+		if (getFirstObjectTerminalFunc is null)
+		{
+			throw new ArgumentNullException(nameof(getFirstObjectTerminalFunc));
+		}
+
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Collision);
 
 		_codePlacer.Connect(getFirstObjectTerminalFunc(), new BlockTerminal(block, "1st Object"));
@@ -312,6 +332,16 @@ public sealed class CodeWriter
 
 	public (ITerminalStore Store, ITerminal DoTerminal, ITerminal CounterTerminal) PlaceLoop(Func<ITerminal> getStartTerminalFunc, Func<ITerminal> getStopTerminalFunc)
 	{
+		if (getStartTerminalFunc is null)
+		{
+			throw new ArgumentNullException(nameof(getStartTerminalFunc));
+		}
+
+		if (getStopTerminalFunc is null)
+		{
+			throw new ArgumentNullException(nameof(getStopTerminalFunc));
+		}
+
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Loop);
 
 		_codePlacer.Connect(getStartTerminalFunc(), new BlockTerminal(block, "Start"));
@@ -320,8 +350,13 @@ public sealed class CodeWriter
 		return (new TerminalStore(block), new BlockTerminal(block, "Do"), new BlockTerminal(block, "Counter"));
 	}
 
-	public ITerminalStore PlaceIncrementNumber(Func<ITerminal> getVariableTerminalFunc)		
+	public ITerminalStore PlaceIncrementNumber(Func<ITerminal> getVariableTerminalFunc)
 	{
+		if (getVariableTerminalFunc is null)
+		{
+			throw new ArgumentNullException(nameof(getVariableTerminalFunc));
+		}
+
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.IncrementNumber);
 
 		_codePlacer.Connect(getVariableTerminalFunc(), new BlockTerminal(block, "Variable"));
@@ -331,6 +366,11 @@ public sealed class CodeWriter
 
 	public ITerminalStore PlaceDecrementNumber(Func<ITerminal> getVariableTerminalFunc)
 	{
+		if (getVariableTerminalFunc is null)
+		{
+			throw new ArgumentNullException(nameof(getVariableTerminalFunc));
+		}
+
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.DecrementNumber);
 
 		_codePlacer.Connect(getVariableTerminalFunc(), new BlockTerminal(block, "Variable"));

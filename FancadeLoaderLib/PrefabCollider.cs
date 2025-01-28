@@ -7,7 +7,9 @@ namespace FancadeLoaderLib;
 /// <summary>
 /// Represents the type of a prefab's collider.
 /// </summary>
+#pragma warning disable CA1028 // Enum Storage should be Int32
 public enum PrefabCollider : byte
+#pragma warning restore CA1028 // Enum Storage should be Int32
 {
 	/// <summary>
 	/// The prefab doesn't have a collider.

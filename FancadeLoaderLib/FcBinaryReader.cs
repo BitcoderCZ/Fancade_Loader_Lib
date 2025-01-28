@@ -14,7 +14,7 @@ namespace FancadeLoaderLib;
 /// <summary>
 /// A class for reading primitives in fancade format.
 /// </summary>
-public class FcBinaryReader : IDisposable
+public sealed class FcBinaryReader : IDisposable
 {
 	/// <summary>
 	/// The underlying stream.
@@ -50,6 +50,11 @@ public class FcBinaryReader : IDisposable
 	/// <param name="leaveOpen">If <paramref name="stream"/> should be left open after <see cref="Dispose"/> is called.</param>
 	public FcBinaryReader(Stream stream, bool leaveOpen)
 	{
+		if (stream is null)
+		{
+			throw new ArgumentNullException(nameof(stream));
+		}
+
 		if (!stream.CanRead)
 		{
 			throw new ArgumentException($"{nameof(stream)} isn't readable.");

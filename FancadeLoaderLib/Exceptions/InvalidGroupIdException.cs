@@ -9,7 +9,8 @@ namespace FancadeLoaderLib.Exceptions;
 /// <summary>
 /// Thrown by a prefab group when the prefab's id is invalid and InvalidGroupIdBehaviour is set to <see cref="InvalidGroupIdBehaviour.ThrowException"/>.
 /// </summary>
-public class InvalidGroupIdException : Exception
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Not desirable for this type.")]
+public sealed class InvalidGroupIdException : Exception
 {
 	/// <summary>
 	/// Initializes a new instance of the <see cref="InvalidGroupIdException"/> class.

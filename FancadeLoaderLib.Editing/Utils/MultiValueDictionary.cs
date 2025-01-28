@@ -82,7 +82,9 @@ public sealed class MultiValueDictionary<TKey, TValue> : IDictionary<TKey, List<
 	IEnumerator IEnumerable.GetEnumerator()
 		=> _dict.GetEnumerator();
 
+#pragma warning disable CA1002 // Do not expose generic lists
 	public List<TValue> GetValue(TKey key)
+#pragma warning restore CA1002 // Do not expose generic lists
 	{
 		if (!_dict.TryGetValue(key, out List<TValue>? list))
 		{
@@ -113,6 +115,21 @@ public static class MultiValueDictionaryUtils
 	public static MultiValueDictionary<TKey, TValue> ToMultiValueDictionary<T, TKey, TValue>(this IEnumerable<T> collection, Func<T, TKey> keySelector, Func<T, TValue> valueSelector)
 		where TKey : notnull
 	{
+		if (collection is null)
+		{
+			throw new ArgumentNullException(nameof(collection));
+		}
+
+		if (keySelector is null)
+		{
+			throw new ArgumentNullException(nameof(keySelector));
+		}
+
+		if (valueSelector is null)
+		{
+			throw new ArgumentNullException(nameof(valueSelector));
+		}
+
 		MultiValueDictionary<TKey, TValue> dict =
 #if NET6_0_OR_GREATER
 			collection.TryGetNonEnumeratedCount(out int collectionCount)

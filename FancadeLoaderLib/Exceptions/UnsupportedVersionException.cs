@@ -10,7 +10,8 @@ namespace FancadeLoaderLib.Exceptions;
 /// <summary>
 /// Thrown when an attempt to load a game of an unsupported version is made.
 /// </summary>
-public class UnsupportedVersionException : Exception
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Not desirable for this type.")]
+public sealed class UnsupportedVersionException : Exception
 {
 	/// <summary>
 	/// Initializes a new instance of the <see cref="UnsupportedVersionException"/> class.

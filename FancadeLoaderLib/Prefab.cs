@@ -38,12 +38,14 @@ public class Prefab : ICloneable
 	/// <summary>
 	/// Settings of the blocks inside this prefab.
 	/// </summary>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public readonly List<PrefabSetting> Settings;
 
 	/// <summary>
 	/// Connections between blocks inside this prefab, block-block and block-outside of this prefab.
 	/// </summary>
 	public readonly List<Connection> Connections;
+#pragma warning restore CA1002 // Do not expose generic lists
 
 	/// <summary>
 	/// The collider of this prefab.
@@ -108,7 +110,9 @@ public class Prefab : ICloneable
 	/// <param name="blocks">The blocks inside this prefab.</param>
 	/// <param name="settings">Settings of the blocks inside this prefab.</param>
 	/// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public Prefab(string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, Voxel[]? voxels, BlockData? blocks, List<PrefabSetting>? settings, List<Connection>? connections)
+#pragma warning restore CA1002 // Do not expose generic lists
 		: this(name, collider, type, backgroundColor, editable, ushort.MaxValue, default, voxels, blocks, settings, connections)
 	{
 	}
@@ -127,7 +131,9 @@ public class Prefab : ICloneable
 	/// <param name="blocks">The blocks inside this prefab.</param>
 	/// <param name="settings">Settings of the blocks inside this prefab.</param>
 	/// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public Prefab(string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, ushort groupId, byte3 posInGroup, Voxel[]? voxels, BlockData? blocks, List<PrefabSetting>? settings, List<Connection>? connections)
+#pragma warning restore CA1002 // Do not expose generic lists
 	{
 		_name = name;
 		Collider = collider;
@@ -147,7 +153,9 @@ public class Prefab : ICloneable
 	/// </summary>
 	/// <param name="prefab">The prefab to copy.</param>
 	public Prefab(Prefab prefab)
+#pragma warning disable CA1062 // Validate arguments of public methods
 		: this(prefab._name, prefab.Collider, prefab.Type, prefab.BackgroundColor, prefab.Editable, prefab.GroupId, prefab.PosInGroup, prefab.Voxels is null ? null : (Voxel[])prefab.Voxels.Clone(), prefab.Blocks.Clone(), [.. prefab.Settings], [.. prefab.Connections])
+#pragma warning restore CA1062
 	{
 	}
 
@@ -186,7 +194,9 @@ public class Prefab : ICloneable
 	/// <para>The voxels are in XYZ order.</para>
 	/// </remarks>
 	/// <value>Voxels/model of this prefab.</value>
+#pragma warning disable CA1819 // Properties should not return arrays
 	public Voxel[]? Voxels
+#pragma warning restore CA1819
 	{
 		get => _voxels;
 		set
@@ -242,6 +252,11 @@ public class Prefab : ICloneable
 	/// <exception cref="ArgumentException">Thrown when <paramref name="rawPrefab"/> is invalid.</exception>
 	public static unsafe Prefab FromRaw(RawPrefab rawPrefab, ushort idOffset, short idOffsetAddition, bool clone = true)
 	{
+		if (rawPrefab is null)
+		{
+			throw new ArgumentNullException(nameof(rawPrefab));
+		}
+
 		PrefabType type = PrefabType.Normal;
 		if (rawPrefab.HasTypeByte)
 		{
@@ -365,23 +380,23 @@ public class Prefab : ICloneable
 				if (id != 0)
 				{
 					int numbStockSettings = 0; // TODO: getNumbStockSettings(id);
+#pragma warning disable CA1508 // Avoid dead conditional code
 					if (numbStockSettings != 0)
 					{
 						for (int setI = 0; setI < numbStockSettings; setI++)
 						{
 							ushort3 pos = (ushort3)blockData.Index(i);
 
-							try
-							{
-								PrefabSetting setting = settings.First(s => s.Index == setI && s.Position == pos);
-							}
-							catch
+							PrefabSetting setting = settings.FirstOrDefault(s => s.Index == setI && s.Position == pos);
+
+							if (setting == default)
 							{
 								// Wasn't found
 								// TODO: settings.Add(getStockSetting(id, setI));
 							}
 						}
 					}
+#pragma warning restore CA1508
 				}
 			}
 		}

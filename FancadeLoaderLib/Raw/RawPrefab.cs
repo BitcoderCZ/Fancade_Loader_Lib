@@ -149,12 +149,16 @@ public class RawPrefab
 	/// <summary>
 	/// Settings of the blocks inside this prefab.
 	/// </summary>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public List<PrefabSetting>? Settings;
+#pragma warning restore CA1002 // Do not expose generic lists
 
 	/// <summary>
 	/// Connections between blocks inside this prefab, block-block and block-outside of this prefab.
 	/// </summary>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public List<Connection>? Connections;
+#pragma warning restore CA1002 // Do not expose generic lists
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="RawPrefab"/> class.
@@ -193,7 +197,9 @@ public class RawPrefab
 	/// <param name="blocks">Ids of the blocks inside this prefab.</param>
 	/// <param name="settings">Settings of the blocks inside this prefab.</param>
 	/// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public RawPrefab(bool hasConnections, bool hasSettings, bool hasBlocks, bool hasVoxels, bool isInGroup, bool hasColliderByte, bool unEditable, bool unEditable2, bool nonDefaultBackgroundColor, bool hasData2, bool hasData1, bool nonDefaultName, bool hasTypeByte, byte typeByte, string name, byte data1, uint data2, byte backgroundColor, byte colliderByte, ushort groupId, byte3 posInGroup, byte[]? voxels, Array3D<ushort>? blocks, List<PrefabSetting>? settings, List<Connection>? connections)
+#pragma warning restore CA1002 // Do not expose generic lists
 #pragma warning restore SA1625 // Element documentation should not be copied and pasted
 	{
 		HasConnections = hasConnections;
@@ -230,6 +236,11 @@ public class RawPrefab
 	/// <returns>A <see cref="RawPrefab"/> read from <paramref name="reader"/>.</returns>
 	public static unsafe RawPrefab Load(FcBinaryReader reader)
 	{
+		if (reader is null)
+		{
+			throw new ArgumentNullException(nameof(reader));
+		}
+
 		byte header0 = reader.ReadUInt8();
 		byte header1 = reader.ReadUInt8();
 
@@ -384,6 +395,11 @@ public class RawPrefab
 	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public unsafe void Save(FcBinaryWriter writer)
 	{
+		if (writer is null)
+		{
+			throw new ArgumentNullException(nameof(writer));
+		}
+
 		ushort header = 0;
 
 		if (HasTypeByte)

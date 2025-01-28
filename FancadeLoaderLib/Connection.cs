@@ -3,6 +3,7 @@
 // </copyright>
 
 using MathUtils.Vectors;
+using System;
 
 namespace FancadeLoaderLib;
 
@@ -13,7 +14,7 @@ namespace FancadeLoaderLib;
 /// if From/To.XYZ == 32769 AND in block -> one side of connection is outside.
 /// <para>When connected to a prefab group, <see cref="From"/>/<see cref="To"/> point to the main prefab of the group (<see cref="Prefab.PosInGroup"/> == <see cref="byte3.Zero"/>).</para>
 /// </remarks>
-public struct Connection
+public struct Connection : IEquatable<Connection>
 {
 	/// <summary>
 	/// Position of the first block.
@@ -50,6 +51,12 @@ public struct Connection
 		ToVoxel = toVoxel;
 	}
 
+	public static bool operator ==(Connection left, Connection right)
+		=> left.From == right.From && left.To == right.To && left.FromVoxel == right.ToVoxel && left.ToVoxel == right.ToVoxel;
+
+	public static bool operator !=(Connection left, Connection right)
+		=> !(left == right);
+
 	/// <summary>
 	/// Loads a <see cref="Connection"/> from a <see cref="FcBinaryReader"/>.
 	/// </summary>
@@ -57,6 +64,11 @@ public struct Connection
 	/// <returns>A <see cref="Connection"/> read from <paramref name="reader"/>.</returns>
 	public static Connection Load(FcBinaryReader reader)
 	{
+		if (reader is null)
+		{
+			throw new ArgumentNullException(nameof(reader));
+		}
+
 		ushort3 from = reader.ReadVec3US();
 		ushort3 to = reader.ReadVec3US();
 		ushort3 fromVoxel = reader.ReadVec3US();
@@ -71,6 +83,11 @@ public struct Connection
 	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public readonly void Save(FcBinaryWriter writer)
 	{
+		if (writer is null)
+		{
+			throw new ArgumentNullException(nameof(writer));
+		}
+
 		writer.WriteUshort3(From);
 		writer.WriteUshort3(To);
 		writer.WriteUshort3(FromVoxel);
@@ -83,4 +100,13 @@ public struct Connection
 	/// <returns>The string representation of the current instance.</returns>
 	public readonly override string ToString()
 		=> $"From: {From}, To: {To}, FromVox: {FromVoxel}, ToVox: {ToVoxel}";
+
+	public readonly bool Equals(Connection other)
+		=> this == other;
+
+	public readonly override bool Equals(object? obj)
+		=> obj is Connection other && this == other;
+
+	public readonly override int GetHashCode()
+		=> HashCode.Combine(From, To, FromVoxel, ToVoxel);
 }

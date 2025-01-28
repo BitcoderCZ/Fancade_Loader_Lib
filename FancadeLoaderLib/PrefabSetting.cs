@@ -15,7 +15,7 @@ namespace FancadeLoaderLib;
 /// <remarks>
 /// If value == default, no block value.
 /// </remarks>
-public struct PrefabSetting
+public struct PrefabSetting : IEquatable<PrefabSetting>
 {
 	/// <summary>
 	/// The index of this setting.
@@ -92,6 +92,12 @@ public struct PrefabSetting
 		}
 	}
 
+	public static bool operator ==(PrefabSetting left, PrefabSetting right)
+		=> left.Index == right.Index && left.Position == right.Position && left.Type == right.Type && left.Value.Equals(right.Value);
+
+	public static bool operator !=(PrefabSetting left, PrefabSetting right)
+		=> left.Index != right.Index || left.Position != right.Position || left.Type != right.Type || !left.Value.Equals(right.Value);
+
 	/// <summary>
 	/// Gets if a value is valid for a <see cref="SettingType"/>.
 	/// </summary>
@@ -139,7 +145,7 @@ public struct PrefabSetting
 			float => SettingType.Float,
 			Vector3 or Rotation => SettingType.Vec3,
 			string => SettingType.String,
-			_ => throw new ArgumentException(nameof(value)),
+			_ => null,
 		};
 
 	/// <summary>
@@ -149,6 +155,11 @@ public struct PrefabSetting
 	/// <returns>A <see cref="PrefabSetting"/> read from <paramref name="reader"/>.</returns>
 	public static PrefabSetting Load(FcBinaryReader reader)
 	{
+		if (reader is null)
+		{
+			throw new ArgumentNullException(nameof(reader));
+		}
+
 		byte valueIndex = reader.ReadUInt8();
 		SettingType type = (SettingType)reader.ReadUInt8();
 		ushort3 pos = reader.ReadVec3US();
@@ -177,6 +188,11 @@ public struct PrefabSetting
 	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public readonly void Save(FcBinaryWriter writer)
 	{
+		if (writer is null)
+		{
+			throw new ArgumentNullException(nameof(writer));
+		}
+
 		writer.WriteUInt8(Index);
 		writer.WriteUInt8((byte)Type);
 		writer.WriteUshort3(Position);
@@ -228,4 +244,13 @@ public struct PrefabSetting
 	/// <returns>The string representation of the current instance.</returns>
 	public readonly override string ToString()
 		=> $"Type: {Type}, Value: {Value}, Pos: {Position}";
+
+	public bool Equals(PrefabSetting other)
+		=> this == other;
+
+	public readonly override bool Equals(object? obj)
+		=> obj is PrefabSetting other && this == other;
+
+	public readonly override int GetHashCode()
+		=> HashCode.Combine(Index, Position, Type, Value);
 }

@@ -2,6 +2,8 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using System;
+
 namespace FancadeLoaderLib.Editing;
 
 /// <summary>
@@ -16,6 +18,11 @@ public static class PrefabUtils
 	/// <returns><see langword="true"/> if <see cref="Prefab.Voxels"/> is null or <see cref="Voxel.IsEmpty"/> is true for all of the voxels; otherwise, <see langword="false"/>.</returns>
 	public static bool IsEmpty(this Prefab prefab)
 	{
+		if (prefab is null)
+		{
+			throw new ArgumentNullException(nameof(prefab));
+		}
+
 		if (prefab.Voxels is null)
 		{
 			return true;

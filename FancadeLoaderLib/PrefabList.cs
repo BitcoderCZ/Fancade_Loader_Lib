@@ -89,6 +89,11 @@ public class PrefabList : IList<Prefab>, ICloneable
 	/// <returns>A <see cref="PrefabList"/> read from <paramref name="reader"/>.</returns>
 	public static PrefabList Load(FcBinaryReader reader)
 	{
+		if (reader is null)
+		{
+			throw new ArgumentNullException(nameof(reader));
+		}
+
 		uint count = reader.ReadUInt32();
 		ushort idOffset = reader.ReadUInt16();
 
@@ -111,6 +116,11 @@ public class PrefabList : IList<Prefab>, ICloneable
 	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
+		if (writer is null)
+		{
+			throw new ArgumentNullException(nameof(writer));
+		}
+
 		writer.WriteUInt32((uint)Count);
 		writer.WriteUInt16(IdOffset);
 
@@ -140,6 +150,11 @@ public class PrefabList : IList<Prefab>, ICloneable
 	/// <param name="group">The group to add.</param>
 	public void AddGroup(PrefabGroup group)
 	{
+		if (group is null)
+		{
+			throw new ArgumentNullException(nameof(group));
+		}
+
 		group.Id = (ushort)_list.Count;
 		_list.AddRange(group.EnumerateInIdOrder());
 	}
@@ -194,7 +209,9 @@ public class PrefabList : IList<Prefab>, ICloneable
 	/// </summary>
 	/// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the prefabs to search for.</param>
 	/// <returns>The prefabs that match the condition defined by the specified predicate.</returns>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public List<Prefab> FindAll(Predicate<Prefab> match)
+#pragma warning restore CA1002 // Do not expose generic lists
 		=> _list.FindAll(match);
 
 	/// <summary>
@@ -230,6 +247,11 @@ public class PrefabList : IList<Prefab>, ICloneable
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is out of range.</exception>
 	public void InsertGroup(int index, PrefabGroup group)
 	{
+		if (group is null)
+		{
+			throw new ArgumentNullException(nameof(group));
+		}
+
 		IncreaseAfter(index, (ushort)group.Count);
 		group.Id = (ushort)index;
 		_list.InsertRange(index, group.EnumerateInIdOrder());

@@ -7,6 +7,8 @@
     <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <Version>1.2.0</Version>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+    <AnalysisLevel>6.0-all</AnalysisLevel>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

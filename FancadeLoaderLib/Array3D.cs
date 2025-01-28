@@ -17,6 +17,7 @@ namespace FancadeLoaderLib;
 public class Array3D<T> : IEnumerable<T>
 {
 	private int _layerSize;
+	private T[] _array;
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="Array3D{T}"/> class.
@@ -31,7 +32,7 @@ public class Array3D<T> : IEnumerable<T>
 		LengthZ = sizeZ;
 		_layerSize = sizeX * sizeY;
 
-		Array = new T[sizeX * sizeY * sizeZ];
+		_array = new T[sizeX * sizeY * sizeZ];
 	}
 
 	/// <summary>
@@ -48,10 +49,10 @@ public class Array3D<T> : IEnumerable<T>
 		LengthZ = sizeZ;
 		_layerSize = sizeX * sizeY;
 
-		Array = [.. collection];
+		_array = [.. collection];
 		if (Length != LengthX * LengthY * LengthZ)
 		{
-			throw new ArgumentException($"{nameof(collection)} length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", "collection");
+			throw new ArgumentException($"{nameof(collection)} length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", nameof(collection));
 		}
 	}
 
@@ -69,10 +70,10 @@ public class Array3D<T> : IEnumerable<T>
 		LengthZ = sizeZ;
 		_layerSize = sizeX * sizeY;
 
-		Array = array;
+		_array = array;
 		if (Length != LengthX * LengthY * LengthZ)
 		{
-			throw new ArgumentException($"{nameof(array)}.Length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", "collection");
+			throw new ArgumentException($"{nameof(array)}.Length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", nameof(array));
 		}
 	}
 
@@ -82,19 +83,26 @@ public class Array3D<T> : IEnumerable<T>
 	/// <param name="array">The <see cref="Array3D{T}"/> to copy.</param>
 	public Array3D(Array3D<T> array)
 	{
+		if (array is null)
+		{
+			throw new ArgumentNullException(nameof(array));
+		}
+
 		LengthX = array.LengthX;
 		LengthY = array.LengthY;
 		LengthZ = array.LengthZ;
 		_layerSize = array._layerSize;
 
-		Array = (T[])array.Array.Clone();
+		_array = (T[])array._array.Clone();
 	}
 
 	/// <summary>
 	/// Gets the underlying array.
 	/// </summary>
-	/// <value>Theu nderlying array.</value>
-	public T[] Array { get; private set; }
+	/// <value>The underlying array.</value>
+#pragma warning disable CA1819 // Properties should not return arrays
+	public T[] Array => _array;
+#pragma warning restore CA1819
 
 	/// <summary>
 	/// Gets the X size of this array.
@@ -124,7 +132,7 @@ public class Array3D<T> : IEnumerable<T>
 	/// Gets the total length of this array.
 	/// </summary>
 	/// <value>The total length of this array.</value>
-	public int Length => Array.Length;
+	public int Length => _array.Length;
 
 	/// <summary>
 	/// Gets or sets the item at the specified index.
@@ -133,8 +141,8 @@ public class Array3D<T> : IEnumerable<T>
 	/// <returns>Item at the specified index.</returns>
 	public T this[int index]
 	{
-		get => Array[index];
-		set => Array[index] = value;
+		get => _array[index];
+		set => _array[index] = value;
 	}
 
 	/// <summary>
@@ -174,7 +182,7 @@ public class Array3D<T> : IEnumerable<T>
 	/// Converts <paramref name="pos"/> into an index.
 	/// </summary>
 	/// <param name="pos">The position to convert.</param>
-	/// <returns>Index into <see cref="Array"/>.</returns>
+	/// <returns>Index into <see cref="_array"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Index(int3 pos)
 		=> Index(pos.X, pos.Y, pos.Z);
@@ -185,7 +193,7 @@ public class Array3D<T> : IEnumerable<T>
 	/// <param name="x">The x postition.</param>
 	/// <param name="y">The y postition.</param>
 	/// <param name="z">The z postition.</param>
-	/// <returns>Index into <see cref="Array"/>.</returns>
+	/// <returns>Index into <see cref="_array"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Index(int x, int y, int z)
 		=> x + (y * LengthX) + (z * _layerSize);
@@ -211,7 +219,7 @@ public class Array3D<T> : IEnumerable<T>
 	/// <returns>Item at the specified index.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public T Get(int x, int y, int z)
-		=> Array[Index(x, y, z)];
+		=> _array[Index(x, y, z)];
 
 	/// <summary>
 	/// Sets the item at the specified index.
@@ -222,7 +230,7 @@ public class Array3D<T> : IEnumerable<T>
 	/// <param name="value">The value to set at the specified position.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void Set(int x, int y, int z, T value)
-		=> Array[Index(x, y, z)] = value;
+		=> _array[Index(x, y, z)] = value;
 
 	/// <summary>
 	/// Changes the size of this array.
@@ -233,13 +241,21 @@ public class Array3D<T> : IEnumerable<T>
 	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="newX"/>, <paramref name="newY"/> or <paramref name="newZ"/> are negative.</exception>
 	public void Resize(int newX, int newY, int newZ)
 	{
-		if (newX < 0 || newY < 0 || newZ < 0)
+		if (newX < 0)
 		{
-			throw new ArgumentOutOfRangeException();
+			throw new ArgumentOutOfRangeException(nameof(newX));
+		}
+		else if (newY < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(newY));
+		}
+		else if (newZ < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(newZ));
 		}
 		else if (newX == 0 || newY == 0 || newZ == 0)
 		{
-			Array = [];
+			_array = [];
 
 			LengthX = 0;
 			LengthY = 0;
@@ -265,12 +281,12 @@ public class Array3D<T> : IEnumerable<T>
 			{
 				if (InBounds(0, y, z) && InBoundsNew(y, z))
 				{
-					System.Array.Copy(Array, Index(0, y, z), newArray, IndexNew(0, y, z), minX);
+					System.Array.Copy(_array, Index(0, y, z), newArray, IndexNew(0, y, z), minX);
 				}
 			}
 		}
 
-		Array = newArray;
+		_array = newArray;
 
 		LengthX = newX;
 		LengthY = newY;
@@ -297,9 +313,9 @@ public class Array3D<T> : IEnumerable<T>
 
 	/// <inheritdoc/>
 	public IEnumerator GetEnumerator()
-		=> Array.GetEnumerator();
+		=> _array.GetEnumerator();
 
 	/// <inheritdoc/>
 	IEnumerator<T> IEnumerable<T>.GetEnumerator()
-		=> ((IEnumerable<T>)Array).GetEnumerator();
+		=> ((IEnumerable<T>)_array).GetEnumerator();
 }

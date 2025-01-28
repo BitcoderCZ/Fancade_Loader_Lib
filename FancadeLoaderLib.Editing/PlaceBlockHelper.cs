@@ -26,6 +26,11 @@ public static partial class PlaceBlockHelper
 	/// <exception cref="ArgumentException">Thrown when <paramref name="value"/> is not a valid fancade literal.</exception>
 	public static void SetValue(this Prefab prefab, int3 pos, object value)
 	{
+		if (prefab is null)
+		{
+			throw new ArgumentNullException(nameof(prefab));
+		}
+
 		PartialPrefabGroup group;
 		bool hasSetting = true;
 

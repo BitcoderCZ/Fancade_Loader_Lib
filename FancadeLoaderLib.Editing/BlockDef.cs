@@ -30,7 +30,7 @@ public sealed class BlockDef
 	{
 		if (size.X < 0 || size.Y < 1 || size.Z < 1)
 		{
-			throw new ArgumentOutOfRangeException($"{nameof(size)} cannot be negative or zero.", nameof(size));
+			throw new ArgumentOutOfRangeException(nameof(size), $"{nameof(size)} cannot be negative or zero.");
 		}
 
 		Prefab = new PartialPrefabGroup(id);

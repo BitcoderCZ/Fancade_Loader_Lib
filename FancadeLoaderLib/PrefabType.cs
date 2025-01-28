@@ -7,7 +7,9 @@ namespace FancadeLoaderLib;
 /// <summary>
 /// Represents the type of a prefab.
 /// </summary>
+#pragma warning disable CA1028 // Enum Storage should be Int32
 public enum PrefabType : byte
+#pragma warning restore CA1028 // Enum Storage should be Int32
 {
 	/// <summary>
 	/// The prefab isn't affected by physics.

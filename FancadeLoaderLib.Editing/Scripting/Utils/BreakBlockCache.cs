@@ -13,6 +13,7 @@ public sealed class BreakBlockCache
 	private readonly int _maxUsesPerAxis;
 
 	private Block? _lastBlock;
+	[SuppressMessage("Performance", "CA1805:Do not initialize unnecessarily", Justification = "Clarity.")]
 	private bool _invalid = false;
 
 	private int _xUseCount;
@@ -23,11 +24,11 @@ public sealed class BreakBlockCache
 	{
 		if (maxUsesPerAxis < 1)
 		{
-			throw new ArgumentOutOfRangeException($"{nameof(maxUsesPerAxis)} must be greater than 0.", nameof(maxUsesPerAxis));
+			throw new ArgumentOutOfRangeException(nameof(maxUsesPerAxis), $"{nameof(maxUsesPerAxis)} must be greater than 0.");
 		}
 		else if (maxUsesPerAxis > FancadeConstants.MaxWireSplits)
 		{
-			throw new ArgumentOutOfRangeException($"{nameof(maxUsesPerAxis)} must be smaller than {FancadeConstants.MaxWireSplits}.", nameof(maxUsesPerAxis));
+			throw new ArgumentOutOfRangeException(nameof(maxUsesPerAxis), $"{nameof(maxUsesPerAxis)} must be smaller than {FancadeConstants.MaxWireSplits}.");
 		}
 
 		_lastBlock = ValidateBlock(breakBlock, nameof(breakBlock));

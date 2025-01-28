@@ -4,6 +4,7 @@
 
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Scripting.TerminalStores;
+using System;
 
 namespace FancadeLoaderLib.Editing.Scripting;
 
@@ -13,46 +14,61 @@ public interface ICodePlacer
 
 	Block PlaceBlock(BlockDef blockType);
 
-	void Connect(ITerminal from, ITerminal to);
+	void Connect(ITerminal fromTerminal, ITerminal toTerminal);
 
 	void SetSetting(Block block, int settingIndex, object value);
 }
 
 public static class ICodePlacerUtils
 {
-	public static void Connect(this ICodePlacer placer, ITerminalStore from, ITerminalStore to)
+	public static void Connect(this ICodePlacer placer, ITerminalStore fromStore, ITerminalStore toStore)
 	{
-		if (from is NopTerminalStore || to is NopTerminalStore)
+		if (placer is null)
+		{
+			throw new ArgumentNullException(nameof(placer));
+		}
+
+		if (fromStore is NopTerminalStore or null || toStore is NopTerminalStore or null)
 		{
 			return;
 		}
 
-		foreach (var target in from.Out)
+		foreach (var target in fromStore.Out)
 		{
-			placer.Connect(target, to.In);
+			placer.Connect(target, toStore.In);
 		}
 	}
 
-	public static void Connect(this ICodePlacer placer, ITerminalStore from, ITerminal to)
+	public static void Connect(this ICodePlacer placer, ITerminalStore fromStore, ITerminal toTerminal)
 	{
-		if (from is NopTerminalStore || to is NopTerminal)
+		if (placer is null)
+		{
+			throw new ArgumentNullException(nameof(placer));
+		}
+
+		if (fromStore is NopTerminalStore or null || toTerminal is NopTerminal)
 		{
 			return;
 		}
 
-		foreach (var target in from.Out)
+		foreach (var target in fromStore.Out)
 		{
-			placer.Connect(target, to);
+			placer.Connect(target, toTerminal);
 		}
 	}
 
-	public static void Connect(this ICodePlacer placer, ITerminal from, ITerminalStore to)
+	public static void Connect(this ICodePlacer placer, ITerminal fromTerminal, ITerminalStore toStore)
 	{
-		if (from is NopTerminal || to is NopTerminalStore)
+		if (placer is null)
+		{
+			throw new ArgumentNullException(nameof(placer));
+		}
+
+		if (fromTerminal is NopTerminal || toStore is NopTerminalStore or null)
 		{
 			return;
 		}
 
-		placer.Connect(from, to.In);
+		placer.Connect(fromTerminal, toStore.In);
 	}
 }

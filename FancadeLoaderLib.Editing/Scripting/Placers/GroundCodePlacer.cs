@@ -18,6 +18,7 @@ public class GroundCodePlacer : IScopedCodePlacer
 	protected readonly Stack<StatementCodeBlock> statements = new();
 	protected readonly Stack<ExpressionCodeBlock> expressions = new();
 
+	[SuppressMessage("Performance", "CA1805:Do not initialize unnecessarily", Justification = "Clarity.")]
 	protected bool inHighlight = false;
 
 	private readonly BlockBuilder _builder;
@@ -43,25 +44,25 @@ public class GroundCodePlacer : IScopedCodePlacer
 		{
 			if (value < 3)
 			{
-				throw new ArgumentOutOfRangeException($"{nameof(BlockXOffset)} must be greater than 2.", nameof(value));
+				throw new ArgumentOutOfRangeException(nameof(value), $"{nameof(BlockXOffset)} must be greater than 2.");
 			}
 
 			_blockXOffset = value;
 		}
 	}
 
-	public Block PlaceBlock(BlockDef blockDef)
+	public Block PlaceBlock(BlockDef blockType)
 	{
 		Block block;
 
 		if (inHighlight)
 		{
-			block = new Block(blockDef, int3.Zero);
+			block = new Block(blockType, int3.Zero);
 			_builder.AddHighlightedBlock(block);
 		}
 		else
 		{
-			block = expressions.Count != 0 ? expressions.Peek().PlaceBlock(blockDef) : statements.Peek().PlaceBlock(blockDef);
+			block = expressions.Count != 0 ? expressions.Peek().PlaceBlock(blockType) : statements.Peek().PlaceBlock(blockType);
 		}
 
 		PlacedBlockCount++;
@@ -69,8 +70,8 @@ public class GroundCodePlacer : IScopedCodePlacer
 		return block;
 	}
 
-	public void Connect(ITerminal from, ITerminal to)
-		=> _builder.Connect(from, to);
+	public void Connect(ITerminal fromTerminal, ITerminal toTerminal)
+		=> _builder.Connect(fromTerminal, toTerminal);
 
 	public void SetSetting(Block block, int settingIndex, object value)
 		=> _builder.SetSetting(block, settingIndex, value);
@@ -126,10 +127,7 @@ public class GroundCodePlacer : IScopedCodePlacer
 
 		if (statements.Count == 1)
 		{
-			if (expression.Parent!.Parent is not null)
-			{
-				throw new Exception("Parent not null.");
-			}
+			Debug.Assert(expression.Parent?.Parent is not null, "Parent of parent shouldn't be null.");
 
 			// if this is child of the top statement, process and assign x and y position to blocks
 			LayerStack.Process(expression, BlockXOffset);
@@ -145,10 +143,17 @@ public class GroundCodePlacer : IScopedCodePlacer
 	protected StatementCodeBlock CreateFunction()
 		=> new StatementCodeBlock(this, 0);
 
+#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 	protected static class LayerStack
+#pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 	{
 		public static void Process(CodeBlock block, int blockXOffset)
 		{
+			if (block is null)
+			{
+				throw new ArgumentNullException(nameof(block));
+			}
+
 			MultiValueDictionary<int, CodeBlock> xToBlocks = block.AllChildren.ToMultiValueDictionary(child => child.LayerPos, child => child);
 
 			xToBlocks.Add(block.LayerPos, block);
@@ -225,17 +230,19 @@ public class GroundCodePlacer : IScopedCodePlacer
 
 	protected abstract class CodeBlock
 	{
+#pragma warning disable CA1002 // Do not expose generic lists
 		public readonly List<Block> Blocks = [];
 
 		public readonly CodeBlock? Parent;
 
 		public List<CodeBlock> Children = [];
+#pragma warning restore CA1002 // Do not expose generic lists
 
 		protected readonly GroundCodePlacer Placer;
 
 		protected BlockDef? lastPlacedBlockType;
 
-		public CodeBlock(GroundCodePlacer placer, int pos, CodeBlock parent, int layerOffset)
+		protected CodeBlock(GroundCodePlacer placer, int pos, CodeBlock parent, int layerOffset)
 		{
 			if (parent is null)
 			{
@@ -252,7 +259,7 @@ public class GroundCodePlacer : IScopedCodePlacer
 			LayerOffsetFromParent = layerOffset;
 		}
 
-		public CodeBlock(GroundCodePlacer placer, int pos)
+		protected CodeBlock(GroundCodePlacer placer, int pos)
 		{
 			Placer = placer;
 			StartPos = pos;
@@ -295,22 +302,27 @@ public class GroundCodePlacer : IScopedCodePlacer
 
 		public abstract ExpressionCodeBlock CreateExpressionChild();
 
-		public Block PlaceBlock(BlockDef blockDef)
+		public Block PlaceBlock(BlockDef blockType)
 		{
+			if (blockType is null)
+			{
+				throw new ArgumentNullException(nameof(blockType));
+			}
+
 			if (BlockCount != 0)
 			{
-				CurrentPos -= blockDef.Size.Z + BlockZOffset;
+				CurrentPos -= blockType.Size.Z + BlockZOffset;
 			}
 			else
 			{
-				CurrentPos -= blockDef.Size.Z - 1;
+				CurrentPos -= blockType.Size.Z - 1;
 			}
 
-			Height = Math.Max(Height, blockDef.Size.Y);
+			Height = Math.Max(Height, blockType.Size.Y);
 
-			lastPlacedBlockType = blockDef;
+			lastPlacedBlockType = blockType;
 
-			Block block = new Block(blockDef, new int3(0, 0, CurrentPos));
+			Block block = new Block(blockType, new int3(0, 0, CurrentPos));
 			Blocks.Add(block);
 			return block;
 		}

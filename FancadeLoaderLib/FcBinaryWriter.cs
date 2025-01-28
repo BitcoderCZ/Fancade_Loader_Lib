@@ -14,7 +14,7 @@ namespace FancadeLoaderLib;
 /// <summary>
 /// A class for writing primitives in fancade format.
 /// </summary>
-public class FcBinaryWriter : IDisposable
+public sealed class FcBinaryWriter : IDisposable
 {
 	/// <summary>
 	/// The underlying stream.
@@ -49,6 +49,11 @@ public class FcBinaryWriter : IDisposable
 	/// <param name="leaveOpen">If <paramref name="stream"/> should be left open after <see cref="Dispose"/> is called.</param>
 	public FcBinaryWriter(Stream stream, bool leaveOpen)
 	{
+		if (stream is null)
+		{
+			throw new ArgumentNullException(nameof(stream));
+		}
+
 		if (!stream.CanRead)
 		{
 			throw new ArgumentException($"{nameof(stream)} isn't writeable.");
@@ -95,7 +100,14 @@ public class FcBinaryWriter : IDisposable
 	/// </summary>
 	/// <param name="value">The value to write.</param>
 	public void WriteBytes(byte[] value)
-		=> WriteBytes(value, 0, value.Length);
+	{
+		if (value is null)
+		{
+			throw new ArgumentNullException(nameof(value));
+		}
+
+		WriteBytes(value, 0, value.Length);
+	}
 
 	/// <summary>
 	/// Writes a byte array to the underlying stream.

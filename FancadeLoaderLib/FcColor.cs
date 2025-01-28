@@ -7,7 +7,10 @@ namespace FancadeLoaderLib;
 /// <summary>
 /// Represents a fancade color.
 /// </summary>
+#pragma warning disable CA1028 // Enum Storage should be Int32
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Not a valid value.")]
 public enum FcColor : byte
+#pragma warning restore CA1028 // Enum Storage should be Int32
 {
 #pragma warning disable SA1602 // Enumeration items should be documented
 	LightBrown = 9,

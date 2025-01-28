@@ -5,6 +5,7 @@
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace FancadeLoaderLib.Editing.Utils;
@@ -30,13 +31,15 @@ internal static class BinPacker
 		{
 			if (freePositions.Count == 0)
 			{
-				throw new Exception("No free positions left (this shouldn't happen)."); // shouldn't really happen, but check here just in case
+				Debug.Fail("No free positions left (this shouldn't happen).");
+				return [];
 			}
 			else if (freePositions.Count == 1)
 			{
 				if (new Container(freePositions[0], size).IntersectsAny(placedContainers))
 				{
-					throw new Exception("No free (un-occupied) positions left (this shouldn't happen)."); // shouldn't really happen, but check here just in case
+					Debug.Fail("No free (un-occupied) positions left (this shouldn't happen).");
+					return [];
 				}
 
 				positions[index] = freePositions[0];

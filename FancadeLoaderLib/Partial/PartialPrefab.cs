@@ -6,7 +6,9 @@ using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
 using System;
 
+#pragma warning disable CA1716
 namespace FancadeLoaderLib.Partial;
+#pragma warning restore CA1716
 
 /// <summary>
 /// Only the name, type and group info of <see cref="Prefab"/>, used by <see cref="PartialPrefabGroup"/>.
@@ -35,7 +37,9 @@ public class PartialPrefab : ICloneable
 	/// </summary>
 	/// <param name="other">The <see cref="PartialPrefab"/> to copy values from.</param>
 	public PartialPrefab(PartialPrefab other)
+#pragma warning disable CA1062 // Validate arguments of public methods
 		: this(other._name, other.Type, other.GroupId, other.PosInGroup)
+#pragma warning restore CA1062 // Validate arguments of public methods
 	{
 	}
 
@@ -44,7 +48,9 @@ public class PartialPrefab : ICloneable
 	/// </summary>
 	/// <param name="other">The <see cref="Prefab"/> to copy values from.</param>
 	public PartialPrefab(Prefab other)
+#pragma warning disable CA1062 // Validate arguments of public methods
 		: this(other.Name, other.Type, other.GroupId, other.PosInGroup)
+#pragma warning restore CA1062 // Validate arguments of public methods
 	{
 	}
 
@@ -53,7 +59,9 @@ public class PartialPrefab : ICloneable
 	/// </summary>
 	/// <param name="other">The <see cref="RawPrefab"/> to copy values from.</param>
 	public PartialPrefab(RawPrefab other)
+#pragma warning disable CA1062 // Validate arguments of public methods
 		: this(other.Name, other.HasTypeByte ? (PrefabType)other.TypeByte : PrefabType.Normal, other.GroupId, other.PosInGroup)
+#pragma warning restore CA1062 // Validate arguments of public methods
 	{
 	}
 
@@ -118,6 +126,11 @@ public class PartialPrefab : ICloneable
 	/// <returns>A <see cref="PartialPrefab"/> read from <paramref name="reader"/>.</returns>
 	public static PartialPrefab Load(FcBinaryReader reader)
 	{
+		if (reader is null)
+		{
+			throw new ArgumentNullException(nameof(reader));
+		}
+
 		byte header = reader.ReadUInt8();
 
 		bool hasTypeByte = ((header >> 0) & 1) == 1;
@@ -153,6 +166,11 @@ public class PartialPrefab : ICloneable
 	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
+		if (writer is null)
+		{
+			throw new ArgumentNullException(nameof(writer));
+		}
+
 		byte header = 0;
 
 		if (Type != PrefabType.Normal)

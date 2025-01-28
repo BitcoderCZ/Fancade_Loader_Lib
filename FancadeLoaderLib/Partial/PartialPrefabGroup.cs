@@ -9,7 +9,9 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
+#pragma warning disable CA1716
 namespace FancadeLoaderLib.Partial;
+#pragma warning restore CA1716
 
 /// <summary>
 /// <see cref="PrefabGroup"/> for <see cref="PartialPrefab"/>, usefull for when just the dimensions of groups are needed.
@@ -17,7 +19,8 @@ namespace FancadeLoaderLib.Partial;
 /// <remarks>
 /// All Add/Insert methods change the prefabs's group id to the id of this group.
 /// </remarks>
-public class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
+[SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Group is a better suffix.")]
+public sealed class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
 {
 	private readonly Dictionary<byte3, PartialPrefab> _prefabs;
 
@@ -123,6 +126,11 @@ public class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
 	/// <param name="deepCopy">If deep copy should be performed.</param>
 	public PartialPrefabGroup(PartialPrefabGroup group, bool deepCopy)
 	{
+		if (group is null)
+		{
+			throw new ArgumentNullException(nameof(group));
+		}
+
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be
 		_prefabs = deepCopy
 			? new Dictionary<byte3, PartialPrefab>(group._prefabs.Select(item => new KeyValuePair<byte3, PartialPrefab>(item.Key, item.Value.Clone())))
@@ -171,10 +179,11 @@ public class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
 	public bool IsReadOnly => false;
 
 	/// <inheritdoc/>
+	[SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It makes sense to use byte3 here.")]
 	public PartialPrefab this[byte3 index]
 	{
 		get => _prefabs[index];
-		set => _prefabs[index] = Validate(value);
+		set => _prefabs[index] = Validate(value, nameof(value));
 	}
 
 	/// <summary>
@@ -214,7 +223,7 @@ public class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
 			throw new ArgumentNullException(nameof(value));
 		}
 
-		_prefabs.Add(key, Validate(value));
+		_prefabs.Add(key, Validate(value, nameof(value)));
 
 		Size = byte3.Max(Size, key + byte3.One);
 	}
@@ -255,12 +264,8 @@ public class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
 	/// <inheritdoc/>
 	void ICollection<KeyValuePair<byte3, PartialPrefab>>.Add(KeyValuePair<byte3, PartialPrefab> item)
 	{
-		if (item.Value is null)
-		{
-			throw new ArgumentNullException(nameof(item) + ".Value");
-		}
+		PartialPrefab res = Validate(item.Value, nameof(item) + ".Value");
 
-		PartialPrefab res = Validate(item.Value);
 		if (!ReferenceEquals(item.Value, res))
 		{
 			item = new KeyValuePair<byte3, PartialPrefab>(item.Key, res);
@@ -341,8 +346,13 @@ public class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, ICloneable
 			Size = byte3.Max(Size, pos + byte3.One);
 	}
 
-	private PartialPrefab Validate(PartialPrefab prefab)
+	private PartialPrefab Validate(PartialPrefab? prefab, string paramName)
 	{
+		if (prefab is null)
+		{
+			throw new ArgumentNullException(paramName);
+		}
+
 		prefab.GroupId = Id;
 
 		return prefab;

@@ -75,7 +75,9 @@ public class Game : ICloneable
 	/// <param name="other">The <see cref="Game"/> to copy values from.</param>
 	/// <param name="deepCopy">If true, <see cref="Prefabs"/> will also be cloned.</param>
 	public Game(Game other, bool deepCopy)
+#pragma warning disable CA1062 // Validate arguments of public methods
 		: this(other.Name, other.Author, other.Description, deepCopy ? other.Prefabs.Clone(true) : other.Prefabs)
+#pragma warning restore CA1062 // Validate arguments of public methods
 	{
 	}
 
@@ -141,6 +143,11 @@ public class Game : ICloneable
 	/// <returns>A new instance of the <see cref="Game"/> class from a <see cref="RawGame"/>.</returns>
 	public static Game FromRaw(RawGame game, bool clonePrefabs = true)
 	{
+		if (game is null)
+		{
+			throw new ArgumentNullException(nameof(game));
+		}
+
 		List<Prefab> prefabs = new List<Prefab>(game.Prefabs.Count);
 
 		short idOffsetAddition = (short)(-game.IdOffset + RawGame.CurrentNumbStockPrefabs);

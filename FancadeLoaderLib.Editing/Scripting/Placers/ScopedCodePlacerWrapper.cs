@@ -24,8 +24,8 @@ public sealed class ScopedCodePlacerWrapper : IScopedCodePlacer
 	public Block PlaceBlock(BlockDef blockType)
 		=> _placer.PlaceBlock(blockType);
 
-	public void Connect(ITerminal from, ITerminal to)
-		=> _placer.Connect(from, to);
+	public void Connect(ITerminal fromTerminal, ITerminal toTerminal)
+		=> _placer.Connect(fromTerminal, toTerminal);
 
 	public void SetSetting(Block block, int settingIndex, object value)
 		=> _placer.SetSetting(block, settingIndex, value);

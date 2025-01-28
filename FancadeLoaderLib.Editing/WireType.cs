@@ -13,7 +13,9 @@ public enum WireType
 {
 	Error = 0,
 	Void = 1,
+#pragma warning disable CA1720 // Identifier contains type name
 	Float = 2,
+#pragma warning restore CA1720 // Identifier contains type name
 	FloatPtr = 3,
 	Vec3 = 4,
 	Vec3Ptr = 5,
@@ -42,7 +44,7 @@ public static class WireTypeUtils
 	public static WireType FromType(Type type)
 		=> TypeToWireType.TryGetValue(type, out var wireType)
 			? wireType
-			: throw new ArgumentException(nameof(type));
+			: throw new ArgumentException($"Type '{type?.FullName ?? "null"}' doesn't map to any setting type.", nameof(type));
 
 	public static WireType ToPointer(this WireType wireType)
 		=> wireType == WireType.Error ? wireType : (WireType)((int)wireType | 1);

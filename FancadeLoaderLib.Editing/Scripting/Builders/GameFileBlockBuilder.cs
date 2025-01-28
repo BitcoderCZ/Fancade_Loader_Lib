@@ -50,9 +50,9 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 	public bool CreateNewPrefab { get; private set; }
 
 #if NET5_0_OR_GREATER
-	public override Game Build(int3 startPos)
+	public override Game Build(int3 buildPos)
 #else
-	public override object Build(int3 startPos)
+	public override object Build(int3 buildPos)
 #endif
 	{
 		Game game = InGame ?? new Game("FanScript");
@@ -84,15 +84,10 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 		}
 		else
 		{
-			if (PrefabIndex < 0 || PrefabIndex >= game.Prefabs.Count)
-			{
-				throw new IndexOutOfRangeException($"{nameof(PrefabIndex)} must be greater or equal to 0 and smaller than the number of prefabs ({game.Prefabs.Count}).");
-			}
-
 			prefab = game.Prefabs[(int)PrefabIndex];
 		}
 
-		Block[] blocks = PreBuild(startPos, false);
+		Block[] blocks = PreBuild(buildPos, false);
 
 		PartialPrefabList stockPrefabs = StockBlocks.PrefabList;
 

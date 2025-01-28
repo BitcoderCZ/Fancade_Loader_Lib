@@ -14,7 +14,8 @@ namespace FancadeLoaderLib;
 /// <summary>
 /// Represents a group of prefabs - a block made from multiple prefabs.
 /// </summary>
-public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
+[SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Group is a better suffix.")]
+public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 {
 	private readonly Dictionary<byte3, Prefab> _prefabs;
 
@@ -120,6 +121,11 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	/// <param name="deepCopy">If deep copy should be performed.</param>
 	public PrefabGroup(PrefabGroup group, bool deepCopy)
 	{
+		if (group is null)
+		{
+			throw new ArgumentNullException(nameof(group));
+		}
+
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
 		_prefabs = deepCopy
 			? new Dictionary<byte3, Prefab>(group._prefabs.Select(item => new KeyValuePair<byte3, Prefab>(item.Key, item.Value.Clone())))
@@ -168,10 +174,11 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	public bool IsReadOnly => false;
 
 	/// <inheritdoc/>
+	[SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It makes sense to use byte3 here.")]
 	public Prefab this[byte3 index]
 	{
 		get => _prefabs[index];
-		set => _prefabs[index] = Validate(value);
+		set => _prefabs[index] = Validate(value, nameof(value));
 	}
 
 	/// <summary>
@@ -206,7 +213,7 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	/// <inheritdoc/>
 	public void Add(byte3 key, Prefab value)
 	{
-		_prefabs.Add(key, Validate(value));
+		_prefabs.Add(key, Validate(value, nameof(value)));
 
 		Size = byte3.Max(Size, key + byte3.One);
 	}
@@ -247,7 +254,8 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	/// <inheritdoc/>
 	void ICollection<KeyValuePair<byte3, Prefab>>.Add(KeyValuePair<byte3, Prefab> item)
 	{
-		Prefab res = Validate(item.Value);
+		Prefab res = Validate(item.Value, nameof(item) + ".Value");
+
 		if (!ReferenceEquals(item.Value, res))
 		{
 			item = new KeyValuePair<byte3, Prefab>(item.Key, res);
@@ -328,8 +336,13 @@ public class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 			Size = byte3.Max(Size, pos + byte3.One);
 	}
 
-	private Prefab Validate(Prefab prefab)
+	private Prefab Validate(Prefab? prefab, string paramName)
 	{
+		if (prefab is null)
+		{
+			throw new ArgumentNullException(paramName);
+		}
+
 		prefab.GroupId = Id;
 
 		return prefab;

@@ -8,7 +8,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
+#pragma warning disable CA1716
 namespace FancadeLoaderLib.Partial;
+#pragma warning restore CA1716
 
 /// <summary>
 /// <see cref="PrefabList"/> for <see cref="PartialPrefab"/>.
@@ -85,6 +87,11 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	/// <returns>A <see cref="PartialPrefabList"/> read from <paramref name="reader"/>.</returns>
 	public static PartialPrefabList Load(FcBinaryReader reader)
 	{
+		if (reader is null)
+		{
+			throw new ArgumentNullException(nameof(reader));
+		}
+
 		uint count = reader.ReadUInt32();
 		ushort idOffset = reader.ReadUInt16();
 
@@ -107,6 +114,11 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
+		if (writer is null)
+		{
+			throw new ArgumentNullException(nameof(writer));
+		}
+
 		writer.WriteUInt32((uint)Count);
 		writer.WriteUInt16(IdOffset);
 
@@ -136,6 +148,11 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	/// <param name="group">The group to add.</param>
 	public void AddGroup(PartialPrefabGroup group)
 	{
+		if (group is null)
+		{
+			throw new ArgumentNullException(nameof(group));
+		}
+
 		group.Id = (ushort)_list.Count;
 		_list.AddRange(group.EnumerateInIdOrder());
 	}
@@ -190,7 +207,9 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	/// </summary>
 	/// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the prefabs to search for.</param>
 	/// <returns>The prefabs that match the condition defined by the specified predicate.</returns>
+#pragma warning disable CA1002 // Do not expose generic lists
 	public List<PartialPrefab> FindAll(Predicate<PartialPrefab> match)
+#pragma warning restore CA1002 // Do not expose generic lists
 		=> _list.FindAll(match);
 
 	/// <summary>
@@ -233,9 +252,14 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	/// </summary>
 	/// <param name="index">The index at which to insert <paramref name="group"/>.</param>
 	/// <param name="group">The prefab group to insert.</param>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is out of range.</exception>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="index"/> is out of range.</exception>
 	public void InsertGroup(int index, PartialPrefabGroup group)
 	{
+		if (group is null)
+		{
+			throw new ArgumentNullException(nameof(group));
+		}
+
 		IncreaseAfter(index, (ushort)group.Count);
 		group.Id = (ushort)index;
 		_list.InsertRange(index, group.EnumerateInIdOrder());

@@ -29,7 +29,9 @@ public static class StockBlocks
 		}
 	}
 
+#pragma warning disable CA1034 // Nested types should not be visible
 	public static class Game
+#pragma warning restore CA1034 // Nested types should not be visible
 	{
 		public static readonly BlockDef Win = new BlockDef("Win", 252, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Void, TerminalType.In));
 		public static readonly BlockDef Lose = new BlockDef("Lose", 256, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Void, TerminalType.In));
@@ -42,7 +44,9 @@ public static class StockBlocks
 		public static readonly BlockDef MenuItem = new BlockDef("Menu Item", 584, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Obj, TerminalType.In, "Picture").Add(WireType.FloatPtr, TerminalType.In, "Variable").Add(WireType.Void, TerminalType.In));
 	}
 
+#pragma warning disable CA1034 // Nested types should not be visible
 	public static class Objects
+#pragma warning restore CA1034 // Nested types should not be visible
 	{
 		public static readonly BlockDef GetPos = new BlockDef("Get Position", 278, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Rot, TerminalType.Out, "Rotation").Add(WireType.Vec3, TerminalType.Out, "Position").Add(WireType.Obj, TerminalType.In, "Object"));
 		public static readonly BlockDef SetPos = new BlockDef("Set Position", 282, BlockType.Active, PrefabType.Script, new int3(2, 1, 3), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Rot, TerminalType.In, "Rotation").Add(WireType.Vec3, TerminalType.In, "Position").Add(WireType.Obj, TerminalType.In, "Object").Add(WireType.Void, TerminalType.In));
@@ -53,14 +57,18 @@ public static class StockBlocks
 		public static readonly BlockDef DestroyObject = new BlockDef("Destroy Object", 320, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Obj, TerminalType.In, "Object").Add(WireType.Void, TerminalType.In));
 	}
 
+#pragma warning disable CA1034 // Nested types should not be visible
 	public static class Sound
+#pragma warning restore CA1034 // Nested types should not be visible
 	{
 		public static readonly BlockDef PlaySound = new BlockDef("Play Sound", 264, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Float, TerminalType.Out, "Channel").Add(WireType.Float, TerminalType.In, "Pitch").Add(WireType.Float, TerminalType.In, "Volume").Add(WireType.Void, TerminalType.In));
 		public static readonly BlockDef StopSound = new BlockDef("Stop Sound", 397, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Float, TerminalType.In, "Channel").Add(WireType.Void, TerminalType.In));
 		public static readonly BlockDef VolumePitch = new BlockDef("VolumePitch", 391, BlockType.Active, PrefabType.Script, new int3(2, 1, 3), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Float, TerminalType.In, "Pitch").Add(WireType.Float, TerminalType.In, "Volume").Add(WireType.Float, TerminalType.In, "Channel").Add(WireType.Void, TerminalType.In));
 	}
 
+#pragma warning disable CA1034 // Nested types should not be visible
 	public static class Physics
+#pragma warning restore CA1034 // Nested types should not be visible
 	{
 		public static readonly BlockDef AddForce = new BlockDef("Add Force", 298, BlockType.Active, PrefabType.Script, new int3(2, 1, 4), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Vec3, TerminalType.In, "Torque").Add(WireType.Vec3, TerminalType.In, "Apply at").Add(WireType.Vec3, TerminalType.In, "Force").Add(WireType.Obj, TerminalType.In, "Object").Add(WireType.Void, TerminalType.In));
 		public static readonly BlockDef GetVelocity = new BlockDef("Get Velocity", 288, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Vec3, TerminalType.Out, "Spin").Add(WireType.Vec3, TerminalType.Out, "Velocity").Add(WireType.Obj, TerminalType.In, "Object"));
@@ -79,7 +87,9 @@ public static class StockBlocks
 		public static readonly BlockDef AngularMotor = new BlockDef("Angular Motor", 376, BlockType.Active, PrefabType.Script, new int3(2, 1, 3), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Vec3, TerminalType.In, "Force").Add(WireType.Vec3, TerminalType.In, "Speed").Add(WireType.Con, TerminalType.In, "Constraint").Add(WireType.Void, TerminalType.In));
 	}
 
+#pragma warning disable CA1034 // Nested types should not be visible
 	public static class Control
+#pragma warning restore CA1034 // Nested types should not be visible
 	{
 		public static readonly BlockDef If = new BlockDef("If", 234, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Void, TerminalType.Out, "False").Add(WireType.Void, TerminalType.Out, "True").Add(WireType.Bool, TerminalType.In, "Condition").Add(WireType.Void, TerminalType.In));
 		public static readonly BlockDef PlaySensor = new BlockDef("Play Sensor", 238, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Void, TerminalType.Out, "On Play").Add(WireType.Void, TerminalType.In));
@@ -93,13 +103,16 @@ public static class StockBlocks
 		public static readonly BlockDef Loop = new BlockDef("Loop", 560, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out).Add(WireType.Float, TerminalType.Out, "Counter").Add(WireType.Void, TerminalType.Out, "Do").Add(WireType.Float, TerminalType.In, "Stop").Add(WireType.Float, TerminalType.In, "Start").Add(WireType.Void, TerminalType.In));
 	}
 
+#pragma warning disable CA1034 // Nested types should not be visible
 	public static class Math
+#pragma warning restore CA1034 // Nested types should not be visible
 	{
 		public static readonly BlockDef Negate = new BlockDef("Negate", 90, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Float, TerminalType.Out, "-Num").Add(WireType.Float, TerminalType.In, "Num"));
 		public static readonly BlockDef Not = new BlockDef("Not", 144, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Bool, TerminalType.Out, "Not Tru").Add(WireType.Bool, TerminalType.In, "Tru"));
 		public static readonly BlockDef Inverse = new BlockDef("Inverse", 440, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Rot, TerminalType.Out, "Rot Inverse").Add(WireType.Rot, TerminalType.In, "Rot"));
 
 #pragma warning disable SA1310 // Field names should not contain underscore
+#pragma warning disable CA1707 // Identifiers should not contain underscores
 		public static readonly BlockDef Add_Number = new BlockDef("Add Numbers", 92, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Float, TerminalType.Out, "Num1 + Num2").Add(WireType.Float, TerminalType.In, "Num2").Add(WireType.Float, TerminalType.In, "Num1"));
 		public static readonly BlockDef Add_Vector = new BlockDef("Add Vectors", 96, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Vec3, TerminalType.Out, "Vec1 + Vec2").Add(WireType.Vec3, TerminalType.In, "Vec2").Add(WireType.Vec3, TerminalType.In, "Vec1"));
 		public static readonly BlockDef Subtract_Number = new BlockDef("Subtract Numbers", 100, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Float, TerminalType.Out, "Num1 - Num2").Add(WireType.Float, TerminalType.In, "Num2").Add(WireType.Float, TerminalType.In, "Num1"));
@@ -116,6 +129,7 @@ public static class StockBlocks
 		public static readonly BlockDef Equals_Vector = new BlockDef("Equals Vectors", 136, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Bool, TerminalType.Out, "Vec1 = Vec2").Add(WireType.Vec3, TerminalType.In, "Vec2").Add(WireType.Vec3, TerminalType.In, "Vec1"));
 		public static readonly BlockDef Equals_Object = new BlockDef("Equals Objects", 140, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Bool, TerminalType.Out, "Obj1 = Obj2").Add(WireType.Obj, TerminalType.In, "Obj2").Add(WireType.Obj, TerminalType.In, "Obj1"));
 		public static readonly BlockDef Equals_Bool = new BlockDef("Equals Truths", 421, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Bool, TerminalType.Out, "Tru1 = Tru2").Add(WireType.Bool, TerminalType.In, "Tru2").Add(WireType.Bool, TerminalType.In, "Tru1"));
+#pragma warning restore CA1707 // Identifiers should not contain underscores
 #pragma warning restore SA1310 // Field names should not contain underscore
 
 		public static readonly BlockDef LogicalAnd = new BlockDef("AND", 146, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Bool, TerminalType.Out, "Tru1 & Tru2").Add(WireType.Bool, TerminalType.In, "Tru2").Add(WireType.Bool, TerminalType.In, "Tru1"));
@@ -158,10 +172,12 @@ public static class StockBlocks
 		public static readonly BlockDef LineVsPlane = new BlockDef("Line vs Plane", 208, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 4), TerminalBuilder.Create().Add(WireType.Vec3, TerminalType.Out, "Intersection").Add(WireType.Vec3, TerminalType.In, "Plane Normal").Add(WireType.Vec3, TerminalType.In, "Plane Point").Add(WireType.Vec3, TerminalType.In, "Line To").Add(WireType.Vec3, TerminalType.In, "Line From"));
 
 #pragma warning disable SA1310 // Field names should not contain underscore
+#pragma warning disable CA1707 // Identifiers should not contain underscores
 		public static readonly BlockDef Make_Vector = new BlockDef("Make Vector", 150, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 3), TerminalBuilder.Create().Add(WireType.Vec3, TerminalType.Out, "Vector").Add(WireType.Float, TerminalType.In, "Z").Add(WireType.Float, TerminalType.In, "Y").Add(WireType.Float, TerminalType.In, "X"));
 		public static readonly BlockDef Break_Vector = new BlockDef("Break Vector", 156, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 3), TerminalBuilder.Create().Add(WireType.Float, TerminalType.Out, "Z").Add(WireType.Float, TerminalType.Out, "Y").Add(WireType.Float, TerminalType.Out, "X").Add(WireType.Vec3, TerminalType.In, "Vector"));
 		public static readonly BlockDef Make_Rotation = new BlockDef("Make Rotation", 162, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 3), TerminalBuilder.Create().Add(WireType.Rot, TerminalType.Out, "Rotation").Add(WireType.Float, TerminalType.In, "Z angle").Add(WireType.Float, TerminalType.In, "Y angle").Add(WireType.Float, TerminalType.In, "X angle"));
 		public static readonly BlockDef Break_Rotation = new BlockDef("Break Rotation", 442, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 3), TerminalBuilder.Create().Add(WireType.Float, TerminalType.Out, "Z angle").Add(WireType.Float, TerminalType.Out, "Y angle").Add(WireType.Float, TerminalType.Out, "X angle").Add(WireType.Rot, TerminalType.In, "Rotation"));
+#pragma warning restore CA1707 // Identifiers should not contain underscores
 #pragma warning restore SA1310 // Field names should not contain underscore
 
 		public static BlockDef EqualsByType(WireType type)
@@ -191,7 +207,9 @@ public static class StockBlocks
 			};
 	}
 
+#pragma warning disable CA1034 // Nested types should not be visible
 	public static class Values
+#pragma warning restore CA1034 // Nested types should not be visible
 	{
 		public static readonly BlockDef Number = new BlockDef("Number", 36, BlockType.Value, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Float, TerminalType.Out, "Number"));
 		public static readonly BlockDef Vector = new BlockDef("Vector", 38, BlockType.Value, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Vec3, TerminalType.Out, "Vector"));
@@ -202,11 +220,13 @@ public static class StockBlocks
 		public static readonly BlockDef Comment = new BlockDef("Comment", 15, BlockType.Value, PrefabType.Script, new int3(1, 1, 1), TerminalBuilder.Empty);
 
 #pragma warning disable SA1310 // Field names should not contain underscore
+#pragma warning disable CA1707 // Identifiers should not contain underscores
 		public static readonly BlockDef Inspect_Number = new BlockDef("Inspect Number", 16, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Float, TerminalType.In, "Number").Add(WireType.Void, TerminalType.In, "Before"));
 		public static readonly BlockDef Inspect_Vector = new BlockDef("Inspect Vector", 20, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Vec3, TerminalType.In, "Vector").Add(WireType.Void, TerminalType.In, "Before"));
 		public static readonly BlockDef Inspect_Rotation = new BlockDef("Inspect Rotation", 24, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Rot, TerminalType.In, "Rotation").Add(WireType.Void, TerminalType.In, "Before"));
 		public static readonly BlockDef Inspect_Truth = new BlockDef("Inspect Truth", 28, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Bool, TerminalType.In, "Truth").Add(WireType.Void, TerminalType.In, "Before"));
 		public static readonly BlockDef Inspect_Object = new BlockDef("Inspect Object", 32, BlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Obj, TerminalType.In, "Object").Add(WireType.Void, TerminalType.In, "Before"));
+#pragma warning restore CA1707 // Identifiers should not contain underscores
 #pragma warning restore SA1310 // Field names should not contain underscore
 
 		public static BlockDef ValueByType(object value)
@@ -216,7 +236,7 @@ public static class StockBlocks
 				bool b => b ? True : False,
 				float3 => Vector,
 				FancadeLoaderLib.Rotation => Rotation,
-				_ => throw new Exception($"Value doesn't exist for Type '{value.GetType()}',"),
+				_ => throw new ArgumentException($"No literal exists for type '{value.GetType().FullName}',", nameof(value)),
 			};
 
 		public static BlockDef InspectByType(WireType type)
@@ -231,9 +251,12 @@ public static class StockBlocks
 			};
 	}
 
+#pragma warning disable CA1034 // Nested types should not be visible
 	public static class Variables
+#pragma warning restore CA1034 // Nested types should not be visible
 	{
 #pragma warning disable SA1310 // Field names should not contain underscore
+#pragma warning disable CA1707 // Identifiers should not contain underscores
 		#region Get Variable
 		public static readonly BlockDef Get_Variable_Num = new BlockDef("Variable", 46, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.FloatPtr, TerminalType.Out, "Number"));
 		public static readonly BlockDef Get_Variable_Vec = new BlockDef("Variable", 48, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Vec3Ptr, TerminalType.Out, "Vector"));
@@ -267,6 +290,7 @@ public static class StockBlocks
 		public static readonly BlockDef List_Obj = new BlockDef("List Object", 86, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.ObjPtr, TerminalType.Out, "Element").Add(WireType.Float, TerminalType.In, "Index").Add(WireType.ObjPtr, TerminalType.In, "Variable"));
 		public static readonly BlockDef List_Con = new BlockDef("List Constraint", 473, BlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(WireType.ConPtr, TerminalType.Out, "Element").Add(WireType.Float, TerminalType.In, "Index").Add(WireType.ConPtr, TerminalType.In, "Variable"));
 		#endregion
+#pragma warning restore CA1707 // Identifiers should not contain underscores
 #pragma warning restore SA1310 // Field names should not contain underscore
 		public static readonly BlockDef IncrementNumber = new BlockDef("Increase Number", 556, BlockType.Active, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Float, TerminalType.In, "Variable").Add(WireType.Void, TerminalType.In, "Before"));
 		public static readonly BlockDef DecrementNumber = new BlockDef("Decrease Number", 558, BlockType.Active, PrefabType.Script, new int3(2, 1, 1), TerminalBuilder.Create().Add(WireType.Void, TerminalType.Out, "After").Add(WireType.Float, TerminalType.In, "Variable").Add(WireType.Void, TerminalType.In, "Before"));

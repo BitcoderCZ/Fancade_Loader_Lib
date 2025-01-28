@@ -6,7 +6,9 @@ using MathUtils.Vectors;
 
 namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public readonly struct AbsolutePositionTerminal : ITerminal
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
 	public AbsolutePositionTerminal(int3 blockPosition)
 	{

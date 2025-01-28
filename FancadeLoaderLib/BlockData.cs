@@ -47,6 +47,11 @@ public class BlockData
 	/// <param name="data">The <see cref="BlockData"/> to copy.</param>
 	public BlockData(BlockData data)
 	{
+		if (data is null)
+		{
+			throw new ArgumentNullException(nameof(data));
+		}
+
 		Array = data.Array.Clone();
 		Size = data.Size;
 	}
@@ -127,6 +132,11 @@ public class BlockData
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetGroup(int x, int y, int z, PrefabGroup group)
 	{
+		if (group is null)
+		{
+			throw new ArgumentNullException(nameof(group));
+		}
+
 		CheckLowerBounds(new int3(x, y, z), "x, y, z");
 
 		ushort id = group.Id;
@@ -172,6 +182,11 @@ public class BlockData
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetGroup(int x, int y, int z, PartialPrefabGroup group)
 	{
+		if (group is null)
+		{
+			throw new ArgumentNullException(nameof(group));
+		}
+
 		CheckLowerBounds(new int3(x, y, z), "x, y, z");
 
 		ushort id = group.Id;

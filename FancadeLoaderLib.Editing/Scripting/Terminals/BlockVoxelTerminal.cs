@@ -3,13 +3,12 @@
 // </copyright>
 
 using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public readonly struct BlockVoxelTerminal : ITerminal
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
 	public readonly Block Block;
 

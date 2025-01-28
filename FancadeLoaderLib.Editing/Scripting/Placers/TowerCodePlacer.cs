@@ -15,8 +15,9 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
 
 	private readonly BlockBuilder _builder;
 	private int _maxHeight = 20;
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1805:Do not initialize unnecessarily", Justification = "Clarity.")]
 	private bool _inHighlight = false;
-	private int _statementDepth = 0;
+	private int _statementDepth;
 
 	public TowerCodePlacer(BlockBuilder builder)
 	{
@@ -40,7 +41,7 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
 		{
 			if (value < 1)
 			{
-				throw new ArgumentOutOfRangeException($"{nameof(MaxHeight)} must be larger than 0.", nameof(value));
+				throw new ArgumentOutOfRangeException(nameof(value), $"{nameof(MaxHeight)} must be larger than 0.");
 			}
 
 			_maxHeight = value;
@@ -49,26 +50,26 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
 
 	public bool SquarePlacement { get; set; } = true;
 
-	public Block PlaceBlock(BlockDef blockDef)
+	public Block PlaceBlock(BlockDef blockType)
 	{
 		Block block;
 
 		if (_inHighlight)
 		{
-			block = new Block(blockDef, int3.Zero);
+			block = new Block(blockType, int3.Zero);
 			_builder.AddHighlightedBlock(block);
 		}
 		else
 		{
-			block = new Block(blockDef, int3.Zero);
+			block = new Block(blockType, int3.Zero);
 			_blocks.Add(block);
 		}
 
 		return block;
 	}
 
-	public void Connect(ITerminal from, ITerminal to)
-		=> _builder.Connect(from, to);
+	public void Connect(ITerminal fromTerminal, ITerminal toTerminal)
+		=> _builder.Connect(fromTerminal, toTerminal);
 
 	public void SetSetting(Block block, int settingIndex, object value)
 		=> _builder.SetSetting(block, settingIndex, value);

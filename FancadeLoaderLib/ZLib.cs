@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using System;
 using System.Buffers;
 using System.IO;
 using System.IO.Compression;
@@ -14,7 +15,9 @@ namespace FancadeLoaderLib;
 /// <summary>
 /// Utils for compression and decompressing streams using the zlib format.
 /// </summary>
+#pragma warning disable CA1724 // consumers aren't expected to use ComponentAce.Compression.Libs.zlib
 public static class Zlib
+#pragma warning restore CA1724
 {
 	/// <summary>
 	/// Decompresses a stream into another stream.
@@ -28,7 +31,9 @@ public static class Zlib
 
 		zlib.CopyTo(to);
 #else
+#pragma warning disable CA2000 // ZInputStream always disposes the underlying stream, which isn't desirelable, so dispose isn't called on it
 		ZInputStream zlib = new ZInputStream(from);
+#pragma warning restore CA2000
 
 		using MemoryStream ms = new MemoryStream();
 		byte[] buffer = ArrayPool<byte>.Shared.Rent(1024);
@@ -57,12 +62,19 @@ public static class Zlib
 	/// <param name="to">The compressed stream.</param>
 	public static void Compress(Stream from, Stream to)
 	{
+		if (from is null)
+		{
+			throw new ArgumentNullException(nameof(from));
+		}
+
 #if NET6_0_OR_GREATER
 		using ZLibStream zlib = new ZLibStream(to, CompressionLevel.SmallestSize, true);
 
 		from.CopyTo(zlib);
 #else
+#pragma warning disable CA2000 // ZOutputStream always disposes the underlying stream, which isn't desirelable, so dispose isn't called on it
 		ZOutputStream zlib = new ZOutputStream(to, 9);
+#pragma warning restore CA2000
 
 		byte[] buffer = ArrayPool<byte>.Shared.Rent(1024);
 		try

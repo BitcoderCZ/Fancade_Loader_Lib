@@ -3,10 +3,13 @@
 // </copyright>
 
 using MathUtils.Vectors;
+using System;
 
 namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public readonly struct BlockTerminal : ITerminal
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
 	public readonly Block Block;
 	public readonly TerminalDef Terminal;
@@ -19,12 +22,22 @@ public readonly struct BlockTerminal : ITerminal
 
 	public BlockTerminal(Block block, string terminalName)
 	{
+		if (block is null)
+		{
+			throw new ArgumentNullException(nameof(block));
+		}
+
 		Block = block;
 		Terminal = block.Type[terminalName];
 	}
 
 	public BlockTerminal(Block block, int terminalIndex)
 	{
+		if (block is null)
+		{
+			throw new ArgumentNullException(nameof(block));
+		}
+
 		Block = block;
 		Terminal = block.Type.Terminals[terminalIndex];
 	}

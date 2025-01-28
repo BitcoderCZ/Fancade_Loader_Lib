@@ -14,10 +14,12 @@ namespace FancadeLoaderLib.Editing.Scripting;
 
 public abstract class BlockBuilder
 {
+#pragma warning disable CA1002 // Do not expose generic lists
 	protected List<BlockSegment> segments = [];
 	protected List<Block> highlightedBlocks = [];
 	protected List<ConnectionRecord> connections = [];
 	protected List<SettingRecord> settings = [];
+#pragma warning restore CA1002 // Do not expose generic lists
 
 	public virtual void AddBlockSegments(IEnumerable<Block> blocks)
 	{
@@ -29,31 +31,31 @@ public abstract class BlockBuilder
 	public virtual void AddHighlightedBlock(Block block)
 		=> highlightedBlocks.Add(block);
 
-	public virtual void Connect(ITerminal from, ITerminal to)
-		=> connections.Add(new ConnectionRecord(from, to));
+	public virtual void Connect(ITerminal fromTerminal, ITerminal toTerminal)
+		=> connections.Add(new ConnectionRecord(fromTerminal, toTerminal));
 
-	public void Connect(ITerminalStore from, ITerminalStore to)
+	public void Connect(ITerminalStore fromStore, ITerminalStore toStore)
 	{
-		if (from is NopTerminalStore || to is NopTerminalStore)
+		if (fromStore is NopTerminalStore or null || toStore is NopTerminalStore or null)
 		{
 			return;
 		}
 
-		if (to.In is null)
+		if (toStore.In is null)
 		{
 			return;
 		}
 
-		foreach (var target in from.Out)
+		foreach (var target in fromStore.Out)
 		{
-			Connect(target, to.In);
+			Connect(target, toStore.In);
 		}
 	}
 
 	public virtual void SetSetting(Block block, int settingIndex, object value)
 		=> settings.Add(new SettingRecord(block, settingIndex, value));
 
-	public abstract object Build(int3 posToBuildAt);
+	public abstract object Build(int3 buildPos);
 
 	public virtual void Clear()
 	{
@@ -62,11 +64,11 @@ public abstract class BlockBuilder
 		settings.Clear();
 	}
 
-	protected Block[] PreBuild(int3 posToBuildAt, bool sortByPos)
+	protected Block[] PreBuild(int3 buildPos, bool sortByPos)
 	{
-		if (posToBuildAt.X < 0 || posToBuildAt.Y < 0 || posToBuildAt.Z < 0)
+		if (buildPos.X < 0 || buildPos.Y < 0 || buildPos.Z < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(posToBuildAt), $"{nameof(posToBuildAt)} must be >= 0");
+			throw new ArgumentOutOfRangeException(nameof(buildPos), $"{nameof(buildPos)} must be >= 0");
 		}
 		else if (segments.Count == 0)
 		{
@@ -86,7 +88,7 @@ public abstract class BlockBuilder
 
 		Block[] blocks = new Block[totalBlockCount];
 
-		int3 highlightedPos = posToBuildAt;
+		int3 highlightedPos = buildPos;
 		for (int i = 0; i < highlightedBlocks.Count; i++)
 		{
 			highlightedBlocks[i].Position = highlightedPos;
@@ -102,7 +104,7 @@ public abstract class BlockBuilder
 		{
 			BlockSegment segment = segments[i];
 
-			segment.Move(segmentPositions[i] + posToBuildAt + off - segment.MinPos);
+			segment.Move(segmentPositions[i] + buildPos + off - segment.MinPos);
 
 			segment.Blocks.CopyTo(blocks, index);
 			index += segment.Blocks.Length;

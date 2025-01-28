@@ -4,7 +4,9 @@
 
 using FancadeLoaderLib.Raw;
 
+#pragma warning disable CA1716
 namespace FancadeLoaderLib.Partial;
+#pragma warning restore CA1716
 
 /// <summary>
 /// Util funcitons for <see cref="PartialPrefab"/>.
