@@ -31,7 +31,7 @@ public unsafe struct Voxel : IEquatable<Voxel>
 #endif
 
 	/// <summary>
-	/// <see langword="true"/> if the side does NOT have glue/"lego" on it - connects to other voxels; otherwise, <see langword="false"/>./prefabs. 
+	/// <see langword="true"/> if the side does NOT have glue/"lego" on it - connects to other voxels; otherwise, <see langword="false"/>. 
 	/// </summary>
 	/// <remarks>
 	/// In the same order as <see cref="Colors"/>.

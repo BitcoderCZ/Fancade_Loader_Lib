@@ -371,8 +371,13 @@ public class Prefab : ICloneable
 		}
 
 		// add settings to stock prefabs
-		if (!(blockData is null) && !(settings is null) && blockData.Size != int3.Zero)
+		if (blockData is not null && blockData.Size != int3.Zero)
 		{
+			if (settings is null)
+			{
+				settings = [];
+			}
+
 			for (int i = 0; i < blockData.Array.Length; i++)
 			{
 				int id = blockData.Array[i];

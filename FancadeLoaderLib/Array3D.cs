@@ -304,6 +304,9 @@ public class Array3D<T> : IEnumerable<T>
 		}
 	}
 
+	public void Clear()
+		=> System.Array.Clear(_array, 0, _array.Length);
+
 	/// <summary>
 	/// Creates a copy of this array.
 	/// </summary>

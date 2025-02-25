@@ -448,6 +448,12 @@ public class BlockData
 		}
 	}
 
+	public void Clear()
+	{
+		Array.Clear();
+		Size = int3.Zero;
+	}
+
 	/// <summary>
 	/// Ensures that the underlying array is at least the size of <paramref name="size"/>.
 	/// </summary>
