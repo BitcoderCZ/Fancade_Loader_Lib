@@ -369,7 +369,8 @@ public class BlockData
 	/// <summary>
 	/// Trims the size to the smallest size possible.
 	/// </summary>
-	public void Trim()
+	/// <param name="shrink">If the underlying array should also be resized.</param>
+	public void Trim(bool shrink = true)
 	{
 		if (Size == int3.Zero)
 		{
@@ -434,13 +435,29 @@ public class BlockData
 		endZ:
 			if (maxX != int.MaxValue && maxY != int.MaxValue && maxZ != int.MaxValue)
 			{
-				Resize(new int3(maxX + 1, maxY + 1, maxZ + 1), false);
+				if (shrink)
+				{
+					Resize(new int3(maxX + 1, maxY + 1, maxZ + 1), false);
+				}
+				else
+				{
+					Size = new int3(maxX + 1, maxY + 1, maxZ + 1);
+				}
+
 				return;
 			}
 			else if (scanPos.X == 1 && scanPos.Y == 1 && scanPos.Z == 1)
 			{
 				// no blocks
-				Resize(int3.Zero, false);
+				if (shrink)
+				{
+					Resize(int3.Zero, false);
+				}
+				else
+				{
+					Size = int3.Zero;
+				}
+
 				return;
 			}
 
@@ -448,9 +465,21 @@ public class BlockData
 		}
 	}
 
-	public void Clear()
+	/// <summary>
+	/// Clears all block data, resetting the size to zero. 
+	/// </summary>
+	/// <param name="shrink">If the underlying array should also be resized to zero.</param>
+	public void Clear(bool shrink = false)
 	{
-		Array.Clear();
+		if (shrink)
+		{
+			Array.Resize(0, 0, 0);
+		}
+		else
+		{
+			Array.Clear();
+		}
+
 		Size = int3.Zero;
 	}
 

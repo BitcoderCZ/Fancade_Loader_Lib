@@ -52,7 +52,7 @@ public class Array3D<T> : IEnumerable<T>
 		_array = [.. collection];
 		if (Length != LengthX * LengthY * LengthZ)
 		{
-			throw new ArgumentException($"{nameof(collection)} length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", nameof(collection));
+			throw new ArgumentException($"{nameof(collection)} length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}.", nameof(collection));
 		}
 	}
 
@@ -73,7 +73,7 @@ public class Array3D<T> : IEnumerable<T>
 		_array = array;
 		if (Length != LengthX * LengthY * LengthZ)
 		{
-			throw new ArgumentException($"{nameof(array)}.Length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}", nameof(array));
+			throw new ArgumentException($"{nameof(array)}.Length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}.", nameof(array));
 		}
 	}
 
@@ -304,6 +304,9 @@ public class Array3D<T> : IEnumerable<T>
 		}
 	}
 
+	/// <summary>
+	/// Sets the elements of the array to the default value of each element type.
+	/// </summary>
 	public void Clear()
 		=> System.Array.Clear(_array, 0, _array.Length);
 
