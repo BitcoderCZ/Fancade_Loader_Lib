@@ -5,6 +5,8 @@
 using FancadeLoaderLib.Partial;
 using MathUtils.Vectors;
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
@@ -26,7 +28,7 @@ public class BlockData
 	/// </summary>
 	public BlockData()
 	{
-		Array = new Array3D<ushort>(0, 0, 0);
+		Array = new Array3D<ushort>(int3.Zero);
 	}
 
 	/// <summary>
@@ -37,7 +39,7 @@ public class BlockData
 	{
 		Array = blocks;
 
-		Size = new int3(Array.LengthX, Array.LengthY, Array.LengthZ);
+		Size = Array.Size;
 		Trim();
 	}
 
@@ -61,6 +63,12 @@ public class BlockData
 	/// </summary>
 	/// <value>Size of the data.</value>
 	public int3 Size { get; private set; }
+
+	/// <summary>
+	/// Gets the size of the underlying array.
+	/// </summary>
+	/// <value>Size of the underlying array.</value>
+	public int3 Capacity => Array.Size;
 
 	/// <summary>
 	/// Determines if the specified position is inside the bounds of this data.
@@ -109,7 +117,7 @@ public class BlockData
 	/// <returns>Index into <see cref="Array"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Index(int x, int y, int z)
-		=> Array.Index(x, y, z);
+		=> Array.Index(new int3(x, y, z));
 
 	#region SetGroup
 
@@ -120,29 +128,23 @@ public class BlockData
 	/// <param name="group">The group to place.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetGroup(int3 pos, PrefabGroup group)
-		=> SetGroup(pos.X, pos.Y, pos.Z, group);
-
-	/// <summary>
-	/// "Places" a prefab group at the specified postion.
-	/// </summary>
-	/// <param name="x">The x postition to place the group at.</param>
-	/// <param name="y">The y postition to place the group at.</param>
-	/// <param name="z">The z postition to place the group at.</param>
-	/// <param name="group">The group to place.</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetGroup(int x, int y, int z, PrefabGroup group)
 	{
 		if (group is null)
 		{
 			throw new ArgumentNullException(nameof(group));
 		}
 
-		CheckLowerBounds(new int3(x, y, z), "x, y, z");
+		CheckLowerBounds(pos, nameof(pos));
 
 		ushort id = group.Id;
 		byte3 size = group.Size;
 
-		EnsureSize(x + (size.X - 1), y + (size.Y - 1), z + (size.Z - 1));
+		if (size == byte3.Zero)
+		{
+			return;
+		}
+
+		EnsureSize(pos + size);
 
 		for (byte zIndex = 0; zIndex < size.Z; zIndex++)
 		{
@@ -150,13 +152,13 @@ public class BlockData
 			{
 				for (byte xIndex = 0; xIndex < size.X; xIndex++)
 				{
-					byte3 pos = new byte3(xIndex, yIndex, zIndex);
-					if (!group.ContainsKey(pos))
+					byte3 prefabPos = new byte3(xIndex, yIndex, zIndex);
+					if (!group.ContainsKey(prefabPos))
 					{
 						continue;
 					}
 
-					SetBlockInternal(x + xIndex, y + yIndex, z + zIndex, id);
+					SetBlockInternal(pos + prefabPos, id);
 					id++;
 				}
 			}
@@ -170,29 +172,23 @@ public class BlockData
 	/// <param name="group">The group to place.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetGroup(int3 pos, PartialPrefabGroup group)
-		=> SetGroup(pos.X, pos.Y, pos.Z, group);
-
-	/// <summary>
-	/// "Places" a partial prefab group at the specified postion.
-	/// </summary>
-	/// <param name="x">The x postition to place the group at.</param>
-	/// <param name="y">The y postition to place the group at.</param>
-	/// <param name="z">The z postition to place the group at.</param>
-	/// <param name="group">The group to place.</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetGroup(int x, int y, int z, PartialPrefabGroup group)
 	{
 		if (group is null)
 		{
 			throw new ArgumentNullException(nameof(group));
 		}
 
-		CheckLowerBounds(new int3(x, y, z), "x, y, z");
+		CheckLowerBounds(pos, nameof(pos));
 
 		ushort id = group.Id;
 		byte3 size = group.Size;
 
-		EnsureSize(x + (size.X - 1), y + (size.Y - 1), z + (size.Z - 1));
+		if (size == byte3.Zero)
+		{
+			return;
+		}
+
+		EnsureSize(pos + size);
 
 		for (byte zIndex = 0; zIndex < size.Z; zIndex++)
 		{
@@ -200,13 +196,13 @@ public class BlockData
 			{
 				for (byte xIndex = 0; xIndex < size.X; xIndex++)
 				{
-					byte3 pos = new byte3(xIndex, yIndex, zIndex);
-					if (!group.ContainsKey(pos))
+					byte3 prefabPos = new byte3(xIndex, yIndex, zIndex);
+					if (!group.ContainsKey(prefabPos))
 					{
 						continue;
 					}
 
-					SetBlockInternal(x + xIndex, y + yIndex, z + zIndex, id);
+					SetBlockInternal(pos + prefabPos, id);
 					id++;
 				}
 			}
@@ -225,53 +221,8 @@ public class BlockData
 	public void SetBlock(int3 pos, ushort id)
 	{
 		CheckLowerBounds(pos, nameof(pos));
-
-		if (id != 0)
-		{
-			EnsureSize(pos); // not placing "air"
-		}
-		else
-		{
-			CheckUpperBounds(pos, nameof(pos));
-		}
-
-		SetBlockInternal(pos.X, pos.Y, pos.Z, id);
-	}
-
-	/// <summary>
-	/// "Places" a single block at the specified index.
-	/// </summary>
-	/// <param name="index">The index to place the group at.</param>
-	/// <param name="id">Id of the block to place.</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetBlock(int index, ushort id)
-	{
-		int3 pos = Index(index);
-		SetBlock(pos.X, pos.Y, pos.Z, id);
-	}
-
-	/// <summary>
-	/// "Places" a single block at the specified index.
-	/// </summary>
-	/// <param name="x">The x postition to place the block at.</param>
-	/// <param name="y">The y postition to place the block at.</param>
-	/// <param name="z">The z postition to place the block at.</param>
-	/// <param name="id">Id of the block to place.</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetBlock(int x, int y, int z, ushort id)
-	{
-		CheckLowerBounds(new int3(x, y, z), "x, y, z");
-
-		if (id != 0)
-		{
-			EnsureSize(x, y, z); // not placing "air"
-		}
-		else
-		{
-			CheckUpperBounds(new int3(x, y, z), "x, y, z");
-		}
-
-		SetBlockInternal(x, y, z, id);
+		EnsureSize(pos + int3.One);
+		SetBlockInternal(pos, id);
 	}
 
 	/// <summary>
@@ -281,30 +232,7 @@ public class BlockData
 	/// <param name="id">Id of the block to place.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetBlockUnchecked(int3 pos, ushort id)
-		=> SetBlockUnchecked(pos.X, pos.Y, pos.Z, id);
-
-	/// <summary>
-	/// "Places" a single block at the specified index without resizing the underlying array or bounds checking.
-	/// </summary>
-	/// <param name="index">The index to place the block at.</param>
-	/// <param name="id">Id of the block to place.</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetBlockUnchecked(int index, ushort id)
-	{
-		int3 pos = Index(index);
-		SetBlockUnchecked(pos.X, pos.Y, pos.Z, id);
-	}
-
-	/// <summary>
-	/// "Places" a single block at the specified index without resizing the underlying array or bounds checking.
-	/// </summary>
-	/// <param name="x">The x postition to place the block at.</param>
-	/// <param name="y">The y postition to place the block at.</param>
-	/// <param name="z">The z postition to place the block at.</param>
-	/// <param name="id">Id of the block to place.</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetBlockUnchecked(int x, int y, int z, ushort id)
-		=> SetBlockInternal(x, y, z, id);
+		=> SetBlockInternal(pos, id);
 	#endregion
 
 	#region GetBlock
@@ -319,22 +247,7 @@ public class BlockData
 	{
 		CheckBounds(pos, nameof(pos));
 
-		return Array[pos.X, pos.Y, pos.Z];
-	}
-
-	/// <summary>
-	/// Gets the block at the specified position.
-	/// </summary>
-	/// <param name="x">The x postition of the block.</param>
-	/// <param name="y">The y postition of the block.</param>
-	/// <param name="z">The z postition of the block.</param>
-	/// <returns>The block at the specified position.</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ushort GetBlock(int x, int y, int z)
-	{
-		CheckBounds(new int3(x, y, z), "x, y, z");
-
-		return Array[x, y, z];
+		return Array.GetUnchecked(pos);
 	}
 
 	/// <summary>
@@ -344,26 +257,7 @@ public class BlockData
 	/// <returns>The block at the specified position.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ushort GetBlockUnchecked(int3 pos)
-	{
-		CheckBounds(pos, nameof(pos));
-
-		return Array[pos.X, pos.Y, pos.Z];
-	}
-
-	/// <summary>
-	/// Gets the block at the specified position without bounds checking.
-	/// </summary>
-	/// <param name="x">The x postition of the block.</param>
-	/// <param name="y">The y postition of the block.</param>
-	/// <param name="z">The z postition of the block.</param>
-	/// <returns>The block at the specified position.</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ushort GetBlockUnchecked(int x, int y, int z)
-	{
-		CheckBounds(new int3(x, y, z), "x, y, z");
-
-		return Array[x, y, z];
-	}
+		=> Array.GetUnchecked(pos);
 	#endregion
 
 	/// <summary>
@@ -465,6 +359,120 @@ public class BlockData
 		}
 	}
 
+	public void TrimNegative(bool shrink = true)
+	{
+		if (Size == int3.Zero)
+		{
+			return;
+		}
+
+		int minX = int.MinValue;
+		int minY = int.MinValue;
+		int minZ = int.MinValue;
+
+		int3 scanPos = int3.Zero;
+
+		while (true)
+		{
+			if (minX == int.MinValue)
+			{
+				for (int y = 0; y < scanPos.Y; y++)
+				{
+					for (int z = 0; z < scanPos.Z; z++)
+					{
+						int3 pos = new int3(scanPos.X, y, z);
+						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
+
+						if (Array.GetUnchecked(pos) != 0)
+						{
+							minX = scanPos.X;
+							goto endX;
+						}
+					}
+				}
+			}
+
+		endX:
+			if (minY == int.MinValue)
+			{
+				for (int x = 0; x < scanPos.X; x++)
+				{
+					for (int z = 0; z < scanPos.Z; z++)
+					{
+						int3 pos = new int3(x, scanPos.Y, z);
+						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
+
+						if (Array.GetUnchecked(pos) != 0)
+						{
+							minY = scanPos.Y;
+							goto endY;
+						}
+					}
+				}
+			}
+
+		endY:
+			if (minZ == int.MinValue)
+			{
+				for (int x = 0; x < scanPos.X; x++)
+				{
+					for (int y = 0; y < scanPos.Y; y++)
+					{
+						int3 pos = new int3(x, y, scanPos.Z);
+						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
+
+						if (Array.GetUnchecked(pos) != 0)
+						{
+							minZ = scanPos.Z;
+							goto endZ;
+						}
+					}
+				}
+			}
+
+		endZ:
+			if (minX != int.MinValue && minY != int.MinValue && minZ != int.MinValue)
+			{
+				int3 minPos = new int3(minX, minY, minZ);
+
+				if (minPos == int3.Zero)
+				{
+					return; // can't move
+				}
+
+				if (shrink)
+				{
+					Move(-minPos, minPos);
+					Size -= minPos;
+					Resize(Size, false);
+				}
+				else
+				{
+					Move(-minPos, minPos);
+					Size -= minPos;
+				}
+
+				return;
+			}
+			else if (scanPos.X == Size.X - 1)
+			{
+				// no blocks
+				if (shrink)
+				{
+					Resize(int3.Zero, false);
+				}
+				else
+				{
+					Size = int3.Zero;
+				}
+
+				return;
+			}
+
+			scanPos = int3.Min(scanPos + 1, Size - 1);
+		}
+	}
+
 	/// <summary>
 	/// Clears all block data, resetting the size to zero. 
 	/// </summary>
@@ -473,7 +481,7 @@ public class BlockData
 	{
 		if (shrink)
 		{
-			Array.Resize(0, 0, 0);
+			Array.Resize(int3.Zero);
 		}
 		else
 		{
@@ -484,40 +492,145 @@ public class BlockData
 	}
 
 	/// <summary>
+	/// Moves the contents by a specified offset while ensuring the array size is sufficient.
+	/// </summary>
+	/// <param name="move"><see cref="int3"/> representing the movement offset along the X, Y, and Z axes.</param>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when any component of <paramref name="move"/> is negative.</exception>
+	public void Move(int3 move)
+	{
+		if (move.X < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(move.X));
+		}
+		else if (move.Y < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(move.Y));
+		}
+		else if (move.Z < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(move.Z));
+		}
+
+		if ((move.X | move.Y | move.Z) == 0)
+		{
+			return; // move by 0
+		}
+
+		int3 oldSize = Size;
+
+		EnsureSize(Size + move);
+
+		ushort[] arr = Array.Array;
+
+		for (int z = oldSize.Z - 1; z >= 0; z--)
+		{
+			for (int y = oldSize.Y - 1; y >= 0; y--)
+			{
+				System.Array.Copy(arr, Index(0, y, z), arr, Index(new int3(0, y, z) + move), oldSize.X);
+			}
+		}
+
+		if (move.X > 0)
+		{
+			for (int z = oldSize.Z - 1; z >= 0; z--)
+			{
+				for (int y = oldSize.Y - 1; y >= 0; y--)
+				{
+					System.Array.Clear(arr, Index(0, y, z), move.X);
+				}
+			}
+		}
+
+		if (move.Y > 0)
+		{
+			for (int z = 0; z < oldSize.Z; z++)
+			{
+				int newZ = z + move.Z;
+				for (int y = 0; y < move.Y; y++)
+				{
+					System.Array.Clear(arr, Index(0, y, newZ), Size.X);
+				}
+			}
+		}
+
+		for (int z = 0; z < move.Z; z++)
+		{
+			for (int y = 0; y < Size.Y; y++)
+			{
+				System.Array.Clear(arr, Index(0, y, z), Size.X);
+			}
+		}
+	}
+
+	public void Move(int3 move, int3 startPos)
+	{
+		if (startPos.X >= Size.X || startPos.Y >= Size.Y || startPos.Z >= Size.Z)
+		{
+			throw new ArgumentOutOfRangeException(nameof(startPos));
+		}
+
+		int3 dest = startPos + move;
+
+		if (dest.X < 0 || dest.Y < 0 || dest.Z < 0)
+		{
+			throw new ArgumentOutOfRangeException();
+		}
+
+		int3 moveSize = Size - startPos;
+
+		EnsureSize(Size + move);
+
+		ushort[] arr = Array.Array;
+
+		bool moveYZ = move.Y != 0 || move.Z != 0;
+
+		int startY = (move.Y > 0) ? moveSize.Y - 1 : 0;
+		int endY = (move.Y > 0) ? -1 : moveSize.Y;
+		int stepY = (move.Y > 0) ? -1 : 1;
+
+		int startZ = (move.Z > 0) ? moveSize.Z - 1 : 0;
+		int endZ = (move.Z > 0) ? -1 : moveSize.Z;
+		int stepZ = (move.Z > 0) ? -1 : 1;
+
+		for (int z = startZ; z != endZ; z += stepZ)
+		{
+			for (int y = startY; y != endY; y += stepY)
+			{
+				int3 pos = new int3(0, y, z);
+				int index = Index(pos + startPos);
+				System.Array.Copy(arr, index, arr, Index(pos + dest), moveSize.X);
+
+				if (moveYZ)
+				{
+					System.Array.Clear(arr, index, moveSize.X);
+				}
+				else
+				{
+					if (move.X > 0)
+					{
+						System.Array.Clear(arr, index, Math.Min(move.X, moveSize.X));
+					}
+					else
+					{
+						System.Array.Clear(arr, index + startPos.X + Math.Max(moveSize.X + move.X, 0), Math.Min(-move.X, moveSize.X));
+					}
+				}
+			}
+		}
+	}
+
+	/// <summary>
 	/// Ensures that the underlying array is at least the size of <paramref name="size"/>.
 	/// </summary>
 	/// <param name="size">The minimum size.</param>
 	public void EnsureSize(int3 size)
-		=> EnsureSize(size.X, size.Y, size.Z);
-
-	/// <summary>
-	/// Ensures that the underlying array is at least the specified size.
-	/// </summary>
-	/// <param name="sizeX">The minimum x size.</param>
-	/// <param name="sizeY">The minimum y size.</param>
-	/// <param name="sizeZ">The minimum z size.</param>
-	public void EnsureSize(int sizeX, int sizeY, int sizeZ)
 	{
-		int3 size = Size;
-		if (sizeX >= size.X)
-		{
-			size.X = sizeX + 1;
-		}
-
-		if (sizeY >= size.Y)
-		{
-			size.Y = sizeY + 1;
-		}
-
-		if (sizeZ >= size.Z)
-		{
-			size.Z = sizeZ + 1;
-		}
+		size = int3.Max(Size, size);
 
 		if (size != Size)
 		{
 			// only resize if actually needed
-			if (size.X > Array.LengthX || size.Y > Array.LengthY || size.Z > Array.LengthZ)
+			if (size.X > Capacity.X || size.Y > Capacity.Y || size.Z > Capacity.Z)
 			{
 				Resize(size);
 			}
@@ -536,12 +649,26 @@ public class BlockData
 		=> new BlockData(this);
 
 	#region Utils
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static void ThrowArgumentOutOfRange(string argumentName)
+		=> throw new ArgumentOutOfRangeException(argumentName);
+
+	private static int CeilToMultiple(int numb, int blockSize)
+	{
+		int mod = numb % blockSize;
+		return Math.Max(mod == 0 ? numb : numb + (blockSize - mod), blockSize);
+	}
+
+	private static int3 CeilToMultiple(int3 val, int blockSize)
+		=> new int3(CeilToMultiple(val.X, blockSize), CeilToMultiple(val.Y, blockSize), CeilToMultiple(val.Z, blockSize));
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void CheckLowerBounds(int3 pos, string argumentName)
 	{
 		if (pos.X < 0 || pos.Y < 0 || pos.Z < 0)
 		{
-			throw new ArgumentOutOfRangeException(argumentName);
+			ThrowArgumentOutOfRange(argumentName);
 		}
 	}
 
@@ -550,7 +677,7 @@ public class BlockData
 	{
 		if (!InBounds(pos))
 		{
-			throw new ArgumentOutOfRangeException(argumentName);
+			ThrowArgumentOutOfRange(argumentName);
 		}
 	}
 
@@ -559,34 +686,23 @@ public class BlockData
 	{
 		if (pos.X >= Size.X || pos.Y >= Size.Y || pos.Z >= Size.Z)
 		{
-			throw new ArgumentOutOfRangeException(argumentName);
+			ThrowArgumentOutOfRange(argumentName);
 		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private void SetBlockInternal(int x, int y, int z, ushort id)
-		=> Array[x, y, z] = id;
-
-#pragma warning disable SA1204 // Static elements should appear before instance elements
-	private static int CeilToMultiple(int numb, int blockSize)
-#pragma warning restore SA1204
-	{
-		int mod = numb % blockSize;
-		return Math.Max(mod == 0 ? numb : numb + (blockSize - mod), blockSize);
-	}
+	private void SetBlockInternal(int3 pos, ushort id)
+		=> Array.SetUnchecked(pos, id);
 
 	private void Resize(int3 size, bool useBlock = true)
 	{
 		if (useBlock)
 		{
-			Array.Resize(
-				CeilToMultiple(size.X, BlockSize),
-				CeilToMultiple(size.Y, BlockSize),
-				CeilToMultiple(size.Z, BlockSize));
+			Array.Resize(CeilToMultiple(size, BlockSize));
 		}
 		else
 		{
-			Array.Resize(size.X, size.Y, size.Z);
+			Array.Resize(size);
 		}
 
 		Size = size;

@@ -6,6 +6,7 @@ using MathUtils.Vectors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
@@ -22,37 +23,30 @@ public class Array3D<T> : IEnumerable<T>
 	/// <summary>
 	/// Initializes a new instance of the <see cref="Array3D{T}"/> class.
 	/// </summary>
-	/// <param name="sizeX">X size of the array.</param>
-	/// <param name="sizeY">Y size of the array.</param>
-	/// <param name="sizeZ">Z size of the array.</param>
-	public Array3D(int sizeX, int sizeY, int sizeZ)
+	/// <param name="size">Size of the array.</param>
+	public Array3D(int3 size)
 	{
-		LengthX = sizeX;
-		LengthY = sizeY;
-		LengthZ = sizeZ;
-		_layerSize = sizeX * sizeY;
+		Size = size;
+		_layerSize = Size.X * Size.Y;
 
-		_array = new T[sizeX * sizeY * sizeZ];
+		_array = new T[Size.X * Size.Y * Size.Z];
 	}
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="Array3D{T}"/> class.
 	/// </summary>
 	/// <param name="collection">The collection to contruct the array from.</param>
-	/// <param name="sizeX">X size of the array.</param>
-	/// <param name="sizeY">Y size of the array.</param>
-	/// <param name="sizeZ">Z size of the array.</param>
-	public Array3D(IEnumerable<T> collection, int sizeX, int sizeY, int sizeZ)
+	/// <param name="size">Size of the array.</param>
+	public Array3D(IEnumerable<T> collection, int3 size)
 	{
-		LengthX = sizeX;
-		LengthY = sizeY;
-		LengthZ = sizeZ;
-		_layerSize = sizeX * sizeY;
+		Size = size;
+		_layerSize = Size.X * Size.Y;
 
 		_array = [.. collection];
-		if (Length != LengthX * LengthY * LengthZ)
+
+		if (Length != Size.X * Size.Y * Size.Z)
 		{
-			throw new ArgumentException($"{nameof(collection)} length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}.", nameof(collection));
+			throw new ArgumentException($"{nameof(collection)}'s length must be equal to: {nameof(size)}.X * {nameof(size)}.Y * {nameof(size)}.Z ({Size.X * Size.Y * Size.Z}), but it was: {Length}.", nameof(size));
 		}
 	}
 
@@ -60,20 +54,22 @@ public class Array3D<T> : IEnumerable<T>
 	/// Initializes a new instance of the <see cref="Array3D{T}"/> class.
 	/// </summary>
 	/// <param name="array">The array to contruct this <see cref="Array3D{T}"/> from.</param>
-	/// <param name="sizeX">X size of the array.</param>
-	/// <param name="sizeY">Y size of the array.</param>
-	/// <param name="sizeZ">Z size of the array.</param>
-	public Array3D(T[] array, int sizeX, int sizeY, int sizeZ)
+	/// <param name="size">Size of the array.</param>
+	public Array3D(T[] array, int3 size)
 	{
-		LengthX = sizeX;
-		LengthY = sizeY;
-		LengthZ = sizeZ;
-		_layerSize = sizeX * sizeY;
+		if (array is null)
+		{
+			throw new ArgumentNullException(nameof(array));
+		}
+
+		Size = size;
+		_layerSize = Size.X * Size.Y;
 
 		_array = array;
-		if (Length != LengthX * LengthY * LengthZ)
+
+		if (Length != Size.X * Size.Y * Size.Z)
 		{
-			throw new ArgumentException($"{nameof(array)}.Length must be equal to: sizeX * sizeY * sizeZ ({LengthX * LengthY * LengthZ}), but it is: {Length}.", nameof(array));
+			throw new ArgumentException($"{nameof(array)}.Length must be equal to: {nameof(size)}.X * {nameof(size)}.Y * {nameof(size)}.Z ({Size.X * Size.Y * Size.Z}), but it was: {Length}.", nameof(size));
 		}
 	}
 
@@ -88,9 +84,7 @@ public class Array3D<T> : IEnumerable<T>
 			throw new ArgumentNullException(nameof(array));
 		}
 
-		LengthX = array.LengthX;
-		LengthY = array.LengthY;
-		LengthZ = array.LengthZ;
+		Size = array.Size;
 		_layerSize = array._layerSize;
 
 		_array = (T[])array._array.Clone();
@@ -105,28 +99,10 @@ public class Array3D<T> : IEnumerable<T>
 #pragma warning restore CA1819
 
 	/// <summary>
-	/// Gets the X size of this array.
-	/// </summary>
-	/// <value>The X size of this array.</value>
-	public int LengthX { get; private set; }
-
-	/// <summary>
-	/// Gets the Y size of this array.
-	/// </summary>
-	/// <value>The Y size of this array.</value>
-	public int LengthY { get; private set; }
-
-	/// <summary>
-	/// Gets the Z size of this array.
-	/// </summary>
-	/// <value>The Z size of this array.</value>
-	public int LengthZ { get; private set; }
-
-	/// <summary>
 	/// Gets the size of this array.
 	/// </summary>
 	/// <value>The size of this array.</value>
-	public int3 Size => new int3(LengthX, LengthY, LengthZ);
+	public int3 Size { get; private set; }
 
 	/// <summary>
 	/// Gets the total length of this array.
@@ -154,8 +130,19 @@ public class Array3D<T> : IEnumerable<T>
 	/// <returns>Item at the specified index.</returns>
 	public T this[int x, int y, int z]
 	{
-		get => Get(x, y, z);
-		set => Set(x, y, z, value);
+		get => Get(new int3(x, y, z));
+		set => Set(new int3(x, y, z), value);
+	}
+
+	/// <summary>
+	/// Gets or sets the item at the specified position.
+	/// </summary>
+	/// <param name="pos">Position of the item.</param>
+	/// <returns>Item at the specified position.</returns>
+	public T this[int3 pos]
+	{
+		get => Get(pos);
+		set => Set(pos, value);
 	}
 
 	/// <summary>
@@ -165,18 +152,7 @@ public class Array3D<T> : IEnumerable<T>
 	/// <returns><see langword="true"/> if <paramref name="pos"/> is inside the bounds of this array; otherwise, <see langword="false"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool InBounds(int3 pos)
-		=> InBounds(pos.X, pos.Y, pos.Z);
-
-	/// <summary>
-	/// Determines if the specified position is inside the bounds of this array.
-	/// </summary>
-	/// <param name="x">The x postition.</param>
-	/// <param name="y">The y postition.</param>
-	/// <param name="z">The z postition.</param>
-	/// <returns><see langword="true"/> if the position is inside the bounds of this array; otherwise, <see langword="false"/>.</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public bool InBounds(int x, int y, int z)
-		=> x >= 0 && x < LengthX && y >= 0 && y < LengthY && z >= 0 && z < LengthZ;
+		=> pos.InBounds(Size.X, Size.Y, Size.Z);
 
 	/// <summary>
 	/// Converts <paramref name="pos"/> into an index.
@@ -185,18 +161,7 @@ public class Array3D<T> : IEnumerable<T>
 	/// <returns>Index into <see cref="_array"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int Index(int3 pos)
-		=> Index(pos.X, pos.Y, pos.Z);
-
-	/// <summary>
-	/// Converts a position into an index.
-	/// </summary>
-	/// <param name="x">The x postition.</param>
-	/// <param name="y">The y postition.</param>
-	/// <param name="z">The z postition.</param>
-	/// <returns>Index into <see cref="_array"/>.</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public int Index(int x, int y, int z)
-		=> x + (y * LengthX) + (z * _layerSize);
+		=> pos.X + (pos.Y * Size.X) + (pos.Z * _layerSize);
 
 	/// <summary>
 	/// Converts an index into a position.
@@ -207,100 +172,124 @@ public class Array3D<T> : IEnumerable<T>
 	public int3 Index(int index)
 	{
 		int remaining = index % _layerSize;
-		return new int3(remaining % LengthX, remaining / LengthX, index / _layerSize);
+		return new int3(remaining % Size.X, remaining / Size.X, index / _layerSize);
 	}
 
 	/// <summary>
-	/// Gets the item at the specified index.
+	/// Gets the item at the specified position.
 	/// </summary>
-	/// <param name="x">X index of the item.</param>
-	/// <param name="y">Y index of the item.</param>
-	/// <param name="z">Z index of the item.</param>
-	/// <returns>Item at the specified index.</returns>
+	/// <param name="pos">Position of the item.</param>
+	/// <returns>Item at the specified position.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public T Get(int x, int y, int z)
-		=> _array[Index(x, y, z)];
+	public T Get(int3 pos)
+	{
+		if (!InBounds(pos))
+		{
+			ThrowArgumentOutOfRange(nameof(pos));
+		}
+
+		return _array[Index(pos)];
+	}
 
 	/// <summary>
-	/// Sets the item at the specified index.
+	/// Gets the item at the specified position without bounds checking.
 	/// </summary>
-	/// <param name="x">X index of the item.</param>
-	/// <param name="y">Y index of the item.</param>
-	/// <param name="z">Z index of the item.</param>
+	/// <param name="pos">Position of the item.</param>
+	/// <returns>Item at the specified position.</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public T GetUnchecked(int3 pos)
+		=> _array[Index(pos)];
+
+	/// <summary>
+	/// Sets the item at the specified position.
+	/// </summary>
+	/// <param name="pos">Position of the item.</param>
 	/// <param name="value">The value to set at the specified position.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void Set(int x, int y, int z, T value)
-		=> _array[Index(x, y, z)] = value;
+	public void Set(int3 pos, T value)
+	{
+		if (!InBounds(pos))
+		{
+			ThrowArgumentOutOfRange(nameof(pos));
+		}
+
+		_array[Index(pos)] = value;
+	}
+
+	/// <summary>
+	/// Sets the item at the specified position without bounds checking.
+	/// </summary>
+	/// <param name="pos">Position of the item.</param>
+	/// <param name="value">The value to set at the specified position.</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void SetUnchecked(int3 pos, T value)
+		=> _array[Index(pos)] = value;
 
 	/// <summary>
 	/// Changes the size of this array.
 	/// </summary>
-	/// <param name="newX">The new x size.</param>
-	/// <param name="newY">The new y size.</param>
-	/// <param name="newZ">The new z size.</param>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="newX"/>, <paramref name="newY"/> or <paramref name="newZ"/> are negative.</exception>
-	public void Resize(int newX, int newY, int newZ)
+	/// <param name="newSize">The new size.</param>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="newSize"/> is negative.</exception>
+	public void Resize(int3 newSize)
 	{
-		if (newX < 0)
+		if (newSize.X < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(newX));
+			ThrowArgumentOutOfRange(nameof(newSize.X));
 		}
-		else if (newY < 0)
+		else if (newSize.Y < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(newY));
+			ThrowArgumentOutOfRange(nameof(newSize.Y));
 		}
-		else if (newZ < 0)
+		else if (newSize.Z < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(newZ));
+			ThrowArgumentOutOfRange(nameof(newSize.Z));
 		}
-		else if (newX == 0 || newY == 0 || newZ == 0)
+		else if (newSize == int3.Zero)
 		{
 			_array = [];
 
-			LengthX = 0;
-			LengthY = 0;
-			LengthZ = 0;
+			Size = int3.Zero;
 			_layerSize = 0;
 
 			return;
 		}
-		else if (newX == LengthX && newY == LengthY && newZ == LengthZ)
+		else if (newSize == Size)
 		{
 			return; // same length
 		}
 
-		T[] newArray = new T[newX * newY * newZ];
+		T[] newArray = new T[newSize.X * newSize.Y * newSize.Z];
 
-		int newSize2 = newX * newY;
+		int newLayerSize = newSize.X * newSize.Y;
 
-		int minX = Math.Min(LengthX, newX);
+		int minX = Math.Min(Size.X, newSize.X);
 
-		for (int z = 0; z < newZ; z++)
+		for (int z = 0; z < newSize.Z; z++)
 		{
-			for (int y = 0; y < newY; y++)
+			for (int y = 0; y < newSize.Y; y++)
 			{
-				if (InBounds(0, y, z) && InBoundsNew(y, z))
+				int3 pos = new int3(0, y, z);
+
+				if (InBounds(pos) && InBoundsNew(y, z))
 				{
-					System.Array.Copy(_array, Index(0, y, z), newArray, IndexNew(0, y, z), minX);
+					System.Array.Copy(_array, Index(pos), newArray, IndexNew(0, y, z), minX);
 				}
 			}
 		}
 
 		_array = newArray;
 
-		LengthX = newX;
-		LengthY = newY;
-		LengthZ = newZ;
-		_layerSize = LengthX * LengthY;
+		Size = newSize;
+		_layerSize = Size.X * Size.Y;
 
 		int IndexNew(int x, int y, int z)
 		{
-			return x + (y * newX) + (z * newSize2);
+			return x + (y * newSize.X) + (z * newLayerSize);
 		}
 
 		bool InBoundsNew(int y, int z)
 		{
-			return y >= 0 && y < newY && z >= 0 && z < newZ;
+			return y >= 0 && y < newSize.Y && z >= 0 && z < newSize.Z;
 		}
 	}
 
@@ -324,4 +313,9 @@ public class Array3D<T> : IEnumerable<T>
 	/// <inheritdoc/>
 	IEnumerator<T> IEnumerable<T>.GetEnumerator()
 		=> ((IEnumerable<T>)_array).GetEnumerator();
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static void ThrowArgumentOutOfRange(string argumentName)
+		=> throw new ArgumentOutOfRangeException(argumentName);
 }
