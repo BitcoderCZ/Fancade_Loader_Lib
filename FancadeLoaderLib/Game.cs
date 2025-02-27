@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
+using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -92,7 +93,7 @@ public class Game : ICloneable
 		{
 			if (value is null)
 			{
-				throw new ArgumentNullException(nameof(value), $"{nameof(Name)} cannot be null.");
+				ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(Name)} cannot be null.");
 			}
 
 			_name = value;
@@ -110,7 +111,7 @@ public class Game : ICloneable
 		{
 			if (value is null)
 			{
-				throw new ArgumentNullException(nameof(value), $"{nameof(Author)} cannot be null.");
+				ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(Author)} cannot be null.");
 			}
 
 			_author = value;
@@ -128,7 +129,7 @@ public class Game : ICloneable
 		{
 			if (value is null)
 			{
-				throw new ArgumentNullException(nameof(value), $"{nameof(Description)} cannot be null.");
+				ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(Description)} cannot be null.");
 			}
 
 			_description = value;
@@ -145,7 +146,7 @@ public class Game : ICloneable
 	{
 		if (game is null)
 		{
-			throw new ArgumentNullException(nameof(game));
+			ThrowHelper.ThrowArgumentNull(nameof(game));
 		}
 
 		List<Prefab> prefabs = new List<Prefab>(game.Prefabs.Count);

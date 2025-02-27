@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 
@@ -106,7 +107,7 @@ public class PartialPrefab : ICloneable
 		{
 			if (value is null)
 			{
-				throw new ArgumentNullException(nameof(value), $"{nameof(Name)} cannot be null.");
+				ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(Name)} cannot be null.");
 			}
 
 			_name = value;
@@ -128,7 +129,7 @@ public class PartialPrefab : ICloneable
 	{
 		if (reader is null)
 		{
-			throw new ArgumentNullException(nameof(reader));
+			ThrowHelper.ThrowArgumentNull(nameof(reader));
 		}
 
 		byte header = reader.ReadUInt8();
@@ -168,7 +169,7 @@ public class PartialPrefab : ICloneable
 	{
 		if (writer is null)
 		{
-			throw new ArgumentNullException(nameof(writer));
+			ThrowHelper.ThrowArgumentNull(nameof(writer));
 		}
 
 		byte header = 0;

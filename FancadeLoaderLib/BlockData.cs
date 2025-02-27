@@ -3,10 +3,10 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
@@ -126,12 +126,11 @@ public class BlockData
 	/// </summary>
 	/// <param name="pos">The postition to place the group at.</param>
 	/// <param name="group">The group to place.</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetGroup(int3 pos, PrefabGroup group)
 	{
 		if (group is null)
 		{
-			throw new ArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNull(nameof(group));
 		}
 
 		CheckLowerBounds(pos, nameof(pos));
@@ -175,7 +174,7 @@ public class BlockData
 	{
 		if (group is null)
 		{
-			throw new ArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNull(nameof(group));
 		}
 
 		CheckLowerBounds(pos, nameof(pos));
@@ -500,15 +499,15 @@ public class BlockData
 	{
 		if (move.X < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(move.X));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(move.X));
 		}
 		else if (move.Y < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(move.Y));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(move.Y));
 		}
 		else if (move.Z < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(move.Z));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(move.Z));
 		}
 
 		if ((move.X | move.Y | move.Z) == 0)
@@ -566,14 +565,14 @@ public class BlockData
 	{
 		if (startPos.X >= Size.X || startPos.Y >= Size.Y || startPos.Z >= Size.Z)
 		{
-			throw new ArgumentOutOfRangeException(nameof(startPos));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(startPos));
 		}
 
 		int3 dest = startPos + move;
 
 		if (dest.X < 0 || dest.Y < 0 || dest.Z < 0)
 		{
-			throw new ArgumentOutOfRangeException();
+			ThrowHelper.ThrowArgumentOutOfRange();
 		}
 
 		int3 moveSize = Size - startPos;
@@ -649,11 +648,6 @@ public class BlockData
 		=> new BlockData(this);
 
 	#region Utils
-	[DoesNotReturn]
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static void ThrowArgumentOutOfRange(string argumentName)
-		=> throw new ArgumentOutOfRangeException(argumentName);
-
 	private static int CeilToMultiple(int numb, int blockSize)
 	{
 		int mod = numb % blockSize;
@@ -668,7 +662,7 @@ public class BlockData
 	{
 		if (pos.X < 0 || pos.Y < 0 || pos.Z < 0)
 		{
-			ThrowArgumentOutOfRange(argumentName);
+			ThrowHelper.ThrowArgumentOutOfRange(argumentName);
 		}
 	}
 
@@ -677,7 +671,7 @@ public class BlockData
 	{
 		if (!InBounds(pos))
 		{
-			ThrowArgumentOutOfRange(argumentName);
+			ThrowHelper.ThrowArgumentOutOfRange(argumentName);
 		}
 	}
 
@@ -686,7 +680,7 @@ public class BlockData
 	{
 		if (pos.X >= Size.X || pos.Y >= Size.Y || pos.Z >= Size.Z)
 		{
-			ThrowArgumentOutOfRange(argumentName);
+			ThrowHelper.ThrowArgumentOutOfRange(argumentName);
 		}
 	}
 

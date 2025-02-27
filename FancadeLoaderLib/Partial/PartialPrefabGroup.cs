@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections;
@@ -220,7 +221,7 @@ public sealed class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, IClo
 	{
 		if (value is null)
 		{
-			throw new ArgumentNullException(nameof(value));
+			ThrowHelper.ThrowArgumentNull(nameof(value));
 		}
 
 		_prefabs.Add(key, Validate(value, nameof(value)));
@@ -350,7 +351,7 @@ public sealed class PartialPrefabGroup : IDictionary<byte3, PartialPrefab>, IClo
 	{
 		if (prefab is null)
 		{
-			throw new ArgumentNullException(paramName);
+			ThrowHelper.ThrowArgumentNull(paramName);
 		}
 
 		prefab.GroupId = Id;

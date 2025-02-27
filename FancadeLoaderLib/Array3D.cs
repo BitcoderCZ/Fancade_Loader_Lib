@@ -2,11 +2,11 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
@@ -185,7 +185,7 @@ public class Array3D<T> : IEnumerable<T>
 	{
 		if (!InBounds(pos))
 		{
-			ThrowArgumentOutOfRange(nameof(pos));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(pos));
 		}
 
 		return _array[Index(pos)];
@@ -210,7 +210,7 @@ public class Array3D<T> : IEnumerable<T>
 	{
 		if (!InBounds(pos))
 		{
-			ThrowArgumentOutOfRange(nameof(pos));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(pos));
 		}
 
 		_array[Index(pos)] = value;
@@ -234,15 +234,15 @@ public class Array3D<T> : IEnumerable<T>
 	{
 		if (newSize.X < 0)
 		{
-			ThrowArgumentOutOfRange(nameof(newSize.X));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(newSize.X));
 		}
 		else if (newSize.Y < 0)
 		{
-			ThrowArgumentOutOfRange(nameof(newSize.Y));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(newSize.Y));
 		}
 		else if (newSize.Z < 0)
 		{
-			ThrowArgumentOutOfRange(nameof(newSize.Z));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(newSize.Z));
 		}
 		else if (newSize == int3.Zero)
 		{
@@ -313,9 +313,4 @@ public class Array3D<T> : IEnumerable<T>
 	/// <inheritdoc/>
 	IEnumerator<T> IEnumerable<T>.GetEnumerator()
 		=> ((IEnumerable<T>)_array).GetEnumerator();
-
-	[DoesNotReturn]
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static void ThrowArgumentOutOfRange(string argumentName)
-		=> throw new ArgumentOutOfRangeException(argumentName);
 }
