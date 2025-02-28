@@ -386,7 +386,7 @@ public class RawPrefab
 			}
 		}
 
-		return new RawPrefab(hasConnections, hasSettings, hasBlocks, hasVoxels, isInGroup, hasColliderByte, unEditable, unEditable2, nonDefaultBackgroundColor, hasData2, hasData1, nonDefaultName, hasTypeByte, typeByte, name, data1, data2, backgroundColor, colliderByte, groupId, posInGroup, voxels, blocks is null ? null : new Array3D<ushort>(blocks, insideSize.X, insideSize.Y, insideSize.Z), settings, connections);
+		return new RawPrefab(hasConnections, hasSettings, hasBlocks, hasVoxels, isInGroup, hasColliderByte, unEditable, unEditable2, nonDefaultBackgroundColor, hasData2, hasData1, nonDefaultName, hasTypeByte, typeByte, name, data1, data2, backgroundColor, colliderByte, groupId, posInGroup, voxels, blocks is null ? null : new Array3D<ushort>(blocks, insideSize), settings, connections);
 	}
 
 	/// <summary>
@@ -492,7 +492,7 @@ public class RawPrefab
 
 		if (HasBlocks)
 		{
-			writer.WriteUshort3(new ushort3(Blocks!.LengthX, Blocks!.LengthY, Blocks!.LengthZ));
+			writer.WriteUshort3((ushort3)Blocks!.Size);
 
 			if (BitConverter.IsLittleEndian)
 			{

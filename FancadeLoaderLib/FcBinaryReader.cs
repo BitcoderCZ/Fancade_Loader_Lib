@@ -6,7 +6,9 @@ using MathUtils.Vectors;
 using System;
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace FancadeLoaderLib;
@@ -111,7 +113,7 @@ public sealed class FcBinaryReader : IDisposable
 	{
 		if (BytesLeft < span.Length)
 		{
-			throw new EndOfStreamException("Reached end of stream.");
+			ThrowEndOfStream();
 		}
 
 		int read = Stream.Read(span);
@@ -128,7 +130,7 @@ public sealed class FcBinaryReader : IDisposable
 	{
 		if (BytesLeft < count)
 		{
-			throw new EndOfStreamException("Reached end of stream.");
+			ThrowEndOfStream();
 		}
 
 		byte[] bytes = new byte[count];
@@ -320,4 +322,9 @@ public sealed class FcBinaryReader : IDisposable
 			Stream.Dispose();
 		}
 	}
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static void ThrowEndOfStream()
+		=> throw new EndOfStreamException("Reached end of stream.");
 }

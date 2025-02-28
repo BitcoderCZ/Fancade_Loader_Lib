@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Buffers.Binary;
@@ -103,7 +104,7 @@ public sealed class FcBinaryWriter : IDisposable
 	{
 		if (value is null)
 		{
-			throw new ArgumentNullException(nameof(value));
+			ThrowHelper.ThrowArgumentNull(nameof(value));
 		}
 
 		WriteBytes(value, 0, value.Length);
@@ -230,7 +231,7 @@ public sealed class FcBinaryWriter : IDisposable
 		int written = Encoding.ASCII.GetBytes(value, buffer);
 		if (written > byte.MaxValue)
 		{
-			throw new ArgumentException($"{nameof(value)}, when encoded as ASCII is too long, maximum length is 255.", nameof(value));
+			ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(value)}, when encoded as ASCII is too long, maximum length is 255.");
 		}
 
 		WriteUInt8((byte)written);

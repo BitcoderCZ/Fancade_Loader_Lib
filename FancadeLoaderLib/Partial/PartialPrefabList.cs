@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
+using FancadeLoaderLib.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -89,7 +90,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (reader is null)
 		{
-			throw new ArgumentNullException(nameof(reader));
+			ThrowHelper.ThrowArgumentNull(nameof(reader));
 		}
 
 		uint count = reader.ReadUInt32();
@@ -116,7 +117,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (writer is null)
 		{
-			throw new ArgumentNullException(nameof(writer));
+			ThrowHelper.ThrowArgumentNull(nameof(writer));
 		}
 
 		writer.WriteUInt32((uint)Count);
@@ -150,7 +151,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (group is null)
 		{
-			throw new ArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNull(nameof(group));
 		}
 
 		group.Id = (ushort)_list.Count;
@@ -222,7 +223,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (index < 0 || index > _list.Count)
 		{
-			throw new ArgumentOutOfRangeException(nameof(index));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(index));
 		}
 
 		IncreaseAfter(index, 1);
@@ -239,7 +240,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (index < 0 || index > _list.Count)
 		{
-			throw new ArgumentOutOfRangeException(nameof(index));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(index));
 		}
 
 		int count = collection.Count();
@@ -257,7 +258,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (group is null)
 		{
-			throw new ArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNull(nameof(group));
 		}
 
 		IncreaseAfter(index, (ushort)group.Count);

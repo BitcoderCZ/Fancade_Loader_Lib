@@ -3,9 +3,10 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
@@ -125,12 +126,11 @@ public class BlockData
 	/// </summary>
 	/// <param name="pos">The postition to place the group at.</param>
 	/// <param name="group">The group to place.</param>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetGroup(int3 pos, PrefabGroup group)
 	{
 		if (group is null)
 		{
-			throw new ArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNull(nameof(group));
 		}
 
 		CheckLowerBounds(pos, nameof(pos));
@@ -174,7 +174,7 @@ public class BlockData
 	{
 		if (group is null)
 		{
-			throw new ArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNull(nameof(group));
 		}
 
 		CheckLowerBounds(pos, nameof(pos));
@@ -360,7 +360,116 @@ public class BlockData
 
 	public void TrimNegative(bool shrink = true)
 	{
+		if (Size == int3.Zero)
+		{
+			return;
+		}
 
+		int minX = int.MinValue;
+		int minY = int.MinValue;
+		int minZ = int.MinValue;
+
+		int3 scanPos = int3.Zero;
+
+		while (true)
+		{
+			if (minX == int.MinValue)
+			{
+				for (int y = 0; y < scanPos.Y; y++)
+				{
+					for (int z = 0; z < scanPos.Z; z++)
+					{
+						int3 pos = new int3(scanPos.X, y, z);
+						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
+
+						if (Array.GetUnchecked(pos) != 0)
+						{
+							minX = scanPos.X;
+							goto endX;
+						}
+					}
+				}
+			}
+
+		endX:
+			if (minY == int.MinValue)
+			{
+				for (int x = 0; x < scanPos.X; x++)
+				{
+					for (int z = 0; z < scanPos.Z; z++)
+					{
+						int3 pos = new int3(x, scanPos.Y, z);
+						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
+
+						if (Array.GetUnchecked(pos) != 0)
+						{
+							minY = scanPos.Y;
+							goto endY;
+						}
+					}
+				}
+			}
+
+		endY:
+			if (minZ == int.MinValue)
+			{
+				for (int x = 0; x < scanPos.X; x++)
+				{
+					for (int y = 0; y < scanPos.Y; y++)
+					{
+						int3 pos = new int3(x, y, scanPos.Z);
+						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
+
+						if (Array.GetUnchecked(pos) != 0)
+						{
+							minZ = scanPos.Z;
+							goto endZ;
+						}
+					}
+				}
+			}
+
+		endZ:
+			if (minX != int.MinValue && minY != int.MinValue && minZ != int.MinValue)
+			{
+				int3 minPos = new int3(minX, minY, minZ);
+
+				if (minPos == int3.Zero)
+				{
+					return; // can't move
+				}
+
+				if (shrink)
+				{
+					Move(-minPos, minPos);
+					Size -= minPos;
+					Resize(Size, false);
+				}
+				else
+				{
+					Move(-minPos, minPos);
+					Size -= minPos;
+				}
+
+				return;
+			}
+			else if (scanPos.X == Size.X - 1)
+			{
+				// no blocks
+				if (shrink)
+				{
+					Resize(int3.Zero, false);
+				}
+				else
+				{
+					Size = int3.Zero;
+				}
+
+				return;
+			}
+
+			scanPos = int3.Min(scanPos + 1, Size - 1);
+		}
 	}
 
 	/// <summary>
@@ -390,15 +499,15 @@ public class BlockData
 	{
 		if (move.X < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(move.X));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(move.X));
 		}
 		else if (move.Y < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(move.Y));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(move.Y));
 		}
 		else if (move.Z < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(move.Z));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(move.Z));
 		}
 
 		if ((move.X | move.Y | move.Z) == 0)
@@ -456,14 +565,14 @@ public class BlockData
 	{
 		if (startPos.X >= Size.X || startPos.Y >= Size.Y || startPos.Z >= Size.Z)
 		{
-			throw new ArgumentOutOfRangeException(nameof(startPos));
+			ThrowHelper.ThrowArgumentOutOfRange(nameof(startPos));
 		}
 
 		int3 dest = startPos + move;
 
 		if (dest.X < 0 || dest.Y < 0 || dest.Z < 0)
 		{
-			throw new ArgumentOutOfRangeException();
+			ThrowHelper.ThrowArgumentOutOfRange();
 		}
 
 		int3 moveSize = Size - startPos;
@@ -502,8 +611,7 @@ public class BlockData
 					}
 					else
 					{
-						// if -move > moveSize -> clears too much
-						System.Array.Clear(arr, index + startPos.X + moveSize.X + move.X, -move.X);
+						System.Array.Clear(arr, index + startPos.X + Math.Max(moveSize.X + move.X, 0), Math.Min(-move.X, moveSize.X));
 					}
 				}
 			}
@@ -540,11 +648,6 @@ public class BlockData
 		=> new BlockData(this);
 
 	#region Utils
-	[DoesNotReturn]
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static void ThrowArgumentOutOfRange(string argumentName)
-		=> throw new ArgumentOutOfRangeException(argumentName);
-
 	private static int CeilToMultiple(int numb, int blockSize)
 	{
 		int mod = numb % blockSize;
@@ -559,7 +662,7 @@ public class BlockData
 	{
 		if (pos.X < 0 || pos.Y < 0 || pos.Z < 0)
 		{
-			ThrowArgumentOutOfRange(argumentName);
+			ThrowHelper.ThrowArgumentOutOfRange(argumentName);
 		}
 	}
 
@@ -568,7 +671,7 @@ public class BlockData
 	{
 		if (!InBounds(pos))
 		{
-			ThrowArgumentOutOfRange(argumentName);
+			ThrowHelper.ThrowArgumentOutOfRange(argumentName);
 		}
 	}
 
@@ -577,7 +680,7 @@ public class BlockData
 	{
 		if (pos.X >= Size.X || pos.Y >= Size.Y || pos.Z >= Size.Z)
 		{
-			ThrowArgumentOutOfRange(argumentName);
+			ThrowHelper.ThrowArgumentOutOfRange(argumentName);
 		}
 	}
 

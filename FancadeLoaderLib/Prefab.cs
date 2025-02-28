@@ -201,7 +201,7 @@ public class Prefab : ICloneable
 		get => _voxels;
 		set
 		{
-			if (!(value is null) && value.Length != NumbVoxels)
+			if (value is not null && value.Length != NumbVoxels)
 			{
 				throw new ArgumentException($"{nameof(Voxels)} must be {NumbVoxels} long, but {nameof(value)}.Length is {value.Length}.", nameof(value));
 			}
@@ -354,7 +354,7 @@ public class Prefab : ICloneable
 				}
 			}
 
-			blockData = new BlockData(new Array3D<ushort>(blocks, rawPrefab.Blocks.LengthX, rawPrefab.Blocks.LengthY, rawPrefab.Blocks.LengthZ));
+			blockData = new BlockData(new Array3D<ushort>(blocks, rawPrefab.Blocks.Size));
 		}
 
 		List<PrefabSetting>? settings = null;
