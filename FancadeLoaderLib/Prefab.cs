@@ -355,6 +355,7 @@ public class Prefab : ICloneable
 			}
 
 			blockData = new BlockData(new Array3D<ushort>(blocks, rawPrefab.Blocks.Size));
+			blockData.Trim(false);
 		}
 
 		List<PrefabSetting>? settings = null;

@@ -28,7 +28,18 @@ public class BlockData
 	/// </summary>
 	public BlockData()
 	{
-		Array = new Array3D<ushort>(int3.Zero);
+		Array = new Array3D<ushort>(int3.One * BlockSize);
+		Size = int3.Zero;
+	}
+
+	/// <summary>
+	/// Initializes a new instance of the <see cref="BlockData"/> class.
+	/// </summary>
+	/// <param name="capacity">The initial capacity.</param>
+	public BlockData(int3 capacity)
+	{
+		Array = new Array3D<ushort>(capacity);
+		Size = int3.Zero;
 	}
 
 	/// <summary>
@@ -37,10 +48,14 @@ public class BlockData
 	/// <param name="blocks">The blocks to set <see cref="Array"/> to, doesn't clone.</param>
 	public BlockData(Array3D<ushort> blocks)
 	{
+		if (blocks is null)
+		{
+			ThrowHelper.ThrowArgumentNull(nameof(blocks));
+		}
+
 		Array = blocks;
 
 		Size = Array.Size;
-		Trim();
 	}
 
 	/// <summary>
@@ -51,7 +66,7 @@ public class BlockData
 	{
 		if (data is null)
 		{
-			throw new ArgumentNullException(nameof(data));
+			ThrowHelper.ThrowArgumentNull(nameof(data));
 		}
 
 		Array = data.Array.Clone();
@@ -274,17 +289,20 @@ public class BlockData
 		int maxY = int.MaxValue;
 		int maxZ = int.MaxValue;
 
-		int3 scanPos = Size;
+		int3 scanPos = Size - int3.One;
 
 		while (true)
 		{
 			if (maxX == int.MaxValue)
 			{
-				for (int y = 0; y < scanPos.Y; y++)
+				for (int y = 0; y <= scanPos.Y; y++)
 				{
-					for (int z = 0; z < scanPos.Z; z++)
+					for (int z = 0; z <= scanPos.Z; z++)
 					{
-						if (Array[Index(scanPos.X - 1, y, z)] != 0)
+						int3 pos = new int3(scanPos.X, y, z);
+						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
+
+						if (Array.GetUnchecked(pos) != 0)
 						{
 							maxX = scanPos.X;
 							goto endX;
@@ -296,11 +314,14 @@ public class BlockData
 		endX:
 			if (maxY == int.MaxValue)
 			{
-				for (int x = 0; x < scanPos.X; x++)
+				for (int x = 0; x <= scanPos.X; x++)
 				{
-					for (int z = 0; z < scanPos.Z; z++)
+					for (int z = 0; z <= scanPos.Z; z++)
 					{
-						if (Array[Index(x, scanPos.Y - 1, z)] != 0)
+						int3 pos = new int3(x, scanPos.Y, z);
+						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
+
+						if (Array.GetUnchecked(pos) != 0)
 						{
 							maxY = scanPos.Y;
 							goto endY;
@@ -312,11 +333,14 @@ public class BlockData
 		endY:
 			if (maxZ == int.MaxValue)
 			{
-				for (int x = 0; x < scanPos.X; x++)
+				for (int x = 0; x <= scanPos.X; x++)
 				{
-					for (int y = 0; y < scanPos.Y; y++)
+					for (int y = 0; y <= scanPos.Y; y++)
 					{
-						if (Array[Index(x, y, scanPos.Z - 1)] != 0)
+						int3 pos = new int3(x, y, scanPos.Z);
+						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
+
+						if (Array.GetUnchecked(pos) != 0)
 						{
 							maxZ = scanPos.Z;
 							goto endZ;
@@ -330,16 +354,16 @@ public class BlockData
 			{
 				if (shrink)
 				{
-					Resize(new int3(maxX + 1, maxY + 1, maxZ + 1), false);
+					Resize(new int3(maxX, maxY, maxZ) + int3.One, false);
 				}
 				else
 				{
-					Size = new int3(maxX + 1, maxY + 1, maxZ + 1);
+					Size = new int3(maxX, maxY, maxZ) + int3.One;
 				}
 
 				return;
 			}
-			else if (scanPos.X == 1 && scanPos.Y == 1 && scanPos.Z == 1)
+			else if (scanPos == int3.Zero)
 			{
 				// no blocks
 				if (shrink)
@@ -354,7 +378,7 @@ public class BlockData
 				return;
 			}
 
-			scanPos = new int3(Math.Max(1, scanPos.X - 1), Math.Max(1, scanPos.Y - 1), Math.Max(1, scanPos.Z - 1));
+			scanPos = int3.Max(scanPos - new int3(maxX == int.MaxValue ? 1 : 0, maxY == int.MaxValue ? 1 : 0, maxZ == int.MaxValue ? 1 : 0), int3.Zero);
 		}
 	}
 
@@ -375,9 +399,9 @@ public class BlockData
 		{
 			if (minX == int.MinValue)
 			{
-				for (int y = 0; y < scanPos.Y; y++)
+				for (int y = scanPos.Y; y < Size.Y; y++)
 				{
-					for (int z = 0; z < scanPos.Z; z++)
+					for (int z = scanPos.Z; z < Size.Z; z++)
 					{
 						int3 pos = new int3(scanPos.X, y, z);
 						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
@@ -394,9 +418,9 @@ public class BlockData
 		endX:
 			if (minY == int.MinValue)
 			{
-				for (int x = 0; x < scanPos.X; x++)
+				for (int x = scanPos.X; x < Size.X; x++)
 				{
-					for (int z = 0; z < scanPos.Z; z++)
+					for (int z = scanPos.Z; z < Size.Z; z++)
 					{
 						int3 pos = new int3(x, scanPos.Y, z);
 						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
@@ -413,9 +437,9 @@ public class BlockData
 		endY:
 			if (minZ == int.MinValue)
 			{
-				for (int x = 0; x < scanPos.X; x++)
+				for (int x = scanPos.X; x < Size.X; x++)
 				{
-					for (int y = 0; y < scanPos.Y; y++)
+					for (int y = scanPos.Y; y < Size.Y; y++)
 					{
 						int3 pos = new int3(x, y, scanPos.Z);
 						Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
@@ -468,7 +492,7 @@ public class BlockData
 				return;
 			}
 
-			scanPos = int3.Min(scanPos + 1, Size - 1);
+			scanPos = int3.Min(scanPos + new int3(minX == int.MinValue ? 1 : 0, minY == int.MinValue ? 1 : 0, minZ == int.MinValue ? 1 : 0), Size - int3.One);
 		}
 	}
 

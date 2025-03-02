@@ -27,6 +27,11 @@ public class Array3D<T> : IEnumerable<T>
 	/// <param name="size">Size of the array.</param>
 	public Array3D(int3 size)
 	{
+		if (size.X < 0 || size.Y < 0 || size.Z < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(size));
+		}
+
 		Size = size;
 		_layerSize = Size.X * Size.Y;
 
