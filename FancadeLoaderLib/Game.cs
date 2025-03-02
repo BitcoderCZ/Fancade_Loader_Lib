@@ -61,7 +61,7 @@ public class Game : ICloneable
 	{
 		if (prefabs is null)
 		{
-			throw new ArgumentNullException(nameof(prefabs));
+			ThrowHelper.ThrowArgumentNullException(nameof(prefabs));
 		}
 
 		Name = name;
@@ -93,7 +93,7 @@ public class Game : ICloneable
 		{
 			if (value is null)
 			{
-				ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(Name)} cannot be null.");
+				ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(Name)} cannot be null.");
 			}
 
 			_name = value;
@@ -111,7 +111,7 @@ public class Game : ICloneable
 		{
 			if (value is null)
 			{
-				ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(Author)} cannot be null.");
+				ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(Author)} cannot be null.");
 			}
 
 			_author = value;
@@ -129,7 +129,7 @@ public class Game : ICloneable
 		{
 			if (value is null)
 			{
-				ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(Description)} cannot be null.");
+				ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(Description)} cannot be null.");
 			}
 
 			_description = value;
@@ -146,7 +146,7 @@ public class Game : ICloneable
 	{
 		if (game is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(game));
+			ThrowHelper.ThrowArgumentNullException(nameof(game));
 		}
 
 		List<Prefab> prefabs = new List<Prefab>(game.Prefabs.Count);

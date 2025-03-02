@@ -2,7 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Exceptions;
+using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -62,7 +62,7 @@ public class RawGame
 	{
 		if (name is null)
 		{
-			throw new ArgumentNullException(nameof(name));
+			ThrowHelper.ThrowArgumentNullException(nameof(name));
 		}
 
 		Name = name;
@@ -87,22 +87,22 @@ public class RawGame
 	{
 		if (name is null)
 		{
-			throw new ArgumentNullException(nameof(name));
+			ThrowHelper.ThrowArgumentNullException(nameof(name));
 		}
 
 		if (author is null)
 		{
-			throw new ArgumentNullException(nameof(author));
+			ThrowHelper.ThrowArgumentNullException(nameof(author));
 		}
 
 		if (description is null)
 		{
-			throw new ArgumentNullException(nameof(description));
+			ThrowHelper.ThrowArgumentNullException(nameof(description));
 		}
 
 		if (prefabs is null)
 		{
-			throw new ArgumentNullException(nameof(prefabs));
+			ThrowHelper.ThrowArgumentNullException(nameof(prefabs));
 		}
 
 		Name = name;
@@ -163,18 +163,18 @@ public class RawGame
 	{
 		if (reader is null)
 		{
-			throw new ArgumentNullException(nameof(reader));
+			ThrowHelper.ThrowArgumentNullException(nameof(reader));
 		}
 
 		ushort fileVersion = reader.ReadUInt16();
 
 		if (fileVersion > CurrentFileVersion || fileVersion < 26)
 		{
-			throw new UnsupportedVersionException(fileVersion);
+			ThrowHelper.ThrowUnsupportedVersionException(fileVersion);
 		}
 		else if (fileVersion == 26)
 		{
-			throw new NotImplementedException("Loading file verison 26 has not yet been implemented.");
+			ThrowHelper.ThrowNotImplementedException("Loading file verison 26 has not yet been implemented.");
 		}
 
 		string name = reader.ReadString();
@@ -218,7 +218,7 @@ public class RawGame
 	{
 		if (writer is null)
 		{
-			throw new ArgumentNullException(nameof(writer));
+			ThrowHelper.ThrowArgumentNullException(nameof(writer));
 		}
 
 		writer.WriteUInt16(CurrentFileVersion);

@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Editing.Scripting.Terminals;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
@@ -41,7 +42,7 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
 		{
 			if (value < 1)
 			{
-				throw new ArgumentOutOfRangeException(nameof(value), $"{nameof(MaxHeight)} must be larger than 0.");
+				ThrowHelper.ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(MaxHeight)} must be larger than 0.");
 			}
 
 			_maxHeight = value;
@@ -85,7 +86,7 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
 
 		if (_statementDepth < 0)
 		{
-			throw new InvalidOperationException("Must be in a statement to exit one.");
+			ThrowHelper.ThrowInvalidOperationException("Must be in a statement to exit one.");
 		}
 
 		if (_statementDepth <= 0 && _blocks.Count > 0)

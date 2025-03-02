@@ -50,7 +50,7 @@ public class BlockData
 	{
 		if (blocks is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(blocks));
+			ThrowHelper.ThrowArgumentNullException(nameof(blocks));
 		}
 
 		Array = blocks;
@@ -66,7 +66,7 @@ public class BlockData
 	{
 		if (data is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(data));
+			ThrowHelper.ThrowArgumentNullException(nameof(data));
 		}
 
 		Array = data.Array.Clone();
@@ -145,7 +145,7 @@ public class BlockData
 	{
 		if (group is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(group));
+			ThrowHelper.ThrowArgumentNullException(nameof(group));
 		}
 
 		CheckLowerBounds(pos, nameof(pos));
@@ -189,7 +189,7 @@ public class BlockData
 	{
 		if (group is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(group));
+			ThrowHelper.ThrowArgumentNullException(nameof(group));
 		}
 
 		CheckLowerBounds(pos, nameof(pos));
@@ -523,15 +523,15 @@ public class BlockData
 	{
 		if (move.X < 0)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(move.X));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(move.X));
 		}
 		else if (move.Y < 0)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(move.Y));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(move.Y));
 		}
 		else if (move.Z < 0)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(move.Z));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(move.Z));
 		}
 
 		if ((move.X | move.Y | move.Z) == 0)
@@ -589,14 +589,14 @@ public class BlockData
 	{
 		if (startPos.X >= Size.X || startPos.Y >= Size.Y || startPos.Z >= Size.Z)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(startPos));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(startPos));
 		}
 
 		int3 dest = startPos + move;
 
 		if (dest.X < 0 || dest.Y < 0 || dest.Z < 0)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange();
+			ThrowHelper.ThrowArgumentOutOfRangeException();
 		}
 
 		int3 moveSize = Size - startPos;
@@ -686,7 +686,7 @@ public class BlockData
 	{
 		if (pos.X < 0 || pos.Y < 0 || pos.Z < 0)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(argumentName);
+			ThrowHelper.ThrowArgumentOutOfRangeException(argumentName);
 		}
 	}
 
@@ -695,7 +695,7 @@ public class BlockData
 	{
 		if (!InBounds(pos))
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(argumentName);
+			ThrowHelper.ThrowArgumentOutOfRangeException(argumentName);
 		}
 	}
 
@@ -704,7 +704,7 @@ public class BlockData
 	{
 		if (pos.X >= Size.X || pos.Y >= Size.Y || pos.Z >= Size.Z)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(argumentName);
+			ThrowHelper.ThrowArgumentOutOfRangeException(argumentName);
 		}
 	}
 

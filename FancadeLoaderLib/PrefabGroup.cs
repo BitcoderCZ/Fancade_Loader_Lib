@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections;
@@ -40,7 +41,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (!collection.Any())
 		{
-			throw new ArgumentNullException(nameof(collection), $"{nameof(collection)} cannot be empty.");
+			ThrowHelper.ThrowArgumentException(nameof(collection), $"{nameof(collection)} cannot be empty.");
 		}
 
 		ushort? id = null;
@@ -50,15 +51,15 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 			// validate
 			if (prefab.PosInGroup.X < 0 || prefab.PosInGroup.Y < 0 || prefab.PosInGroup.Z < 0)
 			{
-				throw new ArgumentOutOfRangeException(nameof(collection), $"{nameof(Prefab.PosInGroup)} cannot be negative.");
+				ThrowHelper.ThrowArgumentOutOfRangeException(nameof(collection), $"{nameof(Prefab.PosInGroup)} cannot be negative.");
 			}
 			else if (!prefab.IsInGroup)
 			{
-				throw new ArgumentException($"All prefabs in {nameof(collection)} must be in group", nameof(collection));
+				ThrowHelper.ThrowArgumentException($"All prefabs in {nameof(collection)} must be in group", nameof(collection));
 			}
 			else if (id != null && prefab.GroupId != id)
 			{
-				throw new ArgumentException($"GroupId must be the same for all prefabs in {nameof(collection)}", nameof(collection));
+				ThrowHelper.ThrowArgumentException($"GroupId must be the same for all prefabs in {nameof(collection)}", nameof(collection));
 			}
 
 			id = prefab.GroupId;
@@ -80,7 +81,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (id == ushort.MaxValue)
 		{
-			throw new ArgumentOutOfRangeException(nameof(id), $"{nameof(id)} cannot be {ushort.MaxValue}");
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(id), $"{nameof(id)} cannot be {ushort.MaxValue}");
 		}
 
 		_id = id;
@@ -97,15 +98,15 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 			// validate
 			if (prefab.PosInGroup.X < 0 || prefab.PosInGroup.Y < 0 || prefab.PosInGroup.Z < 0)
 			{
-				throw new ArgumentOutOfRangeException(nameof(collection), $"{nameof(Prefab.PosInGroup)} cannot be negative.");
+				ThrowHelper.ThrowArgumentOutOfRangeException(nameof(collection), $"{nameof(Prefab.PosInGroup)} cannot be negative.");
 			}
 			else if (!prefab.IsInGroup)
 			{
-				throw new ArgumentException($"All prefabs in {nameof(collection)} must be in group", nameof(collection));
+				ThrowHelper.ThrowArgumentException($"All prefabs in {nameof(collection)} must be in group", nameof(collection));
 			}
 			else if (prefab.GroupId != Id)
 			{
-				throw new ArgumentException($"GroupId must be the same for all prefabs in {nameof(collection)}", nameof(collection));
+				ThrowHelper.ThrowArgumentException($"GroupId must be the same for all prefabs in {nameof(collection)}", nameof(collection));
 			}
 
 			return prefab.PosInGroup;
@@ -123,7 +124,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (group is null)
 		{
-			throw new ArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNullException(nameof(group));
 		}
 
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
@@ -340,7 +341,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (prefab is null)
 		{
-			throw new ArgumentNullException(paramName);
+			ThrowHelper.ThrowArgumentNullException(paramName);
 		}
 
 		prefab.GroupId = Id;

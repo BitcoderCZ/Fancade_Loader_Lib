@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -117,17 +118,17 @@ public static class MultiValueDictionaryUtils
 	{
 		if (collection is null)
 		{
-			throw new ArgumentNullException(nameof(collection));
+			ThrowHelper.ThrowArgumentNullException(nameof(collection));
 		}
 
 		if (keySelector is null)
 		{
-			throw new ArgumentNullException(nameof(keySelector));
+			ThrowHelper.ThrowArgumentNullException(nameof(keySelector));
 		}
 
 		if (valueSelector is null)
 		{
-			throw new ArgumentNullException(nameof(valueSelector));
+			ThrowHelper.ThrowArgumentNullException(nameof(valueSelector));
 		}
 
 		MultiValueDictionary<TKey, TValue> dict =

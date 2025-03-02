@@ -2,7 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using System;
+using FancadeLoaderLib.Utils;
 using System.Buffers;
 using System.IO;
 using System.IO.Compression;
@@ -64,7 +64,7 @@ public static class Zlib
 	{
 		if (from is null)
 		{
-			throw new ArgumentNullException(nameof(from));
+			ThrowHelper.ThrowArgumentNullException(nameof(from));
 		}
 
 #if NET6_0_OR_GREATER

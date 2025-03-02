@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
+using FancadeLoaderLib.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -91,7 +92,7 @@ public class PrefabList : IList<Prefab>, ICloneable
 	{
 		if (reader is null)
 		{
-			throw new ArgumentNullException(nameof(reader));
+			ThrowHelper.ThrowArgumentNullException(nameof(reader));
 		}
 
 		uint count = reader.ReadUInt32();
@@ -118,7 +119,7 @@ public class PrefabList : IList<Prefab>, ICloneable
 	{
 		if (writer is null)
 		{
-			throw new ArgumentNullException(nameof(writer));
+			ThrowHelper.ThrowArgumentNullException(nameof(writer));
 		}
 
 		writer.WriteUInt32((uint)Count);
@@ -152,7 +153,7 @@ public class PrefabList : IList<Prefab>, ICloneable
 	{
 		if (group is null)
 		{
-			throw new ArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNullException(nameof(group));
 		}
 
 		group.Id = (ushort)_list.Count;
@@ -249,7 +250,7 @@ public class PrefabList : IList<Prefab>, ICloneable
 	{
 		if (group is null)
 		{
-			throw new ArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNullException(nameof(group));
 		}
 
 		IncreaseAfter(index, (ushort)group.Count);

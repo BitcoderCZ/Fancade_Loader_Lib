@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 
@@ -66,7 +67,7 @@ public struct Connection : IEquatable<Connection>
 	{
 		if (reader is null)
 		{
-			throw new ArgumentNullException(nameof(reader));
+			ThrowHelper.ThrowArgumentNullException(nameof(reader));
 		}
 
 		ushort3 from = reader.ReadVec3US();
@@ -85,7 +86,7 @@ public struct Connection : IEquatable<Connection>
 	{
 		if (writer is null)
 		{
-			throw new ArgumentNullException(nameof(writer));
+			ThrowHelper.ThrowArgumentNullException(nameof(writer));
 		}
 
 		writer.WriteUshort3(From);

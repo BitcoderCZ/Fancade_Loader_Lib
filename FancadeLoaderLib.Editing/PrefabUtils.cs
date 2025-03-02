@@ -2,7 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using System;
+using FancadeLoaderLib.Utils;
 
 namespace FancadeLoaderLib.Editing;
 
@@ -20,7 +20,7 @@ public static class PrefabUtils
 	{
 		if (prefab is null)
 		{
-			throw new ArgumentNullException(nameof(prefab));
+			ThrowHelper.ThrowArgumentNullException(nameof(prefab));
 		}
 
 		if (prefab.Voxels is null)

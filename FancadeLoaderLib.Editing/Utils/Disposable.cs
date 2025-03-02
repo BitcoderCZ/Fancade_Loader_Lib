@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using System;
 
 namespace FancadeLoaderLib.Editing.Utils;
@@ -14,7 +15,7 @@ internal class Disposable : IDisposable
 	{
 		if (onDispose is null)
 		{
-			throw new ArgumentNullException(nameof(onDispose));
+			ThrowHelper.ThrowArgumentNullException(nameof(onDispose));
 		}
 
 		_onDispose = onDispose;

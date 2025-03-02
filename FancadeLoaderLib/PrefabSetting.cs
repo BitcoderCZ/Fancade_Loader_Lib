@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Numerics;
@@ -47,7 +48,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
 	{
 		if (!IsValueValid(value, type))
 		{
-			throw new ArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for type '{type}'", nameof(value));
+			ThrowHelper.ThrowArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for type '{type}'", nameof(value));
 		}
 
 		Index = index;
@@ -85,7 +86,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
 		{
 			if (!IsValueValid(value, Type))
 			{
-				throw new ArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(SettingType)} '{Type}'", nameof(value));
+				ThrowHelper.ThrowArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(SettingType)} '{Type}'", nameof(value));
 			}
 
 			_value = value;
@@ -157,7 +158,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
 	{
 		if (reader is null)
 		{
-			throw new ArgumentNullException(nameof(reader));
+			ThrowHelper.ThrowArgumentNullException(nameof(reader));
 		}
 
 		byte valueIndex = reader.ReadUInt8();
@@ -190,7 +191,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
 	{
 		if (writer is null)
 		{
-			throw new ArgumentNullException(nameof(writer));
+			ThrowHelper.ThrowArgumentNullException(nameof(writer));
 		}
 
 		writer.WriteUInt8(Index);
@@ -231,7 +232,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
 	{
 		if (!IsValueValid(value, type))
 		{
-			throw new ArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(type)} '{type}'", nameof(value));
+			ThrowHelper.ThrowArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(type)} '{type}'", nameof(value));
 		}
 
 		_type = type;

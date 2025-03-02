@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Editing.Utils;
+using FancadeLoaderLib.Utils;
 using System;
 
 namespace FancadeLoaderLib.Editing.Scripting.Placers;
@@ -30,7 +31,7 @@ public static class IScopedCodePlacerUtils
 	{
 		if (placer is null)
 		{
-			throw new ArgumentNullException(nameof(placer));
+			ThrowHelper.ThrowArgumentNullException(nameof(placer));
 		}
 
 		placer.EnterStatementBlock();
@@ -41,7 +42,7 @@ public static class IScopedCodePlacerUtils
 	{
 		if (placer is null)
 		{
-			throw new ArgumentNullException(nameof(placer));
+			ThrowHelper.ThrowArgumentNullException(nameof(placer));
 		}
 
 		placer.EnterExpressionBlock();
@@ -52,7 +53,7 @@ public static class IScopedCodePlacerUtils
 	{
 		if (placer is null)
 		{
-			throw new ArgumentNullException(nameof(placer));
+			ThrowHelper.ThrowArgumentNullException(nameof(placer));
 		}
 
 		placer.EnterHighlight();

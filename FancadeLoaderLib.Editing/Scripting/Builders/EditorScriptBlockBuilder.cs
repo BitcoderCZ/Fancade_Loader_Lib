@@ -2,7 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Editing.Utils.NetStandardHacks;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Buffers.Binary;
@@ -298,7 +298,7 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
 				}
 				else
 				{
-					throw new InvalidDataException($"Object of type '{set.Value?.GetType()?.FullName ?? "null"}' isn't a valid setting value.");
+					ThrowHelper.ThrowInvalidDataException($"Object of type '{set.Value?.GetType()?.FullName ?? "null"}' isn't a valid setting value.");
 				}
 			}
 
@@ -344,7 +344,7 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
 		{
 			if (!stream.CanWrite)
 			{
-				throw new ArgumentException($"{nameof(stream)} isn't writeable.", nameof(stream));
+				ThrowHelper.ThrowArgumentException($"{nameof(stream)} isn't writeable.", nameof(stream));
 			}
 
 			_stream = stream;
@@ -387,7 +387,7 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
 		{
 			if (value.Length > ushort.MaxValue)
 			{
-				throw new ArgumentException($"{nameof(value)} is longer than the maximum allowed string length ({ushort.MaxValue}).", nameof(value));
+				ThrowHelper.ThrowArgumentException($"{nameof(value)} is longer than the maximum allowed string length ({ushort.MaxValue}).", nameof(value));
 			}
 
 			byte[] bytes = Encoding.UTF8.GetBytes(value);

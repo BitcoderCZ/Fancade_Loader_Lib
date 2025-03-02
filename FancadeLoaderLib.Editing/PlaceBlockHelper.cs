@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Diagnostics;
@@ -28,7 +29,7 @@ public static partial class PlaceBlockHelper
 	{
 		if (prefab is null)
 		{
-			throw new ArgumentNullException(nameof(prefab));
+			ThrowHelper.ThrowArgumentNullException(nameof(prefab));
 		}
 
 		PartialPrefabGroup group;
@@ -50,7 +51,8 @@ public static partial class PlaceBlockHelper
 				group = StockBlocks.Values.Rotation.Prefab;
 				break;
 			default:
-				throw new ArgumentException($"{nameof(value)} is not a valid fancade literal.", nameof(value));
+				ThrowHelper.ThrowArgumentException($"{nameof(value)} is not a valid fancade literal.", nameof(value));
+				break;
 		}
 
 		prefab.Blocks.SetGroup(pos, group);

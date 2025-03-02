@@ -52,12 +52,12 @@ public sealed class FcBinaryWriter : IDisposable
 	{
 		if (stream is null)
 		{
-			throw new ArgumentNullException(nameof(stream));
+			ThrowHelper.ThrowArgumentNullException(nameof(stream));
 		}
 
 		if (!stream.CanRead)
 		{
-			throw new ArgumentException($"{nameof(stream)} isn't writeable.");
+			ThrowHelper.ThrowArgumentException($"{nameof(stream)} isn't writeable.");
 		}
 
 		Stream = stream;
@@ -74,7 +74,7 @@ public sealed class FcBinaryWriter : IDisposable
 
 		if (!Stream.CanRead)
 		{
-			throw new IOException("Can't write to stream.");
+			ThrowHelper.ThrowArgumentException("Can't write to stream.");
 		}
 	}
 
@@ -104,7 +104,7 @@ public sealed class FcBinaryWriter : IDisposable
 	{
 		if (value is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(value));
+			ThrowHelper.ThrowArgumentNullException(nameof(value));
 		}
 
 		WriteBytes(value, 0, value.Length);
@@ -231,7 +231,7 @@ public sealed class FcBinaryWriter : IDisposable
 		int written = Encoding.ASCII.GetBytes(value, buffer);
 		if (written > byte.MaxValue)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(value)}, when encoded as ASCII is too long, maximum length is 255.");
+			ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(value)}, when encoded as ASCII is too long, maximum length is 255.");
 		}
 
 		WriteUInt8((byte)written);

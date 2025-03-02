@@ -8,9 +8,9 @@ using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Scripting.TerminalStores;
 using FancadeLoaderLib.Editing.Scripting.Utils;
 using FancadeLoaderLib.Editing.Utils;
+using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 
 namespace FancadeLoaderLib.Editing.Scripting;
 
@@ -62,7 +62,7 @@ public sealed class CodeWriter
 	{
 		if (value is null)
 		{
-			throw new ArgumentNullException(nameof(value));
+			ThrowHelper.ThrowArgumentNullException(nameof(value));
 		}
 
 		var wireType = WireTypeUtils.FromType(value.GetType());
@@ -85,7 +85,7 @@ public sealed class CodeWriter
 	{
 		if (terminal is null)
 		{
-			throw new ArgumentNullException(nameof(terminal));
+			ThrowHelper.ThrowArgumentNullException(nameof(terminal));
 		}
 
 		var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminal.WireType));
@@ -101,7 +101,7 @@ public sealed class CodeWriter
 	{
 		if (getTerminalFunc is null)
 		{
-			throw new ArgumentNullException(nameof(getTerminalFunc));
+			ThrowHelper.ThrowArgumentNullException(nameof(getTerminalFunc));
 		}
 
 		var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminalType));
@@ -208,7 +208,7 @@ public sealed class CodeWriter
 			case WireType.Rot:
 				break;
 			default:
-				throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(WireType));
+				ThrowHelper.ThrowInvalidEnumArgumentException(nameof(type), (int)type, typeof(WireType));
 		}
 
 		Block? block;
@@ -252,7 +252,7 @@ public sealed class CodeWriter
 	{
 		if (getConditionTerminalFunc is null)
 		{
-			throw new ArgumentNullException(nameof(getConditionTerminalFunc));
+			ThrowHelper.ThrowArgumentNullException(nameof(getConditionTerminalFunc));
 		}
 
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Control.If);
@@ -289,7 +289,7 @@ public sealed class CodeWriter
 	{
 		if (touchFinger < 0 || touchFinger > FancadeConstants.TouchSensorMaxFinger)
 		{
-			throw new ArgumentNullException(nameof(touchFinger));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(touchFinger));
 		}
 
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Control.TouchSensor);
@@ -320,7 +320,7 @@ public sealed class CodeWriter
 	{
 		if (getFirstObjectTerminalFunc is null)
 		{
-			throw new ArgumentNullException(nameof(getFirstObjectTerminalFunc));
+			ThrowHelper.ThrowArgumentNullException(nameof(getFirstObjectTerminalFunc));
 		}
 
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Collision);
@@ -334,12 +334,12 @@ public sealed class CodeWriter
 	{
 		if (getStartTerminalFunc is null)
 		{
-			throw new ArgumentNullException(nameof(getStartTerminalFunc));
+			ThrowHelper.ThrowArgumentNullException(nameof(getStartTerminalFunc));
 		}
 
 		if (getStopTerminalFunc is null)
 		{
-			throw new ArgumentNullException(nameof(getStopTerminalFunc));
+			ThrowHelper.ThrowArgumentNullException(nameof(getStopTerminalFunc));
 		}
 
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Loop);
@@ -354,7 +354,7 @@ public sealed class CodeWriter
 	{
 		if (getVariableTerminalFunc is null)
 		{
-			throw new ArgumentNullException(nameof(getVariableTerminalFunc));
+			ThrowHelper.ThrowArgumentNullException(nameof(getVariableTerminalFunc));
 		}
 
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.IncrementNumber);
@@ -368,7 +368,7 @@ public sealed class CodeWriter
 	{
 		if (getVariableTerminalFunc is null)
 		{
-			throw new ArgumentNullException(nameof(getVariableTerminalFunc));
+			ThrowHelper.ThrowArgumentNullException(nameof(getVariableTerminalFunc));
 		}
 
 		Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.DecrementNumber);

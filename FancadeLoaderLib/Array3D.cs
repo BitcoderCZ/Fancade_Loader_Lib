@@ -7,7 +7,6 @@ using MathUtils.Vectors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
@@ -29,7 +28,7 @@ public class Array3D<T> : IEnumerable<T>
 	{
 		if (size.X < 0 || size.Y < 0 || size.Z < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(size));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(size));
 		}
 
 		Size = size;
@@ -52,7 +51,7 @@ public class Array3D<T> : IEnumerable<T>
 
 		if (Length != Size.X * Size.Y * Size.Z)
 		{
-			throw new ArgumentException($"{nameof(collection)}'s length must be equal to: {nameof(size)}.X * {nameof(size)}.Y * {nameof(size)}.Z ({Size.X * Size.Y * Size.Z}), but it was: {Length}.", nameof(size));
+			ThrowHelper.ThrowArgumentException($"{nameof(collection)}'s length must be equal to: {nameof(size)}.X * {nameof(size)}.Y * {nameof(size)}.Z ({Size.X * Size.Y * Size.Z}), but it was: {Length}.", nameof(size));
 		}
 	}
 
@@ -65,7 +64,7 @@ public class Array3D<T> : IEnumerable<T>
 	{
 		if (array is null)
 		{
-			throw new ArgumentNullException(nameof(array));
+			ThrowHelper.ThrowArgumentNullException(nameof(array));
 		}
 
 		Size = size;
@@ -75,7 +74,7 @@ public class Array3D<T> : IEnumerable<T>
 
 		if (Length != Size.X * Size.Y * Size.Z)
 		{
-			throw new ArgumentException($"{nameof(array)}.Length must be equal to: {nameof(size)}.X * {nameof(size)}.Y * {nameof(size)}.Z ({Size.X * Size.Y * Size.Z}), but it was: {Length}.", nameof(size));
+			ThrowHelper.ThrowArgumentException($"{nameof(array)}.Length must be equal to: {nameof(size)}.X * {nameof(size)}.Y * {nameof(size)}.Z ({Size.X * Size.Y * Size.Z}), but it was: {Length}.", nameof(size));
 		}
 	}
 
@@ -87,7 +86,7 @@ public class Array3D<T> : IEnumerable<T>
 	{
 		if (array is null)
 		{
-			throw new ArgumentNullException(nameof(array));
+			ThrowHelper.ThrowArgumentNullException(nameof(array));
 		}
 
 		Size = array.Size;
@@ -191,7 +190,7 @@ public class Array3D<T> : IEnumerable<T>
 	{
 		if (!InBounds(pos))
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(pos));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(pos));
 		}
 
 		return _array[Index(pos)];
@@ -216,7 +215,7 @@ public class Array3D<T> : IEnumerable<T>
 	{
 		if (!InBounds(pos))
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(pos));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(pos));
 		}
 
 		_array[Index(pos)] = value;
@@ -240,15 +239,15 @@ public class Array3D<T> : IEnumerable<T>
 	{
 		if (newSize.X < 0)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(newSize.X));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(newSize.X));
 		}
 		else if (newSize.Y < 0)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(newSize.Y));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(newSize.Y));
 		}
 		else if (newSize.Z < 0)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(newSize.Z));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(newSize.Z));
 		}
 		else if (newSize == int3.Zero)
 		{
@@ -319,9 +318,4 @@ public class Array3D<T> : IEnumerable<T>
 	/// <inheritdoc/>
 	IEnumerator<T> IEnumerable<T>.GetEnumerator()
 		=> ((IEnumerable<T>)_array).GetEnumerator();
-
-	[DoesNotReturn]
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static void ThrowArgumentOutOfRange(string argumentName)
-		=> throw new ArgumentOutOfRangeException(argumentName);
 }

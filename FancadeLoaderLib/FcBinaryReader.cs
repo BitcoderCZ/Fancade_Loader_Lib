@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Buffers.Binary;
@@ -54,12 +55,12 @@ public sealed class FcBinaryReader : IDisposable
 	{
 		if (stream is null)
 		{
-			throw new ArgumentNullException(nameof(stream));
+			ThrowHelper.ThrowArgumentNullException(nameof(stream));
 		}
 
 		if (!stream.CanRead)
 		{
-			throw new ArgumentException($"{nameof(stream)} isn't readable.");
+			ThrowHelper.ThrowArgumentException($"{nameof(stream)} isn't readable.");
 		}
 
 		Stream = stream;
@@ -76,7 +77,7 @@ public sealed class FcBinaryReader : IDisposable
 
 		if (!Stream.CanRead)
 		{
-			throw new IOException("Can't read from stream.");
+			ThrowHelper.ThrowArgumentException("Can't read from stream.");
 		}
 	}
 

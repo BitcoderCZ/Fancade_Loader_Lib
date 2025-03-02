@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
 
@@ -38,12 +39,12 @@ internal static class IEnumerableUtils
 	{
 		if (source is null)
 		{
-			throw new ArgumentNullException(nameof(source));
+			ThrowHelper.ThrowArgumentNullException(nameof(source));
 		}
 
 		if (keySelector is null)
 		{
-			throw new ArgumentNullException(nameof(keySelector));
+			ThrowHelper.ThrowArgumentNullException(nameof(keySelector));
 		}
 
 		comparer ??= Comparer<TKey>.Default;

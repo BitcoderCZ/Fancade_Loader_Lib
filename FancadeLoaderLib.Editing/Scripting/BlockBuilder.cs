@@ -5,6 +5,7 @@
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Scripting.TerminalStores;
 using FancadeLoaderLib.Editing.Utils;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
@@ -68,7 +69,7 @@ public abstract class BlockBuilder
 	{
 		if (buildPos.X < 0 || buildPos.Y < 0 || buildPos.Z < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(buildPos), $"{nameof(buildPos)} must be >= 0");
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(buildPos), $"{nameof(buildPos)} must be >= 0");
 		}
 		else if (segments.Count == 0)
 		{
@@ -137,13 +138,13 @@ public abstract class BlockBuilder
 		{
 			if (blocks is null)
 			{
-				throw new ArgumentNullException(nameof(blocks));
+				ThrowHelper.ThrowArgumentNullException(nameof(blocks));
 			}
 
 			Blocks = [.. blocks];
 			if (Blocks.Length == 0)
 			{
-				throw new ArgumentOutOfRangeException(nameof(blocks), $"{nameof(blocks)} cannot be empty.");
+				ThrowHelper.ThrowArgumentOutOfRangeException(nameof(blocks), $"{nameof(blocks)} cannot be empty.");
 			}
 
 			CalculateMinMax();

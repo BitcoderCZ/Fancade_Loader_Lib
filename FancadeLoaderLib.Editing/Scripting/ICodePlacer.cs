@@ -4,7 +4,7 @@
 
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Scripting.TerminalStores;
-using System;
+using FancadeLoaderLib.Utils;
 
 namespace FancadeLoaderLib.Editing.Scripting;
 
@@ -25,7 +25,7 @@ public static class ICodePlacerUtils
 	{
 		if (placer is null)
 		{
-			throw new ArgumentNullException(nameof(placer));
+			ThrowHelper.ThrowArgumentNullException(nameof(placer));
 		}
 
 		if (fromStore is NopTerminalStore or null || toStore is NopTerminalStore or null)
@@ -43,7 +43,7 @@ public static class ICodePlacerUtils
 	{
 		if (placer is null)
 		{
-			throw new ArgumentNullException(nameof(placer));
+			ThrowHelper.ThrowArgumentNullException(nameof(placer));
 		}
 
 		if (fromStore is NopTerminalStore or null || toTerminal is NopTerminal)
@@ -61,7 +61,7 @@ public static class ICodePlacerUtils
 	{
 		if (placer is null)
 		{
-			throw new ArgumentNullException(nameof(placer));
+			ThrowHelper.ThrowArgumentNullException(nameof(placer));
 		}
 
 		if (fromTerminal is NopTerminal || toStore is NopTerminalStore or null)

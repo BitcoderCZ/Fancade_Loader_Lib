@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
@@ -173,7 +174,7 @@ public class Prefab : ICloneable
 		{
 			if (value is null)
 			{
-				throw new ArgumentNullException(nameof(value), $"{nameof(Name)} cannot be null.");
+				ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(Name)} cannot be null.");
 			}
 
 			_name = value;
@@ -203,7 +204,7 @@ public class Prefab : ICloneable
 		{
 			if (value is not null && value.Length != NumbVoxels)
 			{
-				throw new ArgumentException($"{nameof(Voxels)} must be {NumbVoxels} long, but {nameof(value)}.Length is {value.Length}.", nameof(value));
+				ThrowHelper.ThrowArgumentException($"{nameof(Voxels)} must be {NumbVoxels} long, but {nameof(value)}.Length is {value.Length}.", nameof(value));
 			}
 
 			_voxels = value;
@@ -254,7 +255,7 @@ public class Prefab : ICloneable
 	{
 		if (rawPrefab is null)
 		{
-			throw new ArgumentNullException(nameof(rawPrefab));
+			ThrowHelper.ThrowArgumentNullException(nameof(rawPrefab));
 		}
 
 		PrefabType type = PrefabType.Normal;
@@ -302,7 +303,7 @@ public class Prefab : ICloneable
 		{
 			if (rawPrefab.Voxels is null)
 			{
-				throw new ArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasVoxels)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Voxels)} is null", nameof(rawPrefab));
+				ThrowHelper.ThrowArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasVoxels)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Voxels)} is null", nameof(rawPrefab));
 			}
 
 			voxels = new Voxel[NumbVoxels];
@@ -339,7 +340,7 @@ public class Prefab : ICloneable
 		{
 			if (rawPrefab.Blocks is null)
 			{
-				throw new ArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasBlocks)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Blocks)} is null", nameof(rawPrefab));
+				ThrowHelper.ThrowArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasBlocks)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Blocks)} is null", nameof(rawPrefab));
 			}
 
 			ushort[] blocks = clone
@@ -363,7 +364,7 @@ public class Prefab : ICloneable
 		{
 			if (rawPrefab.Settings is null)
 			{
-				throw new ArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasSettings)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Settings)} is null", nameof(rawPrefab));
+				ThrowHelper.ThrowArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasSettings)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Settings)} is null", nameof(rawPrefab));
 			}
 
 			settings = clone
@@ -412,7 +413,7 @@ public class Prefab : ICloneable
 		{
 			if (rawPrefab.Connections is null)
 			{
-				throw new ArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasConnections)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Connections)} is null", nameof(rawPrefab));
+				ThrowHelper.ThrowArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasConnections)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Connections)} is null", nameof(rawPrefab));
 			}
 
 			connections = clone

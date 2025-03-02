@@ -2,7 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using System;
+using FancadeLoaderLib.Utils;
 using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib;
@@ -22,7 +22,7 @@ internal static class UnsafeUtils
 #pragma warning disable IDE0046 // Convert to conditional expression
 		if (sizeof(TFrom) != sizeof(TTo))
 		{
-			throw new NotSupportedException();
+			ThrowHelper.ThrowNotSupportedException();
 		}
 #pragma warning restore IDE0046
 

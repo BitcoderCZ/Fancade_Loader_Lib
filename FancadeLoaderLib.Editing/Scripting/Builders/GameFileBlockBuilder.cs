@@ -3,8 +3,8 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -35,7 +35,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 	{
 		if (inGame is null)
 		{
-			throw new ArgumentNullException(nameof(inGame));
+			ThrowHelper.ThrowArgumentNullException(nameof(inGame));
 		}
 
 		InGame = inGame;

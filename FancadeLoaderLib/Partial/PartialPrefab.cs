@@ -87,7 +87,7 @@ public class PartialPrefab : ICloneable
 	{
 		if (string.IsNullOrEmpty(name))
 		{
-			throw new ArgumentNullException(nameof(name));
+			ThrowHelper.ThrowArgumentException(nameof(name));
 		}
 
 		_name = name;
@@ -107,7 +107,7 @@ public class PartialPrefab : ICloneable
 		{
 			if (value is null)
 			{
-				ThrowHelper.ThrowArgumentNull(nameof(value), $"{nameof(Name)} cannot be null.");
+				ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(Name)} cannot be null.");
 			}
 
 			_name = value;
@@ -129,7 +129,7 @@ public class PartialPrefab : ICloneable
 	{
 		if (reader is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(reader));
+			ThrowHelper.ThrowArgumentNullException(nameof(reader));
 		}
 
 		byte header = reader.ReadUInt8();
@@ -169,7 +169,7 @@ public class PartialPrefab : ICloneable
 	{
 		if (writer is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(writer));
+			ThrowHelper.ThrowArgumentNullException(nameof(writer));
 		}
 
 		byte header = 0;

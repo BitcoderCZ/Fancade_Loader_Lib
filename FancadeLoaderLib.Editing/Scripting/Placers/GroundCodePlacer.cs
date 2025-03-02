@@ -4,6 +4,7 @@
 
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Utils;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
@@ -44,7 +45,7 @@ public class GroundCodePlacer : IScopedCodePlacer
 		{
 			if (value < 3)
 			{
-				throw new ArgumentOutOfRangeException(nameof(value), $"{nameof(BlockXOffset)} must be greater than 2.");
+				ThrowHelper.ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(BlockXOffset)} must be greater than 2.");
 			}
 
 			_blockXOffset = value;
@@ -151,7 +152,7 @@ public class GroundCodePlacer : IScopedCodePlacer
 		{
 			if (block is null)
 			{
-				throw new ArgumentNullException(nameof(block));
+				ThrowHelper.ThrowArgumentNullException(nameof(block));
 			}
 
 			MultiValueDictionary<int, CodeBlock> xToBlocks = block.AllChildren.ToMultiValueDictionary(child => child.LayerPos, child => child);
@@ -246,7 +247,7 @@ public class GroundCodePlacer : IScopedCodePlacer
 		{
 			if (parent is null)
 			{
-				throw new ArgumentNullException(nameof(parent));
+				ThrowHelper.ThrowArgumentNullException(nameof(parent));
 			}
 
 			Debug.Assert(layerOffset == 1 || layerOffset == -1, $"{nameof(layerOffset)} == 1 || {nameof(layerOffset)} == -1, Value: '{layerOffset}'");
@@ -306,7 +307,7 @@ public class GroundCodePlacer : IScopedCodePlacer
 		{
 			if (blockType is null)
 			{
-				throw new ArgumentNullException(nameof(blockType));
+				ThrowHelper.ThrowArgumentNullException(nameof(blockType));
 			}
 
 			if (BlockCount != 0)

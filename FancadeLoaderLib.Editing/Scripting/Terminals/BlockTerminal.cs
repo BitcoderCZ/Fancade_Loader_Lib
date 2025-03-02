@@ -2,8 +2,8 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
-using System;
 
 namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 
@@ -24,7 +24,7 @@ public readonly struct BlockTerminal : ITerminal
 	{
 		if (block is null)
 		{
-			throw new ArgumentNullException(nameof(block));
+			ThrowHelper.ThrowArgumentNullException(nameof(block));
 		}
 
 		Block = block;
@@ -35,7 +35,7 @@ public readonly struct BlockTerminal : ITerminal
 	{
 		if (block is null)
 		{
-			throw new ArgumentNullException(nameof(block));
+			ThrowHelper.ThrowArgumentNullException(nameof(block));
 		}
 
 		Block = block;

@@ -90,7 +90,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (reader is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(reader));
+			ThrowHelper.ThrowArgumentNullException(nameof(reader));
 		}
 
 		uint count = reader.ReadUInt32();
@@ -117,7 +117,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (writer is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(writer));
+			ThrowHelper.ThrowArgumentNullException(nameof(writer));
 		}
 
 		writer.WriteUInt32((uint)Count);
@@ -151,7 +151,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (group is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(group));
+			ThrowHelper.ThrowArgumentNullException(nameof(group));
 		}
 
 		group.Id = (ushort)_list.Count;
@@ -223,7 +223,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (index < 0 || index > _list.Count)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(index));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(index));
 		}
 
 		IncreaseAfter(index, 1);
@@ -240,7 +240,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (index < 0 || index > _list.Count)
 		{
-			ThrowHelper.ThrowArgumentOutOfRange(nameof(index));
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(index));
 		}
 
 		int count = collection.Count();
@@ -258,7 +258,7 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		if (group is null)
 		{
-			ThrowHelper.ThrowArgumentNull(nameof(group));
+			ThrowHelper.ThrowArgumentNullException(nameof(group));
 		}
 
 		IncreaseAfter(index, (ushort)group.Count);

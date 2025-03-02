@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
+using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -28,7 +29,7 @@ public static class PrefabListMarshal
 	{
 		if (list is null)
 		{
-			throw new ArgumentNullException(nameof(list));
+			ThrowHelper.ThrowArgumentNullException(nameof(list));
 		}
 
 #if NET5_0_OR_GREATER
@@ -41,7 +42,7 @@ public static class PrefabListMarshal
 		if ((uint)size > (uint)items.Length)
 		{
 			// List<T> was erroneously mutated concurrently with this call, leading to a count larger than its array.
-			throw new InvalidOperationException();
+			ThrowHelper.ThrowInvalidOperationException();
 		}
 
 		var span = new Span<Prefab>(items, 0, size);
@@ -60,7 +61,7 @@ public static class PrefabListMarshal
 	{
 		if (list is null)
 		{
-			throw new ArgumentNullException(nameof(list));
+			ThrowHelper.ThrowArgumentNullException(nameof(list));
 		}
 
 #if NET5_0_OR_GREATER
@@ -73,7 +74,7 @@ public static class PrefabListMarshal
 		if ((uint)size > (uint)items.Length)
 		{
 			// List<T> was erroneously mutated concurrently with this call, leading to a count larger than its array.
-			throw new InvalidOperationException();
+			ThrowHelper.ThrowInvalidOperationException();
 		}
 
 		var span = new Span<PartialPrefab>(items, 0, size);

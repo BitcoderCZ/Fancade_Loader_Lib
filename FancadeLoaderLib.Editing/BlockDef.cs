@@ -4,10 +4,13 @@
 
 using FancadeLoaderLib.Editing.Utils;
 using FancadeLoaderLib.Partial;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib.Editing;
 
@@ -30,7 +33,7 @@ public sealed class BlockDef
 	{
 		if (size.X < 0 || size.Y < 1 || size.Z < 1)
 		{
-			throw new ArgumentOutOfRangeException(nameof(size), $"{nameof(size)} cannot be negative or zero.");
+			ThrowHelper.ar(nameof(size), $"{nameof(size)} cannot be negative or zero.");
 		}
 
 		Prefab = new PartialPrefabGroup(id);
@@ -71,7 +74,13 @@ public sealed class BlockDef
 				}
 			}
 
-			throw new KeyNotFoundException($"This block doesn't contain a terminal with the name '{terminalName}'.");
+			ThrowKeyNotFoundException($"This block doesn't contain a terminal with the name '{terminalName}'.");
+			return null!;
 		}
 	}
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	public static void ThrowKeyNotFoundException(string paramName)
+		=> throw new KeyNotFoundException(paramName);
 }

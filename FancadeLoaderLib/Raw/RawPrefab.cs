@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
@@ -238,7 +239,7 @@ public class RawPrefab
 	{
 		if (reader is null)
 		{
-			throw new ArgumentNullException(nameof(reader));
+			ThrowHelper.ThrowArgumentNullException(nameof(reader));
 		}
 
 		byte header0 = reader.ReadUInt8();
@@ -397,7 +398,7 @@ public class RawPrefab
 	{
 		if (writer is null)
 		{
-			throw new ArgumentNullException(nameof(writer));
+			ThrowHelper.ThrowArgumentNullException(nameof(writer));
 		}
 
 		ushort header = 0;
