@@ -2,9 +2,10 @@
 
 namespace FancadeLoaderLib.Tests;
 
+[TestFixture]
 public class BlockDataTests
 {
-	[Fact]
+	[Test]
 	public void Move_PositiveOffset_ShiftsDataCorrectly()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
@@ -12,12 +13,12 @@ public class BlockDataTests
 
 		blockData.Move(new int3(1, 1, 1));
 
-		Assert.Equal(new int3(5, 5, 5), blockData.Size);
-		Assert.Equal(42, blockData.GetBlock(new int3(2, 2, 2)));
-		Assert.Equal(0, blockData.GetBlock(new int3(1, 1, 1)));
+		Assert.That(blockData.Size, Is.EqualTo(new int3(5, 5, 5)));
+		Assert.That(blockData.GetBlock(new int3(2, 2, 2)), Is.EqualTo(42));
+		Assert.That(blockData.GetBlock(new int3(1, 1, 1)), Is.EqualTo(0));
 	}
 
-	[Fact]
+	[Test]
 	public void Move_NegativeOffset_ThrowsException()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
@@ -27,7 +28,7 @@ public class BlockDataTests
 		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, 0, -1)));
 	}
 
-	[Fact]
+	[Test]
 	public void Move_ZeroOffset_DoesNothing()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
@@ -35,11 +36,11 @@ public class BlockDataTests
 
 		blockData.Move(new int3(0, 0, 0));
 
-		Assert.Equal(new int3(4, 4, 4), blockData.Size);
-		Assert.Equal(42, blockData.GetBlock(new int3(1, 1, 1)));
+		Assert.That(blockData.Size, Is.EqualTo(new int3(4, 4, 4)));
+		Assert.That(blockData.GetBlock(new int3(1, 1, 1)), Is.EqualTo(42));
 	}
 
-	[Fact]
+	[Test]
 	public void Move_WithStartPosition_ShiftsPartialDataCorrectly()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(3, 3, 3)));
@@ -50,14 +51,14 @@ public class BlockDataTests
 
 		blockData.Move(new int3(1, 0, 0), new int3(1, 1, 1));
 
-		Assert.Equal(new int3(4, 3, 3), blockData.Size);
-		Assert.Equal(1, blockData.GetBlock(new int3(0, 0, 0)));
-		Assert.Equal(0, blockData.GetBlock(new int3(1, 1, 1)));
-		Assert.Equal(2, blockData.GetBlock(new int3(2, 1, 1)));
-		Assert.Equal(3, blockData.GetBlock(new int3(3, 2, 2)));
+		Assert.That(blockData.Size, Is.EqualTo(new int3(4, 3, 3)));
+		Assert.That(blockData.GetBlock(new int3(0, 0, 0)), Is.EqualTo(1));
+		Assert.That(blockData.GetBlock(new int3(1, 1, 1)), Is.EqualTo(0));
+		Assert.That(blockData.GetBlock(new int3(2, 1, 1)), Is.EqualTo(2));
+		Assert.That(blockData.GetBlock(new int3(3, 2, 2)), Is.EqualTo(3));
 	}
 
-	[Fact]
+	[Test]
 	public void Move_WithOutOfBoundsStartPosition_ThrowsException()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(2, 2, 2)));
@@ -68,7 +69,7 @@ public class BlockDataTests
 		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(1, 1, 1), new int3(0, 0, -1)));
 	}
 
-	[Fact]
+	[Test]
 	public void Move_WithOutOfBoundsMove_ThrowsException()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(2, 2, 2)));
@@ -78,7 +79,7 @@ public class BlockDataTests
 		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, 0, -2), new int3(1, 1, 1)));
 	}
 
-	[Fact]
+	[Test]
 	public void TrimNegative_ShiftsBlocksToOrigin()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
@@ -86,21 +87,21 @@ public class BlockDataTests
 
 		blockData.TrimNegative();
 
-		Assert.Equal(new int3(1, 2, 3), blockData.Size);
-		Assert.Equal(99, blockData.GetBlock(new int3(0, 0, 0)));
+		Assert.That(blockData.Size, Is.EqualTo(new int3(1, 2, 3)));
+		Assert.That(blockData.GetBlock(new int3(0, 0, 0)), Is.EqualTo(99));
 	}
 
-	[Fact]
+	[Test]
 	public void TrimNegative_EmptyArray_RemainsUnchanged()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
 
 		blockData.TrimNegative();
 
-		Assert.Equal(int3.Zero, blockData.Size);
+		Assert.That(blockData.Size, Is.EqualTo(int3.Zero));
 	}
 
-	[Fact]
+	[Test]
 	public void Trim_RemovesEmptySpace()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(5, 5, 5)));
@@ -108,17 +109,18 @@ public class BlockDataTests
 
 		blockData.Trim();
 
-		Assert.Equal(new int3(2, 3, 4), blockData.Size);
-		Assert.Equal(99, blockData.GetBlock(new int3(1, 2, 3)));
+		Assert.That(blockData.Size, Is.EqualTo(new int3(2, 3, 4)));
+		Assert.That(blockData.GetBlock(new int3(1, 2, 3)), Is.EqualTo(99));
 	}
 
-	[Fact]
+	[Test]
 	public void Trim_EmptyArray_RemainsUnchanged()
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
 
 		blockData.Trim();
 
-		Assert.Equal(int3.Zero, blockData.Size);
+		Assert.That(blockData.Size, Is.EqualTo(int3.Zero));
 	}
 }
+
