@@ -52,7 +52,7 @@ public static partial class PlaceBlockHelper
 				break;
 			default:
 				ThrowHelper.ThrowArgumentException($"{nameof(value)} is not a valid fancade literal.", nameof(value));
-				break;
+				return;
 		}
 
 		prefab.Blocks.SetGroup(pos, group);

@@ -11,6 +11,7 @@ using FancadeLoaderLib.Editing.Utils;
 using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace FancadeLoaderLib.Editing.Scripting;
 
@@ -208,7 +209,7 @@ public sealed class CodeWriter
 			case WireType.Rot:
 				break;
 			default:
-				ThrowHelper.ThrowInvalidEnumArgumentException(nameof(type), (int)type, typeof(WireType));
+				throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(WireType));
 		}
 
 		Block? block;
