@@ -13,7 +13,11 @@ using System.Runtime.CompilerServices;
 
 namespace FancadeLoaderLib.Utils;
 
+#if NETSTANDARD2_1_OR_GREATER
+public static class ThrowHelper
+#else
 internal static class ThrowHelper
+#endif
 {
 	[DoesNotReturn]
 	[MethodImpl(MethodImplOptions.NoInlining)]
