@@ -635,7 +635,7 @@ public class BlockData
 					}
 					else
 					{
-						System.Array.Clear(arr, index + startPos.X + Math.Max(moveSize.X + move.X, 0), Math.Min(-move.X, moveSize.X));
+						System.Array.Clear(arr, index + Math.Max(moveSize.X + move.X, 0), Math.Min(-move.X, moveSize.X));
 					}
 				}
 			}
