@@ -87,6 +87,18 @@ public class BlockDataTests
 
 		blockData.TrimNegative();
 
+		Assert.That(blockData.Size, Is.EqualTo(new int3(1, 4, 3)));
+		Assert.That(blockData.GetBlock(new int3(0, 2, 0)), Is.EqualTo(99));
+	}
+
+	[Test]
+	public void TrimNegative_TrimY_ShiftsBlocksToOrigin()
+	{
+		var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
+		blockData.SetBlock(new int3(3, 2, 1), 99);
+
+		blockData.TrimNegative(trimY: true);
+
 		Assert.That(blockData.Size, Is.EqualTo(new int3(1, 2, 3)));
 		Assert.That(blockData.GetBlock(new int3(0, 0, 0)), Is.EqualTo(99));
 	}

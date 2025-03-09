@@ -382,7 +382,7 @@ public class BlockData
 		}
 	}
 
-	public void TrimNegative(bool shrink = true)
+	public void TrimNegative(bool shrink = true, bool trimY = false)
 	{
 		if (Size == int3.Zero)
 		{
@@ -456,7 +456,7 @@ public class BlockData
 		endZ:
 			if (minX != int.MinValue && minY != int.MinValue && minZ != int.MinValue)
 			{
-				int3 minPos = new int3(minX, minY, minZ);
+				int3 minPos = new int3(minX, trimY ? minY : 0, minZ);
 
 				if (minPos == int3.Zero)
 				{
