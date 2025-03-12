@@ -32,7 +32,7 @@ public class Game : ICloneable
 	/// </summary>
 	/// <param name="name">The name of this game.</param>
 	public Game(string name)
-		: this(name, "Unknown Author", string.Empty, Enumerable.Empty<Prefab>())
+		: this(name, "Unknown Author", string.Empty, Enumerable.Empty<PrefabGroup>())
 	{
 	}
 
@@ -42,9 +42,9 @@ public class Game : ICloneable
 	/// <param name="name">The name of this game.</param>
 	/// <param name="author">The name of the author of this game.</param>
 	/// <param name="description">The description of this game.</param>
-	/// <param name="prefabs">The prefabs of this game.</param>
-	public Game(string name, string author, string description, IEnumerable<Prefab> prefabs)
-		: this(name, author, description, [.. prefabs])
+	/// <param name="groups">The groups of this game.</param>
+	public Game(string name, string author, string description, IEnumerable<PrefabGroup> groups)
+		: this(name, author, description, [.. groups])
 	{
 	}
 
@@ -149,16 +149,32 @@ public class Game : ICloneable
 			ThrowHelper.ThrowArgumentNullException(nameof(game));
 		}
 
-		List<Prefab> prefabs = new List<Prefab>(game.Prefabs.Count);
+		var groups = new List<PrefabGroup>();
 
 		short idOffsetAddition = (short)(-game.IdOffset + RawGame.CurrentNumbStockPrefabs);
 
 		for (int i = 0; i < game.Prefabs.Count; i++)
 		{
-			prefabs.Add(Prefab.FromRaw(game.Prefabs[i], game.IdOffset, idOffsetAddition, clonePrefabs));
+			if (game.Prefabs[i].IsInGroup)
+			{
+				int startIndex = i;
+				ushort groupId = game.Prefabs[i].GroupId;
+				do
+				{
+					i++;
+				} while (game.Prefabs[i].GroupId == groupId);
+
+				groups.Add(PrefabGroup.FromRaw((ushort)(startIndex + RawGame.CurrentNumbStockPrefabs), game.Prefabs.Skip(startIndex).Take(i - startIndex), game.IdOffset, idOffsetAddition, clonePrefabs));
+
+				i--; // incremented at the end of the loop
+			}
+			else
+			{
+				groups.Add(PrefabGroup.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [game.Prefabs[i]], game.IdOffset, idOffsetAddition, clonePrefabs));
+			}
 		}
 
-		return new Game(game.Name, game.Author, game.Description, prefabs);
+		return new Game(game.Name, game.Author, game.Description, groups);
 	}
 
 	/// <summary>
@@ -219,7 +235,7 @@ public class Game : ICloneable
 
 		for (int i = 0; i < Prefabs.Count; i++)
 		{
-			prefabs.Add(Prefabs[i].ToRaw(clonePrefabs));
+			prefabs.Add(Prefabs[i].VoxelsToRaw(clonePrefabs));
 		}
 
 		return new RawGame(Name, Author, Description, RawGame.CurrentNumbStockPrefabs, prefabs);

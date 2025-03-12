@@ -25,7 +25,7 @@ public static class PrefabListMarshal
 	/// <param name="list">The list to get the data view over.</param>
 	/// <returns>The underlying span of <paramref name="list"/>.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static Span<Prefab> AsSpan(PrefabList list)
+	public static Span<Prefab> AsPrefabSpan(PrefabList list)
 	{
 		if (list is null)
 		{
@@ -33,10 +33,10 @@ public static class PrefabListMarshal
 		}
 
 #if NET5_0_OR_GREATER
-		return CollectionsMarshal.AsSpan(list._list);
+		return CollectionsMarshal.AsSpan(list._prefabs);
 #else
-		int size = list._list.Count;
-		Prefab[] items = (Prefab[])typeof(List<Prefab>).GetField("_items", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(list._list);
+		int size = list._prefabs.Count;
+		Prefab[] items = (Prefab[])typeof(List<Prefab>).GetField("_items", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(list._prefabs);
 		Debug.Assert(items is not null, "Implementation depends on List<T> always having an array.");
 
 		if ((uint)size > (uint)items.Length)
@@ -57,7 +57,7 @@ public static class PrefabListMarshal
 	/// </summary>
 	/// <param name="list">The list to get the data view over.</param>
 	/// <returns>The underlying span of <paramref name="list"/>.</returns>
-	public static Span<PartialPrefab> AsSpan(PartialPrefabList list)
+	public static Span<PartialPrefab> AsPrefabSpan(PartialPrefabList list)
 	{
 		if (list is null)
 		{
