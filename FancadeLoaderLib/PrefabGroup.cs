@@ -630,8 +630,8 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	}
 
 	/// <inheritdoc/>
-#if NET6_0_OR_GREATER
-	public bool TryGetValue(byte3 key, [NotNullWhen(true)] out Prefab? value)
+#if NET5_0_OR_GREATER
+	public bool TryGetValue(byte3 key, [MaybeNullWhen(false)] out Prefab value)
 #else
 	public bool TryGetValue(byte3 key, out Prefab value)
 #endif

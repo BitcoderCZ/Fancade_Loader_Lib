@@ -150,7 +150,6 @@ public class BlockData
 
 		CheckLowerBounds(pos, nameof(pos));
 
-		ushort id = group.Id;
 		byte3 size = group.Size;
 
 		if (size == byte3.Zero)
@@ -160,22 +159,9 @@ public class BlockData
 
 		EnsureSize(pos + size);
 
-		for (byte zIndex = 0; zIndex < size.Z; zIndex++)
+		foreach (var (prefab, id) in group.EnumerateWithId())
 		{
-			for (byte yIndex = 0; yIndex < size.Y; yIndex++)
-			{
-				for (byte xIndex = 0; xIndex < size.X; xIndex++)
-				{
-					byte3 prefabPos = new byte3(xIndex, yIndex, zIndex);
-					if (!group.ContainsKey(prefabPos))
-					{
-						continue;
-					}
-
-					SetBlockInternal(pos + prefabPos, id);
-					id++;
-				}
-			}
+			SetBlockInternal(pos + prefab.PosInGroup, id);
 		}
 	}
 
@@ -194,7 +180,6 @@ public class BlockData
 
 		CheckLowerBounds(pos, nameof(pos));
 
-		ushort id = group.Id;
 		byte3 size = group.Size;
 
 		if (size == byte3.Zero)
@@ -204,22 +189,9 @@ public class BlockData
 
 		EnsureSize(pos + size);
 
-		for (byte zIndex = 0; zIndex < size.Z; zIndex++)
+		foreach (var (prefabPos, id) in group.EnumerateWithId())
 		{
-			for (byte yIndex = 0; yIndex < size.Y; yIndex++)
-			{
-				for (byte xIndex = 0; xIndex < size.X; xIndex++)
-				{
-					byte3 prefabPos = new byte3(xIndex, yIndex, zIndex);
-					if (!group.ContainsKey(prefabPos))
-					{
-						continue;
-					}
-
-					SetBlockInternal(pos + prefabPos, id);
-					id++;
-				}
-			}
+			SetBlockInternal(pos + prefabPos, id);
 		}
 	}
 	#endregion

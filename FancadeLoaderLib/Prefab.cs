@@ -2,12 +2,9 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Raw;
 using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace FancadeLoaderLib;
 

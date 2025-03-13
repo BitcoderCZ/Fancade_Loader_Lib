@@ -3,364 +3,180 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
-using FancadeLoaderLib.Utils;
+using MathUtils.Vectors;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 #pragma warning disable CA1716
 namespace FancadeLoaderLib.Partial;
 #pragma warning restore CA1716
 
 /// <summary>
-/// <see cref="PrefabList"/> for <see cref="PartialPrefab"/>.
+/// <see cref="List{T}"/> wrapper for easier <see cref="PartialPrefabGroup"/> manipulation.
 /// </summary>
-public class PartialPrefabList : IList<PartialPrefab>, ICloneable
+/// <remarks>
+/// <para>Allows for saving/loading.</para>
+/// </remarks>
+public class PartialPrefabList : ICloneable
 {
 	/// <summary>
 	/// The id offset of this list, <see cref="RawGame.CurrentNumbStockPrefabs"/> by default.
 	/// </summary>
 	public ushort IdOffset = RawGame.CurrentNumbStockPrefabs;
 
-	internal readonly List<PartialPrefab> _list;
+	internal readonly Dictionary<ushort, PartialPrefabGroup> _groups;
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PartialPrefabList"/> class.
-	/// </summary>
 	public PartialPrefabList()
 	{
-		_list = [];
+		_groups = [];
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PartialPrefabList"/> class.
-	/// </summary>
-	/// <param name="capacity">The initial capacity.</param>
-	public PartialPrefabList(int capacity)
+	public PartialPrefabList(int caapcity)
 	{
-		_list = new List<PartialPrefab>(capacity);
+		_groups = new(caapcity);
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PartialPrefabList"/> class.
-	/// </summary>
-	/// <param name="collection">The prefabs to place into this list.</param>
-	public PartialPrefabList(IEnumerable<PartialPrefab> collection)
+	public PartialPrefabList(IEnumerable<PartialPrefabGroup> collection)
 	{
-		_list = [.. collection];
+		if (collection is null)
+		{
+			ThrowArgumentNullException(nameof(collection));
+		}
+
+		_groups = collection.ToDictionary(group => group.Id);
+		ValidateGroups(_groups.Values, nameof(collection)); // validate using _groups.Values to avoid iterating over collection multiple times
+
+		IdOffset = _groups.Min(item => item.Key);
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PartialPrefabList"/> class.
-	/// </summary>
-	/// <param name="list">The <see cref="PartialPrefabList"/> to copy values from.</param>
-	/// <param name="deepCopy">If deep copy should be performed.</param>
 	public PartialPrefabList(PartialPrefabList list, bool deepCopy)
 	{
-		_list = deepCopy
-			? [.. list.Select(prefab => prefab.Clone())]
-			: [.. list];
+		ThrowIfNull(list, nameof(list));
+
+		if (deepCopy)
+		{
+			_groups = list._groups.ToDictionary(item => item.Key, item => item.Value.Clone());
+		}
+		else
+		{
+			_groups = new(list._groups);
+		}
 	}
 
-	private PartialPrefabList(List<PartialPrefab> list)
+	private PartialPrefabList(Dictionary<ushort, PartialPrefabGroup> dict)
 	{
-		_list = list;
+		_groups = dict;
 	}
 
-	/// <inheritdoc/>
-	public int Count => _list.Count;
+	public int GroupCount => _groups.Count;
 
-	/// <inheritdoc/>
-	public bool IsReadOnly => false;
+	public int PrefabCount => _groups.Sum(item => item.Value.Count);
 
-	/// <inheritdoc/>
-	public PartialPrefab this[int index]
-	{
-		get => _list[index];
-		set => _list[index] = value;
-	}
+	public IEnumerable<PartialPrefabGroup> Groups => _groups.Values;
 
-	/// <summary>
-	/// Loads a <see cref="PartialPrefabList"/> from a <see cref="FcBinaryReader"/>.
-	/// </summary>
-	/// <param name="reader">The reader to read the <see cref="PartialPrefabList"/> from.</param>
-	/// <returns>A <see cref="PartialPrefabList"/> read from <paramref name="reader"/>.</returns>
 	public static PartialPrefabList Load(FcBinaryReader reader)
 	{
-		if (reader is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(reader));
-		}
+		ThrowIfNull(reader, nameof(reader));
 
 		uint count = reader.ReadUInt32();
 		ushort idOffset = reader.ReadUInt16();
 
-		List<PartialPrefab> list = new List<PartialPrefab>((int)count);
+		PartialPrefab[] prefabs = new PartialPrefab[count];
 
 		for (int i = 0; i < count; i++)
 		{
-			list.Add(PartialPrefab.Load(reader));
+			prefabs[i] = PartialPrefab.Load(reader);
 		}
 
-		return new PartialPrefabList(list)
+		Dictionary<ushort, PartialPrefabGroup> groups = [];
+
+		for (int i = 0; i < prefabs.Length; i++)
+		{
+			if (prefabs[i].IsInGroup)
+			{
+				int startIndex = i;
+				ushort groupId = prefabs[i].GroupId;
+				do
+				{
+					i++;
+				} while (prefabs[i].GroupId == groupId);
+
+				ushort id = (ushort)(startIndex + idOffset);
+				var prefab = prefabs[startIndex];
+				groups.Add(id, new PartialPrefabGroup(id, prefab.Name, prefab.Type, prefabs.Skip(startIndex).Take(i - startIndex).Select(prefab => prefab.PosInGroup)));
+
+				i--; // incremented at the end of the loop
+			}
+			else
+			{
+				ushort id = (ushort)(i + idOffset);
+				var prefab = prefabs[i];
+				groups.Add(id, new PartialPrefabGroup(id, prefab.Name, prefab.Type, [byte3.Zero]));
+			}
+		}
+
+		return new PartialPrefabList(groups)
 		{
 			IdOffset = idOffset,
 		};
 	}
 
-	/// <summary>
-	/// Writes a <see cref="PartialPrefabList"/> into a <see cref="FcBinaryWriter"/>.
-	/// </summary>
-	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
-		if (writer is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(writer));
-		}
+		ThrowIfNull(writer, nameof(writer));
 
-		writer.WriteUInt32((uint)Count);
+		int prefabCount = PrefabCount;
+
+		writer.WriteUInt32((uint)PrefabCount);
 		writer.WriteUInt16(IdOffset);
 
-		for (int i = 0; i < Count; i++)
+		foreach (var (_, group) in _groups.OrderBy(item => item.Key))
 		{
-			this[i].Save(writer);
+			int i = 0;
+			foreach (var pos in group)
+			{
+				new PartialPrefab(i++ == 0 ? group.Name : "New Block", group.Type, group.Count > 1 ? group.Id : ushort.MaxValue, pos).Save(writer);
+			}
 		}
 	}
 
-	/// <inheritdoc/>
-	public void Add(PartialPrefab item)
-		=> _list.Add(item);
+	public PartialPrefabGroup GetGroup(ushort id)
+		=> _groups[id];
 
-	/// <summary>
-	/// Adds multiple prefabs.
-	/// </summary>
-	/// <param name="collection">The prefabs to add.</param>
-	public void AddRange(IEnumerable<PartialPrefab> collection)
-		=> _list.AddRange(collection);
+	public bool TryGetGroup(ushort id, [MaybeNullWhen(false)] out PartialPrefabGroup group)
+		=> _groups.TryGetValue(id, out group);
 
-	/// <summary>
-	/// Adds a prefab group.
-	/// </summary>
-	/// <remarks>
-	/// Id of the group will get set to <see cref="Count"/> (before being added).
-	/// </remarks>
-	/// <param name="group">The group to add.</param>
 	public void AddGroup(PartialPrefabGroup group)
 	{
-		if (group is null)
+		if (group.Id != PrefabCount + IdOffset)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(group));
+			ThrowArgumentException($"{group.Id} must be equal to {nameof(PrefabCount)} + {nameof(IdOffset)}.", nameof(group));
 		}
 
-		group.Id = (ushort)_list.Count;
-		_list.AddRange(group.EnumerateInIdOrder());
+		_groups.Add(group.Id, group);
 	}
 
-	/// <inheritdoc/>
-	public void Clear()
-		=> _list.Clear();
-
-	/// <inheritdoc/>
-	public bool Contains(PartialPrefab item)
-		=> _list.Contains(item);
-
-	/// <inheritdoc/>
-	public void CopyTo(PartialPrefab[] array, int arrayIndex)
-		=> _list.CopyTo(array, arrayIndex);
-
-	/// <summary>
-	/// Copied this <see cref="PartialPrefabList"/> into <paramref name="array"/>.
-	/// </summary>
-	/// <param name="array">The array to copy to.</param>
-	public void CopyTo(PartialPrefab[] array)
-		=> _list.CopyTo(array);
-
-	/// <summary>
-	/// Copied this <see cref="PartialPrefabList"/> into <paramref name="array"/>.
-	/// </summary>
-	/// <param name="index">The index to start copying at.</param>
-	/// <param name="array">The array to copy to.</param>
-	/// <param name="arrayIndex">Index in <paramref name="array"/> to start copying to.</param>
-	/// <param name="count">The number of prefabs to copy.</param>
-	public void CopyTo(int index, PartialPrefab[] array, int arrayIndex, int count)
-		=> _list.CopyTo(index, array, arrayIndex, count);
-
-	/// <summary>
-	/// Gets if this <see cref="PartialPrefabList"/> contains a prefab that matches the condition defined by the specified predicate.
-	/// </summary>
-	/// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the prefab to search for.</param>
-	/// <returns><see langword="true"/> if this <see cref="PartialPrefabList"/> contains a prefab that matches the condition defined by the specified predicate; otherwise, false.</returns>
-	public bool Exists(Predicate<PartialPrefab> match)
-		=> _list.Exists(match);
-
-	/// <summary>
-	/// Gets the first prefab that matches the condition defined by the specified predicate.
-	/// </summary>
-	/// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the prefab to search for.</param>
-	/// <returns>The first prefab that matches the condition defined by the specified predicate.</returns>
-	public PartialPrefab? Find(Predicate<PartialPrefab> match)
-		=> _list.Find(match);
-
-	/// <summary>
-	/// Gets all prefabs that match the condition defined by the specified predicate.
-	/// </summary>
-	/// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the prefabs to search for.</param>
-	/// <returns>The prefabs that match the condition defined by the specified predicate.</returns>
-#pragma warning disable CA1002 // Do not expose generic lists
-	public List<PartialPrefab> FindAll(Predicate<PartialPrefab> match)
-#pragma warning restore CA1002 // Do not expose generic lists
-		=> _list.FindAll(match);
-
-	/// <summary>
-	/// Inserts a prefab at an index.
-	/// </summary>
-	/// <param name="index">The index at which to insert <paramref name="item"/>.</param>
-	/// <param name="item">The prefab to insert.</param>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is out of range.</exception>
-	public void Insert(int index, PartialPrefab item)
+	public bool RemoveGroup(ushort id)
 	{
-		if (index < 0 || index > _list.Count)
-		{
-			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(index));
-		}
-
-		IncreaseAfter(index, 1);
-		_list.Insert(index, item);
-	}
-
-	/// <summary>
-	/// Inserts multiple prefab at an index.
-	/// </summary>
-	/// <param name="index">The index at which to insert <paramref name="collection"/>.</param>
-	/// <param name="collection">The prefabs to insert.</param>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is out of range.</exception>
-	public void InsertRange(int index, IEnumerable<PartialPrefab> collection)
-	{
-		if (index < 0 || index > _list.Count)
-		{
-			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(index));
-		}
-
-		int count = collection.Count();
-		IncreaseAfter(index, (ushort)count);
-		_list.InsertRange(index, collection);
-	}
-
-	/// <summary>
-	/// Inserts a prefab group at an index.
-	/// </summary>
-	/// <param name="index">The index at which to insert <paramref name="group"/>.</param>
-	/// <param name="group">The prefab group to insert.</param>
-	/// <exception cref="ArgumentNullException">Thrown when <paramref name="index"/> is out of range.</exception>
-	public void InsertGroup(int index, PartialPrefabGroup group)
-	{
-		if (group is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(group));
-		}
-
-		IncreaseAfter(index, (ushort)group.Count);
-		group.Id = (ushort)index;
-		_list.InsertRange(index, group.EnumerateInIdOrder());
-	}
-
-	/// <summary>
-	/// Gets the last index of <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to find.</param>
-	/// <returns>Last index of <paramref name="item"/> or -1, if it isn't found.</returns>
-	public int LastIndexOf(PartialPrefab item)
-		=> _list.LastIndexOf(item);
-
-	/// <summary>
-	/// Gets the last index of <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to find.</param>
-	/// <param name="index">The starting index of the search.</param>
-	/// <returns>Last index of <paramref name="item"/> or -1, if it isn't found.</returns>
-	public int LastIndexOf(PartialPrefab item, int index)
-		=> _list.LastIndexOf(item, index);
-
-	/// <summary>
-	/// Gets the last index of <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to find.</param>
-	/// <param name="index">The starting index of the search.</param>
-	/// <param name="count">The number of elements in the section to search.</param>
-	/// <returns>Last index of <paramref name="item"/> or -1, if it isn't found.</returns>
-	public int LastIndexOf(PartialPrefab item, int index, int count)
-		=> _list.LastIndexOf(item, index, count);
-
-	/// <summary>
-	/// Gets the first index of <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to find.</param>
-	/// <returns>First index of <paramref name="item"/> or -1, if it isn't found.</returns>
-	public int IndexOf(PartialPrefab item)
-		=> _list.IndexOf(item);
-
-	/// <summary>
-	/// Removes the first <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to remove.</param>
-	/// <returns><see langword="true"/> if the item was removed, <see langword="false"/> if the items wasn't found.</returns>
-	public bool Remove(PartialPrefab item)
-	{
-		int index = _list.IndexOf(item);
-		if (index < 0)
+		if (!_groups.Remove(id, out var group))
 		{
 			return false;
 		}
-		else
+
+		if (IsLastGroup(group))
 		{
-			RemoveAt(index);
 			return true;
 		}
+
+		DecreaseAfter(id, (ushort)group.Count);
+
+		return true;
 	}
 
-	/// <summary>
-	/// Removed a prefab at a specified index.
-	/// </summary>
-	/// <param name="index">The index at which to remove the prefab.</param>
-	public void RemoveAt(int index)
-	{
-		_list.RemoveAt(index);
-		DecreaseAfter(index - 1, 1);
-	}
-
-	/// <summary>
-	/// Removes a range of prefabs at a specified index.
-	/// </summary>
-	/// <param name="index">The index at which to remove the prefab.</param>
-	/// <param name="count">The number of prefabs to remove.</param>
-	public void RemoveRange(int index, int count)
-	{
-		_list.RemoveRange(index, count);
-		DecreaseAfter(index - 1, (ushort)count);
-	}
-
-	/// <summary>
-	/// Converts this <see cref="PartialPrefabList"/> to an array of <see cref="PartialPrefab"/>s.
-	/// </summary>
-	/// <returns>An array of <see cref="PartialPrefab"/>s.</returns>
-	public PartialPrefab[] ToArray()
-		=> [.. _list];
-
-	/// <inheritdoc/>
-	public IEnumerator<PartialPrefab> GetEnumerator()
-		=> _list.GetEnumerator();
-
-	/// <inheritdoc/>
-	IEnumerator IEnumerable.GetEnumerator()
-		=> _list.GetEnumerator();
-
-	/// <summary>
-	/// Creates a copy of this <see cref="PartialPrefabList"/>.
-	/// </summary>
-	/// <param name="deepCopy">If deep copy should be performed.</param>
-	/// <returns>A copy of this <see cref="PartialPrefabList"/>.</returns>
 	public PartialPrefabList Clone(bool deepCopy)
 		=> new PartialPrefabList(this, deepCopy);
 
@@ -368,18 +184,51 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	object ICloneable.Clone()
 		=> new PartialPrefabList(this, true);
 
+	private static void ValidateGroups(IEnumerable<PartialPrefabGroup> groups, string paramName)
+	{
+		int? nextId = null;
+
+		foreach (var group in groups.OrderBy(group => group.Id))
+		{
+			if (nextId == null || group.Id == nextId)
+			{
+				nextId = group.Id + group.Count;
+			}
+			else
+			{
+				throw new ArgumentException($"Groups in {paramName} must have consecutive IDs. Expected ID {nextId}, but found {group.Id}.", paramName);
+			}
+		}
+	}
+
+	private static IEnumerable<Prefab> PrefabsFromGroups(IEnumerable<KeyValuePair<ushort, PrefabGroup>> groups)
+		=> groups.OrderBy(item => item.Key).SelectMany(item => item.Value.Values);
+
+	private bool IsLastGroup(PartialPrefabGroup group)
+		=> group.Id + group.Count == PrefabCount + IdOffset;
+
 	private void IncreaseAfter(int index, ushort amount)
 	{
 		index += IdOffset;
 
-		for (int i = 0; i < _list.Count; i++)
-		{
-			PartialPrefab prefab = this[i];
+		List<ushort> groupsToChangeId = [];
 
-			if (prefab.IsInGroup && prefab.GroupId >= index)
+		foreach (var (id, group) in _groups)
+		{
+			if (id >= index)
 			{
-				prefab.GroupId += amount;
+				groupsToChangeId.Add(id);
 			}
+		}
+
+		foreach (ushort id in groupsToChangeId.OrderByDescending(item => item))
+		{
+			bool removed = _groups.Remove(id, out var group);
+
+			Debug.Assert(removed, "Group should have been removed.");
+			Debug.Assert(group is not null, $"{group} shouldn't be null.");
+
+			_groups[(ushort)(id + amount)] = group;
 		}
 	}
 
@@ -387,13 +236,157 @@ public class PartialPrefabList : IList<PartialPrefab>, ICloneable
 	{
 		index += IdOffset;
 
-		for (int i = 0; i < _list.Count; i++)
-		{
-			PartialPrefab prefab = this[i];
+		List<ushort> groupsToChangeId = [];
 
-			if (prefab.IsInGroup && prefab.GroupId >= index)
+		foreach (var (id, group) in _groups)
+		{
+			if (id >= index)
 			{
-				prefab.GroupId -= amount;
+				groupsToChangeId.Add(id);
+			}
+		}
+
+		foreach (ushort id in groupsToChangeId.OrderBy(item => item))
+		{
+			bool removed = _groups.Remove(id, out var group);
+
+			Debug.Assert(removed, "Group should have been removed.");
+			Debug.Assert(group is not null, $"{group} shouldn't be null.");
+
+			_groups[(ushort)(id - amount)] = group;
+		}
+	}
+
+	private readonly struct PartialPrefab
+	{
+		/// <summary>
+		/// Type of the prefab.
+		/// </summary>
+		public readonly PrefabType Type;
+
+		/// <summary>
+		/// Id of the group this prefab is in or <see cref="ushort.MaxValue"/> if it isn't in a group.
+		/// </summary>
+		public readonly ushort GroupId;
+
+		/// <summary>
+		/// Position of this prefab in it's group, if it is in one.
+		/// </summary>
+		public readonly byte3 PosInGroup;
+
+		private readonly string _name;
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="PartialPrefab"/> struct.
+		/// </summary>
+		/// <param name="name">The name of this prefab.</param>
+		/// <param name="type">The type of this prefab.</param>
+		/// <param name="groupid">Id of the group this prefab is in or <see cref="ushort.MaxValue"/> if it isn't in a group.</param>
+		/// <param name="posInGroup">Position of this prefab in it's group, if it is in one.</param>
+		public PartialPrefab(string name, PrefabType type, ushort groupid, byte3 posInGroup)
+		{
+			if (string.IsNullOrEmpty(name))
+			{
+				ThrowArgumentException(nameof(name));
+			}
+
+			_name = name;
+			Type = type;
+			GroupId = groupid;
+			PosInGroup = posInGroup;
+		}
+
+		/// <summary>
+		/// Gets the name of this prefab.
+		/// </summary>
+		/// <value>The name of this prefab.</value>
+		public readonly string Name => _name;
+
+		/// <summary>
+		/// Gets a value indicating whether this prifab is in a group.
+		/// </summary>
+		/// <value><see langword="true"/> if this prefab is in a group; otherwise, <see langword="false"/>.</value>
+		public bool IsInGroup => GroupId != ushort.MaxValue;
+
+		/// <summary>
+		/// Loads a <see cref="PartialPrefab"/> from a <see cref="FcBinaryReader"/>.
+		/// </summary>
+		/// <param name="reader">The reader to read the <see cref="PartialPrefab"/> from.</param>
+		/// <returns>A <see cref="PartialPrefab"/> read from <paramref name="reader"/>.</returns>
+		public static PartialPrefab Load(FcBinaryReader reader)
+		{
+			ThrowIfNull(reader, nameof(reader));
+
+			byte header = reader.ReadUInt8();
+
+			bool hasTypeByte = ((header >> 0) & 1) == 1;
+			bool nonDefaultName = ((header >> 1) & 1) == 1;
+			bool isInGroup = ((header >> 2) & 1) == 1;
+
+			PrefabType type = PrefabType.Normal;
+			if (hasTypeByte)
+			{
+				type = (PrefabType)reader.ReadUInt8();
+			}
+
+			string name = "New Block";
+			if (nonDefaultName)
+			{
+				name = reader.ReadString();
+			}
+
+			ushort groupId = ushort.MaxValue;
+			byte3 posInGroup = default;
+			if (isInGroup)
+			{
+				groupId = reader.ReadUInt16();
+				posInGroup = reader.ReadVec3B();
+			}
+
+			return new PartialPrefab(name, type, groupId, posInGroup);
+		}
+
+		/// <summary>
+		/// Writes a <see cref="PartialPrefab"/> into a <see cref="FcBinaryWriter"/>.
+		/// </summary>
+		/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
+		public void Save(FcBinaryWriter writer)
+		{
+			ThrowIfNull(writer, nameof(writer));
+
+			byte header = 0;
+
+			if (Type != PrefabType.Normal)
+			{
+				header |= 0b1;
+			}
+
+			if (Name != "New Block")
+			{
+				header |= 0b10;
+			}
+
+			if (IsInGroup)
+			{
+				header |= 0b100;
+			}
+
+			writer.WriteUInt8(header);
+
+			if (Type != PrefabType.Normal)
+			{
+				writer.WriteUInt8((byte)Type);
+			}
+
+			if (Name != "New Block")
+			{
+				writer.WriteString(Name);
+			}
+
+			if (IsInGroup)
+			{
+				writer.WriteUInt16(GroupId);
+				writer.WriteByte3(PosInGroup);
 			}
 		}
 	}

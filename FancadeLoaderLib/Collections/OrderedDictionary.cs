@@ -1131,7 +1131,7 @@ public class OrderedDictionary<TKey, TValue> :
 		}
 		else
 		{
-			return ref buckets[(uint)hashCode % buckets.Length];
+			return ref buckets[hashCode % buckets.Length];
 		}
 	}
 

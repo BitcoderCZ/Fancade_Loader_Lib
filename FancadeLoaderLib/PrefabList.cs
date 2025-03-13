@@ -3,15 +3,12 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
@@ -191,6 +188,24 @@ public class PrefabList : ICloneable
 		_prefabs.AddRange(group.Values);
 	}
 
+	public void InsertGroup(PrefabGroup group)
+	{
+		if (WillBeLastGroup(group))
+		{
+			AddGroup(group);
+			return;
+		}
+
+		if (!_groups.ContainsKey(group.Id))
+		{
+			ThrowArgumentException($"{nameof(_groups)} must contain {nameof(group)}.{nameof(PrefabGroup.Id)}.", nameof(group));
+		}
+
+		IncreaseAfter(group.Id, (ushort)group.Count);
+		_groups.Add(group.Id, group);
+		_prefabs.InsertRange(group.Id - IdOffset, group.Values);
+	}
+
 	public bool RemoveGroup(ushort id)
 	{
 		if (!_groups.Remove(id, out var group))
@@ -198,9 +213,14 @@ public class PrefabList : ICloneable
 			return false;
 		}
 
-		_prefabs.RemoveRange(id, group.Count);
+		_prefabs.RemoveRange(id - IdOffset, group.Count);
 
-		if (IsLastGroup(group))
+		for (int i = 0; i < group.Count; i++)
+		{
+			RemoveIdFromBlocks((ushort)(id + i));
+		}
+
+		if (WillBeLastGroup(group))
 		{
 			return true;
 		}
@@ -215,7 +235,7 @@ public class PrefabList : ICloneable
 		var group = _groups[id];
 		group.Add(prefab.PosInGroup, prefab);
 
-		if (IsLastGroup(group))
+		if (WillBeLastGroup(group))
 		{
 			_prefabs.Add(prefab);
 			return;
@@ -257,7 +277,7 @@ public class PrefabList : ICloneable
 		int index = group.IndexOf(posInGroup);
 		ushort prefabId = (ushort)(id + index);
 
-		_prefabs.RemoveAt(PrefabCount - 1);
+		_prefabs.RemoveAt(id + index - IdOffset);
 		RemoveIdFromBlocks(prefabId);
 
 		if (prefabId == PrefabCount + IdOffset - 1)
@@ -298,7 +318,10 @@ public class PrefabList : ICloneable
 		=> groups.OrderBy(item => item.Key).SelectMany(item => item.Value.Values);
 
 	private bool IsLastGroup(PrefabGroup group)
-		=> group.Id + group.Count == PrefabCount + IdOffset;
+		=> group.Id + group.Count >= PrefabCount + IdOffset;
+
+	private bool WillBeLastGroup(PrefabGroup group)
+		=> group.Id >= PrefabCount + IdOffset;
 
 	private void RemoveIdFromBlocks(ushort id)
 	{

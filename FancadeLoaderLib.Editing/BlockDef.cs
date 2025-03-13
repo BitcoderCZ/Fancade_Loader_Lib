@@ -36,7 +36,7 @@ public sealed class BlockDef
 			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(size), $"{nameof(size)} cannot be negative or zero.");
 		}
 
-		Prefab = new PartialPrefabGroup(id);
+		Prefab = new PartialPrefabGroup(id, name, prefabType, [byte3.Zero]);
 		BlockType = blockType;
 		Terminals = terminals.Build(Prefab.Size, BlockType);
 
@@ -44,11 +44,9 @@ public sealed class BlockDef
 		{
 			for (int y = 0; y < size.Y; y++)
 			{
-				for (int x = 0; x < size.Z; x++)
+				for (int x = 0; x < size.X; x++)
 				{
-					byte3 pos = new byte3(x, y, z);
-					PartialPrefab prefab = new PartialPrefab(name, prefabType, id, pos);
-					Prefab.Add(pos, prefab);
+					Prefab.Add(new byte3(x, y, z));
 				}
 			}
 		}

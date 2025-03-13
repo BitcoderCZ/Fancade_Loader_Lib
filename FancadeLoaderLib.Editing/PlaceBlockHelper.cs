@@ -3,10 +3,10 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Diagnostics;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
 
@@ -21,41 +21,38 @@ public static partial class PlaceBlockHelper
 	/// <remarks>
 	/// Use <see cref="Rotation"/> to place a rotation literal.
 	/// </remarks>
-	/// <param name="prefab">The to set the block in.</param>
+	/// <param name="group">The group to set the block in.</param>
 	/// <param name="pos">The position to place the value at.</param>
 	/// <param name="value">The value to place.</param>
 	/// <exception cref="ArgumentException">Thrown when <paramref name="value"/> is not a valid fancade literal.</exception>
-	public static void SetValue(this Prefab prefab, int3 pos, object value)
+	public static void SetValue(this PrefabGroup group, int3 pos, object value)
 	{
-		if (prefab is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(prefab));
-		}
+		ThrowIfNull(group, nameof(group));
 
-		PartialPrefabGroup group;
+		PartialPrefabGroup block;
 		bool hasSetting = true;
 
 		switch (value)
 		{
 			case bool b:
-				group = b ? StockBlocks.Values.True.Prefab : StockBlocks.Values.False.Prefab;
+				block = b ? StockBlocks.Values.True.Prefab : StockBlocks.Values.False.Prefab;
 				hasSetting = false;
 				break;
 			case float:
-				group = StockBlocks.Values.Number.Prefab;
+				block = StockBlocks.Values.Number.Prefab;
 				break;
 			case float3:
-				group = StockBlocks.Values.Vector.Prefab;
+				block = StockBlocks.Values.Vector.Prefab;
 				break;
 			case Rotation:
-				group = StockBlocks.Values.Rotation.Prefab;
+				block = StockBlocks.Values.Rotation.Prefab;
 				break;
 			default:
-				ThrowHelper.ThrowArgumentException($"{nameof(value)} is not a valid fancade literal.", nameof(value));
+				ThrowArgumentException($"{nameof(value)} is not a valid fancade literal.", nameof(value));
 				return;
 		}
 
-		prefab.Blocks.SetGroup(pos, group);
+		group.Blocks.SetGroup(pos, block);
 
 		if (hasSetting)
 		{
@@ -73,7 +70,7 @@ public static partial class PlaceBlockHelper
 					return;
 			}
 
-			prefab.Settings.Add(new PrefabSetting(0, settingType, (ushort3)pos, value));
+			group.Settings.Add(new PrefabSetting(0, settingType, (ushort3)pos, value));
 		}
 	}
 }
