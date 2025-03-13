@@ -4,6 +4,7 @@
 
 using FancadeLoaderLib.Exceptions;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -88,4 +89,56 @@ internal static class ThrowHelper
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	public static void ThrowInvalidDataException(string message)
 		=> throw new InvalidDataException(message);
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	public static void ThrowKeyNotFound<TKey>(TKey key)
+		=> throw new KeyNotFoundException($"Key '{key}' wasn't found.");
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	public static void ThrowDuplicateKey<TKey>(TKey key)
+		=> throw new ArgumentException($"Duplicate key '{key}'.", nameof(key));
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	public static void ThrowIndexArgumentOutOfRange()
+		=> throw new IndexOutOfRangeException();
+
+	#region Conditional
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void ThrowIfNegative(int value, string paramName)
+	{
+		if (value < 0)
+		{
+			ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be negative.");
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void ThrowIfLessThan(int value, int other, string paramName)
+	{
+		if (value.CompareTo(other) < 0)
+		{
+			ThrowArgumentOutOfRangeException(paramName, $"{paramName} ({value}) must be less than {other}.");
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void ThrowIfNull<T>(T? value, string paramName)
+	{
+		if (value is null)
+		{
+			ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be null.");
+		}
+	}
+	#endregion
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowConcurrentOperation()
+		=> throw new InvalidOperationException("Operations that change non-concurrent collections must have exclusive access. A concurrent update was performed on this collection and corrupted its state. The collection's state is no longer correct.");
+
+	internal static void ThrowVersionCheckFailed()
+		=> throw new InvalidOperationException("Collection was modified after the enumerator was instantiated.");
 }

@@ -1,13 +1,13 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
-
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
-#if NET9_0_OR_GREATER
+#if !NET9_0_OR_GREATER
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace System.Collections.Generic;
 #pragma warning restore IDE0130 // Namespace does not match folder structure
@@ -42,7 +42,7 @@ public class OrderedDictionary<TKey, TValue> :
 	where TKey : notnull
 {
 	/// <summary>The comparer used by the collection. May be null if the default comparer is used.</summary>
-	private IEqualityComparer<TKey>? _comparer;
+	private readonly IEqualityComparer<TKey>? _comparer;
 
 	/// <summary>Indexes into <see cref="_entries"/> for the start of chains; indices are 1-based.</summary>
 	private int[]? _buckets;
@@ -114,7 +114,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than 0.</exception>
 	public OrderedDictionary(int capacity, IEqualityComparer<TKey>? comparer)
 	{
-		ThrowIfNegative(capacity);
+		ThrowIfNegative(capacity, nameof(capacity));
 
 		if (capacity > 0)
 		{
@@ -135,12 +135,6 @@ public class OrderedDictionary<TKey, TValue> :
 		if (!typeof(TKey).IsValueType)
 		{
 			_comparer = comparer ?? EqualityComparer<TKey>.Default;
-
-			if (typeof(TKey) == typeof(string) &&
-				NonRandomizedStringEqualityComparer.GetStringComparer(_comparer) is IEqualityComparer<string> stringComparer)
-			{
-				_comparer = (IEqualityComparer<TKey>)stringComparer;
-			}
 		}
 		else if (comparer is not null && // first check for null to avoid forcing default comparer instantiation unnecessarily
 				 comparer != EqualityComparer<TKey>.Default)
@@ -179,9 +173,9 @@ public class OrderedDictionary<TKey, TValue> :
 	public OrderedDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer)
 		: this(dictionary?.Count ?? 0, comparer)
 	{
-		ThrowIfNull(dictionary);
+		ThrowIfNull(dictionary, nameof(dictionary));
 
-		AddRange(dictionary);
+		AddRange(dictionary!);
 	}
 
 	/// <summary>
@@ -214,7 +208,7 @@ public class OrderedDictionary<TKey, TValue> :
 	public OrderedDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection, IEqualityComparer<TKey>? comparer)
 		: this((collection as ICollection<KeyValuePair<TKey, TValue>>)?.Count ?? 0, comparer)
 	{
-		ThrowIfNull(collection);
+		ThrowIfNull(collection, nameof(collection));
 
 		AddRange(collection);
 	}
@@ -223,24 +217,7 @@ public class OrderedDictionary<TKey, TValue> :
 	public int Capacity => _entries?.Length ?? 0;
 
 	/// <summary>Gets the <see cref="IEqualityComparer{TKey}"/> that is used to determine equality of keys for the dictionary.</summary>
-	public IEqualityComparer<TKey> Comparer
-	{
-		get
-		{
-			IEqualityComparer<TKey>? comparer = _comparer;
-
-			// If the key is a string, we may have substituted a non-randomized comparer during construction.
-			// If we did, fish out and return the actual comparer that had been provided.
-			if (typeof(TKey) == typeof(string) &&
-				(comparer as NonRandomizedStringEqualityComparer)?.GetUnderlyingEqualityComparer() is IEqualityComparer<TKey> ec)
-			{
-				return ec;
-			}
-
-			// Otherwise, return whatever comparer we have, or the default if none was provided.
-			return comparer ?? EqualityComparer<TKey>.Default;
-		}
-	}
+	public IEqualityComparer<TKey> Comparer => _comparer ?? EqualityComparer<TKey>.Default;
 
 	/// <summary>Gets the number of key/value pairs contained in the <see cref="OrderedDictionary{TKey, TValue}"/>.</summary>
 	public int Count => _count;
@@ -296,7 +273,7 @@ public class OrderedDictionary<TKey, TValue> :
 		get => GetAt(index);
 		set
 		{
-			ThrowIfNull(value);
+			ThrowIfNull(value, nameof(value));
 
 			if (value is not KeyValuePair<TKey, TValue> tpair)
 			{
@@ -312,7 +289,7 @@ public class OrderedDictionary<TKey, TValue> :
 	{
 		get
 		{
-			ThrowIfNull(key);
+			ThrowIfNull(key, nameof(key));
 
 			if (key is TKey tkey && TryGetValue(tkey, out TValue? value))
 			{
@@ -324,10 +301,10 @@ public class OrderedDictionary<TKey, TValue> :
 
 		set
 		{
-			ThrowIfNull(key);
+			ThrowIfNull(key, nameof(key));
 			if (default(TValue) is not null)
 			{
-				ThrowIfNull(value);
+				ThrowIfNull(value, nameof(value));
 			}
 
 			if (key is not TKey tkey)
@@ -372,7 +349,7 @@ public class OrderedDictionary<TKey, TValue> :
 		{
 			if (!TryGetValue(key, out TValue? value))
 			{
-				ThrowHelper.ThrowKeyNotFound(key);
+				ThrowKeyNotFound(key);
 			}
 
 			return value;
@@ -380,7 +357,7 @@ public class OrderedDictionary<TKey, TValue> :
 
 		set
 		{
-			ThrowIfNull(key);
+			ThrowIfNull(key, nameof(key));
 
 			bool modified = TryInsert(index: -1, key, value, InsertionBehavior.OverwriteExisting, out _);
 			Debug.Assert(modified);
@@ -389,8 +366,6 @@ public class OrderedDictionary<TKey, TValue> :
 
 	/// <summary>Initializes the <see cref="_buckets"/>/<see cref="_entries"/>.</summary>
 	/// <param name="capacity"></param>
-	[MemberNotNull(nameof(_buckets))]
-	[MemberNotNull(nameof(_entries))]
 	private void EnsureBucketsAndEntriesInitialized(int capacity)
 	{
 		Resize(HashHelpers.GetPrime(capacity));
@@ -404,7 +379,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// The behavior controlling insertion behavior with respect to key duplication:
 	/// - IgnoreInsertion: Immediately ends the operation, returning false, if the key already exists, e.g. TryAdd(key, value)
 	/// - OverwriteExisting: If the key already exists, overwrites its value with the specified value, e.g. this[key] = value
-	/// - ThrowOnExisting: If the key already exists, throws an exception, e.g. Add(key, value)
+	/// - ThrowOnExisting: If the key already exists, throws an exception, e.g. Add(key, value).
 	/// </param>
 	/// <param name="keyIndex">The index of the added or existing key. This is always a valid index into the dictionary.</param>
 	/// <returns>true if the collection was updated; otherwise, false.</returns>
@@ -430,7 +405,7 @@ public class OrderedDictionary<TKey, TValue> :
 					return true;
 
 				case InsertionBehavior.ThrowOnExisting:
-					ThrowHelper.ThrowDuplicateKey(key);
+					ThrowDuplicateKey(key);
 					break;
 
 				default:
@@ -466,6 +441,8 @@ public class OrderedDictionary<TKey, TValue> :
 			entries = _entries;
 		}
 
+		Debug.Assert(entries is not null);
+
 		// The _entries array is ordered, so we need to insert the new entry at the specified index. That means
 		// not only shifting up all elements at that index and higher, but also updating the buckets and chains
 		// to record the newly updated indices.
@@ -499,7 +476,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <exception cref="ArgumentException">An element with the same key already exists in the <see cref="OrderedDictionary{TKey, TValue}"/>.</exception>
 	public void Add(TKey key, TValue value)
 	{
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 
 		TryInsert(index: -1, key, value, InsertionBehavior.ThrowOnExisting, out _);
 	}
@@ -519,7 +496,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <returns><see langword="true"/> if the key didn't exist and the key and value were added to the dictionary; otherwise, <see langword="false"/>.</returns>
 	public bool TryAdd(TKey key, TValue value, out int index)
 	{
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 
 		return TryInsert(index: -1, key, value, InsertionBehavior.IgnoreInsertion, out index);
 	}
@@ -611,7 +588,7 @@ public class OrderedDictionary<TKey, TValue> :
 	{
 		if ((uint)index >= (uint)_count)
 		{
-			ThrowHelper.ThrowIndexArgumentOutOfRange();
+			ThrowIndexArgumentOutOfRange();
 		}
 
 		Debug.Assert(_entries is not null, "count must be positive, which means we must have entries");
@@ -626,7 +603,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
 	public int IndexOf(TKey key)
 	{
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 
 		uint _ = 0;
 		return IndexOf(key, ref _, ref _);
@@ -722,7 +699,7 @@ public class OrderedDictionary<TKey, TValue> :
 
 		// We examined more entries than are actually in the list, which means there's a cycle
 		// that's caused by erroneous concurrent use.
-		ThrowHelper.ThrowConcurrentOperation();
+		ThrowConcurrentOperation();
 
 	Return:
 		outHashCode = hashCode;
@@ -740,10 +717,10 @@ public class OrderedDictionary<TKey, TValue> :
 	{
 		if ((uint)index > (uint)_count)
 		{
-			ThrowHelper.ThrowIndexArgumentOutOfRange();
+			ThrowIndexArgumentOutOfRange();
 		}
 
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 
 		TryInsert(index, key, value, InsertionBehavior.ThrowOnExisting, out _);
 	}
@@ -761,7 +738,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
 	public bool Remove(TKey key, [MaybeNullWhen(false)] out TValue value)
 	{
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 
 		// Find the key.
 		int index = IndexOf(key);
@@ -788,7 +765,7 @@ public class OrderedDictionary<TKey, TValue> :
 		int count = _count;
 		if ((uint)index >= (uint)count)
 		{
-			ThrowHelper.ThrowIndexArgumentOutOfRange();
+			ThrowIndexArgumentOutOfRange();
 		}
 
 		// Remove from the associated bucket chain the entry that lives at the specified index.
@@ -815,7 +792,7 @@ public class OrderedDictionary<TKey, TValue> :
 	{
 		if ((uint)index >= (uint)_count)
 		{
-			ThrowHelper.ThrowIndexArgumentOutOfRange();
+			ThrowIndexArgumentOutOfRange();
 		}
 
 		Debug.Assert(_entries is not null);
@@ -834,10 +811,10 @@ public class OrderedDictionary<TKey, TValue> :
 	{
 		if ((uint)index >= (uint)_count)
 		{
-			ThrowHelper.ThrowIndexArgumentOutOfRange();
+			ThrowIndexArgumentOutOfRange();
 		}
 
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 
 		Debug.Assert(_entries is not null);
 		ref Entry e = ref _entries[index];
@@ -865,7 +842,7 @@ public class OrderedDictionary<TKey, TValue> :
 		uint hashCode = 0, collisionCount = 0;
 		if (IndexOf(key, ref hashCode, ref collisionCount) >= 0)
 		{
-			ThrowHelper.ThrowDuplicateKey(key);
+			ThrowDuplicateKey(key);
 		}
 
 		// The key doesn't exist in the collection. Update the key and value, but also update
@@ -889,7 +866,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is negative.</exception>
 	public int EnsureCapacity(int capacity)
 	{
-		ThrowIfNegative(capacity);
+		ThrowIfNegative(capacity, nameof(capacity));
 
 		if (Capacity < capacity)
 		{
@@ -916,7 +893,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than <see cref="Count"/>.</exception>
 	public void TrimExcess(int capacity)
 	{
-		ThrowIfLessThan(capacity, Count);
+		ThrowIfLessThan(capacity, Count, nameof(capacity));
 
 		int currentCapacity = _entries?.Length ?? 0;
 		capacity = HashHelpers.GetPrime(capacity);
@@ -934,7 +911,12 @@ public class OrderedDictionary<TKey, TValue> :
 	/// </param>
 	/// <returns><see langword="true"/> if the <see cref="OrderedDictionary{TKey, TValue}"/> contains an element with the specified key; otherwise, <see langword="false"/>.</returns>
 	/// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
-	public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) => TryGetValue(key, out value, out _);
+#if NET5_0_OR_GREATER
+	public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
+#else
+	public bool TryGetValue(TKey key, out TValue value)
+#endif
+	=> TryGetValue(key, out value, out _);
 
 	/// <summary>Gets the value associated with the specified key.</summary>
 	/// <param name="key">The key of the value to get.</param>
@@ -945,9 +927,13 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <param name="index">The index of <paramref name="key"/> if found; otherwise, -1.</param>
 	/// <returns><see langword="true"/> if the <see cref="OrderedDictionary{TKey, TValue}"/> contains an element with the specified key; otherwise, <see langword="false"/>.</returns>
 	/// <exception cref="ArgumentNullException"><paramref name="key"/> is <see langword="null"/>.</exception>
+#if NET5_0_OR_GREATER
 	public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value, out int index)
+#else
+	public bool TryGetValue(TKey key, out TValue value, out int index)
+#endif
 	{
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 
 		// Find the key.
 		index = IndexOf(key);
@@ -959,7 +945,7 @@ public class OrderedDictionary<TKey, TValue> :
 			return true;
 		}
 
-		value = default;
+		value = default!;
 		return false;
 	}
 
@@ -1015,7 +1001,7 @@ public class OrderedDictionary<TKey, TValue> :
 				{
 					// We examined more entries than are actually in the list, which means there's a cycle
 					// that's caused by erroneous concurrent use.
-					ThrowHelper.ThrowConcurrentOperation();
+					ThrowConcurrentOperation();
 				}
 			}
 		}
@@ -1067,7 +1053,7 @@ public class OrderedDictionary<TKey, TValue> :
 				{
 					// We examined more entries than are actually in the list, which means there's a cycle
 					// that's caused by erroneous concurrent use.
-					ThrowHelper.ThrowConcurrentOperation();
+					ThrowConcurrentOperation();
 				}
 			}
 		}
@@ -1079,22 +1065,13 @@ public class OrderedDictionary<TKey, TValue> :
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	[SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Is no-op in certain targets")]
+#pragma warning disable IDE0060 // Odebrat nepoužívaný parametr
 	private void RehashIfNecessary(uint collisionCount, Entry[] entries)
+#pragma warning restore IDE0060 // Odebrat nepoužívaný parametr
 	{
-		// If we exceeded the hash collision threshold and we're using a randomized comparer, rehash.
-		// This is only ever done for string keys, so we can optimize it all away for value type keys.
-		if (!typeof(TKey).IsValueType &&
-			collisionCount > HashHelpers.HashCollisionThreshold &&
-			_comparer is NonRandomizedStringEqualityComparer)
-		{
-			// Switch to a randomized comparer and rehash.
-			Resize(entries.Length, forceNewHashCodes: true);
-		}
 	}
 
 	/// <summary>Grow or shrink <see cref="_buckets"/> and <see cref="_entries"/> to the specified capacity.</summary>
-	[MemberNotNull(nameof(_buckets))]
-	[MemberNotNull(nameof(_entries))]
 	private void Resize(int newSize, bool forceNewHashCodes = false)
 	{
 		Debug.Assert(!forceNewHashCodes || !typeof(TKey).IsValueType, "Value types never rehash.");
@@ -1121,17 +1098,7 @@ public class OrderedDictionary<TKey, TValue> :
 		// If we're being asked to upgrade to a non-randomized comparer due to too many collisions, do so.
 		if (!typeof(TKey).IsValueType && forceNewHashCodes)
 		{
-			// Store the original randomized comparer instead of the non-randomized one.
-			Debug.Assert(_comparer is NonRandomizedStringEqualityComparer);
-			IEqualityComparer<TKey> comparer = _comparer = (IEqualityComparer<TKey>)((NonRandomizedStringEqualityComparer)_comparer).GetUnderlyingEqualityComparer();
-			Debug.Assert(_comparer is not null);
-			Debug.Assert(_comparer is not NonRandomizedStringEqualityComparer);
-
-			// Update all of the entries' hash codes based on the new comparer.
-			for (int i = 0; i < count; i++)
-			{
-				newEntries[i].HashCode = (uint)comparer.GetHashCode(newEntries[i].Key);
-			}
+			Debug.Fail("NonRandomizedStringEqualityComparer not supported.");
 		}
 
 		// Now publish the buckets array. It's necessary to do this prior to the below loop,
@@ -1220,8 +1187,8 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <inheritdoc/>
 	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
 	{
-		ThrowIfNull(array);
-		ThrowIfNegative(arrayIndex);
+		ThrowIfNull(array, nameof(array));
+		ThrowIfNegative(arrayIndex, nameof(arrayIndex));
 		if (array.Length - arrayIndex < _count)
 		{
 			throw new ArgumentException();
@@ -1235,18 +1202,18 @@ public class OrderedDictionary<TKey, TValue> :
 	}
 
 	/// <inheritdoc/>
-	bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) =>
-		TryGetValue(item.Key, out TValue? value) &&
+	bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
+		=> TryGetValue(item.Key, out TValue? value) &&
 		EqualityComparer<TValue>.Default.Equals(value, item.Value) &&
 		Remove(item.Key);
 
 	/// <inheritdoc/>
 	void IDictionary.Add(object key, object? value)
 	{
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 		if (default(TValue) is not null)
 		{
-			ThrowIfNull(value);
+			ThrowIfNull(value, nameof(value));
 		}
 
 		if (key is not TKey tkey)
@@ -1256,7 +1223,7 @@ public class OrderedDictionary<TKey, TValue> :
 
 		if (default(TValue) is not null)
 		{
-			ThrowIfNull(value);
+			ThrowIfNull(value, nameof(value));
 		}
 
 		TValue tvalue = default!;
@@ -1276,7 +1243,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <inheritdoc/>
 	bool IDictionary.Contains(object key)
 	{
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 
 		return key is TKey tkey && ContainsKey(tkey);
 	}
@@ -1284,7 +1251,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <inheritdoc/>
 	void IDictionary.Remove(object key)
 	{
-		ThrowIfNull(key);
+		ThrowIfNull(key, nameof(key));
 
 		if (key is TKey tkey)
 		{
@@ -1295,7 +1262,7 @@ public class OrderedDictionary<TKey, TValue> :
 	/// <inheritdoc/>
 	void ICollection.CopyTo(Array array, int index)
 	{
-		ThrowIfNull(array);
+		ThrowIfNull(array, nameof(array));
 
 		if (array.Rank != 1)
 		{
@@ -1307,7 +1274,7 @@ public class OrderedDictionary<TKey, TValue> :
 			throw new ArgumentException(nameof(array));
 		}
 
-		ThrowIfNegative(index);
+		ThrowIfNegative(index, nameof(index));
 
 		if (array.Length - index < _count)
 		{
@@ -1452,7 +1419,7 @@ public class OrderedDictionary<TKey, TValue> :
 
 			if (_version != dictionary._version)
 			{
-				ThrowHelper.ThrowVersionCheckFailed();
+				ThrowVersionCheckFailed();
 			}
 
 			if (_index < dictionary._count)
@@ -1473,7 +1440,7 @@ public class OrderedDictionary<TKey, TValue> :
 		{
 			if (_version != _dictionary._version)
 			{
-				ThrowHelper.ThrowVersionCheckFailed();
+				ThrowVersionCheckFailed();
 			}
 
 			_index = 0;
@@ -1527,8 +1494,8 @@ public class OrderedDictionary<TKey, TValue> :
 		/// <inheritdoc/>
 		public void CopyTo(TKey[] array, int arrayIndex)
 		{
-			ThrowIfNull(array);
-			ThrowIfNegative(arrayIndex);
+			ThrowIfNull(array, nameof(array));
+			ThrowIfNegative(arrayIndex, nameof(arrayIndex));
 
 			OrderedDictionary<TKey, TValue> dictionary = _dictionary;
 			int count = dictionary._count;
@@ -1549,7 +1516,7 @@ public class OrderedDictionary<TKey, TValue> :
 		/// <inheritdoc/>
 		void ICollection.CopyTo(Array array, int index)
 		{
-			ThrowIfNull(array);
+			ThrowIfNull(array, nameof(array));
 
 			if (array.Rank != 1)
 			{
@@ -1561,7 +1528,7 @@ public class OrderedDictionary<TKey, TValue> :
 				throw new ArgumentException(nameof(array));
 			}
 
-			ThrowIfNegative(index);
+			ThrowIfNegative(index, nameof(index));
 
 			if (array.Length - index < _dictionary.Count)
 			{
@@ -1615,8 +1582,8 @@ public class OrderedDictionary<TKey, TValue> :
 		public Enumerator GetEnumerator() => new(_dictionary);
 
 		/// <inheritdoc/>
-		IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() =>
-			Count == 0 ? EnumerableHelpers.GetEmptyEnumerator<TKey>() :
+		IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator()
+			=> Count == 0 ? Enumerable.Empty<TKey>().GetEnumerator() :
 			GetEnumerator();
 
 		/// <inheritdoc/>
@@ -1665,13 +1632,16 @@ public class OrderedDictionary<TKey, TValue> :
 			private OrderedDictionary<TKey, TValue>.Enumerator _enumerator;
 
 			/// <summary>Initialize the enumerator.</summary>
-			internal Enumerator(OrderedDictionary<TKey, TValue> dictionary) => _enumerator = dictionary.GetEnumerator();
+			internal Enumerator(OrderedDictionary<TKey, TValue> dictionary)
+			{
+				_enumerator = dictionary.GetEnumerator();
+			}
 
 			/// <inheritdoc/>
-			public TKey Current => _enumerator.Current.Key;
+			public readonly TKey Current => _enumerator.Current.Key;
 
 			/// <inheritdoc/>
-			object IEnumerator.Current => Current;
+			readonly object IEnumerator.Current => Current;
 
 			/// <inheritdoc/>
 			public bool MoveNext() => _enumerator.MoveNext();
@@ -1680,7 +1650,9 @@ public class OrderedDictionary<TKey, TValue> :
 			void IEnumerator.Reset() => EnumerableHelpers.Reset(ref _enumerator);
 
 			/// <inheritdoc/>
-			readonly void IDisposable.Dispose() { }
+			readonly void IDisposable.Dispose()
+			{
+			}
 		}
 	}
 
@@ -1693,7 +1665,10 @@ public class OrderedDictionary<TKey, TValue> :
 		private readonly OrderedDictionary<TKey, TValue> _dictionary;
 
 		/// <summary>Initialize the collection wrapper.</summary>
-		internal ValueCollection(OrderedDictionary<TKey, TValue> dictionary) => _dictionary = dictionary;
+		internal ValueCollection(OrderedDictionary<TKey, TValue> dictionary)
+		{
+			_dictionary = dictionary;
+		}
 
 		/// <inheritdoc/>
 		public int Count => _dictionary.Count;
@@ -1716,15 +1691,15 @@ public class OrderedDictionary<TKey, TValue> :
 		/// <inheritdoc/>
 		public void CopyTo(TValue[] array, int arrayIndex)
 		{
-			ThrowIfNull(array);
-			ThrowIfNegative(arrayIndex);
+			ThrowIfNull(array, nameof(array));
+			ThrowIfNegative(arrayIndex, nameof(arrayIndex));
 
 			OrderedDictionary<TKey, TValue> dictionary = _dictionary;
 			int count = dictionary._count;
 
 			if (array.Length - arrayIndex < count)
 			{
-				throw new ArgumentException(SR.Arg_ArrayPlusOffTooSmall, nameof(array));
+				throw new ArgumentException("Destination array is not long enough to copy all the items in the collection. Check array index and length.", nameof(array));
 			}
 
 			Entry[]? entries = dictionary._entries;
@@ -1760,8 +1735,8 @@ public class OrderedDictionary<TKey, TValue> :
 		bool ICollection<TValue>.Contains(TValue item) => _dictionary.ContainsValue(item);
 
 		/// <inheritdoc/>
-		IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() =>
-			Count == 0 ? EnumerableHelpers.GetEmptyEnumerator<TValue>() :
+		IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
+			=> Count == 0 ? Enumerable.Empty<TValue>().GetEnumerator() :
 			GetEnumerator();
 
 		/// <inheritdoc/>
@@ -1808,8 +1783,8 @@ public class OrderedDictionary<TKey, TValue> :
 		void IList.Clear() => throw new NotSupportedException();
 
 		/// <inheritdoc/>
-		bool IList.Contains(object? value) =>
-			value is null && default(TValue) is null ?
+		bool IList.Contains(object? value)
+			=> value is null && default(TValue) is null ?
 				_dictionary.ContainsValue(default!) :
 				value is TValue tvalue && _dictionary.ContainsValue(tvalue);
 
@@ -1858,23 +1833,23 @@ public class OrderedDictionary<TKey, TValue> :
 		/// <inheritdoc/>
 		void ICollection.CopyTo(Array array, int index)
 		{
-			ThrowIfNull(array);
+			ThrowIfNull(array, nameof(array));
 
 			if (array.Rank != 1)
 			{
-				throw new ArgumentException(SR.Arg_RankMultiDimNotSupported, nameof(array));
+				throw new ArgumentException("Only single dimensional arrays are supported for the requested action.", nameof(array));
 			}
 
 			if (array.GetLowerBound(0) != 0)
 			{
-				throw new ArgumentException(SR.Arg_NonZeroLowerBound, nameof(array));
+				throw new ArgumentException("The lower bound of target array must be zero.", nameof(array));
 			}
 
-			ThrowIfNegative(index);
+			ThrowIfNegative(index, nameof(index));
 
 			if (array.Length - index < _dictionary.Count)
 			{
-				throw new ArgumentException(SR.Arg_ArrayPlusOffTooSmall);
+				throw new ArgumentException("Destination array is not long enough to copy all the items in the collection. Check array index and length.");
 			}
 
 			if (array is TValue[] values)
@@ -1887,7 +1862,7 @@ public class OrderedDictionary<TKey, TValue> :
 				{
 					if (array is not object?[] objects)
 					{
-						throw new ArgumentException(SR.Argument_IncompatibleArrayType, nameof(array));
+						throw new ArgumentException("Target array type is not compatible with the type of items in the collection.", nameof(array));
 					}
 
 					foreach (TValue value in this)
@@ -1897,7 +1872,7 @@ public class OrderedDictionary<TKey, TValue> :
 				}
 				catch (ArrayTypeMismatchException)
 				{
-					throw new ArgumentException(SR.Argument_IncompatibleArrayType, nameof(array));
+					throw new ArgumentException("Target array type is not compatible with the type of items in the collection.", nameof(array));
 				}
 			}
 		}
@@ -1909,13 +1884,16 @@ public class OrderedDictionary<TKey, TValue> :
 			private OrderedDictionary<TKey, TValue>.Enumerator _enumerator;
 
 			/// <summary>Initialize the enumerator.</summary>
-			internal Enumerator(OrderedDictionary<TKey, TValue> dictionary) => _enumerator = dictionary.GetEnumerator();
+			internal Enumerator(OrderedDictionary<TKey, TValue> dictionary)
+			{
+				_enumerator = dictionary.GetEnumerator();
+			}
 
 			/// <inheritdoc/>
-			public TValue Current => _enumerator.Current.Value;
+			public readonly TValue Current => _enumerator.Current.Value;
 
 			/// <inheritdoc/>
-			object? IEnumerator.Current => Current;
+			readonly object? IEnumerator.Current => Current;
 
 			/// <inheritdoc/>
 			public bool MoveNext() => _enumerator.MoveNext();
@@ -1924,7 +1902,9 @@ public class OrderedDictionary<TKey, TValue> :
 			void IEnumerator.Reset() => EnumerableHelpers.Reset(ref _enumerator);
 
 			/// <inheritdoc/>
-			readonly void IDisposable.Dispose() { }
+			readonly void IDisposable.Dispose()
+			{
+			}
 		}
 	}
 }
@@ -1940,6 +1920,210 @@ internal enum InsertionBehavior
 	OverwriteExisting = 1,
 
 	/// <summary>Specifies that if an existing entry with the same key is encountered, an exception should be thrown.</summary>
-	ThrowOnExisting = 2
+	ThrowOnExisting = 2,
+}
+
+file static class EnumerableHelpers
+{
+	/// <summary>Calls Reset on an enumerator instance.</summary>
+	/// <remarks>Enables Reset to be called without boxing on a struct enumerator that lacks a public Reset.</remarks>
+	public static void Reset<T>(ref T enumerator)
+		where T : IEnumerator
+		=> enumerator.Reset();
+}
+
+file static class HashHelpers
+{
+	public const uint HashCollisionThreshold = 100;
+
+	// This is the maximum prime smaller than Array.MaxLength.
+	public const int MaxPrimeArrayLength = 0x7FFFFFC3;
+
+	public const int HashPrime = 101;
+
+	// Table of prime numbers to use as hash table sizes.
+	// A typical resize algorithm would pick the smallest prime number in this array
+	// that is larger than twice the previous capacity.
+	// Suppose our Hashtable currently has capacity x and enough elements are added
+	// such that a resize needs to occur. Resizing first computes 2x then finds the
+	// first prime in the table greater than 2x, i.e. if primes are ordered
+	// p_1, p_2, ..., p_i, ..., it finds p_n such that p_n-1 < 2x < p_n.
+	// Doubling is important for preserving the asymptotic complexity of the
+	// hashtable operations such as add.  Having a prime guarantees that double
+	// hashing does not lead to infinite loops.  IE, your hash function will be
+	// h1(key) + i*h2(key), 0 <= i < size.  h2 and the size must be relatively prime.
+	// We prefer the low computation costs of higher prime numbers over the increased
+	// memory allocation of a fixed prime number i.e. when right sizing a HashSet.
+	internal static ReadOnlySpan<int> Primes
+		=> [
+			3, 7, 11, 17, 23, 29, 37, 47, 59, 71, 89, 107, 131, 163, 197, 239, 293, 353, 431, 521, 631, 761, 919,
+				1103, 1327, 1597, 1931, 2333, 2801, 3371, 4049, 4861, 5839, 7013, 8419, 10103, 12143, 14591,
+				17519, 21023, 25229, 30293, 36353, 43627, 52361, 62851, 75431, 90523, 108631, 130363, 156437,
+				187751, 225307, 270371, 324449, 389357, 467237, 560689, 672827, 807403, 968897, 1162687, 1395263,
+				1674319, 2009191, 2411033, 2893249, 3471899, 4166287, 4999559, 5999471, 7199369
+		];
+
+	public static bool IsPrime(int candidate)
+	{
+		if ((candidate & 1) != 0)
+		{
+			int limit = (int)Math.Sqrt(candidate);
+			for (int divisor = 3; divisor <= limit; divisor += 2)
+			{
+				if ((candidate % divisor) == 0)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		return candidate == 2;
+	}
+
+	public static int GetPrime(int min)
+	{
+		if (min < 0)
+		{
+			throw new ArgumentException("Hashtable's capacity overflowed and went negative. Check load factor, capacity and the current size of the table.");
+		}
+
+		foreach (int prime in Primes)
+		{
+			if (prime >= min)
+			{
+				return prime;
+			}
+		}
+
+		// Outside of our predefined table. Compute the hard way.
+		for (int i = min | 1; i < int.MaxValue; i += 2)
+		{
+			if (IsPrime(i) && ((i - 1) % HashPrime != 0))
+			{
+				return i;
+			}
+		}
+
+		return min;
+	}
+
+	// Returns size of hashtable to grow to.
+	public static int ExpandPrime(int oldSize)
+	{
+		int newSize = 2 * oldSize;
+
+		// Allow the hashtables to grow to maximum possible size (~2G elements) before encountering capacity overflow.
+		// Note that this check works even when _items.Length overflowed thanks to the (uint) cast
+		if ((uint)newSize > MaxPrimeArrayLength && MaxPrimeArrayLength > oldSize)
+		{
+			Debug.Assert(MaxPrimeArrayLength == GetPrime(MaxPrimeArrayLength), "Invalid MaxPrimeArrayLength");
+			return MaxPrimeArrayLength;
+		}
+
+		return GetPrime(newSize);
+	}
+
+	/// <summary>Returns approximate reciprocal of the divisor: ceil(2**64 / divisor).</summary>
+	/// <remarks>This should only be used on 64-bit.</remarks>
+	public static ulong GetFastModMultiplier(uint divisor)
+		=> (ulong.MaxValue / divisor) + 1;
+
+	/// <summary>Performs a mod operation using the multiplier pre-computed with <see cref="GetFastModMultiplier"/>.</summary>
+	/// <remarks>This should only be used on 64-bit.</remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static uint FastMod(uint value, uint divisor, ulong multiplier)
+	{
+		// We use modified Daniel Lemire's fastmod algorithm (https://github.com/dotnet/runtime/pull/406),
+		// which allows to avoid the long multiplication if the divisor is less than 2**31.
+		Debug.Assert(divisor <= int.MaxValue);
+
+		// This is equivalent of (uint)Math.BigMul(multiplier * value, divisor, out _). This version
+		// is faster than BigMul currently because we only need the high bits.
+		uint highbits = (uint)(((((multiplier * value) >> 32) + 1) * divisor) >> 32);
+
+		Debug.Assert(highbits == value % divisor);
+		return highbits;
+	}
+}
+
+file sealed class IDictionaryDebugView<TKey, TValue>
+	where TKey : notnull
+{
+	private readonly IDictionary<TKey, TValue> _dict;
+
+	public IDictionaryDebugView(IDictionary<TKey, TValue> dictionary)
+	{
+		_dict = dictionary ?? throw new ArgumentNullException(nameof(dictionary));
+	}
+
+	[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+	public DebugViewDictionaryItem<TKey, TValue>[] Items
+	{
+		get
+		{
+			var keyValuePairs = new KeyValuePair<TKey, TValue>[_dict.Count];
+			_dict.CopyTo(keyValuePairs, 0);
+			var items = new DebugViewDictionaryItem<TKey, TValue>[keyValuePairs.Length];
+			for (int i = 0; i < items.Length; i++)
+			{
+				items[i] = new DebugViewDictionaryItem<TKey, TValue>(keyValuePairs[i]);
+			}
+
+			return items;
+		}
+	}
+}
+
+/// <summary>
+/// Defines a key/value pair for displaying an item of a dictionary by a debugger.
+/// </summary>
+[DebuggerDisplay("{Value}", Name = "[{Key}]")]
+file readonly struct DebugViewDictionaryItem<TKey, TValue>
+{
+	public DebugViewDictionaryItem(TKey key, TValue value)
+	{
+		Key = key;
+		Value = value;
+	}
+
+	public DebugViewDictionaryItem(KeyValuePair<TKey, TValue> keyValue)
+	{
+		Key = keyValue.Key;
+		Value = keyValue.Value;
+	}
+
+	[DebuggerBrowsable(DebuggerBrowsableState.Collapsed)]
+	public TKey Key { get; }
+
+	[DebuggerBrowsable(DebuggerBrowsableState.Collapsed)]
+	public TValue Value { get; }
+}
+
+file sealed class ICollectionDebugView<T>
+{
+	private readonly ICollection<T> _collection;
+
+	public ICollectionDebugView(ICollection<T> collection)
+	{
+		if (collection is null)
+		{
+			throw new ArgumentNullException(nameof(collection));
+		}
+
+		_collection = collection;
+	}
+
+	[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+	public T[] Items
+	{
+		get
+		{
+			T[] items = new T[_collection.Count];
+			_collection.CopyTo(items, 0);
+			return items;
+		}
+	}
 }
 #endif

@@ -78,6 +78,11 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	/// <param name="prefabs">The prefabs to be placed in this group, must all have the same id.</param>
 	public PrefabGroup(ushort id, string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, List<PrefabSetting>? settings, List<Connection>? connections, IEnumerable<Prefab> prefabs)
 	{
+		if (!prefabs.Any())
+		{
+			ThrowHelper.ThrowArgumentException($"{nameof(prefabs)} cannot be empty.", nameof(prefabs));
+		}
+
 		_id = id;
 		_name = name;
 		Collider = collider;
@@ -88,14 +93,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		Settings = settings ?? [];
 		Connections = connections ?? [];
 
-		if (!prefabs.Any())
-		{
-			Size = byte3.Zero;
-			_prefabs = [];
-			return;
-		}
-
-		_prefabs = prefabs.ToDictionary(prefab =>
+		_prefabs = new(prefabs.Select(prefab =>
 		{
 			// validate
 			if (prefab.PosInGroup.X >= MaxSize || prefab.PosInGroup.Y >= MaxSize || prefab.PosInGroup.Z >= MaxSize)
@@ -107,8 +105,8 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 				ThrowHelper.ThrowArgumentException($"GroupId must be the same for all prefabs in {nameof(prefabs)}", nameof(prefabs));
 			}
 
-			return prefab.PosInGroup;
-		});
+			return new KeyValuePair<byte3, Prefab>(prefab.PosInGroup, prefab);
+		}));
 
 		CalculateSize();
 	}
@@ -145,7 +143,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 
 		ushort? id = null;
 
-		_prefabs = prefabs.ToDictionary(prefab =>
+		_prefabs = new(prefabs.Select(prefab =>
 		{
 			// validate
 			if (prefab.PosInGroup.X >= MaxSize || prefab.PosInGroup.Y >= MaxSize || prefab.PosInGroup.Z >= MaxSize)
@@ -159,8 +157,8 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 
 			id = prefab.GroupId;
 
-			return prefab.PosInGroup;
-		});
+			return new KeyValuePair<byte3, Prefab>(prefab.PosInGroup, prefab);
+		}));
 
 		_id = id!.Value;
 
@@ -190,8 +188,8 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
 		_prefabs = deepCopy
-			? new Dictionary<byte3, Prefab>(group._prefabs.Select(item => new KeyValuePair<byte3, Prefab>(item.Key, item.Value.Clone())))
-			: new Dictionary<byte3, Prefab>(group._prefabs);
+			? new OrderedDictionary<byte3, Prefab>(group._prefabs.Select(item => new KeyValuePair<byte3, Prefab>(item.Key, item.Value.Clone())))
+			: new OrderedDictionary<byte3, Prefab>(group._prefabs);
 #pragma warning restore IDE0306
 
 		_id = group.Id;
@@ -554,6 +552,43 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		Size = byte3.Max(Size, key + byte3.One);
 	}
 
+	public void Add(Prefab prefab)
+	{
+		ValidatePos(prefab.PosInGroup, $"{nameof(prefab)}.{nameof(prefab.PosInGroup)}");
+
+		_prefabs.Add(prefab.PosInGroup, ValidatePrefab(prefab, nameof(prefab)));
+
+		Size = byte3.Max(Size, prefab.PosInGroup + byte3.One);
+	}
+
+	public bool TryAdd(byte3 key, Prefab prefab)
+	{
+		ValidatePos(key, nameof(key));
+
+		if (!_prefabs.TryAdd(key, ValidatePrefab(prefab, nameof(prefab))))
+		{
+			return false;
+		}
+
+		prefab.PosInGroup = key; // only change pos if successfully added
+
+		Size = byte3.Max(Size, key + byte3.One);
+		return true;
+	}
+
+	public bool TryAdd(Prefab prefab)
+	{
+		ValidatePos(prefab.PosInGroup, $"{nameof(prefab)}.{nameof(prefab.PosInGroup)}");
+
+		if (!_prefabs.TryAdd(prefab.PosInGroup, ValidatePrefab(prefab, nameof(prefab))))
+		{
+			return false;
+		}
+
+		Size = byte3.Max(Size, prefab.PosInGroup + byte3.One);
+		return true;
+	}
+
 	/// <inheritdoc/>
 	public bool ContainsKey(byte3 key)
 		=> _prefabs.ContainsKey(key);
@@ -561,7 +596,30 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	/// <inheritdoc/>
 	public bool Remove(byte3 key)
 	{
+		if (Count == 1)
+		{
+			return false;
+		}
+
 		bool removed = _prefabs.Remove(key);
+
+		if (removed)
+		{
+			CalculateSize();
+		}
+
+		return removed;
+	}
+
+	public bool Remove(byte3 key, [MaybeNullWhen(false)] out Prefab prefab)
+	{
+		if (Count == 1)
+		{
+			prefab = null;
+			return false;
+		}
+
+		bool removed = _prefabs.Remove(key, out prefab);
 
 		if (removed)
 		{
@@ -578,6 +636,9 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	public bool TryGetValue(byte3 key, out Prefab value)
 #endif
 		=> _prefabs.TryGetValue(key, out value);
+
+	public int IndexOf(byte3 key)
+		=> _prefabs.IndexOf(key);
 
 	/// <inheritdoc/>
 	public void Clear()
@@ -617,6 +678,11 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	/// <inheritdoc/>
 	bool ICollection<KeyValuePair<byte3, Prefab>>.Remove(KeyValuePair<byte3, Prefab> item)
 	{
+		if (Count == 1)
+		{
+			ThrowHelper.ThrowInvalidOperationException($"{nameof(PrefabGroup)} cannot be empty.");
+		}
+
 		bool removed = ((ICollection<KeyValuePair<byte3, Prefab>>)_prefabs).Remove(item);
 
 		if (removed)
@@ -627,24 +693,19 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		return removed;
 	}
 
-	/// <inheritdoc/>
-	public IEnumerator<KeyValuePair<byte3, Prefab>> GetEnumerator()
+	public IEnumerable<(Prefab Prefab, ushort Id)> EnumerateWithId()
 	{
-		for (byte z = 0; z < Size.Z; z++)
+		ushort id = Id;
+
+		foreach (var prefab in _prefabs.Values)
 		{
-			for (byte y = 0; y < Size.Y; y++)
-			{
-				for (byte x = 0; x < Size.X; x++)
-				{
-					byte3 key = new byte3(x, y, z);
-					if (_prefabs.TryGetValue(key, out var value))
-					{
-						yield return new KeyValuePair<byte3, Prefab>(key, value);
-					}
-				}
-			}
+			yield return (prefab, id++);
 		}
 	}
+
+	/// <inheritdoc/>
+	public IEnumerator<KeyValuePair<byte3, Prefab>> GetEnumerator()
+		=> _prefabs.GetEnumerator();
 
 	/// <inheritdoc/>
 	IEnumerator IEnumerable.GetEnumerator()

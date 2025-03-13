@@ -4,10 +4,13 @@
 
 using FancadeLoaderLib.Raw;
 using FancadeLoaderLib.Utils;
+using MathUtils.Vectors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 
 namespace FancadeLoaderLib;
 
@@ -18,7 +21,7 @@ namespace FancadeLoaderLib;
 /// Group ids are automatically changed when prefabs are inserter/removed.
 /// <para>Allows for saving/loading.</para>
 /// </remarks>
-public class PrefabList :  ICloneable
+public class PrefabList : ICloneable
 {
 	/// <summary>
 	/// The id offset of this list, <see cref="RawGame.CurrentNumbStockPrefabs"/> by default.
@@ -90,7 +93,9 @@ public class PrefabList :  ICloneable
 		_prefabs = [.. PrefabsFromGroups(_groups)];
 	}
 
-	public int Count => _prefabs.Count;
+	public int GroupCount => _groups.Count;
+
+	public int PrefabCount => _prefabs.Count;
 
 	public Prefab this[int index]
 	{
@@ -162,13 +167,103 @@ public class PrefabList :  ICloneable
 			ThrowHelper.ThrowArgumentNullException(nameof(writer));
 		}
 
-		writer.WriteUInt32((uint)Count);
+		writer.WriteUInt32((uint)PrefabCount);
 		writer.WriteUInt16(IdOffset);
 
-		for (int i = 0; i < Count; i++)
+		foreach (var prefab in _groups.OrderBy(item => item.Key).SelectMany(item => item.Value.ToRaw(false)))
 		{
-			this[i].VoxelsToRaw(false).Save(writer);
+			prefab.Save(writer);
 		}
+	}
+
+	public void AddGroup(PrefabGroup group)
+	{
+		if (group.Id != PrefabCount + IdOffset)
+		{
+			ThrowHelper.ThrowArgumentException($"{group.Id} must be equal to {nameof(PrefabCount)} + {nameof(IdOffset)}.", nameof(group));
+		}
+
+		_groups.Add(group.Id, group);
+		_prefabs.AddRange(group.Values);
+	}
+
+	public bool RemoveGroup(ushort id)
+	{
+		if (!_groups.Remove(id, out var group))
+		{
+			return false;
+		}
+
+		_prefabs.RemoveRange(id, group.Count);
+
+		if (IsLastGroup(group))
+		{
+			return true;
+		}
+
+		DecreaseAfter(id, (ushort)group.Count);
+
+		return true;
+	}
+
+	public void AddPrefabToGroup(ushort id, Prefab prefab)
+	{
+		var group = _groups[id];
+		group.Add(prefab.PosInGroup, prefab);
+
+		if (IsLastGroup(group))
+		{
+			_prefabs.Add(prefab);
+			return;
+		}
+
+		int prefabId = group.Id + group.Count;
+		IncreaseAfter(prefabId, 1);
+		_prefabs.Insert(prefabId, prefab);
+	}
+
+	public bool TryAddPrefabToGroup(ushort id, Prefab prefab)
+	{
+		if (!_groups.TryGetValue(id, out var group) || !group.TryAdd(prefab))
+		{
+			return false;
+		}
+
+		if (IsLastGroup(group))
+		{
+			_prefabs.Add(prefab);
+			return true;
+		}
+
+		int prefabId = group.Id + group.Count;
+		IncreaseAfter(prefabId, 1);
+		_prefabs.Insert(prefabId, prefab);
+
+		return true;
+	}
+
+	public bool RemovePrefabFromGroup(ushort id, byte3 posInGroup)
+	{
+		var group = _groups[id];
+		if (!group.Remove(posInGroup))
+		{
+			return false;
+		}
+
+		int index = group.IndexOf(posInGroup);
+		ushort prefabId = (ushort)(id + index);
+
+		_prefabs.RemoveAt(PrefabCount - 1);
+		RemovePrefabId(prefabId);
+
+		if (prefabId == PrefabCount + IdOffset - 1)
+		{
+			return true;
+		}
+
+		DecreaseAfter(prefabId, 1);
+
+		return true;
 	}
 
 	/// <summary>
@@ -186,6 +281,33 @@ public class PrefabList :  ICloneable
 	private static IEnumerable<Prefab> PrefabsFromGroups(IEnumerable<KeyValuePair<ushort, PrefabGroup>> groups)
 		=> groups.OrderBy(item => item.Key).SelectMany(item => item.Value.Values);
 
+	private bool IsLastGroup(PrefabGroup group)
+		=> group.Id + group.Count == PrefabCount + IdOffset;
+
+	private void RemovePrefabId(ushort id)
+	{
+		foreach (var group in _groups.Values)
+		{
+			ushort[] array = group.Blocks.Array.Array;
+
+			for (int z = 0; z < group.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < group.Blocks.Size.Y; y++)
+				{
+					for (int x = 0; x < group.Blocks.Size.X; x++)
+					{
+						int i = group.Blocks.GetBlockUnchecked(new int3(x, y, z));
+
+						if (array[i] == id)
+						{
+							array[i] = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	private void IncreaseAfter(int index, ushort amount)
 	{
 		index += IdOffset;
@@ -194,23 +316,48 @@ public class PrefabList :  ICloneable
 		{
 			Prefab prefab = this[i];
 
-			if (prefab.IsInGroup && prefab.GroupId >= index)
+			if (prefab.GroupId >= index)
 			{
 				prefab.GroupId += amount;
 			}
+		}
 
-			if (!(prefab.Blocks is null))
+		List<ushort> groupsToChangeId = [];
+
+		foreach (var (id, group) in _groups)
+		{
+			if (id >= index)
 			{
-				ushort[] array = prefab.Blocks.Array.Array;
+				groupsToChangeId.Add(id);
+			}
 
-				for (int j = 0; j < array.Length; j++)
+			ushort[] array = group.Blocks.Array.Array;
+
+			for (int z = 0; z < group.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < group.Blocks.Size.Y; y++)
 				{
-					if (array[j] >= index)
+					for (int x = 0; x < group.Blocks.Size.X; x++)
 					{
-						array[j] += amount;
+						int i = group.Blocks.GetBlockUnchecked(new int3(x, y, z));
+
+						if (array[i] >= index)
+						{
+							array[i] += amount;
+						}
 					}
 				}
 			}
+		}
+
+		foreach (ushort id in groupsToChangeId.OrderByDescending(item => item))
+		{
+			bool removed = _groups.Remove(id, out var group);
+
+			Debug.Assert(removed, "Group should have been removed.");
+			Debug.Assert(group is not null, $"{group} shouldn't be null.");
+
+			_groups[(ushort)(id + amount)] = group;
 		}
 	}
 
@@ -222,23 +369,48 @@ public class PrefabList :  ICloneable
 		{
 			Prefab prefab = this[i];
 
-			if (prefab.IsInGroup && prefab.GroupId >= index)
+			if (prefab.GroupId >= index)
 			{
 				prefab.GroupId -= amount;
 			}
+		}
 
-			if (!(prefab.Blocks is null))
+		List<ushort> groupsToChangeId = [];
+
+		foreach (var (id, group) in _groups)
+		{
+			if (id >= index)
 			{
-				ushort[] array = prefab.Blocks.Array.Array;
+				groupsToChangeId.Add(id);
+			}
 
-				for (int j = 0; j < array.Length; j++)
+			ushort[] array = group.Blocks.Array.Array;
+
+			for (int z = 0; z < group.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < group.Blocks.Size.Y; y++)
 				{
-					if (array[j] >= index)
+					for (int x = 0; x < group.Blocks.Size.X; x++)
 					{
-						array[j] -= amount;
+						int i = group.Blocks.GetBlockUnchecked(new int3(x, y, z));
+
+						if (array[i] >= index)
+						{
+							array[i] -= amount;
+						}
 					}
 				}
 			}
+		}
+
+		foreach (ushort id in groupsToChangeId.OrderBy(item => item))
+		{
+			bool removed = _groups.Remove(id, out var group);
+
+			Debug.Assert(removed, "Group should have been removed.");
+			Debug.Assert(group is not null, $"{group} shouldn't be null.");
+
+			_groups[(ushort)(id - amount)] = group;
 		}
 	}
 }
