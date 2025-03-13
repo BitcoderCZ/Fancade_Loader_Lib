@@ -12,7 +12,7 @@ using System.Linq;
 namespace FancadeLoaderLib;
 
 /// <summary>
-/// Represents a prefab (block or level), processed for easier manipulation.
+/// Represents a mesh part of a <see cref="PrefabGroup"/>.
 /// </summary>
 public class Prefab : ICloneable
 {
@@ -62,9 +62,7 @@ public class Prefab : ICloneable
 	/// </summary>
 	/// <param name="prefab">The prefab to copy.</param>
 	public Prefab(Prefab prefab)
-#pragma warning disable CA1062 // Validate arguments of public methods
-		: this(prefab._name, prefab.Collider, prefab.Type, prefab.BackgroundColor, prefab.Editable, prefab.GroupId, prefab.PosInGroup, prefab.Voxels is null ? null : (Voxel[])prefab.Voxels.Clone(), prefab.Blocks.Clone(), [.. prefab.Settings], [.. prefab.Connections])
-#pragma warning restore CA1062
+		: this(prefab.GroupId, prefab.PosInGroup, prefab.Voxels is null ? null : (Voxel[])prefab.Voxels.Clone())
 	{
 	}
 
@@ -88,9 +86,7 @@ public class Prefab : ICloneable
 	/// <para>The voxels are in XYZ order.</para>
 	/// </remarks>
 	/// <value>Voxels/model of this prefab.</value>
-#pragma warning disable CA1819 // Properties should not return arrays
 	public Voxel[]? Voxels
-#pragma warning restore CA1819
 	{
 		get => _voxels;
 		set

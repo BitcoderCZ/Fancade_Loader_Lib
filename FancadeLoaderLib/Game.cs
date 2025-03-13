@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace FancadeLoaderLib;
 
@@ -32,19 +33,7 @@ public class Game : ICloneable
 	/// </summary>
 	/// <param name="name">The name of this game.</param>
 	public Game(string name)
-		: this(name, "Unknown Author", string.Empty, Enumerable.Empty<PrefabGroup>())
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="Game"/> class.
-	/// </summary>
-	/// <param name="name">The name of this game.</param>
-	/// <param name="author">The name of the author of this game.</param>
-	/// <param name="description">The description of this game.</param>
-	/// <param name="groups">The groups of this game.</param>
-	public Game(string name, string author, string description, IEnumerable<PrefabGroup> groups)
-		: this(name, author, description, [.. groups])
+		: this(name, "Unknown Author", string.Empty, new PrefabList())
 	{
 	}
 
@@ -149,7 +138,7 @@ public class Game : ICloneable
 			ThrowHelper.ThrowArgumentNullException(nameof(game));
 		}
 
-		var groups = new List<PrefabGroup>();
+		var prefabs = new PrefabList();
 
 		short idOffsetAddition = (short)(-game.IdOffset + RawGame.CurrentNumbStockPrefabs);
 
@@ -164,17 +153,17 @@ public class Game : ICloneable
 					i++;
 				} while (game.Prefabs[i].GroupId == groupId);
 
-				groups.Add(PrefabGroup.FromRaw((ushort)(startIndex + RawGame.CurrentNumbStockPrefabs), game.Prefabs.Skip(startIndex).Take(i - startIndex), game.IdOffset, idOffsetAddition, clonePrefabs));
+				prefabs.AddGroup(PrefabGroup.FromRaw((ushort)(startIndex + RawGame.CurrentNumbStockPrefabs), game.Prefabs.Skip(startIndex).Take(i - startIndex), game.IdOffset, idOffsetAddition, clonePrefabs));
 
 				i--; // incremented at the end of the loop
 			}
 			else
 			{
-				groups.Add(PrefabGroup.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [game.Prefabs[i]], game.IdOffset, idOffsetAddition, clonePrefabs));
+				prefabs.AddGroup(PrefabGroup.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [game.Prefabs[i]], game.IdOffset, idOffsetAddition, clonePrefabs));
 			}
 		}
 
-		return new Game(game.Name, game.Author, game.Description, groups);
+		return new Game(game.Name, game.Author, game.Description, prefabs);
 	}
 
 	/// <summary>
@@ -207,20 +196,20 @@ public class Game : ICloneable
 			Author = "Unknown Author";
 		}
 
-		for (int i = 0; i < Prefabs.Count; i++)
+		foreach (var group in Prefabs.Groups)
 		{
-			Prefabs[i].Editable = true;
+			group.Editable = true;
 		}
 	}
 
 	/// <summary>
-	/// Calls <see cref="BlockData.Trim"/> on all prefabs in <see cref="Prefabs"/>.
+	/// Calls <see cref="BlockData.Trim"/> on all groups in <see cref="Prefabs"/>.
 	/// </summary>
-	public void TrimPrefabs()
+	public void TrimGroups()
 	{
-		foreach (var prefab in Prefabs)
+		foreach (var group in Prefabs.Groups)
 		{
-			prefab.Blocks.Trim();
+			group.Blocks.Trim();
 		}
 	}
 
@@ -230,16 +219,7 @@ public class Game : ICloneable
 	/// <param name="clonePrefabs">If the prefabs should be copied, if <see langword="true"/>, this <see cref="Game"/> instance shouldn't be used anymore.</param>
 	/// <returns>A new instance of the <see cref="RawGame"/> class from this <see cref="game"/>.</returns>
 	public RawGame ToRaw(bool clonePrefabs)
-	{
-		List<RawPrefab> prefabs = new List<RawPrefab>(Prefabs.Count);
-
-		for (int i = 0; i < Prefabs.Count; i++)
-		{
-			prefabs.Add(Prefabs[i].VoxelsToRaw(clonePrefabs));
-		}
-
-		return new RawGame(Name, Author, Description, RawGame.CurrentNumbStockPrefabs, prefabs);
-	}
+		=> new RawGame(Name, Author, Description, RawGame.CurrentNumbStockPrefabs, [.. Prefabs.Groups.OrderBy(item => item.Id).SelectMany(item => item.ToRaw(clonePrefabs)).ToList()]);
 
 	/// <summary>
 	/// Saves a game to a writer.

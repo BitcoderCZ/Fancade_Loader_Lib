@@ -9,8 +9,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -31,50 +33,37 @@ public class PrefabList : ICloneable
 	internal readonly Dictionary<ushort, PrefabGroup> _groups;
 	internal readonly List<Prefab> _prefabs;
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PrefabList"/> class.
-	/// </summary>
 	public PrefabList()
 	{
 		_groups = [];
 		_prefabs = [];
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PrefabList"/> class.
-	/// </summary>
-	/// <param name="capacity">The initial group capacity.</param>
-	public PrefabList(int capacity)
+	public PrefabList(int groupCapacity, int prefabCapacity)
 	{
-		_groups = new(capacity);
-		_prefabs = new(capacity);
+		_groups = new(groupCapacity);
+		_prefabs = new(prefabCapacity);
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PrefabList"/> class.
-	/// </summary>
-	/// <remarks>Sets <see cref="IdOffset"/> to the lowest <see cref="PrefabGroup.Id"/>.</remarks>
-	/// <param name="collection">The groups to place into this list.</param>
 	public PrefabList(IEnumerable<PrefabGroup> collection)
 	{
 		if (collection is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(collection));
+			ThrowArgumentNullException(nameof(collection));
 		}
 
 		_groups = collection.ToDictionary(group => group.Id);
+		ValidateGroups(_groups.Values, nameof(collection)); // validate using _groups.Values to avoid iterating over collection multiple times
+
 		_prefabs = [.. PrefabsFromGroups(_groups)];
 
 		IdOffset = _groups.Min(item => item.Key);
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PrefabList"/> class.
-	/// </summary>
-	/// <param name="list">The <see cref="PrefabList"/> to copy values from.</param>
-	/// <param name="deepCopy">If deep copy should be performed.</param>
 	public PrefabList(PrefabList list, bool deepCopy)
 	{
+		ThrowIfNull(list, nameof(list));
+
 		if (deepCopy)
 		{
 			_groups = list._groups.ToDictionary(item => item.Key, item => item.Value.Clone(true));
@@ -97,22 +86,15 @@ public class PrefabList : ICloneable
 
 	public int PrefabCount => _prefabs.Count;
 
-	public Prefab this[int index]
-	{
-		get => _prefabs[index];
-		set => _prefabs[index] = value;
-	}
+	public IEnumerable<PrefabGroup> Groups => _groups.Values;
 
-	/// <summary>
-	/// Loads a <see cref="PrefabList"/> from a <see cref="FcBinaryReader"/>.
-	/// </summary>
-	/// <param name="reader">The reader to read the <see cref="PrefabList"/> from.</param>
-	/// <returns>A <see cref="PrefabList"/> read from <paramref name="reader"/>.</returns>
+	public IEnumerable<Prefab> Prefabs => _prefabs;
+
 	public static PrefabList Load(FcBinaryReader reader)
 	{
 		if (reader is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(reader));
+			ThrowArgumentNullException(nameof(reader));
 		}
 
 		uint count = reader.ReadUInt32();
@@ -138,14 +120,14 @@ public class PrefabList : ICloneable
 					i++;
 				} while (rawPrefabs[i].GroupId == groupId);
 
-				ushort id = (ushort)(startIndex + RawGame.CurrentNumbStockPrefabs);
+				ushort id = (ushort)(startIndex + idOffset);
 				groups.Add(id, PrefabGroup.FromRaw(id, rawPrefabs.Skip(startIndex).Take(i - startIndex), ushort.MaxValue, 0, false));
 
 				i--; // incremented at the end of the loop
 			}
 			else
 			{
-				ushort id = (ushort)(i + RawGame.CurrentNumbStockPrefabs);
+				ushort id = (ushort)(i + idOffset);
 				groups.Add(id, PrefabGroup.FromRaw(id, [rawPrefabs[i]], ushort.MaxValue, 0, false));
 			}
 		}
@@ -156,15 +138,11 @@ public class PrefabList : ICloneable
 		};
 	}
 
-	/// <summary>
-	/// Writes a <see cref="PrefabList"/> into a <see cref="FcBinaryWriter"/>.
-	/// </summary>
-	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
 		if (writer is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(writer));
+			ThrowArgumentNullException(nameof(writer));
 		}
 
 		writer.WriteUInt32((uint)PrefabCount);
@@ -176,11 +154,37 @@ public class PrefabList : ICloneable
 		}
 	}
 
+	public PrefabGroup GetGroup(ushort id)
+		=> _groups[id];
+
+	public bool TryGetGroup(ushort id, [MaybeNullWhen(false)] out PrefabGroup group)
+		=> _groups.TryGetValue(id, out group);
+
+	public Prefab GetPrefab(ushort id)
+		=> _prefabs[id - IdOffset];
+
+	public bool TryGetPrefab(ushort id, [MaybeNullWhen(false)] out Prefab prefab)
+	{
+		id -= IdOffset;
+
+		// can skip (id >= 0) because id is unsigned
+		if (id < _prefabs.Count)
+		{
+			prefab = _prefabs[id];
+			return true;
+		}
+		else
+		{
+			prefab = null;
+			return false;
+		}
+	}
+
 	public void AddGroup(PrefabGroup group)
 	{
 		if (group.Id != PrefabCount + IdOffset)
 		{
-			ThrowHelper.ThrowArgumentException($"{group.Id} must be equal to {nameof(PrefabCount)} + {nameof(IdOffset)}.", nameof(group));
+			ThrowArgumentException($"{group.Id} must be equal to {nameof(PrefabCount)} + {nameof(IdOffset)}.", nameof(group));
 		}
 
 		_groups.Add(group.Id, group);
@@ -254,7 +258,7 @@ public class PrefabList : ICloneable
 		ushort prefabId = (ushort)(id + index);
 
 		_prefabs.RemoveAt(PrefabCount - 1);
-		RemovePrefabId(prefabId);
+		RemoveIdFromBlocks(prefabId);
 
 		if (prefabId == PrefabCount + IdOffset - 1)
 		{
@@ -266,11 +270,6 @@ public class PrefabList : ICloneable
 		return true;
 	}
 
-	/// <summary>
-	/// Creates a copy of this <see cref="PrefabList"/>.
-	/// </summary>
-	/// <param name="deepCopy">If deep copy should be performed.</param>
-	/// <returns>A copy of this <see cref="PrefabList"/>.</returns>
 	public PrefabList Clone(bool deepCopy)
 		=> new PrefabList(this, deepCopy);
 
@@ -278,13 +277,30 @@ public class PrefabList : ICloneable
 	object ICloneable.Clone()
 		=> new PrefabList(this, true);
 
+	private static void ValidateGroups(IEnumerable<PrefabGroup> groups, string paramName)
+	{
+		int? nextId = null;
+
+		foreach (var group in groups.OrderBy(group => group.Id))
+		{
+			if (nextId == null || group.Id == nextId)
+			{
+				nextId = group.Id + group.Count;
+			}
+			else
+			{
+				throw new ArgumentException($"Groups in {paramName} must have consecutive IDs. Expected ID {nextId}, but found {group.Id}.", paramName);
+			}
+		}
+	}
+
 	private static IEnumerable<Prefab> PrefabsFromGroups(IEnumerable<KeyValuePair<ushort, PrefabGroup>> groups)
 		=> groups.OrderBy(item => item.Key).SelectMany(item => item.Value.Values);
 
 	private bool IsLastGroup(PrefabGroup group)
 		=> group.Id + group.Count == PrefabCount + IdOffset;
 
-	private void RemovePrefabId(ushort id)
+	private void RemoveIdFromBlocks(ushort id)
 	{
 		foreach (var group in _groups.Values)
 		{
@@ -314,7 +330,7 @@ public class PrefabList : ICloneable
 
 		for (int i = 0; i < _prefabs.Count; i++)
 		{
-			Prefab prefab = this[i];
+			Prefab prefab = _prefabs[i];
 
 			if (prefab.GroupId >= index)
 			{
@@ -367,7 +383,7 @@ public class PrefabList : ICloneable
 
 		for (int i = 0; i < _prefabs.Count; i++)
 		{
-			Prefab prefab = this[i];
+			Prefab prefab = _prefabs[i];
 
 			if (prefab.GroupId >= index)
 			{
