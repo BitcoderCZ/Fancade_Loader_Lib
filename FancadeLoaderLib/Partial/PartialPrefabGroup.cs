@@ -177,7 +177,8 @@ public sealed class PartialPrefabGroup : ICollection<byte3>, ICloneable
 	/// <inheritdoc/>
 	public bool Remove(byte3 key)
 	{
-		if (Count == 1)
+		// can't remove the first prefab
+		if (Count == 1 || key == _prefabs[0])
 		{
 			return false;
 		}

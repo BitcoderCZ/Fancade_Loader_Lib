@@ -14,8 +14,11 @@ public class BlockDataTests
 		blockData.Move(new int3(1, 1, 1));
 
 		Assert.That(blockData.Size, Is.EqualTo(new int3(5, 5, 5)));
-		Assert.That(blockData.GetBlock(new int3(2, 2, 2)), Is.EqualTo(42));
-		Assert.That(blockData.GetBlock(new int3(1, 1, 1)), Is.EqualTo(0));
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(blockData.GetBlock(new int3(2, 2, 2)), Is.EqualTo(42));
+			Assert.That(blockData.GetBlock(new int3(1, 1, 1)), Is.EqualTo(0));
+		}
 	}
 
 	[Test]
@@ -23,9 +26,12 @@ public class BlockDataTests
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
 
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(-1, 0, 0)));
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, -1, 0)));
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, 0, -1)));
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(-1, 0, 0)));
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, -1, 0)));
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, 0, -1)));
+		}
 	}
 
 	[Test]
@@ -52,10 +58,13 @@ public class BlockDataTests
 		blockData.Move(new int3(1, 0, 0), new int3(1, 1, 1));
 
 		Assert.That(blockData.Size, Is.EqualTo(new int3(4, 3, 3)));
-		Assert.That(blockData.GetBlock(new int3(0, 0, 0)), Is.EqualTo(1));
-		Assert.That(blockData.GetBlock(new int3(1, 1, 1)), Is.EqualTo(0));
-		Assert.That(blockData.GetBlock(new int3(2, 1, 1)), Is.EqualTo(2));
-		Assert.That(blockData.GetBlock(new int3(3, 2, 2)), Is.EqualTo(3));
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(blockData.GetBlock(new int3(0, 0, 0)), Is.EqualTo(1));
+			Assert.That(blockData.GetBlock(new int3(1, 1, 1)), Is.EqualTo(0));
+			Assert.That(blockData.GetBlock(new int3(2, 1, 1)), Is.EqualTo(2));
+			Assert.That(blockData.GetBlock(new int3(3, 2, 2)), Is.EqualTo(3));
+		}
 	}
 
 	[Test]
@@ -63,10 +72,13 @@ public class BlockDataTests
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(2, 2, 2)));
 
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(1, 1, 1), new int3(3, 3, 3)));
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(1, 1, 1), new int3(-1, 0, 0)));
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(1, 1, 1), new int3(0, -1, 0)));
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(1, 1, 1), new int3(0, 0, -1)));
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(1, 1, 1), new int3(3, 3, 3)));
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(1, 1, 1), new int3(-1, 0, 0)));
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(1, 1, 1), new int3(0, -1, 0)));
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(1, 1, 1), new int3(0, 0, -1)));
+		}
 	}
 
 	[Test]
@@ -74,9 +86,12 @@ public class BlockDataTests
 	{
 		var blockData = new BlockData(new Array3D<ushort>(new int3(2, 2, 2)));
 
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(-2, 0, 0), new int3(1, 1, 1)));
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, -2, 0), new int3(1, 1, 1)));
-		Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, 0, -2), new int3(1, 1, 1)));
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(-2, 0, 0), new int3(1, 1, 1)));
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, -2, 0), new int3(1, 1, 1)));
+			Assert.Throws<ArgumentOutOfRangeException>(() => blockData.Move(new int3(0, 0, -2), new int3(1, 1, 1)));
+		}
 	}
 
 	[Test]

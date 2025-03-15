@@ -511,35 +511,6 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		}
 	}
 
-	/// <summary>
-	/// Swaps 2 postitions.
-	/// </summary>
-	/// <param name="posA">The first postition.</param>
-	/// <param name="posB">The second postion.</param>
-	public void SwapPositions(byte3 posA, byte3 posB)
-	{
-		if (TryGetValue(posA, out Prefab? a))
-		{
-			a.PosInGroup = posB;
-			this[posB] = a;
-		}
-
-		if (TryGetValue(posB, out Prefab? b))
-		{
-			b.PosInGroup = posA;
-			this[posA] = b;
-		}
-		else
-		{
-			Remove(posA);
-		}
-
-		if (a is null)
-		{
-			Remove(posB);
-		}
-	}
-
 	/// <inheritdoc/>
 	public void Add(byte3 key, Prefab value)
 	{
@@ -596,7 +567,8 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	/// <inheritdoc/>
 	public bool Remove(byte3 key)
 	{
-		if (Count == 1)
+		// can't remove the first prefab
+		if (Count == 1 || key == _prefabs.GetAt(0).Key)
 		{
 			return false;
 		}
@@ -613,7 +585,8 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 
 	public bool Remove(byte3 key, [MaybeNullWhen(false)] out Prefab prefab)
 	{
-		if (Count == 1)
+		// can't remove the first prefab
+		if (Count == 1 || key == _prefabs.GetAt(0).Key)
 		{
 			prefab = null;
 			return false;
@@ -678,7 +651,8 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	/// <inheritdoc/>
 	bool ICollection<KeyValuePair<byte3, Prefab>>.Remove(KeyValuePair<byte3, Prefab> item)
 	{
-		if (Count == 1)
+		// can't remove the first prefab
+		if (Count == 1 || item.Key == _prefabs.GetAt(0).Key)
 		{
 			ThrowHelper.ThrowInvalidOperationException($"{nameof(PrefabGroup)} cannot be empty.");
 		}

@@ -115,7 +115,7 @@ public class PrefabList : ICloneable
 				do
 				{
 					i++;
-				} while (rawPrefabs[i].GroupId == groupId);
+				} while (i < count && rawPrefabs[i].GroupId == groupId);
 
 				ushort id = (ushort)(startIndex + idOffset);
 				groups.Add(id, PrefabGroup.FromRaw(id, rawPrefabs.Skip(startIndex).Take(i - startIndex), ushort.MaxValue, 0, false));
@@ -230,38 +230,61 @@ public class PrefabList : ICloneable
 		return true;
 	}
 
-	public void AddPrefabToGroup(ushort id, Prefab prefab)
+	public void AddPrefabToGroup(ushort id, Prefab prefab, bool overwriteBlocks)
 	{
 		var group = _groups[id];
-		group.Add(prefab.PosInGroup, prefab);
 
-		if (WillBeLastGroup(group))
+		if (!overwriteBlocks && !CanAddIdToGroup(id, prefab.PosInGroup))
 		{
+			throw new InvalidOperationException($"Cannot add prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+		}
+
+		ushort prefabId = (ushort)(group.Id + group.Count);
+
+		if (IsLastGroup(group))
+		{
+			group.Add(prefab.PosInGroup, prefab);
 			_prefabs.Add(prefab);
+			AddIdToGroup(id, prefab.PosInGroup, prefabId);
 			return;
 		}
 
-		int prefabId = group.Id + group.Count;
+		group.Add(prefab.PosInGroup, prefab);
+
 		IncreaseAfter(prefabId, 1);
 		_prefabs.Insert(prefabId, prefab);
+		AddIdToGroup(id, prefab.PosInGroup, prefabId);
 	}
 
-	public bool TryAddPrefabToGroup(ushort id, Prefab prefab)
+	public bool TryAddPrefabToGroup(ushort id, Prefab prefab, bool overwriteBlocks)
 	{
-		if (!_groups.TryGetValue(id, out var group) || !group.TryAdd(prefab))
+		if (!_groups.TryGetValue(id, out var group))
 		{
 			return false;
 		}
 
+		if (!overwriteBlocks && !CanAddIdToGroup(id, prefab.PosInGroup))
+		{
+			return false;
+		}
+
+		if (!group.TryAdd(prefab))
+		{
+			return false;
+		}
+
+		ushort prefabId = (ushort)(group.Id + group.Count - 1);
+
 		if (IsLastGroup(group))
 		{
 			_prefabs.Add(prefab);
+			AddIdToGroup(id, prefab.PosInGroup, prefabId);
 			return true;
 		}
 
-		int prefabId = group.Id + group.Count;
 		IncreaseAfter(prefabId, 1);
 		_prefabs.Insert(prefabId, prefab);
+		AddIdToGroup(id, prefab.PosInGroup, prefabId);
 
 		return true;
 	}
@@ -269,15 +292,16 @@ public class PrefabList : ICloneable
 	public bool RemovePrefabFromGroup(ushort id, byte3 posInGroup)
 	{
 		var group = _groups[id];
+
+		int prefabIndex = group.IndexOf(posInGroup);
 		if (!group.Remove(posInGroup))
 		{
 			return false;
 		}
 
-		int index = group.IndexOf(posInGroup);
-		ushort prefabId = (ushort)(id + index);
+		ushort prefabId = (ushort)(id + prefabIndex);
 
-		_prefabs.RemoveAt(id + index - IdOffset);
+		_prefabs.RemoveAt(prefabId - IdOffset);
 		RemoveIdFromBlocks(prefabId);
 
 		if (prefabId == PrefabCount + IdOffset - 1)
@@ -335,11 +359,67 @@ public class PrefabList : ICloneable
 				{
 					for (int x = 0; x < group.Blocks.Size.X; x++)
 					{
-						int i = group.Blocks.GetBlockUnchecked(new int3(x, y, z));
+						int i = group.Blocks.Index(new int3(x, y, z));
 
 						if (array[i] == id)
 						{
 							array[i] = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private bool CanAddIdToGroup(ushort groupId, int3 offset)
+	{
+		foreach (var group in _groups.Values)
+		{
+			ushort[] array = group.Blocks.Array.Array;
+
+			for (int z = 0; z < group.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < group.Blocks.Size.Y; y++)
+				{
+					for (int x = 0; x < group.Blocks.Size.X; x++)
+					{
+						int3 pos = new int3(x, y, z);
+						int i = group.Blocks.Index(pos);
+
+						if (array[i] == groupId)
+						{
+							pos += offset;
+							if (group.Blocks.InBounds(pos) && group.Blocks.GetBlockUnchecked(pos) != 0)
+							{
+								return false;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	private void AddIdToGroup(ushort groupId, int3 offset, ushort id)
+	{
+		foreach (var group in _groups.Values)
+		{
+			ushort[] array = group.Blocks.Array.Array;
+
+			for (int z = 0; z < group.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < group.Blocks.Size.Y; y++)
+				{
+					for (int x = 0; x < group.Blocks.Size.X; x++)
+					{
+						int3 pos = new int3(x, y, z);
+						int i = group.Blocks.Index(pos);
+
+						if (array[i] == groupId)
+						{
+							group.Blocks.SetBlock(pos + offset, id);
 						}
 					}
 				}
@@ -378,7 +458,7 @@ public class PrefabList : ICloneable
 				{
 					for (int x = 0; x < group.Blocks.Size.X; x++)
 					{
-						int i = group.Blocks.GetBlockUnchecked(new int3(x, y, z));
+						int i = group.Blocks.Index(new int3(x, y, z));
 
 						if (array[i] >= index)
 						{
@@ -396,7 +476,9 @@ public class PrefabList : ICloneable
 			Debug.Assert(removed, "Group should have been removed.");
 			Debug.Assert(group is not null, $"{group} shouldn't be null.");
 
-			_groups[(ushort)(id + amount)] = group;
+			ushort newId = (ushort)(id + amount);
+			group.Id = newId;
+			_groups[newId] = group;
 		}
 	}
 
@@ -431,7 +513,7 @@ public class PrefabList : ICloneable
 				{
 					for (int x = 0; x < group.Blocks.Size.X; x++)
 					{
-						int i = group.Blocks.GetBlockUnchecked(new int3(x, y, z));
+						int i = group.Blocks.Index(new int3(x, y, z));
 
 						if (array[i] >= index)
 						{
@@ -449,7 +531,9 @@ public class PrefabList : ICloneable
 			Debug.Assert(removed, "Group should have been removed.");
 			Debug.Assert(group is not null, $"{group} shouldn't be null.");
 
-			_groups[(ushort)(id - amount)] = group;
+			ushort newId = (ushort)(id - amount);
+			group.Id = newId;
+			_groups[newId] = group;
 		}
 	}
 }

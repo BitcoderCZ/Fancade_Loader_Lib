@@ -103,7 +103,7 @@ public class PartialPrefabList : ICloneable
 				do
 				{
 					i++;
-				} while (prefabs[i].GroupId == groupId);
+				} while (i < count && prefabs[i].GroupId == groupId);
 
 				ushort id = (ushort)(startIndex + idOffset);
 				var prefab = prefabs[startIndex];
@@ -160,6 +160,23 @@ public class PartialPrefabList : ICloneable
 		_groups.Add(group.Id, group);
 	}
 
+	public void InsertGroup(PartialPrefabGroup group)
+	{
+		if (WillBeLastGroup(group))
+		{
+			AddGroup(group);
+			return;
+		}
+
+		if (!_groups.ContainsKey(group.Id))
+		{
+			ThrowArgumentException($"{nameof(_groups)} must contain {nameof(group)}.{nameof(PrefabGroup.Id)}.", nameof(group));
+		}
+
+		IncreaseAfter(group.Id, (ushort)group.Count);
+		_groups.Add(group.Id, group);
+	}
+
 	public bool RemoveGroup(ushort id)
 	{
 		if (!_groups.Remove(id, out var group))
@@ -201,11 +218,11 @@ public class PartialPrefabList : ICloneable
 		}
 	}
 
-	private static IEnumerable<Prefab> PrefabsFromGroups(IEnumerable<KeyValuePair<ushort, PrefabGroup>> groups)
-		=> groups.OrderBy(item => item.Key).SelectMany(item => item.Value.Values);
-
 	private bool IsLastGroup(PartialPrefabGroup group)
-		=> group.Id + group.Count == PrefabCount + IdOffset;
+		=> group.Id + group.Count >= PrefabCount + IdOffset;
+
+	private bool WillBeLastGroup(PartialPrefabGroup group)
+		=> group.Id >= PrefabCount + IdOffset;
 
 	private void IncreaseAfter(int index, ushort amount)
 	{
@@ -228,7 +245,9 @@ public class PartialPrefabList : ICloneable
 			Debug.Assert(removed, "Group should have been removed.");
 			Debug.Assert(group is not null, $"{group} shouldn't be null.");
 
-			_groups[(ushort)(id + amount)] = group;
+			ushort newId = (ushort)(id + amount);
+			group.Id = newId;
+			_groups[newId] = group;
 		}
 	}
 
@@ -253,7 +272,9 @@ public class PartialPrefabList : ICloneable
 			Debug.Assert(removed, "Group should have been removed.");
 			Debug.Assert(group is not null, $"{group} shouldn't be null.");
 
-			_groups[(ushort)(id - amount)] = group;
+			ushort newId = (ushort)(id - amount);
+			group.Id = newId;
+			_groups[newId] = group;
 		}
 	}
 
