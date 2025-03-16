@@ -3,13 +3,13 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -80,7 +80,12 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (!prefabs.Any())
 		{
-			ThrowHelper.ThrowArgumentException($"{nameof(prefabs)} cannot be empty.", nameof(prefabs));
+			ThrowArgumentException($"{nameof(prefabs)} cannot be empty.", nameof(prefabs));
+		}
+
+		if (string.IsNullOrEmpty(name))
+		{
+			ThrowArgumentException($"{nameof(name)} cannot be null or empty.", nameof(name));
 		}
 
 		_id = id;
@@ -98,11 +103,11 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 			// validate
 			if (prefab.PosInGroup.X >= MaxSize || prefab.PosInGroup.Y >= MaxSize || prefab.PosInGroup.Z >= MaxSize)
 			{
-				ThrowHelper.ThrowArgumentOutOfRangeException(nameof(prefabs), $"{nameof(Prefab.PosInGroup)} cannot be larger than {MaxSize}.");
+				ThrowArgumentOutOfRangeException(nameof(prefabs), $"{nameof(Prefab.PosInGroup)} cannot be larger than {MaxSize}.");
 			}
 			else if (prefab.GroupId != Id)
 			{
-				ThrowHelper.ThrowArgumentException($"GroupId must be the same for all prefabs in {nameof(prefabs)}", nameof(prefabs));
+				ThrowArgumentException($"GroupId must be the same for all prefabs in {nameof(prefabs)}", nameof(prefabs));
 			}
 
 			return new KeyValuePair<byte3, Prefab>(prefab.PosInGroup, prefab);
@@ -129,7 +134,12 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (!prefabs.Any())
 		{
-			ThrowHelper.ThrowArgumentException(nameof(prefabs), $"{nameof(prefabs)} cannot be empty.");
+			ThrowArgumentException(nameof(prefabs), $"{nameof(prefabs)} cannot be empty.");
+		}
+
+		if (string.IsNullOrEmpty(name))
+		{
+			ThrowArgumentException($"{nameof(name)} cannot be null or empty.", nameof(name));
 		}
 
 		_name = name;
@@ -148,11 +158,11 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 			// validate
 			if (prefab.PosInGroup.X >= MaxSize || prefab.PosInGroup.Y >= MaxSize || prefab.PosInGroup.Z >= MaxSize)
 			{
-				ThrowHelper.ThrowArgumentOutOfRangeException(nameof(prefabs), $"{nameof(Prefab.PosInGroup)} cannot be larger than {MaxSize}.");
+				ThrowArgumentOutOfRangeException(nameof(prefabs), $"{nameof(Prefab.PosInGroup)} cannot be larger than {MaxSize}.");
 			}
 			else if (id == null && prefab.GroupId != id)
 			{
-				ThrowHelper.ThrowArgumentException($"{nameof(Prefab.GroupId)} must be the same for all prefabs in {nameof(prefabs)}.", nameof(prefabs));
+				ThrowArgumentException($"{nameof(Prefab.GroupId)} must be the same for all prefabs in {nameof(prefabs)}.", nameof(prefabs));
 			}
 
 			id = prefab.GroupId;
@@ -183,7 +193,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (group is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(group));
+			ThrowArgumentNullException(nameof(group));
 		}
 
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
@@ -218,9 +228,9 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		get => _name;
 		set
 		{
-			if (value is null)
+			if (string.IsNullOrEmpty(value))
 			{
-				ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(Name)} cannot be null.");
+				ThrowArgumentException($"{nameof(Name)} cannot be null or empty.", nameof(value));
 			}
 
 			_name = value;
@@ -310,14 +320,14 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (rawPrefabs is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(rawPrefabs));
+			ThrowArgumentNullException(nameof(rawPrefabs));
 		}
 
 		RawPrefab? rawPrefab = rawPrefabs.FirstOrDefault();
 
 		if (rawPrefab is null)
 		{
-			ThrowHelper.ThrowArgumentException($"{nameof(rawPrefabs)} cannot be empty.", nameof(rawPrefabs));
+			ThrowArgumentException($"{nameof(rawPrefabs)} cannot be empty.", nameof(rawPrefabs));
 		}
 
 		PrefabType type = PrefabType.Normal;
@@ -414,7 +424,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		{
 			if (rawPrefab.Connections is null)
 			{
-				ThrowHelper.ThrowArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasConnections)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Connections)} is null", nameof(rawPrefab));
+				ThrowArgumentException($"{nameof(rawPrefab)}.{nameof(RawPrefab.HasConnections)} is true, while {nameof(rawPrefab)}.{nameof(RawPrefab.Connections)} is null", nameof(rawPrefab));
 			}
 
 			connections = clone
@@ -438,7 +448,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	/// Converts this <see cref="PrefabGroup"/> into <see cref="RawPrefab"/>s.
 	/// </summary>
 	/// <param name="clone">If the prefabs should be copied, if <see langword="true"/>, this <see cref="RawPrefab"/> instance shouldn't be used anymore.</param>
-	/// <returns>A new instance of the <see cref="RawPrefab"/> class from this <see cref="game"/>.</returns>
+	/// <returns>A new instance of the <see cref="RawPrefab"/> class from this <see cref="PrefabGroup"/>.</returns>
 	public IEnumerable<RawPrefab> ToRaw(bool clone)
 	{
 		Blocks.Trim();
@@ -654,7 +664,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 		// can't remove the first prefab
 		if (Count == 1 || item.Key == _prefabs.GetAt(0).Key)
 		{
-			ThrowHelper.ThrowInvalidOperationException($"{nameof(PrefabGroup)} cannot be empty.");
+			ThrowInvalidOperationException($"{nameof(PrefabGroup)} cannot be empty.");
 		}
 
 		bool removed = ((ICollection<KeyValuePair<byte3, Prefab>>)_prefabs).Remove(item);
@@ -701,7 +711,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (pos.X >= MaxSize || pos.Y >= MaxSize || pos.Z >= MaxSize)
 		{
-			ThrowHelper.ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be larger than {MaxSize}.");
+			ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be larger than {MaxSize}.");
 		}
 	}
 
@@ -719,7 +729,7 @@ public sealed class PrefabGroup : IDictionary<byte3, Prefab>, ICloneable
 	{
 		if (prefab is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(paramName);
+			ThrowArgumentNullException(paramName);
 		}
 
 		prefab.GroupId = Id;

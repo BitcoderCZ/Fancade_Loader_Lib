@@ -31,25 +31,26 @@ public sealed class BlockDef
 
 	public BlockDef(string name, ushort id, BlockType blockType, PrefabType prefabType, int3 size, TerminalBuilder terminals)
 	{
-		if (size.X < 0 || size.Y < 1 || size.Z < 1)
+		if (size.X < 1 || size.Y < 1 || size.Z < 1)
 		{
 			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(size), $"{nameof(size)} cannot be negative or zero.");
 		}
 
-		Prefab = new PartialPrefabGroup(id, name, prefabType, [byte3.Zero]);
-		BlockType = blockType;
-		Terminals = terminals.Build(Prefab.Size, BlockType);
-
+		List<PartialPrefab> prefabs = new(size.X * size.Y * size.Z);
 		for (int z = 0; z < size.Z; z++)
 		{
 			for (int y = 0; y < size.Y; y++)
 			{
 				for (int x = 0; x < size.X; x++)
 				{
-					Prefab.Add(new byte3(x, y, z));
+					prefabs.Add(new PartialPrefab(id, new byte3(x, y, z)));
 				}
 			}
 		}
+
+		Prefab = new PartialPrefabGroup(id, name, prefabType, prefabs);
+		BlockType = blockType;
+		Terminals = terminals.Build(Prefab.Size, BlockType);
 	}
 
 	public TerminalDef Before => BlockType == BlockType.Active ? Terminals.Get(^1) : throw new InvalidOperationException("Only active blocks have Before and After");

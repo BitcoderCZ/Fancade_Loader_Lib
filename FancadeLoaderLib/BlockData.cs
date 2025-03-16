@@ -189,9 +189,9 @@ public class BlockData
 
 		EnsureSize(pos + size);
 
-		foreach (var (prefabPos, id) in group.EnumerateWithId())
+		foreach (var (prefab, id) in group.EnumerateWithId())
 		{
-			SetBlockInternal(pos + prefabPos, id);
+			SetBlockInternal(pos + prefab.PosInGroup, id);
 		}
 	}
 	#endregion

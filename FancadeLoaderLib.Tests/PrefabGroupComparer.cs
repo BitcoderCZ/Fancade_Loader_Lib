@@ -5,6 +5,7 @@ namespace FancadeLoaderLib.Tests;
 internal sealed class PrefabGroupComparer : IEqualityComparer<PrefabGroup>
 {
 	private readonly BlockDataComparer _blockDataComparer = new();
+	private readonly PrefabComparer _prefabComparer = new();
 
 	public bool Equals(PrefabGroup? x, PrefabGroup? y)
 	{
@@ -26,6 +27,8 @@ internal sealed class PrefabGroupComparer : IEqualityComparer<PrefabGroup>
 			x.Editable == y.Editable &&
 			x.Settings.SequenceEqual(y.Settings) &&
 			x.Connections.SequenceEqual(y.Connections) &&
+			x.Keys.SequenceEqual(y.Keys) &&
+			x.Values.SequenceEqual(y.Values, _prefabComparer) &&
 			_blockDataComparer.Equals(x.Blocks, y.Blocks);
 	}
 
