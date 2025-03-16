@@ -16,13 +16,13 @@ namespace FancadeLoaderLib.Editing;
 
 public sealed class BlockDef
 {
-	public readonly PartialPrefabGroup Prefab;
+	public readonly PartialPrefab Prefab;
 
 	public readonly BlockType BlockType;
 
 	public readonly ImmutableArray<TerminalDef> Terminals;
 
-	public BlockDef(PartialPrefabGroup prefab, BlockType blockType, TerminalBuilder terminals)
+	public BlockDef(PartialPrefab prefab, BlockType blockType, TerminalBuilder terminals)
 	{
 		Prefab = prefab;
 		BlockType = blockType;
@@ -36,19 +36,19 @@ public sealed class BlockDef
 			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(size), $"{nameof(size)} cannot be negative or zero.");
 		}
 
-		List<PartialPrefab> prefabs = new(size.X * size.Y * size.Z);
+		List<PartialPrefabSegment> segments = new(size.X * size.Y * size.Z);
 		for (int z = 0; z < size.Z; z++)
 		{
 			for (int y = 0; y < size.Y; y++)
 			{
 				for (int x = 0; x < size.X; x++)
 				{
-					prefabs.Add(new PartialPrefab(id, new byte3(x, y, z)));
+					segments.Add(new PartialPrefabSegment(id, new byte3(x, y, z)));
 				}
 			}
 		}
 
-		Prefab = new PartialPrefabGroup(id, name, prefabType, prefabs);
+		Prefab = new PartialPrefab(id, name, prefabType, segments);
 		BlockType = blockType;
 		Terminals = terminals.Build(Prefab.Size, BlockType);
 	}
@@ -58,8 +58,6 @@ public sealed class BlockDef
 	public TerminalDef After => BlockType == BlockType.Active ? Terminals[0] : throw new InvalidOperationException("Only active blocks have Before and After");
 
 	public int3 Size => Prefab.Size;
-
-	public bool IsGroup => Size != int3.One;
 
 	public TerminalDef this[string terminalName]
 	{

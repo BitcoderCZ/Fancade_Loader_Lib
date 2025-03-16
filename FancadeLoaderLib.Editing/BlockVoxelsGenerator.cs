@@ -72,7 +72,7 @@ public sealed class BlockVoxelsGenerator
 	{
 		if (!_blocks.TryGetValue(pos, out Voxel[]? voxels))
 		{
-			voxels = new Voxel[Prefab.NumbVoxels];
+			voxels = new Voxel[PrefabSegment.NumbVoxels];
 			_blocks.Add(pos, voxels);
 		}
 

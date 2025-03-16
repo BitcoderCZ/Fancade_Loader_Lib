@@ -20,7 +20,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 	public readonly string? PrefabName;
 	public readonly PrefabType? PrefabType;
 
-	public readonly ushort? GroupId;
+	public readonly ushort? PrefabId;
 
 	public GameFileBlockBuilder(Game? inGame, string prefabName, PrefabType prefabType)
 	{
@@ -32,7 +32,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 		PrefabType = prefabType;
 	}
 
-	public GameFileBlockBuilder(Game inGame, ushort groupId)
+	public GameFileBlockBuilder(Game inGame, ushort prefabId)
 	{
 		if (inGame is null)
 		{
@@ -43,11 +43,11 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 
 		CreateNewPrefab = false;
 
-		GroupId = groupId;
+		PrefabId = prefabId;
 	}
 
 	[MemberNotNullWhen(true, nameof(PrefabName), nameof(PrefabType))]
-	[MemberNotNullWhen(false, nameof(GroupId))]
+	[MemberNotNullWhen(false, nameof(PrefabId))]
 	public bool CreateNewPrefab { get; private set; }
 
 #if NET5_0_OR_GREATER
@@ -58,64 +58,57 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 	{
 		Game game = InGame ?? new Game("FanScript");
 
-		PrefabGroup group;
+		Prefab prefab;
 		if (CreateNewPrefab)
 		{
 			if (PrefabType == FancadeLoaderLib.PrefabType.Level)
 			{
 				ushort id = RawGame.CurrentNumbStockPrefabs;
 
-				while (id < game.Prefabs.PrefabCount - RawGame.CurrentNumbStockPrefabs && game.Prefabs.TryGetGroup(id, out var item) && item.Type == FancadeLoaderLib.PrefabType.Level)
+				while (id < game.Prefabs.SegmentCount - RawGame.CurrentNumbStockPrefabs && game.Prefabs.TryGetPrefab(id, out var item) && item.Type == FancadeLoaderLib.PrefabType.Level)
 				{
 					id += (ushort)item.Count;
 				}
 
-				group = PrefabGroup.CreateLevel(id, PrefabName);
-				game.Prefabs.InsertGroup(group);
+				prefab = Prefab.CreateLevel(id, PrefabName);
+				game.Prefabs.InsertPrefab(prefab);
 			}
 			else
 			{
-				group = PrefabGroup.CreateBlock((ushort)(game.Prefabs.PrefabCount + RawGame.CurrentNumbStockPrefabs), PrefabName);
-				group.Type = (PrefabType)PrefabType;
-				group[byte3.Zero].Voxels = BlockVoxelsGenerator.CreateScript(int2.One).First().Value;
+				prefab = Prefab.CreateBlock((ushort)(game.Prefabs.SegmentCount + RawGame.CurrentNumbStockPrefabs), PrefabName);
+				prefab.Type = (PrefabType)PrefabType;
+				prefab[byte3.Zero].Voxels = BlockVoxelsGenerator.CreateScript(int2.One).First().Value;
 
-				game.Prefabs.AddGroup(group);
+				game.Prefabs.AddPrefab(prefab);
 			}
 		}
 		else
 		{
-			group = game.Prefabs.GetGroup((ushort)GroupId);
+			prefab = game.Prefabs.GetPrefab((ushort)PrefabId);
 		}
 
 		Block[] blocks = PreBuild(buildPos, false);
 
 		PartialPrefabList stockPrefabs = StockBlocks.PrefabList;
 
-		Dictionary<ushort, PartialPrefabGroup> groupCache = [];
+		Dictionary<ushort, PartialPrefab> prefabCache = [];
 
 		for (int i = 0; i < blocks.Length; i++)
 		{
 			Block block = blocks[i];
-			if (block.Type.IsGroup)
+			if (!prefabCache.TryGetValue(block.Type.Prefab.Id, out var stockPrefab))
 			{
-				if (!groupCache.TryGetValue(block.Type.Prefab.Id, out var stockGroup))
-				{
-					stockGroup = stockPrefabs.GetGroup(block.Type.Prefab.Id);
-					groupCache.Add(block.Type.Prefab.Id, stockGroup);
-				}
+				stockPrefab = stockPrefabs.GetPrefab(block.Type.Prefab.Id);
+				prefabCache.Add(block.Type.Prefab.Id, stockPrefab);
+			}
 
-				group.Blocks.SetGroup(block.Position, stockGroup);
-			}
-			else
-			{
-				group.Blocks.SetBlock(block.Position, block.Type.Prefab.Id);
-			}
+			prefab.Blocks.SetPrefab(block.Position, stockPrefab);
 		}
 
 		for (int i = 0; i < settings.Count; i++)
 		{
 			SettingRecord set = settings[i];
-			group.Settings.Add(new PrefabSetting()
+			prefab.Settings.Add(new PrefabSetting()
 			{
 				Index = (byte)set.ValueIndex,
 				Type = set.Value switch
@@ -136,7 +129,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 		for (int i = 0; i < connections.Count; i++)
 		{
 			ConnectionRecord con = connections[i];
-			group.Connections.Add(new Connection()
+			prefab.Connections.Add(new Connection()
 			{
 				From = (ushort3)con.From.BlockPosition,
 				FromVoxel = (ushort3)(con.From.VoxelPosition ?? ChooseSubPos(con.From.BlockPosition)),

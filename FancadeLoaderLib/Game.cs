@@ -151,13 +151,13 @@ public class Game : ICloneable
 					i++;
 				} while (game.Prefabs[i].GroupId == groupId);
 
-				prefabs.AddGroup(PrefabGroup.FromRaw((ushort)(startIndex + RawGame.CurrentNumbStockPrefabs), game.Prefabs.Skip(startIndex).Take(i - startIndex), game.IdOffset, idOffsetAddition, clonePrefabs));
+				prefabs.AddPrefab(Prefab.FromRaw((ushort)(startIndex + RawGame.CurrentNumbStockPrefabs), game.Prefabs.Skip(startIndex).Take(i - startIndex), game.IdOffset, idOffsetAddition, clonePrefabs));
 
 				i--; // incremented at the end of the loop
 			}
 			else
 			{
-				prefabs.AddGroup(PrefabGroup.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [game.Prefabs[i]], game.IdOffset, idOffsetAddition, clonePrefabs));
+				prefabs.AddPrefab(Prefab.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [game.Prefabs[i]], game.IdOffset, idOffsetAddition, clonePrefabs));
 			}
 		}
 
@@ -184,9 +184,9 @@ public class Game : ICloneable
 	/// Makes this game editable.
 	/// </summary>
 	/// <remarks>
-	/// Sets <see cref="Prefab.Editable"/> of all prefabs in <see cref="Prefabs"/> to <see langword="true"/>.
+	/// Sets <see cref="PrefabSegment.Editable"/> of all prefabs in <see cref="Prefabs"/> to <see langword="true"/>.
 	/// </remarks>
-	/// <param name="changeAuthor">If <see langword="true"/>, <see cref="Author"/> is changed to "Unknown Author".</param>
+	/// <param name="changeAuthor">If <see langword="true"/>, <see cref="Author"/> is changed to "Unknown Author"; otherwise only <see cref="Prefab.Editable"/> is set to <see langword="true"/>.</param>
 	public void MakeEditable(bool changeAuthor)
 	{
 		if (changeAuthor)
@@ -194,20 +194,20 @@ public class Game : ICloneable
 			Author = "Unknown Author";
 		}
 
-		foreach (var group in Prefabs.Groups)
+		foreach (var prefab in Prefabs.Prefabs)
 		{
-			group.Editable = true;
+			prefab.Editable = true;
 		}
 	}
 
 	/// <summary>
-	/// Calls <see cref="BlockData.Trim"/> on all groups in <see cref="Prefabs"/>.
+	/// Calls <see cref="BlockData.Trim"/> on all prefabs in <see cref="Prefabs"/>.
 	/// </summary>
-	public void TrimGroups()
+	public void TrimPrefabs()
 	{
-		foreach (var group in Prefabs.Groups)
+		foreach (var prefab in Prefabs.Prefabs)
 		{
-			group.Blocks.Trim();
+			prefab.Blocks.Trim();
 		}
 	}
 
@@ -217,7 +217,7 @@ public class Game : ICloneable
 	/// <param name="clonePrefabs">If the prefabs should be copied, if <see langword="true"/>, this <see cref="Game"/> instance shouldn't be used anymore.</param>
 	/// <returns>A new instance of the <see cref="RawGame"/> class from this <see cref="game"/>.</returns>
 	public RawGame ToRaw(bool clonePrefabs)
-		=> new RawGame(Name, Author, Description, RawGame.CurrentNumbStockPrefabs, [.. Prefabs.Groups.OrderBy(item => item.Id).SelectMany(item => item.ToRaw(clonePrefabs)).ToList()]);
+		=> new RawGame(Name, Author, Description, RawGame.CurrentNumbStockPrefabs, [.. Prefabs.Prefabs.OrderBy(item => item.Id).SelectMany(item => item.ToRaw(clonePrefabs)).ToList()]);
 
 	/// <summary>
 	/// Saves a game to a writer.

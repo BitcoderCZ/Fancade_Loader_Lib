@@ -246,7 +246,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
 	public readonly override string ToString()
 		=> $"Type: {Type}, Value: {Value}, Pos: {Position}";
 
-	public bool Equals(PrefabSetting other)
+	public readonly bool Equals(PrefabSetting other)
 		=> this == other;
 
 	public readonly override bool Equals(object? obj)

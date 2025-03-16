@@ -21,15 +21,15 @@ public static partial class PlaceBlockHelper
 	/// <remarks>
 	/// Use <see cref="Rotation"/> to place a rotation literal.
 	/// </remarks>
-	/// <param name="group">The group to set the block in.</param>
+	/// <param name="prefab">The prefab to set the block in.</param>
 	/// <param name="pos">The position to place the value at.</param>
 	/// <param name="value">The value to place.</param>
 	/// <exception cref="ArgumentException">Thrown when <paramref name="value"/> is not a valid fancade literal.</exception>
-	public static void SetValue(this PrefabGroup group, int3 pos, object value)
+	public static void SetValue(this Prefab prefab, int3 pos, object value)
 	{
-		ThrowIfNull(group, nameof(group));
+		ThrowIfNull(prefab, nameof(prefab));
 
-		PartialPrefabGroup block;
+		PartialPrefab block;
 		bool hasSetting = true;
 
 		switch (value)
@@ -52,7 +52,7 @@ public static partial class PlaceBlockHelper
 				return;
 		}
 
-		group.Blocks.SetGroup(pos, block);
+		prefab.Blocks.SetPrefab(pos, block);
 
 		if (hasSetting)
 		{
@@ -70,7 +70,7 @@ public static partial class PlaceBlockHelper
 					return;
 			}
 
-			group.Settings.Add(new PrefabSetting(0, settingType, (ushort3)pos, value));
+			prefab.Settings.Add(new PrefabSetting(0, settingType, (ushort3)pos, value));
 		}
 	}
 }

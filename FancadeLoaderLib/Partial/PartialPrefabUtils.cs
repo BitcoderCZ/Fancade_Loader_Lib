@@ -7,15 +7,15 @@ namespace FancadeLoaderLib.Partial;
 #pragma warning restore CA1716
 
 /// <summary>
-/// Util funcitons for <see cref="PartialPrefab"/>.
+/// Util funcitons for <see cref="PartialPrefabSegment"/>.
 /// </summary>
 public static class PartialPrefabUtils
 {
 	/// <summary>
-	/// Coverts a <see cref="PrefabGroup"/> to <see cref="PartialPrefabGroup"/>.
+	/// Coverts a <see cref="Prefab"/> to <see cref="PartialPrefab"/>.
 	/// </summary>
-	/// <param name="group">The group to convert.</param>
-	/// <returns><paramref name="group"/> coverted to <see cref="PartialPrefabGroup"/>.</returns>
-	public static PartialPrefabGroup ToPartial(this PrefabGroup group)
-		=> new PartialPrefabGroup(group);
+	/// <param name="prefab">The prefab to convert.</param>
+	/// <returns><paramref name="prefab"/> coverted to <see cref="PartialPrefab"/>.</returns>
+	public static PartialPrefab ToPartial(this Prefab prefab)
+		=> new PartialPrefab(prefab);
 }
