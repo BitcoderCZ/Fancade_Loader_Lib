@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
+using FancadeLoaderLib.Raw;
 using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System.Collections.Generic;
@@ -19,7 +20,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 	public readonly string? PrefabName;
 	public readonly PrefabType? PrefabType;
 
-	public readonly ushort? PrefabIndex;
+	public readonly ushort? PrefabId;
 
 	public GameFileBlockBuilder(Game? inGame, string prefabName, PrefabType prefabType)
 	{
@@ -31,7 +32,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 		PrefabType = prefabType;
 	}
 
-	public GameFileBlockBuilder(Game inGame, ushort prefabIndex)
+	public GameFileBlockBuilder(Game inGame, ushort prefabId)
 	{
 		if (inGame is null)
 		{
@@ -42,11 +43,11 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 
 		CreateNewPrefab = false;
 
-		PrefabIndex = prefabIndex;
+		PrefabId = prefabId;
 	}
 
 	[MemberNotNullWhen(true, nameof(PrefabName), nameof(PrefabType))]
-	[MemberNotNullWhen(false, nameof(PrefabIndex))]
+	[MemberNotNullWhen(false, nameof(PrefabId))]
 	public bool CreateNewPrefab { get; private set; }
 
 #if NET5_0_OR_GREATER
@@ -62,54 +63,46 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 		{
 			if (PrefabType == FancadeLoaderLib.PrefabType.Level)
 			{
-				prefab = Prefab.CreateLevel(PrefabName);
+				ushort id = RawGame.CurrentNumbStockPrefabs;
 
-				int index = 0;
-
-				while (index < game.Prefabs.Count && game.Prefabs[index].Type == FancadeLoaderLib.PrefabType.Level)
+				while (id < game.Prefabs.SegmentCount - RawGame.CurrentNumbStockPrefabs && game.Prefabs.TryGetPrefab(id, out var item) && item.Type == FancadeLoaderLib.PrefabType.Level)
 				{
-					index++;
+					id += (ushort)item.Count;
 				}
 
-				game.Prefabs.Insert(index, prefab);
+				prefab = Prefab.CreateLevel(id, PrefabName);
+				game.Prefabs.InsertPrefab(prefab);
 			}
 			else
 			{
-				prefab = Prefab.CreateBlock(PrefabName);
+				prefab = Prefab.CreateBlock((ushort)(game.Prefabs.SegmentCount + RawGame.CurrentNumbStockPrefabs), PrefabName);
 				prefab.Type = (PrefabType)PrefabType;
-				prefab.Voxels = BlockVoxelsGenerator.CreateScript(int2.One).First().Value;
+				prefab[byte3.Zero].Voxels = BlockVoxelsGenerator.CreateScript(int2.One).First().Value;
 
-				game.Prefabs.Add(prefab);
+				game.Prefabs.AddPrefab(prefab);
 			}
 		}
 		else
 		{
-			prefab = game.Prefabs[(int)PrefabIndex];
+			prefab = game.Prefabs.GetPrefab((ushort)PrefabId);
 		}
 
 		Block[] blocks = PreBuild(buildPos, false);
 
 		PartialPrefabList stockPrefabs = StockBlocks.PrefabList;
 
-		Dictionary<ushort, PartialPrefabGroup> groupCache = [];
+		Dictionary<ushort, PartialPrefab> prefabCache = [];
 
 		for (int i = 0; i < blocks.Length; i++)
 		{
 			Block block = blocks[i];
-			if (block.Type.IsGroup)
+			if (!prefabCache.TryGetValue(block.Type.Prefab.Id, out var stockPrefab))
 			{
-				if (!groupCache.TryGetValue(block.Type.Prefab.Id, out var group))
-				{
-					group = stockPrefabs.GetGroup(block.Type.Prefab.Id);
-					groupCache.Add(block.Type.Prefab.Id, group);
-				}
+				stockPrefab = stockPrefabs.GetPrefab(block.Type.Prefab.Id);
+				prefabCache.Add(block.Type.Prefab.Id, stockPrefab);
+			}
 
-				prefab.Blocks.SetGroup(block.Position, group);
-			}
-			else
-			{
-				prefab.Blocks.SetBlock(block.Position, block.Type.Prefab.Id);
-			}
+			prefab.Blocks.SetPrefab(block.Position, stockPrefab);
 		}
 
 		for (int i = 0; i < settings.Count; i++)

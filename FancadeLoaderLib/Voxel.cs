@@ -11,7 +11,7 @@ using System.Text;
 namespace FancadeLoaderLib;
 
 /// <summary>
-/// Represents a single voxel of a prefab.
+/// Represents a single voxel of a <see cref="PrefabSegment"/>.
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
 #if NET8_0_OR_GREATER
@@ -128,7 +128,7 @@ public unsafe struct Voxel : IEquatable<Voxel>
 
 #if NET8_0_OR_GREATER
 	/// <summary>
-	/// Struct array with 6 items.
+	/// Value array with 6 items.
 	/// </summary>
 	/// <typeparam name="T">The item type.</typeparam>
 	[InlineArray(6)]

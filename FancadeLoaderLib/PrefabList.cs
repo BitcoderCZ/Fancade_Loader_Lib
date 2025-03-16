@@ -3,11 +3,13 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
-using FancadeLoaderLib.Utils;
+using MathUtils.Vectors;
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -15,345 +17,303 @@ namespace FancadeLoaderLib;
 /// <see cref="List{T}"/> wrapper for easier <see cref="Prefab"/> manipulation.
 /// </summary>
 /// <remarks>
-/// Group ids are automatically changed when prefabs are inserter/removed.
+/// Ids are automatically changed when prefabs are inserter/removed.
 /// <para>Allows for saving/loading.</para>
 /// </remarks>
-public class PrefabList : IList<Prefab>, ICloneable
+public class PrefabList : ICloneable
 {
 	/// <summary>
 	/// The id offset of this list, <see cref="RawGame.CurrentNumbStockPrefabs"/> by default.
 	/// </summary>
 	public ushort IdOffset = RawGame.CurrentNumbStockPrefabs;
 
-	internal readonly List<Prefab> _list;
+	internal readonly Dictionary<ushort, Prefab> _prefabs;
+	internal readonly List<PrefabSegment> _segments;
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PrefabList"/> class.
-	/// </summary>
 	public PrefabList()
 	{
-		_list = [];
+		_prefabs = [];
+		_segments = [];
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PrefabList"/> class.
-	/// </summary>
-	/// <param name="capacity">The initial capacity.</param>
-	public PrefabList(int capacity)
+	public PrefabList(int prefabCapacity, int segmentCapacity)
 	{
-		_list = new List<Prefab>(capacity);
+		_prefabs = new(prefabCapacity);
+		_segments = new(segmentCapacity);
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PrefabList"/> class.
-	/// </summary>
-	/// <param name="collection">The prefabs to place into this list.</param>
-	public PrefabList(IEnumerable<Prefab> collection)
+	public PrefabList(IEnumerable<Prefab> prefabs)
 	{
-		_list = [.. collection];
+		if (prefabs is null)
+		{
+			ThrowArgumentNullException(nameof(prefabs));
+		}
+
+		_prefabs = prefabs.ToDictionary(group => group.Id);
+		ValidatePrefabs(_prefabs.Values, nameof(prefabs)); // validate using _prefabs.Values to avoid iterating over collection multiple times
+
+		_segments = [.. SegmentsFromPrefabs(_prefabs)];
+
+		IdOffset = _prefabs.Min(item => item.Key);
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="PrefabList"/> class.
-	/// </summary>
-	/// <param name="list">The <see cref="PrefabList"/> to copy values from.</param>
-	/// <param name="deepCopy">If deep copy should be performed.</param>
-	public PrefabList(PrefabList list, bool deepCopy)
+	public PrefabList(PrefabList other, bool deepCopy)
 	{
-		_list = deepCopy
-			? [.. list.Select(prefab => prefab.Clone())]
-			: [.. list];
+		ThrowIfNull(other, nameof(other));
+
+		if (deepCopy)
+		{
+			_prefabs = other._prefabs.ToDictionary(item => item.Key, item => item.Value.Clone(true));
+			_segments = [.. SegmentsFromPrefabs(_prefabs)];
+		}
+		else
+		{
+			_prefabs = new(other._prefabs);
+			_segments = [.. SegmentsFromPrefabs(_prefabs)];
+		}
 	}
 
-	private PrefabList(List<Prefab> list)
+	private PrefabList(Dictionary<ushort, Prefab> dict)
 	{
-		_list = list;
+		_prefabs = dict;
+		_segments = [.. SegmentsFromPrefabs(_prefabs)];
 	}
 
-	/// <inheritdoc/>
-	public int Count => _list.Count;
+	public int PrefabCount => _prefabs.Count;
 
-	/// <inheritdoc/>
-	public bool IsReadOnly => false;
+	public int SegmentCount => _segments.Count;
 
-	/// <inheritdoc/>
-	public Prefab this[int index]
-	{
-		get => _list[index];
-		set => _list[index] = value;
-	}
+	public IEnumerable<Prefab> Prefabs => _prefabs.Values;
 
-	/// <summary>
-	/// Loads a <see cref="PrefabList"/> from a <see cref="FcBinaryReader"/>.
-	/// </summary>
-	/// <param name="reader">The reader to read the <see cref="PrefabList"/> from.</param>
-	/// <returns>A <see cref="PrefabList"/> read from <paramref name="reader"/>.</returns>
+	public IEnumerable<PrefabSegment> Segments => _segments;
+
 	public static PrefabList Load(FcBinaryReader reader)
 	{
 		if (reader is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(reader));
+			ThrowArgumentNullException(nameof(reader));
 		}
 
 		uint count = reader.ReadUInt32();
 		ushort idOffset = reader.ReadUInt16();
 
-		List<Prefab> list = new List<Prefab>((int)count);
+		RawPrefab[] rawPrefabs = new RawPrefab[count];
 
 		for (int i = 0; i < count; i++)
 		{
-			list.Add(Prefab.FromRaw(RawPrefab.Load(reader), ushort.MaxValue, 0, false));
+			rawPrefabs[i] = RawPrefab.Load(reader);
 		}
 
-		return new PrefabList(list)
+		Dictionary<ushort, Prefab> prefabs = [];
+
+		for (int i = 0; i < rawPrefabs.Length; i++)
+		{
+			if (rawPrefabs[i].IsInGroup)
+			{
+				int startIndex = i;
+				ushort groupId = rawPrefabs[i].GroupId;
+				do
+				{
+					i++;
+				} while (i < count && rawPrefabs[i].GroupId == groupId);
+
+				ushort id = (ushort)(startIndex + idOffset);
+				prefabs.Add(id, Prefab.FromRaw(id, rawPrefabs.Skip(startIndex).Take(i - startIndex), ushort.MaxValue, 0, false));
+
+				i--; // incremented at the end of the loop
+			}
+			else
+			{
+				ushort id = (ushort)(i + idOffset);
+				prefabs.Add(id, Prefab.FromRaw(id, [rawPrefabs[i]], ushort.MaxValue, 0, false));
+			}
+		}
+
+		return new PrefabList(prefabs)
 		{
 			IdOffset = idOffset,
 		};
 	}
 
-	/// <summary>
-	/// Writes a <see cref="PrefabList"/> into a <see cref="FcBinaryWriter"/>.
-	/// </summary>
-	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
 		if (writer is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(writer));
+			ThrowArgumentNullException(nameof(writer));
 		}
 
-		writer.WriteUInt32((uint)Count);
+		writer.WriteUInt32((uint)SegmentCount);
 		writer.WriteUInt16(IdOffset);
 
-		for (int i = 0; i < Count; i++)
+		foreach (var prefab in _prefabs.OrderBy(item => item.Key).SelectMany(item => item.Value.ToRaw(false)))
 		{
-			this[i].ToRaw(false).Save(writer);
+			prefab.Save(writer);
 		}
 	}
 
-	/// <inheritdoc/>
-	public void Add(Prefab item)
-		=> _list.Add(item);
+	public Prefab GetPrefab(ushort id)
+		=> _prefabs[id];
 
-	/// <summary>
-	/// Adds multiple prefabs.
-	/// </summary>
-	/// <param name="collection">The prefabs to add.</param>
-	public void AddRange(IEnumerable<Prefab> collection)
-		=> _list.AddRange(collection);
+	public bool TryGetPrefab(ushort id, [MaybeNullWhen(false)] out Prefab value)
+		=> _prefabs.TryGetValue(id, out value);
 
-	/// <summary>
-	/// Adds a prefab group.
-	/// </summary>
-	/// <remarks>
-	/// Id of the group will get set to <see cref="Count"/> (before being added).
-	/// </remarks>
-	/// <param name="group">The group to add.</param>
-	public void AddGroup(PrefabGroup group)
+	public PrefabSegment GetSegment(ushort id)
+		=> _segments[id - IdOffset];
+
+	public bool TryGetSegments(ushort id, [MaybeNullWhen(false)] out PrefabSegment value)
 	{
-		if (group is null)
+		id -= IdOffset;
+
+		// can skip (id >= 0) because id is unsigned
+		if (id < _segments.Count)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(group));
-		}
-
-		group.Id = (ushort)_list.Count;
-		_list.AddRange(group.EnumerateInIdOrder());
-	}
-
-	/// <inheritdoc/>
-	public void Clear()
-		=> _list.Clear();
-
-	/// <inheritdoc/>
-	public bool Contains(Prefab item)
-		=> _list.Contains(item);
-
-	/// <inheritdoc/>
-	public void CopyTo(Prefab[] array, int arrayIndex)
-		=> _list.CopyTo(array, arrayIndex);
-
-	/// <summary>
-	/// Copied this <see cref="PrefabList"/> into <paramref name="array"/>.
-	/// </summary>
-	/// <param name="array">The array to copy to.</param>
-	public void CopyTo(Prefab[] array)
-		=> _list.CopyTo(array);
-
-	/// <summary>
-	/// Copied this <see cref="PrefabList"/> into <paramref name="array"/>.
-	/// </summary>
-	/// <param name="index">The index to start copying at.</param>
-	/// <param name="array">The array to copy to.</param>
-	/// <param name="arrayIndex">Index in <paramref name="array"/> to start copying to.</param>
-	/// <param name="count">The number of prefabs to copy.</param>
-	public void CopyTo(int index, Prefab[] array, int arrayIndex, int count)
-		=> _list.CopyTo(index, array, arrayIndex, count);
-
-	/// <summary>
-	/// Gets if this <see cref="PrefabList"/> contains a prefab that matches the condition defined by the specified predicate.
-	/// </summary>
-	/// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the prefab to search for.</param>
-	/// <returns><see langword="true"/> if this <see cref="PrefabList"/> contains a prefab that matches the condition defined by the specified predicate; otherwise, false.</returns>
-	public bool Exists(Predicate<Prefab> match)
-		=> _list.Exists(match);
-
-	/// <summary>
-	/// Gets the first prefab that matches the condition defined by the specified predicate.
-	/// </summary>
-	/// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the prefab to search for.</param>
-	/// <returns>The first prefab that matches the condition defined by the specified predicate.</returns>
-	public Prefab? Find(Predicate<Prefab> match)
-		=> _list.Find(match);
-
-	/// <summary>
-	/// Gets all prefabs that match the condition defined by the specified predicate.
-	/// </summary>
-	/// <param name="match">The <see cref="Predicate{T}"/> delegate that defines the conditions of the prefabs to search for.</param>
-	/// <returns>The prefabs that match the condition defined by the specified predicate.</returns>
-#pragma warning disable CA1002 // Do not expose generic lists
-	public List<Prefab> FindAll(Predicate<Prefab> match)
-#pragma warning restore CA1002 // Do not expose generic lists
-		=> _list.FindAll(match);
-
-	/// <summary>
-	/// Inserts a prefab at an index.
-	/// </summary>
-	/// <param name="index">The index at which to insert <paramref name="item"/>.</param>
-	/// <param name="item">The prefab to insert.</param>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is out of range.</exception>
-	public void Insert(int index, Prefab item)
-	{
-		IncreaseAfter(index, 1);
-		_list.Insert(index, item);
-	}
-
-	/// <summary>
-	/// Inserts multiple prefab at an index.
-	/// </summary>
-	/// <param name="index">The index at which to insert <paramref name="collection"/>.</param>
-	/// <param name="collection">The prefabs to insert.</param>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is out of range.</exception>
-	public void InsertRange(int index, IEnumerable<Prefab> collection)
-	{
-		int count = collection.Count();
-		IncreaseAfter(index, (ushort)count);
-		_list.InsertRange(index, collection);
-	}
-
-	/// <summary>
-	/// Inserts a prefab group at an index.
-	/// </summary>
-	/// <param name="index">The index at which to insert <paramref name="group"/>.</param>
-	/// <param name="group">The prefab group to insert.</param>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="index"/> is out of range.</exception>
-	public void InsertGroup(int index, PrefabGroup group)
-	{
-		if (group is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(group));
-		}
-
-		IncreaseAfter(index, (ushort)group.Count);
-		group.Id = (ushort)index;
-		_list.InsertRange(index, group.EnumerateInIdOrder());
-	}
-
-	/// <summary>
-	/// Gets the last index of <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to find.</param>
-	/// <returns>Last index of <paramref name="item"/> or -1, if it isn't found.</returns>
-	public int LastIndexOf(Prefab item)
-		=> _list.LastIndexOf(item);
-
-	/// <summary>
-	/// Gets the last index of <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to find.</param>
-	/// <param name="index">The starting index of the search.</param>
-	/// <returns>Last index of <paramref name="item"/> or -1, if it isn't found.</returns>
-	public int LastIndexOf(Prefab item, int index)
-		=> _list.LastIndexOf(item, index);
-
-	/// <summary>
-	/// Gets the last index of <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to find.</param>
-	/// <param name="index">The starting index of the search.</param>
-	/// <param name="count">The number of elements in the section to search.</param>
-	/// <returns>Last index of <paramref name="item"/> or -1, if it isn't found.</returns>
-	public int LastIndexOf(Prefab item, int index, int count)
-		=> _list.LastIndexOf(item, index, count);
-
-	/// <summary>
-	/// Gets the first index of <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to find.</param>
-	/// <returns>First index of <paramref name="item"/> or -1, if it isn't found.</returns>
-	public int IndexOf(Prefab item)
-		=> _list.IndexOf(item);
-
-	/// <summary>
-	/// Removes the first <paramref name="item"/>.
-	/// </summary>
-	/// <param name="item">The prefab to remove.</param>
-	/// <returns><see langword="true"/> if the item was removed, <see langword="false"/> if the items wasn't found.</returns>
-	public bool Remove(Prefab item)
-	{
-		int index = _list.IndexOf(item);
-
-		if (index < 0)
-		{
-			return false;
+			value = _segments[id];
+			return true;
 		}
 		else
 		{
-			RemoveAt(index);
-			return true;
+			value = null;
+			return false;
 		}
 	}
 
-	/// <summary>
-	/// Removed a prefab at a specified index.
-	/// </summary>
-	/// <param name="index">The index at which to remove the prefab.</param>
-	public void RemoveAt(int index)
+	public void AddPrefab(Prefab value)
 	{
-		_list.RemoveAt(index);
-		DecreaseAfter(index - 1, 1);
+		if (value.Id != SegmentCount + IdOffset)
+		{
+			ThrowArgumentException($"{nameof(value)}.{nameof(value.Id)} ({value.Id}) must be equal to {nameof(SegmentCount)} + {nameof(IdOffset)}.", $"{nameof(value)}.{nameof(value.Id)}");
+		}
+
+		_prefabs.Add(value.Id, value);
+		_segments.AddRange(value.Values);
 	}
 
-	/// <summary>
-	/// Removes a range of prefabs at a specified index.
-	/// </summary>
-	/// <param name="index">The index at which to remove the prefab.</param>
-	/// <param name="count">The number of prefabs to remove.</param>
-	public void RemoveRange(int index, int count)
+	public void InsertPrefab(Prefab value)
 	{
-		_list.RemoveRange(index, count);
-		DecreaseAfter(index - 1, (ushort)count);
+		if (WillBeLastPrefab(value))
+		{
+			AddPrefab(value);
+			return;
+		}
+
+		if (!_prefabs.ContainsKey(value.Id))
+		{
+			ThrowArgumentException($"{nameof(_prefabs)} must contain {nameof(value)}.{nameof(Prefab.Id)}.", nameof(value));
+		}
+
+		IncreaseAfter(value.Id, (ushort)value.Count);
+		_prefabs.Add(value.Id, value);
+		_segments.InsertRange(value.Id - IdOffset, value.Values);
 	}
 
-	/// <summary>
-	/// Converts this <see cref="PrefabList"/> to an array of <see cref="PrefabList"/>s.
-	/// </summary>
-	/// <returns>An array of <see cref="Prefab"/>s.</returns>
-	public Prefab[] ToArray()
-		=> [.. _list];
+	public bool RemovePrefab(ushort id)
+	{
+		if (!_prefabs.Remove(id, out var prefab))
+		{
+			return false;
+		}
 
-	/// <inheritdoc/>
-	public IEnumerator<Prefab> GetEnumerator()
-		=> _list.GetEnumerator();
+		_segments.RemoveRange(id - IdOffset, prefab.Count);
 
-	/// <inheritdoc/>
-	IEnumerator IEnumerable.GetEnumerator()
-		=> _list.GetEnumerator();
+		for (int i = 0; i < prefab.Count; i++)
+		{
+			RemoveIdFromBlocks((ushort)(id + i));
+		}
 
-	/// <summary>
-	/// Creates a copy of this <see cref="PrefabList"/>.
-	/// </summary>
-	/// <param name="deepCopy">If deep copy should be performed.</param>
-	/// <returns>A copy of this <see cref="PrefabList"/>.</returns>
+		if (WillBeLastPrefab(prefab))
+		{
+			return true;
+		}
+
+		DecreaseAfter(id, (ushort)prefab.Count);
+
+		return true;
+	}
+
+	public void AddSegmentToPrefab(ushort id, PrefabSegment value, bool overwriteBlocks)
+	{
+		var prefab = _prefabs[id];
+
+		if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab))
+		{
+			throw new InvalidOperationException($"Cannot add prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+		}
+
+		ushort segmentId = (ushort)(prefab.Id + prefab.Count);
+
+		if (IsLastPrefab(prefab))
+		{
+			prefab.Add(value.PosInPrefab, value);
+			_segments.Add(value);
+			AddIdToPrefab(id, value.PosInPrefab, segmentId);
+			return;
+		}
+
+		prefab.Add(value.PosInPrefab, value);
+
+		IncreaseAfter(segmentId, 1);
+		_segments.Insert(segmentId, value);
+		AddIdToPrefab(id, value.PosInPrefab, segmentId);
+	}
+
+	public bool TryAddSegmentToPrefab(ushort id, PrefabSegment value, bool overwriteBlocks)
+	{
+		if (!_prefabs.TryGetValue(id, out var prefab))
+		{
+			return false;
+		}
+
+		if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab))
+		{
+			return false;
+		}
+
+		if (!prefab.TryAdd(value))
+		{
+			return false;
+		}
+
+		ushort segmentId = (ushort)(prefab.Id + prefab.Count - 1);
+
+		if (IsLastPrefab(prefab))
+		{
+			_segments.Add(value);
+			AddIdToPrefab(id, value.PosInPrefab, segmentId);
+			return true;
+		}
+
+		IncreaseAfter(segmentId, 1);
+		_segments.Insert(segmentId, value);
+		AddIdToPrefab(id, value.PosInPrefab, segmentId);
+
+		return true;
+	}
+
+	public bool RemoveSegmentFromPrefab(ushort id, byte3 posInPrefab)
+	{
+		var prefab = _prefabs[id];
+
+		int segmentIndex = prefab.IndexOf(posInPrefab);
+		if (!prefab.Remove(posInPrefab))
+		{
+			return false;
+		}
+
+		ushort segmentId = (ushort)(id + segmentIndex);
+
+		_segments.RemoveAt(segmentId - IdOffset);
+		RemoveIdFromBlocks(segmentId);
+
+		if (segmentId == SegmentCount + IdOffset - 1)
+		{
+			return true;
+		}
+
+		DecreaseAfter(segmentId, 1);
+
+		return true;
+	}
+
 	public PrefabList Clone(bool deepCopy)
 		=> new PrefabList(this, deepCopy);
 
@@ -361,31 +321,164 @@ public class PrefabList : IList<Prefab>, ICloneable
 	object ICloneable.Clone()
 		=> new PrefabList(this, true);
 
+	private static void ValidatePrefabs(IEnumerable<Prefab> prefabs, string paramName)
+	{
+		int? nextId = null;
+
+		foreach (var prefab in prefabs.OrderBy(group => group.Id))
+		{
+			if (nextId == null || prefab.Id == nextId)
+			{
+				nextId = prefab.Id + prefab.Count;
+			}
+			else
+			{
+				ThrowArgumentException($"Prefabs in {paramName} must have consecutive IDs. Expected ID {nextId}, but found {prefab.Id}.", paramName);
+			}
+		}
+	}
+
+	private static IEnumerable<PrefabSegment> SegmentsFromPrefabs(IEnumerable<KeyValuePair<ushort, Prefab>> prefabs)
+		=> prefabs.OrderBy(item => item.Key).SelectMany(item => item.Value.Values);
+
+	private bool IsLastPrefab(Prefab prefab)
+		=> prefab.Id + prefab.Count >= SegmentCount + IdOffset;
+
+	private bool WillBeLastPrefab(Prefab prefab)
+		=> prefab.Id >= SegmentCount + IdOffset;
+
+	private void RemoveIdFromBlocks(ushort id)
+	{
+		foreach (var prefab in _prefabs.Values)
+		{
+			ushort[] array = prefab.Blocks.Array.Array;
+
+			for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+				{
+					for (int x = 0; x < prefab.Blocks.Size.X; x++)
+					{
+						int i = prefab.Blocks.Index(new int3(x, y, z));
+
+						if (array[i] == id)
+						{
+							array[i] = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private bool CanAddIdToPrefab(ushort prefabId, int3 offset)
+	{
+		foreach (var prefab in _prefabs.Values)
+		{
+			ushort[] array = prefab.Blocks.Array.Array;
+
+			for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+				{
+					for (int x = 0; x < prefab.Blocks.Size.X; x++)
+					{
+						int3 pos = new int3(x, y, z);
+						int i = prefab.Blocks.Index(pos);
+
+						if (array[i] == prefabId)
+						{
+							pos += offset;
+							if (prefab.Blocks.InBounds(pos) && prefab.Blocks.GetBlockUnchecked(pos) != 0)
+							{
+								return false;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	private void AddIdToPrefab(ushort prefabId, int3 offset, ushort id)
+	{
+		foreach (var prefab in _prefabs.Values)
+		{
+			ushort[] array = prefab.Blocks.Array.Array;
+
+			for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+				{
+					for (int x = 0; x < prefab.Blocks.Size.X; x++)
+					{
+						int3 pos = new int3(x, y, z);
+						int i = prefab.Blocks.Index(pos);
+
+						if (array[i] == prefabId)
+						{
+							prefab.Blocks.SetBlock(pos + offset, id);
+						}
+					}
+				}
+			}
+		}
+	}
+
 	private void IncreaseAfter(int index, ushort amount)
 	{
 		index += IdOffset;
 
-		for (int i = 0; i < _list.Count; i++)
+		for (int i = 0; i < _segments.Count; i++)
 		{
-			Prefab prefab = this[i];
+			PrefabSegment segment = _segments[i];
 
-			if (prefab.IsInGroup && prefab.GroupId >= index)
+			if (segment.PrefabId >= index)
 			{
-				prefab.GroupId += amount;
+				segment.PrefabId += amount;
+			}
+		}
+
+		List<ushort> prefabsToChangeId = [];
+
+		foreach (var (id, prefab) in _prefabs)
+		{
+			if (id >= index)
+			{
+				prefabsToChangeId.Add(id);
 			}
 
-			if (!(prefab.Blocks is null))
-			{
-				ushort[] array = prefab.Blocks.Array.Array;
+			ushort[] array = prefab.Blocks.Array.Array;
 
-				for (int j = 0; j < array.Length; j++)
+			for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < prefab.Blocks.Size.Y; y++)
 				{
-					if (array[j] >= index)
+					for (int x = 0; x < prefab.Blocks.Size.X; x++)
 					{
-						array[j] += amount;
+						int i = prefab.Blocks.Index(new int3(x, y, z));
+
+						if (array[i] >= index)
+						{
+							array[i] += amount;
+						}
 					}
 				}
 			}
+		}
+
+		foreach (ushort id in prefabsToChangeId.OrderByDescending(item => item))
+		{
+			bool removed = _prefabs.Remove(id, out var prefab);
+
+			Debug.Assert(removed, "Prefab should have been removed.");
+			Debug.Assert(prefab is not null, $"{nameof(prefab)} shouldn't be null.");
+
+			ushort newId = (ushort)(id + amount);
+			prefab.Id = newId;
+			_prefabs[newId] = prefab;
 		}
 	}
 
@@ -393,27 +486,54 @@ public class PrefabList : IList<Prefab>, ICloneable
 	{
 		index += IdOffset;
 
-		for (int i = 0; i < _list.Count; i++)
+		for (int i = 0; i < _segments.Count; i++)
 		{
-			Prefab prefab = this[i];
+			PrefabSegment segment = _segments[i];
 
-			if (prefab.IsInGroup && prefab.GroupId >= index)
+			if (segment.PrefabId >= index)
 			{
-				prefab.GroupId -= amount;
+				segment.PrefabId -= amount;
+			}
+		}
+
+		List<ushort> prefabsToChangeId = [];
+
+		foreach (var (id, prefab) in _prefabs)
+		{
+			if (id >= index)
+			{
+				prefabsToChangeId.Add(id);
 			}
 
-			if (!(prefab.Blocks is null))
-			{
-				ushort[] array = prefab.Blocks.Array.Array;
+			ushort[] array = prefab.Blocks.Array.Array;
 
-				for (int j = 0; j < array.Length; j++)
+			for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+			{
+				for (int y = 0; y < prefab.Blocks.Size.Y; y++)
 				{
-					if (array[j] >= index)
+					for (int x = 0; x < prefab.Blocks.Size.X; x++)
 					{
-						array[j] -= amount;
+						int i = prefab.Blocks.Index(new int3(x, y, z));
+
+						if (array[i] >= index)
+						{
+							array[i] -= amount;
+						}
 					}
 				}
 			}
+		}
+
+		foreach (ushort id in prefabsToChangeId.OrderBy(item => item))
+		{
+			bool removed = _prefabs.Remove(id, out var prefab);
+
+			Debug.Assert(removed, "Prefab should have been removed.");
+			Debug.Assert(prefab is not null, $"{nameof(prefab)} shouldn't be null.");
+
+			ushort newId = (ushort)(id - amount);
+			prefab.Id = newId;
+			_prefabs[newId] = prefab;
 		}
 	}
 }

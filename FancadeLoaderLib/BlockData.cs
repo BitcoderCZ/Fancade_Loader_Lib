@@ -134,24 +134,23 @@ public class BlockData
 	public int Index(int x, int y, int z)
 		=> Array.Index(new int3(x, y, z));
 
-	#region SetGroup
+	#region SetPrefab
 
 	/// <summary>
-	/// "Places" a prefab group at the specified postion.
+	/// "Places" a prefab at the specified postion.
 	/// </summary>
-	/// <param name="pos">The postition to place the group at.</param>
-	/// <param name="group">The group to place.</param>
-	public void SetGroup(int3 pos, PrefabGroup group)
+	/// <param name="pos">The postition to place the prefab at.</param>
+	/// <param name="prefab">The prefab to place.</param>
+	public void SetPrefab(int3 pos, Prefab prefab)
 	{
-		if (group is null)
+		if (prefab is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNullException(nameof(prefab));
 		}
 
 		CheckLowerBounds(pos, nameof(pos));
 
-		ushort id = group.Id;
-		byte3 size = group.Size;
+		byte3 size = prefab.Size;
 
 		if (size == byte3.Zero)
 		{
@@ -160,42 +159,28 @@ public class BlockData
 
 		EnsureSize(pos + size);
 
-		for (byte zIndex = 0; zIndex < size.Z; zIndex++)
+		foreach (var (segment, id) in prefab.EnumerateWithId())
 		{
-			for (byte yIndex = 0; yIndex < size.Y; yIndex++)
-			{
-				for (byte xIndex = 0; xIndex < size.X; xIndex++)
-				{
-					byte3 prefabPos = new byte3(xIndex, yIndex, zIndex);
-					if (!group.ContainsKey(prefabPos))
-					{
-						continue;
-					}
-
-					SetBlockInternal(pos + prefabPos, id);
-					id++;
-				}
-			}
+			SetBlockInternal(pos + segment.PosInPrefab, id);
 		}
 	}
 
 	/// <summary>
-	/// "Places" a partial prefab group at the specified postion.
+	/// "Places" a partial prefab at the specified postion.
 	/// </summary>
-	/// <param name="pos">The postition to place the group at.</param>
-	/// <param name="group">The group to place.</param>
+	/// <param name="pos">The postition to place the prefab at.</param>
+	/// <param name="prefab">The prefab to place.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public void SetGroup(int3 pos, PartialPrefabGroup group)
+	public void SetPrefab(int3 pos, PartialPrefab prefab)
 	{
-		if (group is null)
+		if (prefab is null)
 		{
-			ThrowHelper.ThrowArgumentNullException(nameof(group));
+			ThrowHelper.ThrowArgumentNullException(nameof(prefab));
 		}
 
 		CheckLowerBounds(pos, nameof(pos));
 
-		ushort id = group.Id;
-		byte3 size = group.Size;
+		byte3 size = prefab.Size;
 
 		if (size == byte3.Zero)
 		{
@@ -204,22 +189,9 @@ public class BlockData
 
 		EnsureSize(pos + size);
 
-		for (byte zIndex = 0; zIndex < size.Z; zIndex++)
+		foreach (var (segment, id) in prefab.EnumerateWithId())
 		{
-			for (byte yIndex = 0; yIndex < size.Y; yIndex++)
-			{
-				for (byte xIndex = 0; xIndex < size.X; xIndex++)
-				{
-					byte3 prefabPos = new byte3(xIndex, yIndex, zIndex);
-					if (!group.ContainsKey(prefabPos))
-					{
-						continue;
-					}
-
-					SetBlockInternal(pos + prefabPos, id);
-					id++;
-				}
-			}
+			SetBlockInternal(pos + segment.PosInPrefab, id);
 		}
 	}
 	#endregion
@@ -229,7 +201,7 @@ public class BlockData
 	/// <summary>
 	/// "Places" a single block at the specified postion.
 	/// </summary>
-	/// <param name="pos">The postition to place the group at.</param>
+	/// <param name="pos">The postition to place the block at.</param>
 	/// <param name="id">Id of the block to place.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetBlock(int3 pos, ushort id)
@@ -242,7 +214,7 @@ public class BlockData
 	/// <summary>
 	/// "Places" a single block at the specified postion without resizing the underlying array or bounds checking.
 	/// </summary>
-	/// <param name="pos">The postition to place the group at.</param>
+	/// <param name="pos">The postition to place the block at.</param>
 	/// <param name="id">Id of the block to place.</param>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void SetBlockUnchecked(int3 pos, ushort id)
@@ -277,8 +249,11 @@ public class BlockData
 	/// <summary>
 	/// Trims the size to the smallest size possible.
 	/// </summary>
-	/// <param name="shrink">If the underlying array should also be resized.</param>
-	public void Trim(bool shrink = true)
+	/// <param name="resize">
+	/// If <see langword="true"/>, the underlying array should will be resized;
+	/// if <see langword="false"/>, only <see cref="Size"/> will get changed.
+	/// </param>
+	public void Trim(bool resize = true)
 	{
 		if (Size == int3.Zero)
 		{
@@ -352,7 +327,7 @@ public class BlockData
 		endZ:
 			if (maxX != int.MaxValue && maxY != int.MaxValue && maxZ != int.MaxValue)
 			{
-				if (shrink)
+				if (resize)
 				{
 					Resize(new int3(maxX, maxY, maxZ) + int3.One, false);
 				}
@@ -366,7 +341,7 @@ public class BlockData
 			else if (scanPos == int3.Zero)
 			{
 				// no blocks
-				if (shrink)
+				if (resize)
 				{
 					Resize(int3.Zero, false);
 				}
@@ -499,10 +474,13 @@ public class BlockData
 	/// <summary>
 	/// Clears all block data, resetting the size to zero. 
 	/// </summary>
-	/// <param name="shrink">If the underlying array should also be resized to zero.</param>
-	public void Clear(bool shrink = false)
+	/// <param name="resize">
+	/// If <see langword="true"/>, the underlying array will get resized to zero;
+	/// if <see langword="false"/>, <see cref="Size"/> will get changed and the underlying array will get cleared.
+	/// </param>
+	public void Clear(bool resize = false)
 	{
-		if (shrink)
+		if (resize)
 		{
 			Array.Resize(int3.Zero);
 		}

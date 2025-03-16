@@ -5,7 +5,6 @@
 using FancadeLoaderLib.Raw;
 using FancadeLoaderLib.Utils;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -32,19 +31,7 @@ public class Game : ICloneable
 	/// </summary>
 	/// <param name="name">The name of this game.</param>
 	public Game(string name)
-		: this(name, "Unknown Author", string.Empty, Enumerable.Empty<Prefab>())
-	{
-	}
-
-	/// <summary>
-	/// Initializes a new instance of the <see cref="Game"/> class.
-	/// </summary>
-	/// <param name="name">The name of this game.</param>
-	/// <param name="author">The name of the author of this game.</param>
-	/// <param name="description">The description of this game.</param>
-	/// <param name="prefabs">The prefabs of this game.</param>
-	public Game(string name, string author, string description, IEnumerable<Prefab> prefabs)
-		: this(name, author, description, [.. prefabs])
+		: this(name, "Unknown Author", string.Empty, new PrefabList())
 	{
 	}
 
@@ -149,13 +136,29 @@ public class Game : ICloneable
 			ThrowHelper.ThrowArgumentNullException(nameof(game));
 		}
 
-		List<Prefab> prefabs = new List<Prefab>(game.Prefabs.Count);
+		var prefabs = new PrefabList();
 
 		short idOffsetAddition = (short)(-game.IdOffset + RawGame.CurrentNumbStockPrefabs);
 
 		for (int i = 0; i < game.Prefabs.Count; i++)
 		{
-			prefabs.Add(Prefab.FromRaw(game.Prefabs[i], game.IdOffset, idOffsetAddition, clonePrefabs));
+			if (game.Prefabs[i].IsInGroup)
+			{
+				int startIndex = i;
+				ushort groupId = game.Prefabs[i].GroupId;
+				do
+				{
+					i++;
+				} while (game.Prefabs[i].GroupId == groupId);
+
+				prefabs.AddPrefab(Prefab.FromRaw((ushort)(startIndex + RawGame.CurrentNumbStockPrefabs), game.Prefabs.Skip(startIndex).Take(i - startIndex), game.IdOffset, idOffsetAddition, clonePrefabs));
+
+				i--; // incremented at the end of the loop
+			}
+			else
+			{
+				prefabs.AddPrefab(Prefab.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [game.Prefabs[i]], game.IdOffset, idOffsetAddition, clonePrefabs));
+			}
 		}
 
 		return new Game(game.Name, game.Author, game.Description, prefabs);
@@ -181,9 +184,9 @@ public class Game : ICloneable
 	/// Makes this game editable.
 	/// </summary>
 	/// <remarks>
-	/// Sets <see cref="Prefab.Editable"/> of all prefabs in <see cref="Prefabs"/> to <see langword="true"/>.
+	/// Sets <see cref="PrefabSegment.Editable"/> of all prefabs in <see cref="Prefabs"/> to <see langword="true"/>.
 	/// </remarks>
-	/// <param name="changeAuthor">If <see langword="true"/>, <see cref="Author"/> is changed to "Unknown Author".</param>
+	/// <param name="changeAuthor">If <see langword="true"/>, <see cref="Author"/> is changed to "Unknown Author"; otherwise only <see cref="Prefab.Editable"/> is set to <see langword="true"/>.</param>
 	public void MakeEditable(bool changeAuthor)
 	{
 		if (changeAuthor)
@@ -191,9 +194,9 @@ public class Game : ICloneable
 			Author = "Unknown Author";
 		}
 
-		for (int i = 0; i < Prefabs.Count; i++)
+		foreach (var prefab in Prefabs.Prefabs)
 		{
-			Prefabs[i].Editable = true;
+			prefab.Editable = true;
 		}
 	}
 
@@ -202,7 +205,7 @@ public class Game : ICloneable
 	/// </summary>
 	public void TrimPrefabs()
 	{
-		foreach (var prefab in Prefabs)
+		foreach (var prefab in Prefabs.Prefabs)
 		{
 			prefab.Blocks.Trim();
 		}
@@ -214,16 +217,7 @@ public class Game : ICloneable
 	/// <param name="clonePrefabs">If the prefabs should be copied, if <see langword="true"/>, this <see cref="Game"/> instance shouldn't be used anymore.</param>
 	/// <returns>A new instance of the <see cref="RawGame"/> class from this <see cref="game"/>.</returns>
 	public RawGame ToRaw(bool clonePrefabs)
-	{
-		List<RawPrefab> prefabs = new List<RawPrefab>(Prefabs.Count);
-
-		for (int i = 0; i < Prefabs.Count; i++)
-		{
-			prefabs.Add(Prefabs[i].ToRaw(clonePrefabs));
-		}
-
-		return new RawGame(Name, Author, Description, RawGame.CurrentNumbStockPrefabs, prefabs);
-	}
+		=> new RawGame(Name, Author, Description, RawGame.CurrentNumbStockPrefabs, [.. Prefabs.Prefabs.OrderBy(item => item.Id).SelectMany(item => item.ToRaw(clonePrefabs)).ToList()]);
 
 	/// <summary>
 	/// Saves a game to a writer.

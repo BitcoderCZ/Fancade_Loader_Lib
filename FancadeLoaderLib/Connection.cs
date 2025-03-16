@@ -13,7 +13,7 @@ namespace FancadeLoaderLib;
 /// </summary>
 /// <remarks>
 /// if From/To.XYZ == 32769 AND in block -> one side of connection is outside.
-/// <para>When connected to a prefab group, <see cref="From"/>/<see cref="To"/> point to the main prefab of the group (<see cref="Prefab.PosInGroup"/> == <see cref="byte3.Zero"/>).</para>
+/// <para>When connected to a prefab, <see cref="From"/>/<see cref="To"/> point to the main segment of the prefab (<see cref="PrefabSegment.PosInPrefab"/> == <see cref="byte3.Zero"/>).</para>
 /// </remarks>
 public struct Connection : IEquatable<Connection>
 {

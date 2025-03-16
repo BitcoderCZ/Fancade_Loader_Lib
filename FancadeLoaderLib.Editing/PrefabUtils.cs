@@ -7,16 +7,16 @@ using FancadeLoaderLib.Utils;
 namespace FancadeLoaderLib.Editing;
 
 /// <summary>
-/// Utils for working with <see cref="Prefab"/>.
+/// Utils for working with <see cref="PrefabSegment"/>.
 /// </summary>
 public static class PrefabUtils
 {
 	/// <summary>
-	/// Gets if a <see cref="Prefab"/> is empty.
+	/// Gets if a <see cref="PrefabSegment"/> is empty.
 	/// </summary>
 	/// <param name="prefab">The prefab to test.</param>
-	/// <returns><see langword="true"/> if <see cref="Prefab.Voxels"/> is null or <see cref="Voxel.IsEmpty"/> is true for all of the voxels; otherwise, <see langword="false"/>.</returns>
-	public static bool IsEmpty(this Prefab prefab)
+	/// <returns><see langword="true"/> if <see cref="PrefabSegment.Voxels"/> is null or <see cref="Voxel.IsEmpty"/> is true for all of the voxels; otherwise, <see langword="false"/>.</returns>
+	public static bool IsEmpty(this PrefabSegment prefab)
 	{
 		if (prefab is null)
 		{
