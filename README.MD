@@ -13,11 +13,11 @@ using (FileStream fs = File.OpenRead("game.fcg"))
 }
 
 // Add a level
-Prefab level = Prefab.CreateLevel("Level 1");
+Prefab level = Prefab.CreateLevel(RawGame.CurrentNumbStockPrefabs, "Level 1");
 
-level.Blocks.SetBlock(0, 0, 0, 1);
+level.Blocks.SetBlock(new int3(0, 0, 0), 1);
 
-game.Prefabs.Add(level);
+game.Prefabs.AddPrefab(level);
 
 // Save game
 using (FileStream fs = File.OpenWrite("game.fcg"))
