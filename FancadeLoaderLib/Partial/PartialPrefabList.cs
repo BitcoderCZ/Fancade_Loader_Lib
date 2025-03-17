@@ -296,6 +296,12 @@ public partial class PartialPrefabList : ICloneable
 		return true;
 	}
 
+	public void Clear()
+	{
+		_prefabs.Clear();
+		_segments.Clear();
+	}
+
 	public PartialPrefabList Clone(bool deepCopy)
 		=> new PartialPrefabList(this, deepCopy);
 

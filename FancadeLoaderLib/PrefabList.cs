@@ -314,6 +314,12 @@ public class PrefabList : ICloneable
 		return true;
 	}
 
+	public void Clear()
+	{
+		_prefabs.Clear();
+		_segments.Clear();
+	}
+
 	public PrefabList Clone(bool deepCopy)
 		=> new PrefabList(this, deepCopy);
 
