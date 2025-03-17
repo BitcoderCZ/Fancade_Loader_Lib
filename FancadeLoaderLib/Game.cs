@@ -149,7 +149,7 @@ public class Game : ICloneable
 				do
 				{
 					i++;
-				} while (game.Prefabs[i].GroupId == groupId);
+				} while (i < game.Prefabs.Count && game.Prefabs[i].GroupId == groupId);
 
 				prefabs.AddPrefab(Prefab.FromRaw((ushort)(startIndex + RawGame.CurrentNumbStockPrefabs), game.Prefabs.Skip(startIndex).Take(i - startIndex), game.IdOffset, idOffsetAddition, clonePrefabs));
 
