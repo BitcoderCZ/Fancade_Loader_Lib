@@ -243,13 +243,13 @@ public class PrefabList : ICloneable
 
 		if (IsLastPrefab(prefab))
 		{
-			prefab.Add(value.PosInPrefab, value);
+			prefab.Add(value);
 			_segments.Add(value);
 			AddIdToPrefab(id, value.PosInPrefab, segmentId);
 			return;
 		}
 
-		prefab.Add(value.PosInPrefab, value);
+		prefab.Add(value);
 
 		IncreaseAfter(segmentId, 1);
 		_segments.Insert(segmentId, value);

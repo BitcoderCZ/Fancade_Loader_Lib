@@ -13,45 +13,15 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
-[SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Group is a better suffix.")]
+/// <summary>
+/// Represents a fancade prefab.
+/// </summary>
 public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 {
+	/// <summary>
+	/// The maximum allowed size for a prefab in each axis.
+	/// </summary>
 	public const int MaxSize = 4;
-
-	/// <summary>
-	/// The blocks inside this prefab.
-	/// </summary>
-	public readonly BlockData Blocks;
-
-	/// <summary>
-	/// Settings of the blocks inside this prefab.
-	/// </summary>
-	public readonly List<PrefabSetting> Settings;
-
-	/// <summary>
-	/// Connections between blocks inside this prefab, block-block and block-outside of this prefab.
-	/// </summary>
-	public readonly List<Connection> Connections;
-
-	/// <summary>
-	/// The collider of this prefab.
-	/// </summary>
-	public PrefabCollider Collider;
-
-	/// <summary>
-	/// The type of this prefab.
-	/// </summary>
-	public PrefabType Type;
-
-	/// <summary>
-	/// The background color of this prefab.
-	/// </summary>
-	public FcColor BackgroundColor;
-
-	/// <summary>
-	/// If this prefab is editable.
-	/// </summary>
-	public bool Editable;
 
 	private readonly OrderedDictionary<byte3, PrefabSegment> _segments;
 
@@ -62,17 +32,16 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// <summary>
 	/// Initializes a new instance of the <see cref="Prefab"/> class.
 	/// </summary>
-	/// <param name="id">Id of this prefab.</param>
-	/// <param name="name">Name of this prefab.</param>
-	/// <param name="collider">The collider of this prefab.</param>
+	/// <param name="id">The unique identifier of this prefab.</param>
+	/// <param name="name">The name of this prefab.</param>
+	/// <param name="collider">The collider type of this prefab.</param>
 	/// <param name="type">The type of this prefab.</param>
 	/// <param name="backgroundColor">The background color of this prefab.</param>
-	/// <param name="editable">If this prefab is editable.</param>
-	/// <param name="voxels">Voxels/model of this prefab.</param>
-	/// <param name="blocks">The blocks inside this prefab.</param>
-	/// <param name="settings">Settings of the blocks inside this prefab.</param>
-	/// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
-	/// <param name="segments">The segmetns to be placed in this prefab, must all have the same id.</param>
+	/// <param name="editable">If this prefab should be editable.</param>
+	/// <param name="blocks">The blocks contained within this prefab.</param>
+	/// <param name="settings">The settings applied to blocks in this prefab.</param>
+	/// <param name="connections">The connections between blocks in this prefab.</param>
+	/// <param name="segments">The segments to be placed in this prefab, all of which must have the same ID.</param>
 	public Prefab(ushort id, string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, List<PrefabSetting>? settings, List<Connection>? connections, IEnumerable<PrefabSegment> segments)
 	{
 		if (!segments.Any())
@@ -215,10 +184,8 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// <summary>
 	/// Gets or sets the name of this prefab.
 	/// </summary>
-	/// <remarks>
-	/// Cannot be empty or longer than 255 bytes when encoded as UTF8.
-	/// </remarks>
-	/// <value>Name of this prefab.</value>
+	/// <value>The name of this prefab. Cannot be empty or exceed 255 bytes when UTF-8 encoded.</value>
+	/// <exception cref="ArgumentException">Thrown when attempting to set an empty or null name.</exception>
 	public string Name
 	{
 		get => _name;
@@ -234,9 +201,9 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	}
 
 	/// <summary>
-	/// Gets or sets the id of this prefab.
+	/// Gets or sets the ID of this prefab.
 	/// </summary>
-	/// <value>Id of this prefab.</value>
+	/// <value>The unique identifier of this prefab.</value>
 	public ushort Id
 	{
 		get => _id;
@@ -250,6 +217,48 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 			_id = value;
 		}
 	}
+
+	/// <summary>
+	/// Gets the blocks contained within this prefab.
+	/// </summary>
+	/// <value>The blocks contained within this prefab.</value>
+	public BlockData Blocks { get; }
+
+	/// <summary>
+	/// Gets the settings applied to the blocks in this prefab.
+	/// </summary>
+	/// <value>The settings applied to the blocks in this prefab.</value>
+	public List<PrefabSetting> Settings { get; }
+
+	/// <summary>
+	/// Gets the connections between blocks inside this prefab and connections to inputs/outputs of this prefab.
+	/// </summary>
+	/// <value>The connections inside this prefab.</value>
+	public List<Connection> Connections { get; }
+
+	/// <summary>
+	/// Gets or sets the collider of this prefab.
+	/// </summary>
+	/// <value>The collider of this prefab.</value>
+	public PrefabCollider Collider { get; set; }
+
+	/// <summary>
+	/// Gets or sets the type of this prefab.
+	/// </summary>
+	/// <value>The type of this prefab.</value>
+	public PrefabType Type { get; set; }
+
+	/// <summary>
+	/// Gets or sets the background color of this prefab.
+	/// </summary>
+	/// <value>The background color of this prefab.</value>
+	public FcColor BackgroundColor { get; set; }
+
+	/// <summary>
+	/// Gets or sets a value indicating whether this prefab is editable.
+	/// </summary>
+	/// <value><see langword="true"/> if the prefab is editable; otherwise, <see langword="false"/>.</value>
+	public bool Editable { get; set; }
 
 	/// <summary>
 	/// Gets the size of this prefab.
@@ -267,7 +276,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	public int Count => _segments.Count;
 
 	/// <inheritdoc/>
-	public bool IsReadOnly => false;
+	bool ICollection<KeyValuePair<byte3, PrefabSegment>>.IsReadOnly => false;
 
 	/// <inheritdoc/>
 	[SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It makes sense to use byte3 here.")]
@@ -518,7 +527,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	}
 
 	/// <inheritdoc/>
-	public void Add(byte3 key, PrefabSegment value)
+	void IDictionary<byte3, PrefabSegment>.Add(byte3 key, PrefabSegment value)
 	{
 		ValidatePos(key, nameof(key));
 
@@ -529,6 +538,10 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 		Size = byte3.Max(Size, key + byte3.One);
 	}
 
+	/// <summary>
+	/// Adds a segment to this prefab.
+	/// </summary>
+	/// <param name="value">The segment to add.</param>
 	public void Add(PrefabSegment value)
 	{
 		ValidatePos(value.PosInPrefab, $"{nameof(value)}.{nameof(value.PosInPrefab)}");
@@ -538,21 +551,11 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 		Size = byte3.Max(Size, value.PosInPrefab + byte3.One);
 	}
 
-	public bool TryAdd(byte3 key, PrefabSegment value)
-	{
-		ValidatePos(key, nameof(key));
-
-		if (!_segments.TryAdd(key, ValidateSegment(value, nameof(value))))
-		{
-			return false;
-		}
-
-		value.PosInPrefab = key; // only change pos if successfully added
-
-		Size = byte3.Max(Size, key + byte3.One);
-		return true;
-	}
-
+	/// <summary>
+	/// Adds a segment to this prefab, if one isn't already at it's position.
+	/// </summary>
+	/// <param name="value">The segment to add.</param>
+	/// <returns><see langword="true"/> if the segment was added; otherwise, <see langword="true"/>.</returns>
 	public bool TryAdd(PrefabSegment value)
 	{
 		ValidatePos(value.PosInPrefab, $"{nameof(value)}.{nameof(value.PosInPrefab)}");
@@ -570,7 +573,15 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	public bool ContainsKey(byte3 key)
 		=> _segments.ContainsKey(key);
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Removes a segment at the specified position.
+	/// </summary>
+	/// <remarks>
+	/// <see cref="Prefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>0</c>.
+	/// <para>The segment at index <c>0</c> (<see cref="IndexOf(byte3)"/>) cannot be removed.</para>
+	/// </remarks>
+	/// <param name="key">Position of the segment to remove.</param>
+	/// <returns><see langword="true"/> if the segment was removed; otherwise, <see langword="true"/>.</returns>
 	public bool Remove(byte3 key)
 	{
 		// can't remove the first segment
@@ -589,6 +600,16 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 		return removed;
 	}
 
+	/// <summary>
+	/// Removes a segment at the specified position.
+	/// </summary>
+	/// <remarks>
+	/// <see cref="Prefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>0</c>.
+	/// <para>The segment at index <c>0</c> (<see cref="IndexOf(byte3)"/>) cannot be removed.</para>
+	/// </remarks>
+	/// <param name="key">Position of the segment to remove.</param>
+	/// <param name="value">The segment that was at the specified position, if there was one.</param>
+	/// <returns><see langword="true"/> if the segment was removed; otherwise, <see langword="true"/>.</returns>
 	public bool Remove(byte3 key, [MaybeNullWhen(false)] out PrefabSegment value)
 	{
 		// can't remove the first segment
@@ -616,6 +637,9 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 #endif
 		=> _segments.TryGetValue(key, out value);
 
+	/// <summary>Gets the index of a segment.</summary>
+	/// <param name="key">Position of the segment.</param>
+	/// <returns>The index of <paramref name="key"/> if found; otherwise, -1.</returns>
 	public int IndexOf(byte3 key)
 		=> _segments.IndexOf(key);
 

@@ -12,14 +12,12 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Partial;
 
+/// <summary>
+/// Represents a fancade prefab, with only <see cref="Id"/>, <see cref="Name"/>, <see cref="Type"/> and the positions of segments.
+/// </summary>
 public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, ICloneable
 {
-	public const int MaxSize = 4;
-
-	/// <summary>
-	/// The type of this prefab.
-	/// </summary>
-	public PrefabType Type;
+	private const int MaxSize = Prefab.MaxSize;
 
 	private readonly OrderedDictionary<byte3, PartialPrefabSegment> _segments;
 
@@ -163,10 +161,8 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 	/// <summary>
 	/// Gets or sets the name of this prefab.
 	/// </summary>
-	/// <remarks>
-	/// Cannot be empty or longer than 255 bytes when encoded as UTF8.
-	/// </remarks>
-	/// <value>Name of this prefab.</value>
+	/// <value>The name of this prefab. Cannot be empty or exceed 255 bytes when UTF-8 encoded.</value>
+	/// <exception cref="ArgumentException">Thrown when attempting to set an empty or null name.</exception>
 	public string Name
 	{
 		get => _name;
@@ -182,9 +178,9 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 	}
 
 	/// <summary>
-	/// Gets or sets the id of this prefab.
+	/// Gets or sets the ID of this prefab.
 	/// </summary>
-	/// <value>Id of this prefab.</value>
+	/// <value>The unique identifier of this prefab.</value>
 	public ushort Id
 	{
 		get => _id;
@@ -198,6 +194,12 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 			_id = value;
 		}
 	}
+
+	/// <summary>
+	/// Gets or sets the type of this prefab.
+	/// </summary>
+	/// <value>The type of this prefab.</value>
+	public PrefabType Type { get; set; }
 
 	/// <summary>
 	/// Gets the size of this prefab.
