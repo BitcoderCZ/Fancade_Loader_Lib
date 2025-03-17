@@ -230,6 +230,30 @@ public class PrefabList : ICloneable
 		return true;
 	}
 
+	public bool RemovePrefab(ushort id, [MaybeNullWhen(false)] out Prefab prefab)
+	{
+		if (!_prefabs.Remove(id, out prefab))
+		{
+			return false;
+		}
+
+		_segments.RemoveRange(id - IdOffset, prefab.Count);
+
+		for (int i = 0; i < prefab.Count; i++)
+		{
+			RemoveIdFromBlocks((ushort)(id + i));
+		}
+
+		if (WillBeLastPrefab(prefab))
+		{
+			return true;
+		}
+
+		DecreaseAfter(id, (ushort)prefab.Count);
+
+		return true;
+	}
+
 	public void AddSegmentToPrefab(ushort id, PrefabSegment value, bool overwriteBlocks)
 	{
 		var prefab = _prefabs[id];

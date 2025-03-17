@@ -227,6 +227,25 @@ public partial class PartialPrefabList : ICloneable
 		return true;
 	}
 
+	public bool RemovePrefab(ushort id, [MaybeNullWhen(false)] out PartialPrefab prefab)
+	{
+		if (!_prefabs.Remove(id, out prefab))
+		{
+			return false;
+		}
+
+		_segments.RemoveRange(id - IdOffset, prefab.Count);
+
+		if (WillBeLastPrefab(prefab))
+		{
+			return true;
+		}
+
+		DecreaseAfter(id, (ushort)prefab.Count);
+
+		return true;
+	}
+
 	public void AddSegmentToPrefab(ushort id, PartialPrefabSegment value)
 	{
 		var prefab = _prefabs[id];
