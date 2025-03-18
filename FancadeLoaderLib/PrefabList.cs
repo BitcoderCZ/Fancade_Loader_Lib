@@ -22,13 +22,10 @@ namespace FancadeLoaderLib;
 /// </remarks>
 public class PrefabList : ICloneable
 {
-	/// <summary>
-	/// The id offset of this list, <see cref="RawGame.CurrentNumbStockPrefabs"/> by default.
-	/// </summary>
-	public ushort IdOffset = RawGame.CurrentNumbStockPrefabs;
-
 	internal readonly Dictionary<ushort, Prefab> _prefabs;
 	internal readonly List<PrefabSegment> _segments;
+
+	private ushort _idOffset = RawGame.CurrentNumbStockPrefabs;
 
 	public PrefabList()
 	{
@@ -54,7 +51,7 @@ public class PrefabList : ICloneable
 
 		_segments = [.. SegmentsFromPrefabs(_prefabs)];
 
-		IdOffset = _prefabs.Min(item => item.Key);
+		_idOffset = _prefabs.Min(item => item.Key);
 	}
 
 	public PrefabList(PrefabList other, bool deepCopy)
@@ -73,10 +70,36 @@ public class PrefabList : ICloneable
 		}
 	}
 
-	private PrefabList(Dictionary<ushort, Prefab> dict)
+	private PrefabList(Dictionary<ushort, Prefab> dict, ushort idOffset)
 	{
 		_prefabs = dict;
 		_segments = [.. SegmentsFromPrefabs(_prefabs)];
+		_idOffset = idOffset;
+	}
+
+	/// <summary>
+	/// Gets or sets the id offset of this list, <see cref="RawGame.CurrentNumbStockPrefabs"/> by default.
+	/// Specifies the lowest prefab id.
+	/// </summary>
+	/// <value>Id offset of this list.</value>
+	public ushort IdOffset
+	{
+		get => _idOffset;
+		set
+		{
+			if (value < _idOffset)
+			{
+				_idOffset = 0;
+				DecreaseAfter(0, (ushort)(_idOffset - value));
+				_idOffset = value;
+			}
+			else if (value > _idOffset)
+			{
+				_idOffset = 0;
+				IncreaseAfter(0, (ushort)(value - _idOffset));
+				_idOffset = value;
+			}
+		}
 	}
 
 	public int PrefabCount => _prefabs.Count;
@@ -129,10 +152,7 @@ public class PrefabList : ICloneable
 			}
 		}
 
-		return new PrefabList(prefabs)
-		{
-			IdOffset = idOffset,
-		};
+		return new PrefabList(prefabs, idOffset);
 	}
 
 	public void Save(FcBinaryWriter writer)
