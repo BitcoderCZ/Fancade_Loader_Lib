@@ -110,6 +110,11 @@ public class PrefabList : ICloneable
 
 	public IEnumerable<PrefabSegment> Segments => _segments;
 
+	/// <summary>
+	/// Loads a <see cref="PrefabList"/> from a <see cref="FcBinaryReader"/>.
+	/// </summary>
+	/// <param name="reader">The reader to read the <see cref="PrefabList"/> from.</param>
+	/// <returns>A <see cref="PrefabList"/> read from <paramref name="reader"/>.</returns>
 	public static PrefabList Load(FcBinaryReader reader)
 	{
 		if (reader is null)
@@ -155,6 +160,10 @@ public class PrefabList : ICloneable
 		return new PrefabList(prefabs, idOffset);
 	}
 
+	/// <summary>
+	/// Writes a <see cref="PrefabList"/> into a <see cref="FcBinaryWriter"/>.
+	/// </summary>
+	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
 		if (writer is null)

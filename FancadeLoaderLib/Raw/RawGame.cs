@@ -137,10 +137,10 @@ public class RawGame
 	}
 
 	/// <summary>
-	/// Loads a game from a compressed stream.
+	/// Loads a <see cref="RawGame"/> from a zlib compressed <see cref="Stream"/>.
 	/// </summary>
-	/// <param name="stream">The stream to load from.</param>
-	/// <returns>The loaded game.</returns>
+	/// <param name="stream">The reader to read the <see cref="RawGame"/> from.</param>
+	/// <returns>A <see cref="RawGame"/> read from <paramref name="stream"/>.</returns>
 	public static RawGame LoadCompressed(Stream stream)
 	{
 		// decompress
@@ -155,10 +155,10 @@ public class RawGame
 	}
 
 	/// <summary>
-	/// Loads a game from a reader.
+	/// Loads a <see cref="RawGame"/> from a <see cref="FcBinaryReader"/>.
 	/// </summary>
-	/// <param name="reader">The reader to load from.</param>
-	/// <returns>The loaded game.</returns>
+	/// <param name="reader">The reader to read the <see cref="RawGame"/> from.</param>
+	/// <returns>A <see cref="RawGame"/> read from <paramref name="reader"/>.</returns>
 	public static RawGame Load(FcBinaryReader reader)
 	{
 		if (reader is null)
@@ -195,9 +195,9 @@ public class RawGame
 	}
 
 	/// <summary>
-	/// Saves and compresses game to a stream.
+	/// Writes and compresses a <see cref="RawPrefab"/> into a <see cref="Stream"/>.
 	/// </summary>
-	/// <param name="stream">The stream to save to.</param>
+	/// <param name="stream">The <see cref="Stream"/> to write this instance into.</param>
 	public void SaveCompressed(Stream stream)
 	{
 		using (MemoryStream writerStream = new MemoryStream())
@@ -211,9 +211,9 @@ public class RawGame
 	}
 
 	/// <summary>
-	/// Saves a game to a writer.
+	/// Writes a <see cref="RawPrefab"/> into a <see cref="FcBinaryWriter"/>.
 	/// </summary>
-	/// <param name="writer">The writer to save to.</param>
+	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
 		if (writer is null)

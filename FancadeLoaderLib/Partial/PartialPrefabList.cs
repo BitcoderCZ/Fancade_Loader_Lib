@@ -112,6 +112,11 @@ public partial class PartialPrefabList : ICloneable
 
 	public IEnumerable<PartialPrefabSegment> Segments => _segments;
 
+	/// <summary>
+	/// Loads a <see cref="PartialPrefabList"/> from a <see cref="FcBinaryReader"/>.
+	/// </summary>
+	/// <param name="reader">The reader to read the <see cref="PartialPrefabList"/> from.</param>
+	/// <returns>A <see cref="PartialPrefabList"/> read from <paramref name="reader"/>.</returns>
 	public static PartialPrefabList Load(FcBinaryReader reader)
 	{
 		if (reader is null)
@@ -157,6 +162,10 @@ public partial class PartialPrefabList : ICloneable
 		return new PartialPrefabList(prefabs, idOffset);
 	}
 
+	/// <summary>
+	/// Writes a <see cref="PartialPrefabList"/> into a <see cref="FcBinaryWriter"/>.
+	/// </summary>
+	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
 	public void Save(FcBinaryWriter writer)
 	{
 		if (writer is null)
