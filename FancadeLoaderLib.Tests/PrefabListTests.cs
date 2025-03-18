@@ -364,6 +364,35 @@ public class PrefabListTests
 	}
 
 	[Test]
+	public async Task AddSegmentToPrefab_OverwritesPrefabsCorrectly()
+	{
+		var prefabList = new PrefabList()
+		{
+			IdOffset = 1,
+		};
+
+		var prefab1 = CreateDummyPrefab(1, 1);
+		var prefab2 = CreateDummyPrefab(2, 2);
+
+		var blocks = prefab1.Blocks;
+		blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+		blocks.SetPrefab(new int3(1, 0, 0), prefab2);
+
+		prefabList.AddPrefab(prefab1);
+		prefabList.AddPrefab(prefab2);
+
+		var newSegment = new PrefabSegment(1, new byte3(1, 0, 0));
+		prefabList.AddSegmentToPrefab(1, newSegment, true);
+
+		using (Assert.Multiple())
+		{
+			await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+			await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+			await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)0);
+		}
+	}
+
+	[Test]
 	public async Task TryAddSegmentToPrefab_WithObstruction_ReturnsFalse()
 	{
 		var prefabList = new PrefabList()

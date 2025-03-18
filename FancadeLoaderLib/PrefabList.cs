@@ -586,7 +586,19 @@ public class PrefabList : ICloneable
 
 						if (array[i] == prefabId)
 						{
-							prefab.Blocks.SetBlock(pos + offset, id);
+							int iNew = prefab.Blocks.Index(pos + offset);
+							ushort idOld = array[iNew];
+							if (TryGetPrefab(idOld, out var oldPrefab))
+							{
+								int3 prefabPos = (pos + offset) - GetSegment(idOld).PosInPrefab;
+
+								foreach (var segPos in oldPrefab.Keys)
+								{
+									prefab.Blocks.SetBlockUnchecked(prefabPos + segPos, 0);
+								}
+							}
+
+							array[iNew] = id;
 						}
 					}
 				}
