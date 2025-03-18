@@ -40,12 +40,15 @@ public readonly struct Rotation : IEquatable<Rotation>
 	public static bool operator !=(Rotation left, Rotation right)
 		=> left.Value != right.Value;
 
+	/// <inheritdoc/>
 	public readonly bool Equals(Rotation other)
 		=> this == other;
 
+	/// <inheritdoc/>
 	public readonly override bool Equals(object? obj)
 		=> obj is Rotation other && this == other;
 
+	/// <inheritdoc/>
 	public readonly override int GetHashCode()
 		=> Value.GetHashCode();
 }

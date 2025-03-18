@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 namespace FancadeLoaderLib.Raw;
 
 /// <summary>
-/// Directly represents a prefab (block or level).
+/// Directly represents a fancade prefab.
 /// </summary>
 public class RawPrefab
 {

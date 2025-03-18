@@ -7,6 +7,7 @@ using FancadeLoaderLib.Utils;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -24,10 +25,7 @@ public static class PrefabListMarshal
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Span<PrefabSegment> AsSegmentSpan(PrefabList list)
 	{
-		if (list is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(list));
-		}
+		ThrowIfNull(list, nameof(list));
 
 		return CollectionsMarshal.AsSpan(list._segments);
 	}
@@ -41,10 +39,7 @@ public static class PrefabListMarshal
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Span<PartialPrefabSegment> AsSegmentSpan(PartialPrefabList list)
 	{
-		if (list is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(list));
-		}
+		ThrowIfNull(list, nameof(list));
 
 		return CollectionsMarshal.AsSpan(list._segments);
 	}

@@ -18,4 +18,12 @@ public static class PartialPrefabUtils
 	/// <returns><paramref name="prefab"/> coverted to <see cref="PartialPrefab"/>.</returns>
 	public static PartialPrefab ToPartial(this Prefab prefab)
 		=> new PartialPrefab(prefab);
+
+	/// <summary>
+	/// Coverts a <see cref="PrefabList"/> to <see cref="PartialPrefabList"/>.
+	/// </summary>
+	/// <param name="list">The prefab list to convert.</param>
+	/// <returns><paramref name="list"/> coverted to <see cref="PartialPrefabList"/>.</returns>
+	public static PartialPrefabList ToPartial(this PrefabList list)
+		=> new PartialPrefabList(list);
 }

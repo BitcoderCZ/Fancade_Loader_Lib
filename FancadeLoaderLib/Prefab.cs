@@ -14,7 +14,7 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 namespace FancadeLoaderLib;
 
 /// <summary>
-/// Represents a fancade prefab.
+/// Represents a fancade prefab, processed for easier manipulation.
 /// </summary>
 public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 {
@@ -272,7 +272,10 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// <inheritdoc/>
 	public ICollection<PrefabSegment> Values => _segments.Values;
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Gets the number of segments in the <see cref="Prefab"/>.
+	/// </summary>
+	/// <value>The number of segments in the <see cref="Prefab"/>.</value>
 	public int Count => _segments.Count;
 
 	/// <inheritdoc/>
@@ -577,7 +580,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// Removes a segment at the specified position.
 	/// </summary>
 	/// <remarks>
-	/// <see cref="Prefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>0</c>.
+	/// <see cref="Prefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>1</c>.
 	/// <para>The segment at index <c>0</c> (<see cref="IndexOf(byte3)"/>) cannot be removed.</para>
 	/// </remarks>
 	/// <param name="key">Position of the segment to remove.</param>
@@ -604,7 +607,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// Removes a segment at the specified position.
 	/// </summary>
 	/// <remarks>
-	/// <see cref="Prefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>0</c>.
+	/// <see cref="Prefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>1</c>.
 	/// <para>The segment at index <c>0</c> (<see cref="IndexOf(byte3)"/>) cannot be removed.</para>
 	/// </remarks>
 	/// <param name="key">Position of the segment to remove.</param>
@@ -637,13 +640,17 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 #endif
 		=> _segments.TryGetValue(key, out value);
 
-	/// <summary>Gets the index of a segment.</summary>
+	/// <summary>
+	/// Determines the indes of a specified segment.
+	/// </summary>
 	/// <param name="key">Position of the segment.</param>
-	/// <returns>The index of <paramref name="key"/> if found; otherwise, -1.</returns>
+	/// <returns>The index of the segment if found; otherwise, <c>-1</c>.</returns>
 	public int IndexOf(byte3 key)
 		=> _segments.IndexOf(key);
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Removes all, but the first segment.
+	/// </summary>
 	public void Clear()
 	{
 		_segments.Clear();
@@ -697,6 +704,10 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 		return removed;
 	}
 
+	/// <summary>
+	/// Returns an <see cref="IEnumerable{T}"/>, that enumerates the segments with their ids.
+	/// </summary>
+	/// <returns>An <see cref="IEnumerable{T}"/>, that enumerates the segments with their ids.</returns>
 	public IEnumerable<(PrefabSegment Segment, ushort Id)> EnumerateWithId()
 	{
 		ushort id = Id;

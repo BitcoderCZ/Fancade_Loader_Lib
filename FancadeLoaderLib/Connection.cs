@@ -102,12 +102,15 @@ public struct Connection : IEquatable<Connection>
 	public readonly override string ToString()
 		=> $"From: {From}, To: {To}, FromVox: {FromVoxel}, ToVox: {ToVoxel}";
 
+	/// <inheritdoc/>
 	public readonly bool Equals(Connection other)
 		=> this == other;
 
+	/// <inheritdoc/>
 	public readonly override bool Equals(object? obj)
 		=> obj is Connection other && this == other;
 
+	/// <inheritdoc/>
 	public readonly override int GetHashCode()
 		=> HashCode.Combine(From, To, FromVoxel, ToVoxel);
 }

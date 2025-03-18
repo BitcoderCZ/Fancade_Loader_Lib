@@ -18,7 +18,6 @@ namespace FancadeLoaderLib;
 /// </summary>
 /// <remarks>
 /// Ids are automatically changed when prefabs are inserter/removed.
-/// <para>Allows for saving/loading.</para>
 /// </remarks>
 public class PrefabList : ICloneable
 {
@@ -27,18 +26,30 @@ public class PrefabList : ICloneable
 
 	private ushort _idOffset = RawGame.CurrentNumbStockPrefabs;
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PrefabList"/> class.
+	/// </summary>
 	public PrefabList()
 	{
 		_prefabs = [];
 		_segments = [];
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PrefabList"/> class.
+	/// </summary>
+	/// <param name="prefabCapacity">The initial prefab capacity.</param>
+	/// <param name="segmentCapacity">The initial segment capacity.</param>
 	public PrefabList(int prefabCapacity, int segmentCapacity)
 	{
 		_prefabs = new(prefabCapacity);
 		_segments = new(segmentCapacity);
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PrefabList"/> class.
+	/// </summary>
+	/// <param name="prefabs">The <see cref="IEnumerable{T}"/> whose elements are copied to the new <see cref="PrefabList"/>.</param>
 	public PrefabList(IEnumerable<Prefab> prefabs)
 	{
 		if (prefabs is null)
@@ -54,9 +65,16 @@ public class PrefabList : ICloneable
 		_idOffset = _prefabs.Min(item => item.Key);
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PrefabList"/> class.
+	/// </summary>
+	/// <param name="other">A <see cref="PrefabList"/> to copy values from.</param>
+	/// <param name="deepCopy">If deep copy should be performed.</param>
 	public PrefabList(PrefabList other, bool deepCopy)
 	{
 		ThrowIfNull(other, nameof(other));
+
+		_idOffset = other.IdOffset;
 
 		if (deepCopy)
 		{
@@ -102,12 +120,28 @@ public class PrefabList : ICloneable
 		}
 	}
 
+	/// <summary>
+	/// Gets the number of prefabs in the <see cref="PrefabList"/>.
+	/// </summary>
+	/// <value>The number of prefabs in the <see cref="PrefabList"/>.</value>
 	public int PrefabCount => _prefabs.Count;
 
+	/// <summary>
+	/// Gets the number of segments in the <see cref="PrefabList"/>.
+	/// </summary>
+	/// <value>The number of segments in the <see cref="PrefabList"/>.</value>
 	public int SegmentCount => _segments.Count;
 
+	/// <summary>
+	/// Gets an <see cref="IEnumerable{T}"/> containing the prefabs in the <see cref="PrefabList"/>.
+	/// </summary>
+	/// <value>An <see cref="IEnumerable{T}"/> containing the prefabs in the <see cref="PrefabList"/>.</value>
 	public IEnumerable<Prefab> Prefabs => _prefabs.Values;
 
+	/// <summary>
+	/// Gets an <see cref="IEnumerable{T}"/> containing the segments in the <see cref="PrefabList"/>.
+	/// </summary>
+	/// <value>An <see cref="IEnumerable{T}"/> containing the segments in the <see cref="PrefabList"/>.</value>
 	public IEnumerable<PrefabSegment> Segments => _segments;
 
 	/// <summary>
@@ -180,15 +214,37 @@ public class PrefabList : ICloneable
 		}
 	}
 
+	/// <summary>
+	/// Gets the prefab with the specified id.
+	/// </summary>
+	/// <param name="id">Id of the prefab to get.</param>
+	/// <returns>The prefab with the specified id.</returns>
 	public Prefab GetPrefab(ushort id)
 		=> _prefabs[id];
 
+	/// <summary>
+	/// Gets the prefab with the specified id.
+	/// </summary>
+	/// <param name="id">Id of the prefab to get.</param>
+	/// <param name="value">The prefab with the specified id.</param>
+	/// <returns><see langword="true"/> if the <see cref="PrefabList"/> contains the specified prefab; otherwise <see langword="false"/>.</returns>
 	public bool TryGetPrefab(ushort id, [MaybeNullWhen(false)] out Prefab value)
 		=> _prefabs.TryGetValue(id, out value);
 
+	/// <summary>
+	/// Gets the segment with the specified id.
+	/// </summary>
+	/// <param name="id">Id of the segment to get.</param>
+	/// <returns>The segment with the specified id.</returns>
 	public PrefabSegment GetSegment(ushort id)
 		=> _segments[id - IdOffset];
 
+	/// <summary>
+	/// Gets the segment with the specified id.
+	/// </summary>
+	/// <param name="id">Id of the segment to get.</param>
+	/// <param name="value">The segment with the specified id.</param>
+	/// <returns><see langword="true"/> if the <see cref="PrefabList"/> contains the specified segment; otherwise <see langword="false"/>.</returns>
 	public bool TryGetSegments(ushort id, [MaybeNullWhen(false)] out PrefabSegment value)
 	{
 		id -= IdOffset;
@@ -206,6 +262,10 @@ public class PrefabList : ICloneable
 		}
 	}
 
+	/// <summary>
+	/// Adds a prefab to the <see cref="PrefabList"/>.
+	/// </summary>
+	/// <param name="value">The prefab to add, it's id must be equal to <see cref="SegmentCount"/> + <see cref="IdOffset"/>.</param>
 	public void AddPrefab(Prefab value)
 	{
 		if (value.Id != SegmentCount + IdOffset)
@@ -217,6 +277,10 @@ public class PrefabList : ICloneable
 		_segments.AddRange(value.Values);
 	}
 
+	/// <summary>
+	/// Adds a prefab to the <see cref="PartialPrefabList"/>.
+	/// </summary>
+	/// <param name="value">The prefab to add, a prefab with it's id must already be in the <see cref="PartialPrefabList"/>.</param>
 	public void InsertPrefab(Prefab value)
 	{
 		if (WillBeLastPrefab(value))
@@ -235,6 +299,11 @@ public class PrefabList : ICloneable
 		_segments.InsertRange(value.Id - IdOffset, value.Values);
 	}
 
+	/// <summary>
+	/// Removed a prefab with the specified id from the <see cref="PartialPrefabList"/>.
+	/// </summary>
+	/// <param name="id">Id of the prefab to remove.</param>
+	/// <returns><see langword="true"/> if the prefab was removed; otherwise <see langword="false"/>.</returns>
 	public bool RemovePrefab(ushort id)
 	{
 		if (!_prefabs.Remove(id, out var prefab))
@@ -259,6 +328,12 @@ public class PrefabList : ICloneable
 		return true;
 	}
 
+	/// <summary>
+	/// Removed a prefab with the specified id from the <see cref="PartialPrefabList"/>.
+	/// </summary>
+	/// <param name="id">Id of the prefab to remove.</param>
+	/// <param name="prefab">The prefab that was removed.</param>
+	/// <returns><see langword="true"/> if the prefab was removed; otherwise <see langword="false"/>.</returns>
 	public bool RemovePrefab(ushort id, [MaybeNullWhen(false)] out Prefab prefab)
 	{
 		if (!_prefabs.Remove(id, out prefab))
@@ -283,13 +358,22 @@ public class PrefabList : ICloneable
 		return true;
 	}
 
+	/// <summary>
+	/// Adds a segment to a prefab.
+	/// </summary>
+	/// <param name="id">Id of the prefab.</param>
+	/// <param name="value">The segment to add to the prefab.</param>
+	/// <param name="overwriteBlocks">
+	/// If <see langword="true"/>, blocks will be overwritten,
+	/// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, an <see cref="InvalidOperationException"/> will be thrown.
+	/// </param>
 	public void AddSegmentToPrefab(ushort id, PrefabSegment value, bool overwriteBlocks)
 	{
 		var prefab = _prefabs[id];
 
 		if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab))
 		{
-			throw new InvalidOperationException($"Cannot add prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+			throw new InvalidOperationException($"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
 		}
 
 		ushort segmentId = (ushort)(prefab.Id + prefab.Count);
@@ -309,6 +393,16 @@ public class PrefabList : ICloneable
 		AddIdToPrefab(id, value.PosInPrefab, segmentId);
 	}
 
+	/// <summary>
+	/// Adds a segment to a prefab.
+	/// </summary>
+	/// <param name="id">Id of the prefab.</param>
+	/// <param name="value">The segment to add to the prefab.</param>
+	/// <param name="overwriteBlocks">
+	/// If <see langword="true"/>, blocks will be overwritten,
+	/// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, <see langword="false"/> is returned.
+	/// </param>
+	/// <returns><see langword="true"/> if the segment was added to the prefab; otherwise <see langword="false"/>.</returns>
 	public bool TryAddSegmentToPrefab(ushort id, PrefabSegment value, bool overwriteBlocks)
 	{
 		if (!_prefabs.TryGetValue(id, out var prefab))
@@ -342,6 +436,12 @@ public class PrefabList : ICloneable
 		return true;
 	}
 
+	/// <summary>
+	/// Removes a segment from a prefab.
+	/// </summary>
+	/// <param name="id">Id of the prefab.</param>
+	/// <param name="posInPrefab">Position of the segment to remove.</param>
+	/// <returns><see langword="true"/> if the segment was removed from the prefab; otherwise <see langword="false"/>.</returns>
 	public bool RemoveSegmentFromPrefab(ushort id, byte3 posInPrefab)
 	{
 		var prefab = _prefabs[id];
@@ -367,12 +467,20 @@ public class PrefabList : ICloneable
 		return true;
 	}
 
+	/// <summary>
+	/// Removes all prefabs and segments from the <see cref="PrefabList"/>.
+	/// </summary>
 	public void Clear()
 	{
 		_prefabs.Clear();
 		_segments.Clear();
 	}
 
+	/// <summary>
+	/// Creates a copy of this <see cref="PrefabList"/>.
+	/// </summary>
+	/// <param name="deepCopy">If deep copy should be performed.</param>
+	/// <returns>A copy of this <see cref="PrefabList"/>.</returns>
 	public PrefabList Clone(bool deepCopy)
 		=> new PrefabList(this, deepCopy);
 

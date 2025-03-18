@@ -246,12 +246,15 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
 	public readonly override string ToString()
 		=> $"Type: {Type}, Value: {Value}, Pos: {Position}";
 
+	/// <inheritdoc/>
 	public readonly bool Equals(PrefabSetting other)
 		=> this == other;
 
+	/// <inheritdoc/>
 	public readonly override bool Equals(object? obj)
 		=> obj is PrefabSetting other && this == other;
 
+	/// <inheritdoc/>
 	public readonly override int GetHashCode()
 		=> HashCode.Combine(Index, Position, Type, Value);
 }

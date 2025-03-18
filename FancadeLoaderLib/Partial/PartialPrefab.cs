@@ -120,6 +120,10 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 	{
 	}
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="PartialPrefab"/> class.
+	/// </summary>
+	/// <param name="prefab">A <see cref="Prefab"/> to copy values from.</param>
 	public PartialPrefab(Prefab prefab)
 	{
 		ThrowIfNull(prefab, nameof(prefab));
@@ -135,7 +139,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 	/// <summary>
 	/// Initializes a new instance of the <see cref="PartialPrefab"/> class.
 	/// </summary>
-	/// <param name="other">The <see cref="PartialPrefab"/> to copy values from.</param>
+	/// <param name="other">A <see cref="PartialPrefab"/> to copy values from.</param>
 	/// <param name="deepCopy">If deep copy should be performed.</param>
 	public PartialPrefab(PartialPrefab other, bool deepCopy)
 	{
@@ -213,7 +217,10 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 	/// <inheritdoc/>
 	public ICollection<PartialPrefabSegment> Values => _segments.Values;
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Gets the number of segments in the <see cref="Prefab"/>.
+	/// </summary>
+	/// <value>The number of segments in the <see cref="Prefab"/>.</value>
 	public int Count => _segments.Count;
 
 	/// <inheritdoc/>
@@ -228,7 +235,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 	}
 
 	/// <inheritdoc/>
-	public void Add(byte3 key, PartialPrefabSegment value)
+	void IDictionary<byte3, PartialPrefabSegment>.Add(byte3 key, PartialPrefabSegment value)
 	{
 		ValidatePos(key, nameof(key));
 
@@ -239,6 +246,10 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 		Size = byte3.Max(Size, key + byte3.One);
 	}
 
+	/// <summary>
+	/// Adds a segment to the prefab.
+	/// </summary>
+	/// <param name="value">The segment to add.</param>
 	public void Add(PartialPrefabSegment value)
 	{
 		ValidatePos(value.PosInPrefab, $"{nameof(value)}.{nameof(value.PosInPrefab)}");
@@ -248,21 +259,11 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 		Size = byte3.Max(Size, value.PosInPrefab + byte3.One);
 	}
 
-	public bool TryAdd(byte3 key, PartialPrefabSegment value)
-	{
-		ValidatePos(key, nameof(key));
-
-		if (!_segments.TryAdd(key, ValidateSegment(value, nameof(value))))
-		{
-			return false;
-		}
-
-		value.PosInPrefab = key; // only change pos if successfully added
-
-		Size = byte3.Max(Size, key + byte3.One);
-		return true;
-	}
-
+	/// <summary>
+	/// Adds a segment to the prefab, if one isn't already at it's position.
+	/// </summary>
+	/// <param name="value">The segment to add.</param>
+	/// <returns><see langword="true"/> if the value was added; otherwise, <see langword="false"/>.</returns>
 	public bool TryAdd(PartialPrefabSegment value)
 	{
 		ValidatePos(value.PosInPrefab, $"{nameof(value)}.{nameof(value.PosInPrefab)}");
@@ -280,7 +281,15 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 	public bool ContainsKey(byte3 key)
 		=> _segments.ContainsKey(key);
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Removes a segment at the specified position.
+	/// </summary>
+	/// <remarks>
+	/// <see cref="PartialPrefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>1</c>.
+	/// <para>The segment at index <c>0</c> (<see cref="IndexOf(byte3)"/>) cannot be removed.</para>
+	/// </remarks>
+	/// <param name="key">Position of the segment to remove.</param>
+	/// <returns><see langword="true"/> if the segment was removed; otherwise, <see langword="true"/>.</returns>
 	public bool Remove(byte3 key)
 	{
 		// can't remove the first segment
@@ -299,6 +308,16 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 		return removed;
 	}
 
+	/// <summary>
+	/// Removes the segment at the specified position.
+	/// </summary>
+	/// <remarks>
+	/// <see cref="PartialPrefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>1</c>.
+	/// <para>The segment at index <c>0</c> (<see cref="IndexOf(byte3)"/>) cannot be removed.</para>
+	/// </remarks>
+	/// <param name="key">The position of the segment to remove.</param>
+	/// <param name="value">The removed segment.</param>
+	/// <returns><see langword="true"/> if the segment is successfully found and removed; otherwise, <see langword="false"/>.</returns>
 	public bool Remove(byte3 key, [MaybeNullWhen(false)] out PartialPrefabSegment value)
 	{
 		// can't remove the first segment
@@ -326,15 +345,27 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 #endif
 		=> _segments.TryGetValue(key, out value);
 
+	/// <summary>
+	/// Determines the indes of a specified segment.
+	/// </summary>
+	/// <param name="key">Position of the segment.</param>
+	/// <returns>The index of the segment if found; otherwise, <c>-1</c>.</returns>
 	public int IndexOf(byte3 key)
 		=> _segments.IndexOf(key);
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Removes all, but the first segment.
+	/// </summary>
 	public void Clear()
 	{
+		var first = _segments.GetAt(0).Value;
+
 		_segments.Clear();
 
-		Size = byte3.Zero;
+		first.PosInPrefab = byte3.Zero;
+		_segments.Add(first.PosInPrefab, first);
+
+		Size = byte3.One;
 	}
 
 	/// <inheritdoc/>
@@ -383,6 +414,10 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 		return removed;
 	}
 
+	/// <summary>
+	/// Returns an <see cref="IEnumerable{T}"/>, that enumerates the segments with their ids.
+	/// </summary>
+	/// <returns>An <see cref="IEnumerable{T}"/>, that enumerates the segments with their ids.</returns>
 	public IEnumerable<(PartialPrefabSegment Segment, ushort Id)> EnumerateWithId()
 	{
 		ushort id = Id;

@@ -66,6 +66,7 @@ public unsafe struct Voxel : IEquatable<Voxel>
 		!MemoryMarshal.CreateReadOnlySpan(ref left.Attribs[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Attribs[0], 6));
 #endif
 
+	/// <inheritdoc/>
 	public readonly override int GetHashCode()
 	{
 		HashCode hash = default;
@@ -83,9 +84,11 @@ public unsafe struct Voxel : IEquatable<Voxel>
 		return hash.ToHashCode();
 	}
 
+	/// <inheritdoc/>
 	public readonly bool Equals(Voxel other)
 		=> this == other;
 
+	/// <inheritdoc/>
 	public readonly override bool Equals([NotNullWhen(true)] object? obj)
 		=> obj is Voxel other && this == other;
 
