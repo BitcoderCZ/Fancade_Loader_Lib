@@ -240,28 +240,6 @@ public class PartialPrefabListTests
 	}
 
 	[Test]
-	public async Task RemoveSegmentFromPrefab_RemoveOrigin_ReturnsFalse()
-	{
-		var prefabList = new PartialPrefabList()
-		{
-			IdOffset = 0,
-		};
-
-		var prefab = CreateDummyPrefab(0, 2);
-		prefabList.AddPrefab(prefab);
-
-		bool removed = prefabList.RemoveSegmentFromPrefab(0, new byte3(0, 0, 0));
-
-		await Assert.That(removed).IsFalse();
-
-		using (Assert.Multiple())
-		{
-			await Assert.That(prefab.Count).IsEqualTo(2);
-			await Assert.That(prefabList.SegmentCount).IsEqualTo(2);
-		}
-	}
-
-	[Test]
 	public async Task RemoveSegmentFromPrefab_UpdatesIds()
 	{
 		var prefabList = new PartialPrefabList()

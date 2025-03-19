@@ -23,7 +23,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// </summary>
 	public const int MaxSize = 4;
 
-	private readonly OrderedDictionary<byte3, PrefabSegment> _segments;
+	private readonly Dictionary<byte3, PrefabSegment> _segments;
 
 	private ushort _id;
 
@@ -163,8 +163,8 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
 		_segments = deepCopy
-			? new OrderedDictionary<byte3, PrefabSegment>(other._segments.Select(item => new KeyValuePair<byte3, PrefabSegment>(item.Key, item.Value.Clone())))
-			: new OrderedDictionary<byte3, PrefabSegment>(other._segments);
+			? new Dictionary<byte3, PrefabSegment>(other._segments.Select(item => new KeyValuePair<byte3, PrefabSegment>(item.Key, item.Value.Clone())))
+			: new Dictionary<byte3, PrefabSegment>(other._segments);
 #pragma warning restore IDE0306
 
 		_id = other.Id;
@@ -581,14 +581,12 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// </summary>
 	/// <remarks>
 	/// <see cref="Prefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>1</c>.
-	/// <para>The segment at index <c>0</c> (<see cref="IndexOf(byte3)"/>) cannot be removed.</para>
 	/// </remarks>
 	/// <param name="key">Position of the segment to remove.</param>
 	/// <returns><see langword="true"/> if the segment was removed; otherwise, <see langword="true"/>.</returns>
 	public bool Remove(byte3 key)
 	{
-		// can't remove the first segment
-		if (Count == 1 || key == _segments.GetAt(0).Key)
+		if (Count == 1)
 		{
 			return false;
 		}
@@ -608,15 +606,13 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// </summary>
 	/// <remarks>
 	/// <see cref="Prefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>1</c>.
-	/// <para>The segment at index <c>0</c> (<see cref="IndexOf(byte3)"/>) cannot be removed.</para>
 	/// </remarks>
 	/// <param name="key">Position of the segment to remove.</param>
 	/// <param name="value">The segment that was at the specified position, if there was one.</param>
 	/// <returns><see langword="true"/> if the segment was removed; otherwise, <see langword="true"/>.</returns>
 	public bool Remove(byte3 key, [MaybeNullWhen(false)] out PrefabSegment value)
 	{
-		// can't remove the first segment
-		if (Count == 1 || key == _segments.GetAt(0).Key)
+		if (Count == 1)
 		{
 			value = null;
 			return false;
@@ -646,16 +642,46 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// <param name="key">Position of the segment.</param>
 	/// <returns>The index of the segment if found; otherwise, <c>-1</c>.</returns>
 	public int IndexOf(byte3 key)
-		=> _segments.IndexOf(key);
+	{
+		int index = 0;
+
+		for (int z = 0; z < Size.Z; z++)
+		{
+			for (int y = 0; y < Size.Y; y++)
+			{
+				for (int x = 0; x < Size.X; x++)
+				{
+					byte3 pos = new byte3(x, y, z);
+
+					if (pos == key)
+					{
+						return index;
+					}
+
+					if (_segments.ContainsKey(pos))
+					{
+						index++;
+					}
+				}
+			}
+		}
+
+		return -1;
+	}
 
 	/// <summary>
 	/// Removes all, but the first segment.
 	/// </summary>
 	public void Clear()
 	{
+		var first = this.First().Value;
+
 		_segments.Clear();
 
-		Size = byte3.Zero;
+		first.PosInPrefab = byte3.Zero;
+		_segments.Add(first.PosInPrefab, first);
+
+		Size = byte3.One;
 	}
 
 	/// <inheritdoc/>
@@ -688,8 +714,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	/// <inheritdoc/>
 	bool ICollection<KeyValuePair<byte3, PrefabSegment>>.Remove(KeyValuePair<byte3, PrefabSegment> item)
 	{
-		// can't remove the first segment
-		if (Count == 1 || item.Key == _segments.GetAt(0).Key)
+		if (Count == 1)
 		{
 			ThrowInvalidOperationException($"{nameof(Prefab)} cannot be empty.");
 		}
@@ -712,19 +737,42 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 	{
 		ushort id = Id;
 
-		foreach (var segment in _segments.Values)
+		for (int z = 0; z < Size.Z; z++)
 		{
-			yield return (segment, id++);
+			for (int y = 0; y < Size.Y; y++)
+			{
+				for (int x = 0; x < Size.X; x++)
+				{
+					if (_segments.TryGetValue(new byte3(x, y, z), out var segment))
+					{
+						yield return (segment, id++);
+					}
+				}
+			}
 		}
 	}
 
 	/// <inheritdoc/>
 	public IEnumerator<KeyValuePair<byte3, PrefabSegment>> GetEnumerator()
-		=> _segments.GetEnumerator();
+	{
+		for (int z = 0; z < Size.Z; z++)
+		{
+			for (int y = 0; y < Size.Y; y++)
+			{
+				for (int x = 0; x < Size.X; x++)
+				{
+					if (_segments.TryGetValue(new byte3(x, y, z), out var segment))
+					{
+						yield return new KeyValuePair<byte3, PrefabSegment>(new byte3(x, y, z), segment);
+					}
+				}
+			}
+		}
+	}
 
 	/// <inheritdoc/>
 	IEnumerator IEnumerable.GetEnumerator()
-		=> _segments.GetEnumerator();
+		=> GetEnumerator();
 
 	/// <summary>
 	/// Creates a copy of this <see cref="Prefab"/>.
