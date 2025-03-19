@@ -121,13 +121,11 @@ public partial class PartialPrefabList : ICloneable
         {
             if (value < _idOffset)
             {
-                _idOffset = 0;
                 DecreaseAfter(0, (ushort)(_idOffset - value));
                 _idOffset = value;
             }
             else if (value > _idOffset)
             {
-                _idOffset = 0;
                 IncreaseAfter(0, (ushort)(value - _idOffset));
                 _idOffset = value;
             }
@@ -383,7 +381,7 @@ public partial class PartialPrefabList : ICloneable
         prefab.Add(value);
 
         IncreaseAfter(segmentId, 1);
-        _segments.Insert(segmentId, value);
+        _segments.Insert(segmentId - IdOffset, value);
     }
 
     /// <summary>
@@ -413,7 +411,7 @@ public partial class PartialPrefabList : ICloneable
         }
 
         IncreaseAfter(segmentId, 1);
-        _segments.Insert(segmentId, value);
+        _segments.Insert(segmentId - IdOffset, value);
 
         return true;
     }
@@ -497,8 +495,6 @@ public partial class PartialPrefabList : ICloneable
 
     private void IncreaseAfter(int index, ushort amount)
     {
-        index += IdOffset;
-
         for (int i = 0; i < _segments.Count; i++)
         {
             PartialPrefabSegment segment = _segments[i];
@@ -534,8 +530,6 @@ public partial class PartialPrefabList : ICloneable
 
     private void DecreaseAfter(int index, ushort amount)
     {
-        index += IdOffset;
-
         for (int i = 0; i < _segments.Count; i++)
         {
             PartialPrefabSegment segment = _segments[i];
