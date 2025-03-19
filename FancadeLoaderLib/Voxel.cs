@@ -71,47 +71,6 @@ public unsafe struct Voxel : IEquatable<Voxel>
     {
         HashCode hash = default;
 
-
-<<<<<<< TODO: Unmerged change from project 'FancadeLoaderLib (net9.0)', Before:
-        for (int i = 0; i < 6; i++)
-        {
-            hash.Add(Colors[i]);
-        }
-
-        for (int i = 0; i < 6; i++)
-        {
-            hash.Add(Attribs[i]);
-        }
-=======
-        for (int i = 0; i < 6; i++)
-        {
-            hash.Add(Colors[i]);
-        }
-
-        for (int i = 0; i < 6; i++)
-        {
-            hash.Add(Attribs[i]);
-        }
-
-        return hash.ToHashCode();
-    }
-
-    /// <inheritdoc/>
-    public readonly bool Equals(Voxel other)
-        => this == other;
-
-    /// <inheritdoc/>
-    public readonly override bool Equals([NotNullWhen(true)] object? obj)
-        => obj is Voxel other && this == other;
-
-    /// <summary>
-    /// Returns the string representation of the current instance.
-    /// </summary>
-    /// <returns>The string representation of the current instance.</returns>
-    public readonly override string ToString()
-    {
-        StringBuilder builder = new StringBuilder(64);
->>>>>>> After
         for (int i = 0; i < 6; i++)
         {
             hash.Add(Colors[i]);
