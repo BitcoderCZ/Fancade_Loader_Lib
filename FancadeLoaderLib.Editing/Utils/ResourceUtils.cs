@@ -9,8 +9,8 @@ namespace FancadeLoaderLib.Editing.Utils;
 
 internal static class ResourceUtils
 {
-	private static Assembly? _assembly;
+    private static Assembly? _assembly;
 
-	public static Stream GetResource(string name)
-		=> (_assembly ??= Assembly.GetExecutingAssembly()).GetManifestResourceStream("FancadeLoaderLib.Editing." + name) ?? throw new FileNotFoundException($"Resource '{name}' wasn't found.");
+    public static Stream GetResource(string name)
+        => (_assembly ??= Assembly.GetExecutingAssembly()).GetManifestResourceStream("FancadeLoaderLib.Editing." + name) ?? throw new FileNotFoundException($"Resource '{name}' wasn't found.");
 }

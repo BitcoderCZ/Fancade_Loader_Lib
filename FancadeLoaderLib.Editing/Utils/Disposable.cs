@@ -9,21 +9,21 @@ namespace FancadeLoaderLib.Editing.Utils;
 
 internal class Disposable : IDisposable
 {
-	private Action? _onDispose;
+    private Action? _onDispose;
 
-	public Disposable(Action onDispose)
-	{
-		if (onDispose is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(onDispose));
-		}
+    public Disposable(Action onDispose)
+    {
+        if (onDispose is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(onDispose));
+        }
 
-		_onDispose = onDispose;
-	}
+        _onDispose = onDispose;
+    }
 
-	public void Dispose()
-	{
-		_onDispose?.Invoke();
-		_onDispose = null;
-	}
+    public void Dispose()
+    {
+        _onDispose?.Invoke();
+        _onDispose = null;
+    }
 }

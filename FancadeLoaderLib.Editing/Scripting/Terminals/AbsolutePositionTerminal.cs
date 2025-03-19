@@ -10,16 +10,16 @@ namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 public readonly struct AbsolutePositionTerminal : ITerminal
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 {
-	public AbsolutePositionTerminal(int3 blockPosition)
-	{
-		BlockPosition = blockPosition;
-	}
+    public AbsolutePositionTerminal(int3 blockPosition)
+    {
+        BlockPosition = blockPosition;
+    }
 
-	public int3 BlockPosition { get; }
+    public int3 BlockPosition { get; }
 
-	public int TerminalIndex { get; init; }
+    public int TerminalIndex { get; init; }
 
-	public int3? VoxelPosition { get; init; }
+    public int3? VoxelPosition { get; init; }
 
-	public WireType WireType { get; init; }
+    public WireType WireType { get; init; }
 }

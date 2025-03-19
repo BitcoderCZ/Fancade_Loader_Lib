@@ -15,7 +15,7 @@ namespace FancadeLoaderLib.Editing.Scripting.Builders;
 
 public sealed class EditorScriptBlockBuilder : BlockBuilder
 {
-	/*
+    /*
 	Non minimized code:
 	function con(nChr) {
 		return nChr > 64 && nChr < 91
@@ -127,281 +127,281 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
 	updateChanges();
 	log("Updated changes, done");
 	 */
-	private const string Base64Code = """
+    private const string Base64Code = """
 		var t=function(t,e){const n=t.replace(/[^A-Za-z0-9+/]/g,""),a=n.length,g=e?Math.ceil((3*a+1>>2)/e)*e:3*a+1>>2,r=new Uint8Array(g);let I,o,l=0,c=0;for(let t=0;t<a;t++)if(o=3&t,l|=((f=n.charCodeAt(t))>64&&f<91?f-65:f>96&&f<123?f-71:f>47&&f<58?f+4:43===f?62:47===f?63:0)<<6*(3-o),3===o||a-t==1){for(I=0;I<3&&c<g;)r[c]=l>>>(16>>>I&24)&255,I++,c++;l=0}var f;return r}("[CODE]"),e=new DataView(t.buffer),n=new TextDecoder,a=0,g=e.getInt32(a,!0);a+=4;for(var r=0;r<g;r++){var I=e.getInt32(a,!0),o=e.getInt32(a+4,!0),l=e.getInt32(a+8,!0),c=e.getInt32(a+12,!0);a+=16,setBlock(I,o,l,c)}updateChanges();var f=e.getInt32(a,!0);a+=4;for(r=0;r<f;r++){let g=e.getInt32(a,!0),r=e.getInt32(a+4,!0),I=e.getInt32(a+8,!0),o=e.getInt32(a+12,!0),l=e.getInt32(a+16,!0);var v;if(a+=20,0==l)v=e.getFloat32(a,!0),a+=4;else if(1==l){var s=e.getInt32(a,!0);a+=4;var u=t.subarray(a,a+s);a+=s,v=n.decode(u)}else 2==l&&(v=[e.getFloat32(a,!0),e.getFloat32(a+4,!0),e.getFloat32(a+8,!0)],a+=12);setBlockValue(g,r,I,o,v)}updateChanges();var d=e.getInt32(a,!0);a+=4;for(r=0;r<d;r++){var i=e.getInt32(a,!0),h=e.getInt32(a+4,!0),C=e.getInt32(a+8,!0),p=e.getInt32(a+12,!0),w=e.getInt32(a+16,!0),F=e.getInt32(a+20,!0),A=e.getInt32(a+24,!0),D=e.getInt32(a+28,!0);a+=32,connect(i,h,C,A,p,w,F,D)}updateChanges();
 		""";
 
-	public enum CompressionType
-	{
-		None,
-		Base64,
-	}
+    public enum CompressionType
+    {
+        None,
+        Base64,
+    }
 
-	public CompressionType Compression { get; init; } = CompressionType.Base64;
+    public CompressionType Compression { get; init; } = CompressionType.Base64;
 
 #if NET5_0_OR_GREATER
-	public override string Build(int3 buildPos)
+    public override string Build(int3 buildPos)
 #else
-	public override object Build(int3 buildPos)
+    public override object Build(int3 buildPos)
 #endif
-	{
-		Block[] blocks = PreBuild(buildPos, sortByPos: true); // sortByPos is requred because of a bug that sometimes deletes objects if they are placed from +Z to -Z, even if they aren't overlaping
+    {
+        Block[] blocks = PreBuild(buildPos, sortByPos: true); // sortByPos is requred because of a bug that sometimes deletes objects if they are placed from +Z to -Z, even if they aren't overlaping
 
-		return Compression switch
-		{
-			CompressionType.None => BuildRaw(blocks),
-			CompressionType.Base64 => BuildBase64(blocks),
-			_ => throw new InvalidEnumArgumentException(nameof(Compression), (int)Compression, typeof(CompressionType)),
-		};
-	}
+        return Compression switch
+        {
+            CompressionType.None => BuildRaw(blocks),
+            CompressionType.Base64 => BuildBase64(blocks),
+            _ => throw new InvalidEnumArgumentException(nameof(Compression), (int)Compression, typeof(CompressionType)),
+        };
+    }
 
-	private string BuildRaw(Block[] blocks)
-	{
-		StringBuilder builder = new StringBuilder();
+    private string BuildRaw(Block[] blocks)
+    {
+        StringBuilder builder = new StringBuilder();
 
-		if (blocks.Length > 0 && blocks[0].Position != int3.Zero)
-		{
-			builder.AppendLine($"setBlock(0,0,0,1);"); // make sure the level origin doesn't shift
-		}
+        if (blocks.Length > 0 && blocks[0].Position != int3.Zero)
+        {
+            builder.AppendLine($"setBlock(0,0,0,1);"); // make sure the level origin doesn't shift
+        }
 
-		for (int i = 0; i < blocks.Length; i++)
-		{
-			Block block = blocks[i];
+        for (int i = 0; i < blocks.Length; i++)
+        {
+            Block block = blocks[i];
 #if NET6_0_OR_GREATER
-			builder.AppendLine(CultureInfo.InvariantCulture, $"setBlock({block.Position.X},{block.Position.Y},{block.Position.Z},{block.Type.Prefab.Id});");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"setBlock({block.Position.X},{block.Position.Y},{block.Position.Z},{block.Type.Prefab.Id});");
 #else
-			builder.AppendLine($"setBlock({block.Position.X},{block.Position.Y},{block.Position.Z},{block.Type.Prefab.Id});");
+            builder.AppendLine($"setBlock({block.Position.X},{block.Position.Y},{block.Position.Z},{block.Type.Prefab.Id});");
 #endif
-		}
+        }
 
-		builder.AppendLine("updateChanges();");
+        builder.AppendLine("updateChanges();");
 
-		for (int i = 0; i < settings.Count; i++)
-		{
-			SettingRecord set = settings[i];
+        for (int i = 0; i < settings.Count; i++)
+        {
+            SettingRecord set = settings[i];
 
-			string val = set.Value switch
-			{
-				null => "null",
-				byte b => b.ToString(CultureInfo.InvariantCulture),
-				ushort s => s.ToString(CultureInfo.InvariantCulture),
-				float f => f.ToString(CultureInfo.InvariantCulture),
-				string s => $"\"{s}\"",
-				float3 v => $"[{v.X.ToString(CultureInfo.InvariantCulture)},{v.Y.ToString(CultureInfo.InvariantCulture)},{v.Z.ToString(CultureInfo.InvariantCulture)}]",
-				Rotation r => $"[{r.Value.X.ToString(CultureInfo.InvariantCulture)},{r.Value.Y.ToString(CultureInfo.InvariantCulture)},{r.Value.Z.ToString(CultureInfo.InvariantCulture)}]",
-				_ => throw new InvalidDataException($"Object of type '{set.Value.GetType()}' isn't a valid setting value."),
-			};
+            string val = set.Value switch
+            {
+                null => "null",
+                byte b => b.ToString(CultureInfo.InvariantCulture),
+                ushort s => s.ToString(CultureInfo.InvariantCulture),
+                float f => f.ToString(CultureInfo.InvariantCulture),
+                string s => $"\"{s}\"",
+                float3 v => $"[{v.X.ToString(CultureInfo.InvariantCulture)},{v.Y.ToString(CultureInfo.InvariantCulture)},{v.Z.ToString(CultureInfo.InvariantCulture)}]",
+                Rotation r => $"[{r.Value.X.ToString(CultureInfo.InvariantCulture)},{r.Value.Y.ToString(CultureInfo.InvariantCulture)},{r.Value.Z.ToString(CultureInfo.InvariantCulture)}]",
+                _ => throw new InvalidDataException($"Object of type '{set.Value.GetType()}' isn't a valid setting value."),
+            };
 
 #if NET6_0_OR_GREATER
-			builder.AppendLine(CultureInfo.InvariantCulture, $"setBlockValue({set.Block.Position.X},{set.Block.Position.Y},{set.Block.Position.Z},{set.ValueIndex},{val});");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"setBlockValue({set.Block.Position.X},{set.Block.Position.Y},{set.Block.Position.Z},{set.ValueIndex},{val});");
 #else
-			builder.AppendLine($"setBlockValue({set.Block.Position.X},{set.Block.Position.Y},{set.Block.Position.Z},{set.ValueIndex},{val});");
+            builder.AppendLine($"setBlockValue({set.Block.Position.X},{set.Block.Position.Y},{set.Block.Position.Z},{set.ValueIndex},{val});");
 #endif
-		}
+        }
 
-		builder.AppendLine("updateChanges();");
+        builder.AppendLine("updateChanges();");
 
-		for (int i = 0; i < connections.Count; i++)
-		{
-			ConnectionRecord con = connections[i];
-			int3 from = con.From.BlockPosition;
-			int fromTerminal = con.From.TerminalIndex;
-			int3 to = con.To.BlockPosition;
-			int toTerminal = con.To.TerminalIndex;
+        for (int i = 0; i < connections.Count; i++)
+        {
+            ConnectionRecord con = connections[i];
+            int3 from = con.From.BlockPosition;
+            int fromTerminal = con.From.TerminalIndex;
+            int3 to = con.To.BlockPosition;
+            int toTerminal = con.To.TerminalIndex;
 #if NET6_0_OR_GREATER
-			builder.AppendLine(CultureInfo.InvariantCulture, $"connect({from.X},{from.Y},{from.Z},{fromTerminal},{to.X},{to.Y},{to.Z},{toTerminal});");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"connect({from.X},{from.Y},{from.Z},{fromTerminal},{to.X},{to.Y},{to.Z},{toTerminal});");
 #else
-			builder.AppendLine($"connect({from.X},{from.Y},{from.Z},{fromTerminal},{to.X},{to.Y},{to.Z},{toTerminal});");
+            builder.AppendLine($"connect({from.X},{from.Y},{from.Z},{fromTerminal},{to.X},{to.Y},{to.Z},{toTerminal});");
 #endif
-		}
+        }
 
-		builder.AppendLine("updateChanges();");
+        builder.AppendLine("updateChanges();");
 
-		return builder.ToString();
-	}
+        return builder.ToString();
+    }
 
-	private string BuildBase64(Block[] blocks)
-	{
-		byte[] bufer;
-		using (MemoryStream stream = new MemoryStream())
-		using (EditorScriptBase64Writer writer = new EditorScriptBase64Writer(stream))
-		{
-			bool insertBlockAtZero = blocks.Length > 0 && blocks[0].Position != int3.Zero;
+    private string BuildBase64(Block[] blocks)
+    {
+        byte[] bufer;
+        using (MemoryStream stream = new MemoryStream())
+        using (EditorScriptBase64Writer writer = new EditorScriptBase64Writer(stream))
+        {
+            bool insertBlockAtZero = blocks.Length > 0 && blocks[0].Position != int3.Zero;
 
-			writer.WriteInt32(blocks.Length + (insertBlockAtZero ? 1 : 0));
+            writer.WriteInt32(blocks.Length + (insertBlockAtZero ? 1 : 0));
 
-			if (insertBlockAtZero)
-			{
-				// make sure the level origin doesn't shift
-				writer.WriteInt32(0);
-				writer.WriteInt32(0);
-				writer.WriteInt32(0);
-				writer.WriteInt32(1);
-			}
+            if (insertBlockAtZero)
+            {
+                // make sure the level origin doesn't shift
+                writer.WriteInt32(0);
+                writer.WriteInt32(0);
+                writer.WriteInt32(0);
+                writer.WriteInt32(1);
+            }
 
-			for (int i = 0; i < blocks.Length; i++)
-			{
-				Block block = blocks[i];
-				writer.WriteInt32(block.Position.X);
-				writer.WriteInt32(block.Position.Y);
-				writer.WriteInt32(block.Position.Z);
-				writer.WriteInt32(block.Type.Prefab.Id);
-			}
+            for (int i = 0; i < blocks.Length; i++)
+            {
+                Block block = blocks[i];
+                writer.WriteInt32(block.Position.X);
+                writer.WriteInt32(block.Position.Y);
+                writer.WriteInt32(block.Position.Z);
+                writer.WriteInt32(block.Type.Prefab.Id);
+            }
 
-			writer.WriteInt32(settings.Count);
-			for (int i = 0; i < settings.Count; i++)
-			{
-				SettingRecord set = settings[i];
-				writer.WriteInt32(set.Block.Position.X);
-				writer.WriteInt32(set.Block.Position.Y);
-				writer.WriteInt32(set.Block.Position.Z);
-				writer.WriteInt32(set.ValueIndex);
+            writer.WriteInt32(settings.Count);
+            for (int i = 0; i < settings.Count; i++)
+            {
+                SettingRecord set = settings[i];
+                writer.WriteInt32(set.Block.Position.X);
+                writer.WriteInt32(set.Block.Position.Y);
+                writer.WriteInt32(set.Block.Position.Z);
+                writer.WriteInt32(set.ValueIndex);
 
-				if (set.Value is byte numB)
-				{
-					writer.WriteInt32(0);
-					writer.WriteSingle(numB); // javascript only has float type, so no reason to add a value type (other than saving space)
-				}
-				else if (set.Value is ushort numS)
-				{
-					writer.WriteInt32(0);
-					writer.WriteSingle(numS); // javascript only has float type, so no reason to add a value type (other than saving space)
-				}
-				else if (set.Value is float numF)
-				{
-					writer.WriteInt32(0);
-					writer.WriteSingle(numF);
-				}
-				else if (set.Value is string s)
-				{
-					writer.WriteInt32(1);
-					writer.WriteString(s);
-				}
-				else if (set.Value is float3 v3)
-				{
-					writer.WriteInt32(2);
-					writer.WriteSingle(v3.X);
-					writer.WriteSingle(v3.Y);
-					writer.WriteSingle(v3.Z);
-				}
-				else if (set.Value is Rotation rot)
-				{
-					writer.WriteInt32(2);
-					writer.WriteSingle(rot.Value.X);
-					writer.WriteSingle(rot.Value.Y);
-					writer.WriteSingle(rot.Value.Z);
-				}
-				else if (set.Value is bool b)
-				{
-					writer.WriteInt32(3);
-					writer.WriteInt32(b ? 1 : 0);
-				}
-				else
-				{
-					ThrowHelper.ThrowInvalidDataException($"Object of type '{set.Value?.GetType()?.FullName ?? "null"}' isn't a valid setting value.");
-				}
-			}
+                if (set.Value is byte numB)
+                {
+                    writer.WriteInt32(0);
+                    writer.WriteSingle(numB); // javascript only has float type, so no reason to add a value type (other than saving space)
+                }
+                else if (set.Value is ushort numS)
+                {
+                    writer.WriteInt32(0);
+                    writer.WriteSingle(numS); // javascript only has float type, so no reason to add a value type (other than saving space)
+                }
+                else if (set.Value is float numF)
+                {
+                    writer.WriteInt32(0);
+                    writer.WriteSingle(numF);
+                }
+                else if (set.Value is string s)
+                {
+                    writer.WriteInt32(1);
+                    writer.WriteString(s);
+                }
+                else if (set.Value is float3 v3)
+                {
+                    writer.WriteInt32(2);
+                    writer.WriteSingle(v3.X);
+                    writer.WriteSingle(v3.Y);
+                    writer.WriteSingle(v3.Z);
+                }
+                else if (set.Value is Rotation rot)
+                {
+                    writer.WriteInt32(2);
+                    writer.WriteSingle(rot.Value.X);
+                    writer.WriteSingle(rot.Value.Y);
+                    writer.WriteSingle(rot.Value.Z);
+                }
+                else if (set.Value is bool b)
+                {
+                    writer.WriteInt32(3);
+                    writer.WriteInt32(b ? 1 : 0);
+                }
+                else
+                {
+                    ThrowHelper.ThrowInvalidDataException($"Object of type '{set.Value?.GetType()?.FullName ?? "null"}' isn't a valid setting value.");
+                }
+            }
 
-			writer.WriteInt32(connections.Count);
-			for (int i = 0; i < connections.Count; i++)
-			{
-				ConnectionRecord con = connections[i];
-				int3 from = con.From.BlockPosition;
-				int fromTerminal = con.From.TerminalIndex;
-				int3 to = con.To.BlockPosition;
-				int toTerminal = con.To.TerminalIndex;
-				writer.WriteInt32(from.X);
-				writer.WriteInt32(from.Y);
-				writer.WriteInt32(from.Z);
-				writer.WriteInt32(to.X);
-				writer.WriteInt32(to.Y);
-				writer.WriteInt32(to.Z);
-				writer.WriteInt32(fromTerminal);
-				writer.WriteInt32(toTerminal);
-			}
+            writer.WriteInt32(connections.Count);
+            for (int i = 0; i < connections.Count; i++)
+            {
+                ConnectionRecord con = connections[i];
+                int3 from = con.From.BlockPosition;
+                int fromTerminal = con.From.TerminalIndex;
+                int3 to = con.To.BlockPosition;
+                int toTerminal = con.To.TerminalIndex;
+                writer.WriteInt32(from.X);
+                writer.WriteInt32(from.Y);
+                writer.WriteInt32(from.Z);
+                writer.WriteInt32(to.X);
+                writer.WriteInt32(to.Y);
+                writer.WriteInt32(to.Z);
+                writer.WriteInt32(fromTerminal);
+                writer.WriteInt32(toTerminal);
+            }
 
-			bufer = new byte[stream.Length];
-			stream.Position = 0;
-			stream.Read(bufer, 0, bufer.Length);
-		}
+            bufer = new byte[stream.Length];
+            stream.Position = 0;
+            stream.Read(bufer, 0, bufer.Length);
+        }
 
-		string code = Convert.ToBase64String(bufer);
-		return Base64Code.Replace("[CODE]", code, StringComparison.Ordinal);
-	}
+        string code = Convert.ToBase64String(bufer);
+        return Base64Code.Replace("[CODE]", code, StringComparison.Ordinal);
+    }
 
-	private class EditorScriptBase64Writer : IDisposable
-	{
-		private readonly Stream _stream;
+    private class EditorScriptBase64Writer : IDisposable
+    {
+        private readonly Stream _stream;
 
-		public EditorScriptBase64Writer(byte[] bytes)
-		{
-			_stream = new MemoryStream(bytes);
+        public EditorScriptBase64Writer(byte[] bytes)
+        {
+            _stream = new MemoryStream(bytes);
 
-			Position = 0;
-		}
+            Position = 0;
+        }
 
-		public EditorScriptBase64Writer(Stream stream)
-		{
-			if (!stream.CanWrite)
-			{
-				ThrowHelper.ThrowArgumentException($"{nameof(stream)} isn't writeable.", nameof(stream));
-			}
+        public EditorScriptBase64Writer(Stream stream)
+        {
+            if (!stream.CanWrite)
+            {
+                ThrowHelper.ThrowArgumentException($"{nameof(stream)} isn't writeable.", nameof(stream));
+            }
 
-			_stream = stream;
+            _stream = stream;
 
-			Position = 0;
-		}
+            Position = 0;
+        }
 
-		public EditorScriptBase64Writer(string path)
-		{
-			_stream = new FileStream(path, FileMode.Create, FileAccess.Write);
+        public EditorScriptBase64Writer(string path)
+        {
+            _stream = new FileStream(path, FileMode.Create, FileAccess.Write);
 
-			Position = 0;
-		}
+            Position = 0;
+        }
 
-		public long Position { get => _stream.Position; set => _stream.Position = value; }
+        public long Position { get => _stream.Position; set => _stream.Position = value; }
 
-		public long Length => _stream.Length;
+        public long Length => _stream.Length;
 
-		public void Reset()
-			=> _stream.Position = 0;
+        public void Reset()
+            => _stream.Position = 0;
 
-		public void WriteSpan(ReadOnlySpan<byte> bytes)
-			=> _stream.Write(bytes);
+        public void WriteSpan(ReadOnlySpan<byte> bytes)
+            => _stream.Write(bytes);
 
-		public void WriteInt32(int value)
-		{
-			Span<byte> buffer = stackalloc byte[sizeof(int)];
-			BinaryPrimitives.WriteInt32LittleEndian(buffer, value);
-			WriteSpan(buffer);
-		}
+        public void WriteInt32(int value)
+        {
+            Span<byte> buffer = stackalloc byte[sizeof(int)];
+            BinaryPrimitives.WriteInt32LittleEndian(buffer, value);
+            WriteSpan(buffer);
+        }
 
-		public void WriteSingle(float value)
-		{
-			Span<byte> buffer = stackalloc byte[sizeof(float)];
-			BinaryPrimitives.WriteUInt32LittleEndian(buffer, UnsafeUtils.BitCast<float, uint>(value));
-			WriteSpan(buffer);
-		}
+        public void WriteSingle(float value)
+        {
+            Span<byte> buffer = stackalloc byte[sizeof(float)];
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer, UnsafeUtils.BitCast<float, uint>(value));
+            WriteSpan(buffer);
+        }
 
-		public void WriteString(string value)
-		{
-			if (value.Length > ushort.MaxValue)
-			{
-				ThrowHelper.ThrowArgumentException($"{nameof(value)} is longer than the maximum allowed string length ({ushort.MaxValue}).", nameof(value));
-			}
+        public void WriteString(string value)
+        {
+            if (value.Length > ushort.MaxValue)
+            {
+                ThrowHelper.ThrowArgumentException($"{nameof(value)} is longer than the maximum allowed string length ({ushort.MaxValue}).", nameof(value));
+            }
 
-			byte[] bytes = Encoding.UTF8.GetBytes(value);
-			WriteInt32((ushort)bytes.Length);
-			WriteSpan(bytes);
-		}
+            byte[] bytes = Encoding.UTF8.GetBytes(value);
+            WriteInt32((ushort)bytes.Length);
+            WriteSpan(bytes);
+        }
 
-		public void Flush()
-			=> _stream.Flush();
+        public void Flush()
+            => _stream.Flush();
 
-		public void Dispose()
-		{
-			_stream.Close();
-			_stream.Dispose();
-		}
-	}
+        public void Dispose()
+        {
+            _stream.Close();
+            _stream.Dispose();
+        }
+    }
 }

@@ -14,231 +14,231 @@ namespace FancadeLoaderLib.Raw;
 /// </summary>
 public class RawGame
 {
-	/// <summary>
-	/// The current file version.
-	/// </summary>
-	public static readonly ushort CurrentFileVersion = 31;
+    /// <summary>
+    /// The current file version.
+    /// </summary>
+    public static readonly ushort CurrentFileVersion = 31;
 
-	/// <summary>
-	/// The current ammount of stock/built in prefabs in fancade.
-	/// </summary>
-	public static readonly ushort CurrentNumbStockPrefabs = 597;
+    /// <summary>
+    /// The current ammount of stock/built in prefabs in fancade.
+    /// </summary>
+    public static readonly ushort CurrentNumbStockPrefabs = 597;
 
-	/// <summary>
-	/// The prefabs of this game.
-	/// </summary>
+    /// <summary>
+    /// The prefabs of this game.
+    /// </summary>
 #pragma warning disable CA1002 // Do not expose generic lists
-	public readonly List<RawPrefab> Prefabs;
+    public readonly List<RawPrefab> Prefabs;
 #pragma warning restore CA1002
 
-	/// <summary>
-	/// The name of this game.
-	/// </summary>
-	public string Name;
+    /// <summary>
+    /// The name of this game.
+    /// </summary>
+    public string Name;
 
-	/// <summary>
-	/// Username of the author of this game.
-	/// </summary>
-	public string Author;
+    /// <summary>
+    /// Username of the author of this game.
+    /// </summary>
+    public string Author;
 
-	/// <summary>
-	/// The description of this game.
-	/// </summary>
-	public string Description;
+    /// <summary>
+    /// The description of this game.
+    /// </summary>
+    public string Description;
 
-	/// <summary>
-	/// The id offset of prefabs in this game, specifies the amoung of stock prefabs at the time the game was save.
-	/// </summary>
-	/// <remarks>
-	/// Not used when saving, <see cref="CurrentNumbStockPrefabs"/> is used instead.
-	/// </remarks>
-	public ushort IdOffset;
+    /// <summary>
+    /// The id offset of prefabs in this game, specifies the amoung of stock prefabs at the time the game was save.
+    /// </summary>
+    /// <remarks>
+    /// Not used when saving, <see cref="CurrentNumbStockPrefabs"/> is used instead.
+    /// </remarks>
+    public ushort IdOffset;
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="RawGame"/> class.
-	/// </summary>
-	/// <param name="name">Name of this game.</param>
-	public RawGame(string name)
-	{
-		if (name is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(name));
-		}
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RawGame"/> class.
+    /// </summary>
+    /// <param name="name">Name of this game.</param>
+    public RawGame(string name)
+    {
+        if (name is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(name));
+        }
 
-		Name = name;
-		Author = "Unknown Author";
-		Description = string.Empty;
-		Prefabs = [];
-		IdOffset = CurrentNumbStockPrefabs;
-	}
+        Name = name;
+        Author = "Unknown Author";
+        Description = string.Empty;
+        Prefabs = [];
+        IdOffset = CurrentNumbStockPrefabs;
+    }
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="RawGame"/> class.
-	/// </summary>
-	/// <param name="name">Name of this game.</param>
-	/// <param name="author">Username of the author of this game.</param>
-	/// <param name="description">Decsription of this game.</param>
-	/// <param name="idOffset">Id offset of this game.</param>
-	/// <param name="prefabs">Prefabs of this game.</param>
-	/// <exception cref="ArgumentNullException">Thrown when any of the arguments is null.</exception>
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RawGame"/> class.
+    /// </summary>
+    /// <param name="name">Name of this game.</param>
+    /// <param name="author">Username of the author of this game.</param>
+    /// <param name="description">Decsription of this game.</param>
+    /// <param name="idOffset">Id offset of this game.</param>
+    /// <param name="prefabs">Prefabs of this game.</param>
+    /// <exception cref="ArgumentNullException">Thrown when any of the arguments is null.</exception>
 #pragma warning disable CA1002 // Do not expose generic lists
-	public RawGame(string name, string author, string description, ushort idOffset, List<RawPrefab> prefabs)
+    public RawGame(string name, string author, string description, ushort idOffset, List<RawPrefab> prefabs)
 #pragma warning restore CA1002
-	{
-		if (name is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(name));
-		}
+    {
+        if (name is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(name));
+        }
 
-		if (author is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(author));
-		}
+        if (author is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(author));
+        }
 
-		if (description is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(description));
-		}
+        if (description is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(description));
+        }
 
-		if (prefabs is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(prefabs));
-		}
+        if (prefabs is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(prefabs));
+        }
 
-		Name = name;
-		Author = author;
-		Description = description;
-		IdOffset = idOffset;
-		Prefabs = prefabs;
-	}
+        Name = name;
+        Author = author;
+        Description = description;
+        IdOffset = idOffset;
+        Prefabs = prefabs;
+    }
 
-	/// <summary>
-	/// Loads the info about a game from a compressed stream.
-	/// </summary>
-	/// <param name="stream">The stream to load from.</param>
-	/// <returns>The info about a game.</returns>
-	public static (ushort FileVersion, string Name, string Author, string Description) LoadInfoCompressed(Stream stream)
-	{
-		// decompress
-		using MemoryStream ms = new MemoryStream();
+    /// <summary>
+    /// Loads the info about a game from a compressed stream.
+    /// </summary>
+    /// <param name="stream">The stream to load from.</param>
+    /// <returns>The info about a game.</returns>
+    public static (ushort FileVersion, string Name, string Author, string Description) LoadInfoCompressed(Stream stream)
+    {
+        // decompress
+        using MemoryStream ms = new MemoryStream();
 
-		Zlib.Decompress(stream, ms);
-		ms.Position = 0;
+        Zlib.Decompress(stream, ms);
+        ms.Position = 0;
 
-		using FcBinaryReader reader = new FcBinaryReader(ms);
+        using FcBinaryReader reader = new FcBinaryReader(ms);
 
-		ushort fileVersion = reader.ReadUInt16();
+        ushort fileVersion = reader.ReadUInt16();
 
-		string name = reader.ReadString();
-		string author = reader.ReadString();
-		string description = reader.ReadString();
+        string name = reader.ReadString();
+        string author = reader.ReadString();
+        string description = reader.ReadString();
 
-		return (fileVersion, name, author, description);
-	}
+        return (fileVersion, name, author, description);
+    }
 
-	/// <summary>
-	/// Loads a <see cref="RawGame"/> from a zlib compressed <see cref="Stream"/>.
-	/// </summary>
-	/// <param name="stream">The reader to read the <see cref="RawGame"/> from.</param>
-	/// <returns>A <see cref="RawGame"/> read from <paramref name="stream"/>.</returns>
-	public static RawGame LoadCompressed(Stream stream)
-	{
-		// decompress
-		using MemoryStream ms = new MemoryStream();
+    /// <summary>
+    /// Loads a <see cref="RawGame"/> from a zlib compressed <see cref="Stream"/>.
+    /// </summary>
+    /// <param name="stream">The reader to read the <see cref="RawGame"/> from.</param>
+    /// <returns>A <see cref="RawGame"/> read from <paramref name="stream"/>.</returns>
+    public static RawGame LoadCompressed(Stream stream)
+    {
+        // decompress
+        using MemoryStream ms = new MemoryStream();
 
-		Zlib.Decompress(stream, ms);
-		ms.Position = 0;
+        Zlib.Decompress(stream, ms);
+        ms.Position = 0;
 
-		using FcBinaryReader reader = new FcBinaryReader(ms);
+        using FcBinaryReader reader = new FcBinaryReader(ms);
 
-		return Load(reader);
-	}
+        return Load(reader);
+    }
 
-	/// <summary>
-	/// Loads a <see cref="RawGame"/> from a <see cref="FcBinaryReader"/>.
-	/// </summary>
-	/// <param name="reader">The reader to read the <see cref="RawGame"/> from.</param>
-	/// <returns>A <see cref="RawGame"/> read from <paramref name="reader"/>.</returns>
-	public static RawGame Load(FcBinaryReader reader)
-	{
-		if (reader is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(reader));
-		}
+    /// <summary>
+    /// Loads a <see cref="RawGame"/> from a <see cref="FcBinaryReader"/>.
+    /// </summary>
+    /// <param name="reader">The reader to read the <see cref="RawGame"/> from.</param>
+    /// <returns>A <see cref="RawGame"/> read from <paramref name="reader"/>.</returns>
+    public static RawGame Load(FcBinaryReader reader)
+    {
+        if (reader is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(reader));
+        }
 
-		ushort fileVersion = reader.ReadUInt16();
+        ushort fileVersion = reader.ReadUInt16();
 
-		if (fileVersion > CurrentFileVersion || fileVersion < 26)
-		{
-			ThrowHelper.ThrowUnsupportedVersionException(fileVersion);
-		}
-		else if (fileVersion == 26)
-		{
-			ThrowHelper.ThrowNotImplementedException("Loading file verison 26 has not yet been implemented.");
-		}
+        if (fileVersion > CurrentFileVersion || fileVersion < 26)
+        {
+            ThrowHelper.ThrowUnsupportedVersionException(fileVersion);
+        }
+        else if (fileVersion == 26)
+        {
+            ThrowHelper.ThrowNotImplementedException("Loading file verison 26 has not yet been implemented.");
+        }
 
-		string name = reader.ReadString();
-		string author = reader.ReadString();
-		string description = reader.ReadString();
+        string name = reader.ReadString();
+        string author = reader.ReadString();
+        string description = reader.ReadString();
 
-		ushort idOffset = reader.ReadUInt16();
+        ushort idOffset = reader.ReadUInt16();
 
-		ushort numbPrefabs = reader.ReadUInt16();
+        ushort numbPrefabs = reader.ReadUInt16();
 
-		List<RawPrefab> prefabs = new List<RawPrefab>(numbPrefabs);
-		for (int i = 0; i < numbPrefabs; i++)
-		{
-			prefabs.Add(RawPrefab.Load(reader));
-		}
+        List<RawPrefab> prefabs = new List<RawPrefab>(numbPrefabs);
+        for (int i = 0; i < numbPrefabs; i++)
+        {
+            prefabs.Add(RawPrefab.Load(reader));
+        }
 
-		return new RawGame(name, author, description, idOffset, prefabs);
-	}
+        return new RawGame(name, author, description, idOffset, prefabs);
+    }
 
-	/// <summary>
-	/// Writes and compresses a <see cref="RawPrefab"/> into a <see cref="Stream"/>.
-	/// </summary>
-	/// <param name="stream">The <see cref="Stream"/> to write this instance into.</param>
-	public void SaveCompressed(Stream stream)
-	{
-		using (MemoryStream writerStream = new MemoryStream())
-		using (FcBinaryWriter writer = new FcBinaryWriter(writerStream))
-		{
-			Save(writer);
+    /// <summary>
+    /// Writes and compresses a <see cref="RawPrefab"/> into a <see cref="Stream"/>.
+    /// </summary>
+    /// <param name="stream">The <see cref="Stream"/> to write this instance into.</param>
+    public void SaveCompressed(Stream stream)
+    {
+        using (MemoryStream writerStream = new MemoryStream())
+        using (FcBinaryWriter writer = new FcBinaryWriter(writerStream))
+        {
+            Save(writer);
 
-			writerStream.Position = 0;
-			Zlib.Compress(writerStream, stream);
-		}
-	}
+            writerStream.Position = 0;
+            Zlib.Compress(writerStream, stream);
+        }
+    }
 
-	/// <summary>
-	/// Writes a <see cref="RawPrefab"/> into a <see cref="FcBinaryWriter"/>.
-	/// </summary>
-	/// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
-	public void Save(FcBinaryWriter writer)
-	{
-		if (writer is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(writer));
-		}
+    /// <summary>
+    /// Writes a <see cref="RawPrefab"/> into a <see cref="FcBinaryWriter"/>.
+    /// </summary>
+    /// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
+    public void Save(FcBinaryWriter writer)
+    {
+        if (writer is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(writer));
+        }
 
-		writer.WriteUInt16(CurrentFileVersion);
-		writer.WriteString(Name);
-		writer.WriteString(Author);
-		writer.WriteString(Description);
-		writer.WriteUInt16(CurrentNumbStockPrefabs);
+        writer.WriteUInt16(CurrentFileVersion);
+        writer.WriteString(Name);
+        writer.WriteString(Author);
+        writer.WriteString(Description);
+        writer.WriteUInt16(CurrentNumbStockPrefabs);
 
-		writer.WriteUInt16((ushort)Prefabs.Count);
+        writer.WriteUInt16((ushort)Prefabs.Count);
 
-		for (int i = 0; i < Prefabs.Count; i++)
-		{
-			Prefabs[i].Save(writer);
-		}
-	}
+        for (int i = 0; i < Prefabs.Count; i++)
+        {
+            Prefabs[i].Save(writer);
+        }
+    }
 
-	/// <summary>
-	/// Returns the string representation of the current instance.
-	/// </summary>
-	/// <returns>The string representation of the current instance.</returns>
-	public override string ToString()
-		=> $"{{Name: {Name}, Author: {Author}, Description: {Description}}}";
+    /// <summary>
+    /// Returns the string representation of the current instance.
+    /// </summary>
+    /// <returns>The string representation of the current instance.</returns>
+    public override string ToString()
+        => $"{{Name: {Name}, Author: {Author}, Description: {Description}}}";
 }

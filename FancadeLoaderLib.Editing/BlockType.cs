@@ -6,23 +6,23 @@ namespace FancadeLoaderLib.Editing;
 
 public enum BlockType
 {
-	/// <summary>
-	/// Doesn't have any terminals.
-	/// </summary>
-	NonScript,
+    /// <summary>
+    /// Doesn't have any terminals.
+    /// </summary>
+    NonScript,
 
-	/// <summary>
-	/// Has "Before" and "After" terminals.
-	/// </summary>
-	Active,
+    /// <summary>
+    /// Has "Before" and "After" terminals.
+    /// </summary>
+    Active,
 
-	/// <summary>
-	/// Doesn't have "Before" and "After" terminals.
-	/// </summary>
-	Pasive,
+    /// <summary>
+    /// Doesn't have "Before" and "After" terminals.
+    /// </summary>
+    Pasive,
 
-	/// <summary>
-	/// Only has out terminals.
-	/// </summary>
-	Value,
+    /// <summary>
+    /// Only has out terminals.
+    /// </summary>
+    Value,
 }

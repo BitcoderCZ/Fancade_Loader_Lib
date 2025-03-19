@@ -10,7 +10,7 @@ namespace FancadeLoaderLib.Editing.Utils;
 
 internal static class ImmutableArrayUtils
 {
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Get<T>(this ImmutableArray<T> array, Index index)
-		=> array[index.GetOffset(array.Length)];
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Get<T>(this ImmutableArray<T> array, Index index)
+        => array[index.GetOffset(array.Length)];
 }

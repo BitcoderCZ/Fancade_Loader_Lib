@@ -8,17 +8,17 @@ namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 
 public sealed class NopTerminal : ITerminal
 {
-	public static readonly NopTerminal Instance = new NopTerminal();
+    public static readonly NopTerminal Instance = new NopTerminal();
 
-	private NopTerminal()
-	{
-	}
+    private NopTerminal()
+    {
+    }
 
-	public int3 BlockPosition => new int3(-1, -1, -1);
+    public int3 BlockPosition => new int3(-1, -1, -1);
 
-	public int TerminalIndex => -1;
+    public int TerminalIndex => -1;
 
-	public int3? VoxelPosition => new int3(-1, -1, -1);
+    public int3? VoxelPosition => new int3(-1, -1, -1);
 
-	public WireType WireType => WireType.Error;
+    public WireType WireType => WireType.Error;
 }

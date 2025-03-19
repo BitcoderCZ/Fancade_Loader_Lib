@@ -20,131 +20,172 @@ public struct Voxel : IEquatable<Voxel>
 public unsafe struct Voxel : IEquatable<Voxel>
 #endif
 {
-	/// <summary>
-	/// Colors of the sides of the voxel in the following order:
-	/// <para>+X, -X, +Y, -Y, +Z, -Z.</para>
-	/// </summary>
+    /// <summary>
+    /// Colors of the sides of the voxel in the following order:
+    /// <para>+X, -X, +Y, -Y, +Z, -Z.</para>
+    /// </summary>
 #if NET8_0_OR_GREATER
-	public Array6<byte> Colors;
+    public Array6<byte> Colors;
 #else
-	public fixed byte Colors[6];
+    public fixed byte Colors[6];
 #endif
 
-	/// <summary>
-	/// <see langword="true"/> if the side does NOT have glue/"lego" on it - connects to other voxels; otherwise, <see langword="false"/>. 
-	/// </summary>
-	/// <remarks>
-	/// In the same order as <see cref="Colors"/>.
-	/// </remarks>
+    /// <summary>
+    /// <see langword="true"/> if the side does NOT have glue/"lego" on it - connects to other voxels; otherwise, <see langword="false"/>. 
+    /// </summary>
+    /// <remarks>
+    /// In the same order as <see cref="Colors"/>.
+    /// </remarks>
 #if NET8_0_OR_GREATER
-	public Array6<bool> Attribs;
+    public Array6<bool> Attribs;
 #else
-	public fixed bool Attribs[6];
+    public fixed bool Attribs[6];
 #endif
 
-	/// <summary>
-	/// Gets a value indicating whether this voxel is empty.
-	/// </summary>
-	/// <value><see langword="true"/> if this voxel is empty; otherwise, <see langword="false"/>.</value>
-	public readonly bool IsEmpty => Colors[0] == 0;
+    /// <summary>
+    /// Gets a value indicating whether this voxel is empty.
+    /// </summary>
+    /// <value><see langword="true"/> if this voxel is empty; otherwise, <see langword="false"/>.</value>
+    public readonly bool IsEmpty => Colors[0] == 0;
 
 #if NET8_0_OR_GREATER
-	public static bool operator ==(Voxel left, Voxel right)
-		=> ((ReadOnlySpan<byte>)left.Colors).SequenceEqual(right.Colors) && ((ReadOnlySpan<bool>)left.Attribs).SequenceEqual(right.Attribs);
+    public static bool operator ==(Voxel left, Voxel right)
+        => ((ReadOnlySpan<byte>)left.Colors).SequenceEqual(right.Colors) && ((ReadOnlySpan<bool>)left.Attribs).SequenceEqual(right.Attribs);
 #else
-	public static unsafe bool operator ==(Voxel left, Voxel right)
-		=> MemoryMarshal.CreateReadOnlySpan(ref left.Colors[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Colors[0], 6)) &&
-		MemoryMarshal.CreateReadOnlySpan(ref left.Attribs[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Attribs[0], 6));
+    public static unsafe bool operator ==(Voxel left, Voxel right)
+        => MemoryMarshal.CreateReadOnlySpan(ref left.Colors[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Colors[0], 6)) &&
+        MemoryMarshal.CreateReadOnlySpan(ref left.Attribs[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Attribs[0], 6));
 #endif
 
 #if NET8_0_OR_GREATER
-	public static bool operator !=(Voxel left, Voxel right)
-		=> !((ReadOnlySpan<byte>)left.Colors).SequenceEqual(right.Colors) || !((ReadOnlySpan<bool>)left.Attribs).SequenceEqual(right.Attribs);
+    public static bool operator !=(Voxel left, Voxel right)
+        => !((ReadOnlySpan<byte>)left.Colors).SequenceEqual(right.Colors) || !((ReadOnlySpan<bool>)left.Attribs).SequenceEqual(right.Attribs);
 #else
-	public static unsafe bool operator !=(Voxel left, Voxel right)
-		=> !MemoryMarshal.CreateReadOnlySpan(ref left.Colors[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Colors[0], 6)) ||
-		!MemoryMarshal.CreateReadOnlySpan(ref left.Attribs[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Attribs[0], 6));
+    public static unsafe bool operator !=(Voxel left, Voxel right)
+        => !MemoryMarshal.CreateReadOnlySpan(ref left.Colors[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Colors[0], 6)) ||
+        !MemoryMarshal.CreateReadOnlySpan(ref left.Attribs[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Attribs[0], 6));
 #endif
 
-	/// <inheritdoc/>
-	public readonly override int GetHashCode()
-	{
-		HashCode hash = default;
+    /// <inheritdoc/>
+    public readonly override int GetHashCode()
+    {
+        HashCode hash = default;
 
-		for (int i = 0; i < 6; i++)
-		{
-			hash.Add(Colors[i]);
-		}
 
-		for (int i = 0; i < 6; i++)
-		{
-			hash.Add(Attribs[i]);
-		}
+<<<<<<< TODO: Unmerged change from project 'FancadeLoaderLib (net9.0)', Before:
+        for (int i = 0; i < 6; i++)
+        {
+            hash.Add(Colors[i]);
+        }
 
-		return hash.ToHashCode();
-	}
+        for (int i = 0; i < 6; i++)
+        {
+            hash.Add(Attribs[i]);
+        }
+=======
+        for (int i = 0; i < 6; i++)
+        {
+            hash.Add(Colors[i]);
+        }
 
-	/// <inheritdoc/>
-	public readonly bool Equals(Voxel other)
-		=> this == other;
+        for (int i = 0; i < 6; i++)
+        {
+            hash.Add(Attribs[i]);
+        }
 
-	/// <inheritdoc/>
-	public readonly override bool Equals([NotNullWhen(true)] object? obj)
-		=> obj is Voxel other && this == other;
+        return hash.ToHashCode();
+    }
 
-	/// <summary>
-	/// Returns the string representation of the current instance.
-	/// </summary>
-	/// <returns>The string representation of the current instance.</returns>
-	public readonly override string ToString()
-	{
-		StringBuilder builder = new StringBuilder(64);
+    /// <inheritdoc/>
+    public readonly bool Equals(Voxel other)
+        => this == other;
 
-		builder.Append('[');
+    /// <inheritdoc/>
+    public readonly override bool Equals([NotNullWhen(true)] object? obj)
+        => obj is Voxel other && this == other;
 
-		for (int i = 0; i < 6; i++)
-		{
-			if (i != 0)
-			{
-				builder.Append(", ");
-			}
+    /// <summary>
+    /// Returns the string representation of the current instance.
+    /// </summary>
+    /// <returns>The string representation of the current instance.</returns>
+    public readonly override string ToString()
+    {
+        StringBuilder builder = new StringBuilder(64);
+>>>>>>> After
+        for (int i = 0; i < 6; i++)
+        {
+            hash.Add(Colors[i]);
+        }
 
-			builder.Append(Colors[i]);
-		}
+        for (int i = 0; i < 6; i++)
+        {
+            hash.Add(Attribs[i]);
+        }
 
-		builder.Append("; Attribs: ");
+        return hash.ToHashCode();
+    }
 
-		for (int i = 0; i < 6; i++)
-		{
-			if (i != 0)
-			{
-				builder.Append(", ");
-			}
+    /// <inheritdoc/>
+    public readonly bool Equals(Voxel other)
+        => this == other;
 
-			builder.Append(Attribs[i]);
-		}
+    /// <inheritdoc/>
+    public readonly override bool Equals([NotNullWhen(true)] object? obj)
+        => obj is Voxel other && this == other;
 
-		builder.Append(']');
+    /// <summary>
+    /// Returns the string representation of the current instance.
+    /// </summary>
+    /// <returns>The string representation of the current instance.</returns>
+    public readonly override string ToString()
+    {
+        StringBuilder builder = new StringBuilder(64);
 
-		return builder.ToString();
-	}
+        builder.Append('[');
+
+        for (int i = 0; i < 6; i++)
+        {
+            if (i != 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(Colors[i]);
+        }
+
+        builder.Append("; Attribs: ");
+
+        for (int i = 0; i < 6; i++)
+        {
+            if (i != 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(Attribs[i]);
+        }
+
+        builder.Append(']');
+
+        return builder.ToString();
+    }
 
 #if NET8_0_OR_GREATER
-	/// <summary>
-	/// Value array with 6 items.
-	/// </summary>
-	/// <typeparam name="T">The item type.</typeparam>
-	[InlineArray(6)]
+    /// <summary>
+    /// Value array with 6 items.
+    /// </summary>
+    /// <typeparam name="T">The item type.</typeparam>
+    [InlineArray(6)]
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
-	public struct Array6<T>
+    public struct Array6<T>
 #pragma warning restore CA1815
 #pragma warning restore CA1034
-		where T : unmanaged
-	{
+        where T : unmanaged
+    {
 #pragma warning disable IDE0044 // Add readonly modifier
-		private T _element0;
+        private T _element0;
 #pragma warning restore IDE0044
-	}
+    }
 #endif
 }

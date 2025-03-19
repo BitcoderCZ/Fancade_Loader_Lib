@@ -9,37 +9,37 @@ namespace FancadeLoaderLib.Editing.Scripting.Utils;
 
 public sealed class TerminalConnector
 {
-	private readonly Action<ITerminalStore, ITerminalStore> _connectFunc;
+    private readonly Action<ITerminalStore, ITerminalStore> _connectFunc;
 
-	private ITerminalStore? _firstStore;
-	private ITerminalStore? _lastStore;
+    private ITerminalStore? _firstStore;
+    private ITerminalStore? _lastStore;
 
-	public TerminalConnector(Action<ITerminalStore, ITerminalStore> connectFunc)
-	{
-		_connectFunc = connectFunc;
-	}
+    public TerminalConnector(Action<ITerminalStore, ITerminalStore> connectFunc)
+    {
+        _connectFunc = connectFunc;
+    }
 
-	public ITerminalStore Store => _firstStore is not null && _lastStore is not null ? new MultiTerminalStore(_firstStore, _lastStore) : NopTerminalStore.Instance;
+    public ITerminalStore Store => _firstStore is not null && _lastStore is not null ? new MultiTerminalStore(_firstStore, _lastStore) : NopTerminalStore.Instance;
 
-	public void Add(ITerminalStore store)
-	{
-		if (store is NopTerminalStore)
-		{
-			return;
-		}
+    public void Add(ITerminalStore store)
+    {
+        if (store is NopTerminalStore)
+        {
+            return;
+        }
 
-		if (_lastStore is not null)
-		{
-			_connectFunc(_lastStore, store);
-		}
+        if (_lastStore is not null)
+        {
+            _connectFunc(_lastStore, store);
+        }
 
-		_firstStore ??= store;
-		_lastStore = store;
-	}
+        _firstStore ??= store;
+        _lastStore = store;
+    }
 
-	public void Clear()
-	{
-		_firstStore = null;
-		_lastStore = null;
-	}
+    public void Clear()
+    {
+        _firstStore = null;
+        _lastStore = null;
+    }
 }

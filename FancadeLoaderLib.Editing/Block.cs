@@ -8,13 +8,13 @@ namespace FancadeLoaderLib.Editing;
 
 public record class Block
 {
-	public Block(BlockDef type, int3 position)
-	{
-		Type = type;
-		Position = position;
-	}
+    public Block(BlockDef type, int3 position)
+    {
+        Type = type;
+        Position = position;
+    }
 
-	public BlockDef Type { get; }
+    public BlockDef Type { get; }
 
-	public int3 Position { get; set; }
+    public int3 Position { get; set; }
 }

@@ -6,6 +6,6 @@ namespace FancadeLoaderLib.Editing.Scripting.Settings;
 
 public enum ButtonType
 {
-	Direction = 0,
-	Button = 1,
+    Direction = 0,
+    Button = 1,
 }

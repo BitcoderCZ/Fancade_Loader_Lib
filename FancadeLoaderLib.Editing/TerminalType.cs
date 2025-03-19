@@ -6,6 +6,6 @@ namespace FancadeLoaderLib.Editing;
 
 public enum TerminalType
 {
-	In,
-	Out,
+    In,
+    Out,
 }

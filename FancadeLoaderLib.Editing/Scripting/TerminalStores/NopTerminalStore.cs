@@ -9,13 +9,13 @@ namespace FancadeLoaderLib.Editing.Scripting.TerminalStores;
 
 public sealed class NopTerminalStore : ITerminalStore
 {
-	public static readonly NopTerminalStore Instance = new NopTerminalStore();
+    public static readonly NopTerminalStore Instance = new NopTerminalStore();
 
-	private NopTerminalStore()
-	{
-	}
+    private NopTerminalStore()
+    {
+    }
 
-	public ITerminal In => NopTerminal.Instance;
+    public ITerminal In => NopTerminal.Instance;
 
-	public ReadOnlySpan<ITerminal> Out => [];
+    public ReadOnlySpan<ITerminal> Out => [];
 }

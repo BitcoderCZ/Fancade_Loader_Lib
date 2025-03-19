@@ -8,14 +8,14 @@ namespace FancadeLoaderLib.Editing.Utils;
 
 internal static class CollectionUtils
 {
-	public static TValue AddIfAbsent<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue defaultValue)
-	{
-		if (!dict.TryGetValue(key, out TValue? val))
-		{
-			val = defaultValue;
-			dict.Add(key, val);
-		}
+    public static TValue AddIfAbsent<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, TValue defaultValue)
+    {
+        if (!dict.TryGetValue(key, out TValue? val))
+        {
+            val = defaultValue;
+            dict.Add(key, val);
+        }
 
-		return val;
-	}
+        return val;
+    }
 }

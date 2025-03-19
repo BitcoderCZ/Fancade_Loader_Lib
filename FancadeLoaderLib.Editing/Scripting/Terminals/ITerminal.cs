@@ -8,11 +8,11 @@ namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 
 public interface ITerminal
 {
-	int3 BlockPosition { get; }
+    int3 BlockPosition { get; }
 
-	int TerminalIndex { get; }
+    int TerminalIndex { get; }
 
-	int3? VoxelPosition { get; }
+    int3? VoxelPosition { get; }
 
-	WireType WireType { get; }
+    WireType WireType { get; }
 }

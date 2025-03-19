@@ -6,7 +6,7 @@ namespace FancadeLoaderLib.Editing.Scripting.Settings;
 
 public enum TouchState
 {
-	Touching = 0,
-	Begins = 1,
-	Ends = 2,
+    Touching = 0,
+    Begins = 1,
+    Ends = 2,
 }

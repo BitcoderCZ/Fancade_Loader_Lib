@@ -9,24 +9,24 @@ namespace FancadeLoaderLib;
 
 internal static class UnsafeUtils
 {
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static unsafe TTo BitCast<TFrom, TTo>(TFrom source)
-		where TFrom : unmanaged
-		where TTo : unmanaged
-	{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static unsafe TTo BitCast<TFrom, TTo>(TFrom source)
+        where TFrom : unmanaged
+        where TTo : unmanaged
+    {
 #if NET5_0_OR_GREATER
 #pragma warning disable IDE0022
-		return Unsafe.BitCast<TFrom, TTo>(source);
+        return Unsafe.BitCast<TFrom, TTo>(source);
 #pragma warning restore IDE0022
 #else
 #pragma warning disable IDE0046 // Convert to conditional expression
-		if (sizeof(TFrom) != sizeof(TTo))
-		{
-			ThrowHelper.ThrowNotSupportedException();
-		}
+        if (sizeof(TFrom) != sizeof(TTo))
+        {
+            ThrowHelper.ThrowNotSupportedException();
+        }
 #pragma warning restore IDE0046
 
-		return Unsafe.ReadUnaligned<TTo>(ref Unsafe.As<TFrom, byte>(ref source));
+        return Unsafe.ReadUnaligned<TTo>(ref Unsafe.As<TFrom, byte>(ref source));
 #endif
-	}
+    }
 }

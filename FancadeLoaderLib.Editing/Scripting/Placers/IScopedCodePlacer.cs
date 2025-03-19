@@ -10,53 +10,53 @@ namespace FancadeLoaderLib.Editing.Scripting.Placers;
 
 public interface IScopedCodePlacer : ICodePlacer
 {
-	int CurrentCodeBlockBlocks { get; }
+    int CurrentCodeBlockBlocks { get; }
 
-	void EnterStatementBlock();
+    void EnterStatementBlock();
 
-	void ExitStatementBlock();
+    void ExitStatementBlock();
 
-	void EnterExpressionBlock();
+    void EnterExpressionBlock();
 
-	void ExitExpressionBlock();
+    void ExitExpressionBlock();
 
-	void EnterHighlight();
+    void EnterHighlight();
 
-	void ExitHightlight();
+    void ExitHightlight();
 }
 
 public static class IScopedCodePlacerUtils
 {
-	public static IDisposable StatementBlock(this IScopedCodePlacer placer)
-	{
-		if (placer is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(placer));
-		}
+    public static IDisposable StatementBlock(this IScopedCodePlacer placer)
+    {
+        if (placer is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(placer));
+        }
 
-		placer.EnterStatementBlock();
-		return new Disposable(placer.ExitStatementBlock);
-	}
+        placer.EnterStatementBlock();
+        return new Disposable(placer.ExitStatementBlock);
+    }
 
-	public static IDisposable ExpressionBlock(this IScopedCodePlacer placer)
-	{
-		if (placer is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(placer));
-		}
+    public static IDisposable ExpressionBlock(this IScopedCodePlacer placer)
+    {
+        if (placer is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(placer));
+        }
 
-		placer.EnterExpressionBlock();
-		return new Disposable(placer.ExitExpressionBlock);
-	}
+        placer.EnterExpressionBlock();
+        return new Disposable(placer.ExitExpressionBlock);
+    }
 
-	public static IDisposable HighlightBlock(this IScopedCodePlacer placer)
-	{
-		if (placer is null)
-		{
-			ThrowHelper.ThrowArgumentNullException(nameof(placer));
-		}
+    public static IDisposable HighlightBlock(this IScopedCodePlacer placer)
+    {
+        if (placer is null)
+        {
+            ThrowHelper.ThrowArgumentNullException(nameof(placer));
+        }
 
-		placer.EnterHighlight();
-		return new Disposable(placer.ExitHightlight);
-	}
+        placer.EnterHighlight();
+        return new Disposable(placer.ExitHightlight);
+    }
 }
