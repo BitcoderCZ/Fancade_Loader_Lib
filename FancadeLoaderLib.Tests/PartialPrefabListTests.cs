@@ -268,6 +268,64 @@ public class PartialPrefabListTests
     }
 
     [Test]
+    public async Task IdOffset_Increase_UpdatesIds()
+    {
+        var prefabList = new PartialPrefabList()
+        {
+            IdOffset = 5,
+        };
+
+        var prefab1 = CreateDummyPrefab(5, 2);
+        var prefab2 = CreateDummyPrefab(7, 1);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        prefabList.IdOffset += 5;
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)10);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)12);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(10)).IsEqualTo(prefab1);
+            await Assert.That(prefabList.GetPrefab(12)).IsEqualTo(prefab2);
+        }
+    }
+
+    [Test]
+    public async Task IdOffset_Decrease_UpdatesIds()
+    {
+        var prefabList = new PartialPrefabList()
+        {
+            IdOffset = 15,
+        };
+
+        var prefab1 = CreateDummyPrefab(15, 2);
+        var prefab2 = CreateDummyPrefab(17, 1);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        prefabList.IdOffset -= 5;
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)10);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)12);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(10)).IsEqualTo(prefab1);
+            await Assert.That(prefabList.GetPrefab(12)).IsEqualTo(prefab2);
+        }
+    }
+
+    [Test]
     public async Task SaveLoad_PersistsAndRestoresData()
     {
         var prefabList = new PartialPrefabList()

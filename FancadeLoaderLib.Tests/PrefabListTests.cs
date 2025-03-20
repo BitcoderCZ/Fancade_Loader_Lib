@@ -516,6 +516,87 @@ public class PrefabListTests
     }
 
     [Test]
+    public async Task IdOffset_Increase_UpdatesIds()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 5,
+        };
+
+        var prefab1 = CreateDummyPrefab(5, 2);
+        var prefab2 = CreateDummyPrefab(7, 1);
+
+        var blocks = prefab1.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 1), prefab2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        prefabList.IdOffset += 5;
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)10);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)12);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(10)).IsEqualTo(prefab1);
+            await Assert.That(prefabList.GetPrefab(12)).IsEqualTo(prefab2);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)10);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)11);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)12);
+        }
+    }
+
+
+    [Test]
+    public async Task IdOffset_Decrease_UpdatesIds()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 15,
+        };
+
+        var prefab1 = CreateDummyPrefab(15, 2);
+        var prefab2 = CreateDummyPrefab(17, 1);
+
+        var blocks = prefab1.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 1), prefab2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        prefabList.IdOffset -= 5;
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)10);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)12);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(10)).IsEqualTo(prefab1);
+            await Assert.That(prefabList.GetPrefab(12)).IsEqualTo(prefab2);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)10);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)11);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)12);
+        }
+    }
+
+    [Test]
     public async Task SaveLoad_PersistsAndRestoresData()
     {
         var prefabList = new PrefabList()
