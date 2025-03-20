@@ -555,7 +555,6 @@ public class PrefabListTests
         }
     }
 
-
     [Test]
     public async Task IdOffset_Decrease_UpdatesIds()
     {

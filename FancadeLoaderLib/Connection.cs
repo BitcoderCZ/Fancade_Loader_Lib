@@ -53,7 +53,7 @@ public struct Connection : IEquatable<Connection>
     }
 
     public static bool operator ==(Connection left, Connection right)
-        => left.From == right.From && left.To == right.To && left.FromVoxel == right.ToVoxel && left.ToVoxel == right.ToVoxel;
+        => left.From == right.From && left.To == right.To && left.FromVoxel == right.FromVoxel && left.ToVoxel == right.ToVoxel;
 
     public static bool operator !=(Connection left, Connection right)
         => !(left == right);
