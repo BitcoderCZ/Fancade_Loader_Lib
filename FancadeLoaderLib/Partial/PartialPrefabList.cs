@@ -235,6 +235,14 @@ public partial class PartialPrefabList : ICloneable
         => _prefabs[id];
 
     /// <summary>
+    /// Determines whether the <see cref="PartialPrefabSegment"/> contains the specified prefab.
+    /// </summary>
+    /// <param name="id">Id of the prefab.</param>
+    /// <returns><see langword="true"/> if the <see cref="PartialPrefabSegment"/> contains a prefab with the specified id; otherwise, <see langword="false"/>.</returns>
+    public bool ContainsPrefab(ushort id)
+        => _prefabs.ContainsKey(id);
+
+    /// <summary>
     /// Gets the prefab with the specified id.
     /// </summary>
     /// <param name="id">Id of the prefab to get.</param>
@@ -273,6 +281,14 @@ public partial class PartialPrefabList : ICloneable
             return false;
         }
     }
+
+    /// <summary>
+    /// Determines whether the <see cref="PartialPrefabSegment"/> contains the specified segment.
+    /// </summary>
+    /// <param name="id">Id of the segment.</param>
+    /// <returns><see langword="true"/> if the <see cref="PartialPrefabSegment"/> contains a segment with the specified id; otherwise, <see langword="false"/>.</returns>
+    public bool ContainsSegment(ushort id)
+        => id >= IdOffset && id < PrefabCount + IdOffset;
 
     /// <summary>
     /// Adds a prefab to the <see cref="PartialPrefabList"/>.

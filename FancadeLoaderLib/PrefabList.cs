@@ -230,6 +230,14 @@ public class PrefabList : ICloneable
         => _prefabs.TryGetValue(id, out value);
 
     /// <summary>
+    /// Determines whether the <see cref="PrefabList"/> contains the specified prefab.
+    /// </summary>
+    /// <param name="id">Id of the prefab.</param>
+    /// <returns><see langword="true"/> if the <see cref="PrefabList"/> contains a prefab with the specified id; otherwise, <see langword="false"/>.</returns>
+    public bool ContainsPrefab(ushort id)
+        => _prefabs.ContainsKey(id);
+
+    /// <summary>
     /// Gets the segment with the specified id.
     /// </summary>
     /// <param name="id">Id of the segment to get.</param>
@@ -259,6 +267,14 @@ public class PrefabList : ICloneable
             return false;
         }
     }
+
+    /// <summary>
+    /// Determines whether the <see cref="PrefabList"/> contains the specified segment.
+    /// </summary>
+    /// <param name="id">Id of the segment.</param>
+    /// <returns><see langword="true"/> if the <see cref="PrefabList"/> contains a segment with the specified id; otherwise, <see langword="false"/>.</returns>
+    public bool ContainsSegment(ushort id)
+        => id >= IdOffset && id < PrefabCount + IdOffset;
 
     /// <summary>
     /// Adds a prefab to the <see cref="PrefabList"/>.
