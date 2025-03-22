@@ -2,6 +2,7 @@
 using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
+using TUnit.Assertions.Extensions;
 
 namespace FancadeLoaderLib.Tests;
 
@@ -156,6 +157,50 @@ public class PartialPrefabListTests
             await Assert.That(prefab1.Id).IsEqualTo((ushort)0);
             await Assert.That(prefab2.Id).IsEqualTo((ushort)1);
             await Assert.That(prefab3.Id).IsEqualTo((ushort)2);
+        }
+    }
+
+    [Test]
+    public async Task UpdatePrefab_UpdatesPrefabAndSegments()
+    {
+        var prefabList = new PartialPrefabList()
+        {
+            IdOffset = 0,
+        };
+
+        var prefab1 = CreateDummyPrefab(0, 2);
+        var prefab2 = CreateDummyPrefab(2, 2);
+        var prefab3 = CreateDummyPrefab(4, 2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+        prefabList.AddPrefab(prefab3);
+
+        var newPrefab = CreateDummyPrefab(2, 3);
+
+        prefabList.UpdatePrefab(newPrefab);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.PrefabCount).IsEqualTo(3);
+            await Assert.That(prefabList.SegmentCount).IsEqualTo(7);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)0);
+            await Assert.That(newPrefab.Id).IsEqualTo((ushort)2);
+            await Assert.That(prefab3.Id).IsEqualTo((ushort)5);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(2)).IsEqualTo(newPrefab);
+
+            foreach (var (segment, segmentId) in newPrefab.EnumerateWithId())
+            {
+                await Assert.That(prefabList.GetSegment(segmentId)).IsEqualTo(segment);
+            }
         }
     }
 

@@ -244,6 +244,24 @@ public class BlockData
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort GetBlockUnchecked(int3 pos)
         => Array.GetUnchecked(pos);
+
+    /// <summary>
+    /// Gets the block at the specified position or <c>0</c>, if <paramref name="pos"/> is out of bounds.
+    /// </summary>
+    /// <param name="pos">Position of the block.</param>
+    /// <returns>The block at the specified position.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort GetBlockOrDefault(int3 pos)
+        => InBounds(pos) ? GetBlockUnchecked(pos) : (ushort)0;
+
+    /// <summary>
+    /// Gets the block at the specified position or <see langword="null"/>, if <paramref name="pos"/> is out of bounds.
+    /// </summary>
+    /// <param name="pos">Position of the block.</param>
+    /// <returns>The block at the specified position.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort? GetBlockOrNull(int3 pos)
+        => InBounds(pos) ? GetBlockUnchecked(pos) : null;
     #endregion
 
     /// <summary>

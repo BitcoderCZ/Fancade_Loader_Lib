@@ -281,6 +281,7 @@ public class PrefabList : ICloneable
     /// </summary>
     /// <remarks>
     /// The prefab's id is changed to <see cref="SegmentCount"/> + <see cref="IdOffset"/>.
+    /// The prefab's segments must not be modified while it is in the <see cref="PrefabList"/>.
     /// </remarks>
     /// <param name="value">The prefab to add.</param>
     public void AddPrefab(Prefab value)
@@ -294,7 +295,10 @@ public class PrefabList : ICloneable
     /// <summary>
     /// Adds a prefab to the <see cref="PartialPrefabList"/>.
     /// </summary>
-    /// <param name="value">The prefab to add, a prefab with it's id must already be in the <see cref="PartialPrefabList"/>.</param>
+    /// <remarks>
+    /// The prefab's segments must not be modified while it is in the <see cref="PrefabList"/>.
+    /// </remarks>
+    /// <param name="value">The prefab to add, a prefab with it's id must already be in the <see cref="PrefabList"/>.</param>
     public void InsertPrefab(Prefab value)
     {
         if (WillBeLastPrefab(value))
@@ -311,6 +315,75 @@ public class PrefabList : ICloneable
         IncreaseAfter(value.Id, (ushort)value.Count);
         _prefabs.Add(value.Id, value);
         _segments.InsertRange(value.Id - IdOffset, value.Values);
+    }
+
+    /// <summary>
+    /// Changes the prefab at the specified id to <paramref name="value"/>.
+    /// </summary>
+    /// <remarks>
+    /// The prefab's segments must not be modified while it is in the <see cref="PrefabList"/>.
+    /// </remarks>
+    /// <param name="value">The prefab that will replace the previous prefab at it's id.</param>
+    /// <param name="overwriteBlocks">
+    /// If <see langword="true"/>, blocks will be overwritten,
+    /// if <see langword="false"/>, if a segment of <paramref name="value"/> would be placed at a position that is already occupied, an <see cref="InvalidOperationException"/> will be thrown.
+    /// </param>
+    public void UpdatePrefab(Prefab value, bool overwriteBlocks)
+    {
+        var prev = _prefabs[value.Id];
+
+        if (!overwriteBlocks && !CanUpdatePrefabIds(prev, value))
+        {
+            throw new InvalidOperationException($"Cannot update prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+        }
+
+        if (prev.Count > 1)
+        {
+            Debug.Assert(prev.Count <= 4 * 4 * 4, "prev.Count should be smaller that it's max size.");
+            Span<int3> offsets = stackalloc int3[(4 * 4 * 4) - 1];
+
+            int len = 0;
+            foreach (var (seg, id) in prev.EnumerateWithId())
+            {
+                if (id != prev.Id)
+                {
+                    offsets[len++] = seg.PosInPrefab;
+                }
+            }
+
+            RemoveIdsFromPrefab(prev.Id, offsets[..len]);
+        }
+
+        _segments.RemoveRange(prev.Id - IdOffset, prev.Count);
+
+        if (prev.Count > value.Count)
+        {
+            DecreaseAfter((ushort)(prev.Id + 1), (ushort)(prev.Count - value.Count));
+        }
+        else if (prev.Count < value.Count)
+        {
+            IncreaseAfter((ushort)(prev.Id + 1), (ushort)(value.Count - prev.Count));
+        }
+
+        _prefabs[prev.Id] = value;
+        _segments.InsertRange(value.Id - IdOffset, value.Values);
+
+        if (value.Count > 1)
+        {
+            Debug.Assert(value.Count <= 4 * 4 * 4, "value.Count should be smaller that it's max size.");
+            Span<(int3, ushort)> ids = stackalloc (int3, ushort)[(4 * 4 * 4) - 1];
+
+            int len = 0;
+            foreach (var (seg, id) in value.EnumerateWithId())
+            {
+                if (id != value.Id)
+                {
+                    ids[len++] = (seg.PosInPrefab, id);
+                }
+            }
+
+            AddIdsToPrefab(value.Id, ids[..len]);
+        }
     }
 
     /// <summary>
@@ -552,12 +625,33 @@ public class PrefabList : ICloneable
         }
     }
 
+    private void RemoveIdsFromPrefab(ushort prefabId, ReadOnlySpan<int3> offsets)
+    {
+        foreach (var prefab in _prefabs.Values)
+        {
+            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+            {
+                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+                {
+                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
+                    {
+                        if (prefab.Blocks.GetBlockUnchecked(new int3(x, y, z)) == prefabId)
+                        {
+                            foreach (var offset in offsets)
+                            {
+                                prefab.Blocks.SetBlock(new int3(x, y, z) + offset, 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private bool CanAddIdToPrefab(ushort prefabId, int3 offset)
     {
         foreach (var prefab in _prefabs.Values)
         {
-            ushort[] array = prefab.Blocks.Array.Array;
-
             for (int z = 0; z < prefab.Blocks.Size.Z; z++)
             {
                 for (int y = 0; y < prefab.Blocks.Size.Y; y++)
@@ -565,14 +659,56 @@ public class PrefabList : ICloneable
                     for (int x = 0; x < prefab.Blocks.Size.X; x++)
                     {
                         int3 pos = new int3(x, y, z);
-                        int i = prefab.Blocks.Index(pos);
 
-                        if (array[i] == prefabId)
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
-                            pos += offset;
-                            if (prefab.Blocks.InBounds(pos) && prefab.Blocks.GetBlockUnchecked(pos) != 0)
+                            if (prefab.Blocks.GetBlockOrDefault(pos + offset) != 0)
                             {
                                 return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private bool CanUpdatePrefabIds(Prefab oldPrefab, Prefab newPrefab)
+    {
+        Debug.Assert(oldPrefab.Id == newPrefab.Id, "Ids should be equal.");
+
+        ushort prefabId = oldPrefab.Id;
+
+        List<int3> newPositions = [];
+
+        foreach (var pos in newPrefab.Keys)
+        {
+            if (!oldPrefab.ContainsKey(pos))
+            {
+                newPositions.Add(pos);
+            }
+        }
+
+        foreach (var prefab in _prefabs.Values)
+        {
+            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+            {
+                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+                {
+                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
+                    {
+                        int3 pos = new int3(x, y, z);
+
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
+                        {
+                            foreach (var offset in newPositions)
+                            {
+                                if (prefab.Blocks.GetBlockOrDefault(pos + offset) != 0)
+                                {
+                                    return false;
+                                }
                             }
                         }
                     }
@@ -587,8 +723,6 @@ public class PrefabList : ICloneable
     {
         foreach (var prefab in _prefabs.Values)
         {
-            ushort[] array = prefab.Blocks.Array.Array;
-
             for (int z = 0; z < prefab.Blocks.Size.Z; z++)
             {
                 for (int y = 0; y < prefab.Blocks.Size.Y; y++)
@@ -596,23 +730,59 @@ public class PrefabList : ICloneable
                     for (int x = 0; x < prefab.Blocks.Size.X; x++)
                     {
                         int3 pos = new int3(x, y, z);
-                        int i = prefab.Blocks.Index(pos);
 
-                        if (array[i] == prefabId)
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
-                            int iNew = prefab.Blocks.Index(pos + offset);
-                            ushort idOld = array[iNew];
-                            if (TryGetPrefab(idOld, out var oldPrefab))
+                            ushort idOld = prefab.Blocks.GetBlockOrDefault(pos + offset);
+
+                            if (idOld != 0 && TryGetPrefab(idOld, out var oldPrefab))
                             {
                                 int3 prefabPos = (pos + offset) - GetSegment(idOld).PosInPrefab;
 
                                 foreach (var segPos in oldPrefab.Keys)
                                 {
-                                    prefab.Blocks.SetBlockUnchecked(prefabPos + segPos, 0);
+                                    prefab.Blocks.SetBlock(prefabPos + segPos, 0);
                                 }
                             }
 
-                            array[iNew] = id;
+                            prefab.Blocks.SetBlock(pos + offset, id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void AddIdsToPrefab(ushort prefabId, ReadOnlySpan<(int3 Offset, ushort Id)> ids)
+    {
+        foreach (var prefab in _prefabs.Values)
+        {
+            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+            {
+                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+                {
+                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
+                    {
+                        int3 pos = new int3(x, y, z);
+
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
+                        {
+                            foreach (var (offset, id) in ids)
+                            {
+                                ushort idOld = prefab.Blocks.GetBlockOrDefault(pos + offset);
+
+                                if (idOld != 0 && TryGetPrefab(idOld, out var oldPrefab))
+                                {
+                                    int3 prefabPos = (pos + offset) - GetSegment(idOld).PosInPrefab;
+
+                                    foreach (var segPos in oldPrefab.Keys)
+                                    {
+                                        prefab.Blocks.SetBlock(prefabPos + segPos, 0);
+                                    }
+                                }
+
+                                prefab.Blocks.SetBlock(pos + offset, id);
+                            }
                         }
                     }
                 }

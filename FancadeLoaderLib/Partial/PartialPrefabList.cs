@@ -295,6 +295,7 @@ public partial class PartialPrefabList : ICloneable
     /// </summary>
     /// <remarks>
     /// The prefab's id is changed to <see cref="SegmentCount"/> + <see cref="IdOffset"/>.
+    /// The prefab's segments must not be modified while it is in the <see cref="PartialPrefabList"/>.
     /// </remarks>
     /// <param name="value">The prefab to add.</param>
     public void AddPrefab(PartialPrefab value)
@@ -308,6 +309,9 @@ public partial class PartialPrefabList : ICloneable
     /// <summary>
     /// Adds a prefab to the <see cref="PartialPrefabList"/>.
     /// </summary>
+    /// <remarks>
+    /// The prefab's segments must not be modified while it is in the <see cref="PartialPrefabList"/>.
+    /// </remarks>
     /// <param name="value">The prefab to add, a prefab with it's id must already be in the <see cref="PartialPrefabList"/>.</param>
     public void InsertPrefab(PartialPrefab value)
     {
@@ -324,6 +328,32 @@ public partial class PartialPrefabList : ICloneable
 
         IncreaseAfter(value.Id, (ushort)value.Count);
         _prefabs.Add(value.Id, value);
+        _segments.InsertRange(value.Id - IdOffset, value.Values);
+    }
+
+    /// <summary>
+    /// Changes the prefab at the specified id to <paramref name="value"/>.
+    /// </summary>
+    /// <remarks>
+    /// The prefab's segments must not be modified while it is in the <see cref="PartialPrefabList"/>.
+    /// </remarks>
+    /// <param name="value">The prefab that will replace the previous prefab at it's id.</param>
+    public void UpdatePrefab(PartialPrefab value)
+    {
+        var prev = _prefabs[value.Id];
+
+        _segments.RemoveRange(prev.Id - IdOffset, prev.Count);
+
+        if (prev.Count > value.Count)
+        {
+            DecreaseAfter((ushort)(prev.Id + 1), (ushort)(prev.Count - value.Count));
+        }
+        else if (prev.Count < value.Count)
+        {
+            IncreaseAfter((ushort)(prev.Id + 1), (ushort)(value.Count - prev.Count));
+        }
+
+        _prefabs[prev.Id] = value;
         _segments.InsertRange(value.Id - IdOffset, value.Values);
     }
 

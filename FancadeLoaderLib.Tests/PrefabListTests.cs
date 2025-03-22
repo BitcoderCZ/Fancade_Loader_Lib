@@ -1,6 +1,7 @@
 ﻿using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
+using TUnit.Assertions.Extensions;
 
 namespace FancadeLoaderLib.Tests;
 
@@ -203,6 +204,212 @@ public class PrefabListTests
             await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)3);
             await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)4);
             await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)5);
+        }
+    }
+
+    [Test]
+    public async Task UpdatePrefab_UpdatesPrefabAndSegments()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 0,
+        };
+
+        var prefab1 = CreateDummyPrefab(0, 2);
+        var prefab2 = CreateDummyPrefab(2, 2);
+        var prefab3 = CreateDummyPrefab(4, 2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+        prefabList.AddPrefab(prefab3);
+
+        var newPrefab = CreateDummyPrefab(2, 3);
+
+        prefabList.UpdatePrefab(newPrefab, false);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.PrefabCount).IsEqualTo(3);
+            await Assert.That(prefabList.SegmentCount).IsEqualTo(7);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)0);
+            await Assert.That(newPrefab.Id).IsEqualTo((ushort)2);
+            await Assert.That(prefab3.Id).IsEqualTo((ushort)5);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(2)).IsEqualTo(newPrefab);
+
+            foreach (var (segment, segmentId) in newPrefab.EnumerateWithId())
+            {
+                await Assert.That(prefabList.GetSegment(segmentId)).IsEqualTo(segment);
+            }
+        }
+    }
+
+    [Test]
+    public async Task UpdatePrefab_AddsIds()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreateDummyPrefab(1, 2);
+        var prefab2 = CreateDummyPrefab(3, 2);
+        var prefab3 = CreateDummyPrefab(5, 2);
+
+        var blocks = prefab1.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 1), prefab2);
+        blocks.SetPrefab(new int3(0, 0, 2), prefab3);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+        prefabList.AddPrefab(prefab3);
+
+        var newPrefab = CreateDummyPrefab(3, 3);
+
+        prefabList.UpdatePrefab(newPrefab, false);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlock(new int3(2, 0, 1))).IsEqualTo((ushort)5);
+
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)6);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)7);
+        }
+    }
+
+    [Test]
+    public async Task UpdatePrefab_RemovesIds()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreateDummyPrefab(1, 2);
+        var prefab2 = CreateDummyPrefab(3, 3);
+        var prefab3 = CreateDummyPrefab(6, 2);
+
+        var blocks = prefab1.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 1), prefab2);
+        blocks.SetPrefab(new int3(0, 0, 2), prefab3);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+        prefabList.AddPrefab(prefab3);
+
+        var newPrefab = CreateDummyPrefab(3, 2);
+
+        prefabList.UpdatePrefab(newPrefab, false);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlock(new int3(2, 0, 1))).IsEqualTo((ushort)0);
+
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)6);
+        }
+    }
+
+    [Test]
+    public async Task UpdatePrefab_WithObstruction_ThrowsException()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreateDummyPrefab(1, 2);
+        var prefab2 = CreateDummyPrefab(3, 3);
+
+        var blocks = prefab2.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(2, 0, 0), prefab2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        var newPrefab = CreateDummyPrefab(1, 3);
+
+        Assert.Throws<InvalidOperationException>(() => prefabList.UpdatePrefab(newPrefab, false));
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)3);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(1)).IsEqualTo(prefab1);
+            await Assert.That(prefabList.GetPrefab(3)).IsEqualTo(prefab2);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+
+            await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlock(new int3(3, 0, 0))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlock(new int3(4, 0, 0))).IsEqualTo((ushort)5);
+        }
+    }
+
+    [Test]
+    public async Task UpdatePrefab_WithObstruction_OverwriteTrue_DoesNotThrow()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreateDummyPrefab(1, 2);
+        var prefab2 = CreateDummyPrefab(3, 3);
+
+        var blocks = prefab2.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(2, 0, 0), prefab2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        var newPrefab = CreateDummyPrefab(1, 3);
+
+        prefabList.UpdatePrefab(newPrefab, true);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(1)).IsEqualTo(newPrefab);
+            await Assert.That(prefabList.GetPrefab(4)).IsEqualTo(prefab2);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)3);
+
+            await Assert.That(blocks.GetBlock(new int3(3, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlock(new int3(4, 0, 0))).IsEqualTo((ushort)0);
         }
     }
 
