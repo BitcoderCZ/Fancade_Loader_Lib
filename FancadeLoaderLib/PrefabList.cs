@@ -446,6 +446,27 @@ public class PrefabList : ICloneable
     }
 
     /// <summary>
+    /// Removed a prefab with the specified id from <see cref="Prefab.Blocks"/>.
+    /// </summary>
+    /// <param name="id">Id of the prefab to remove.</param>
+    /// <returns><see langword="true"/> if the prefab was removed (it was found at least once); otherwise <see langword="false"/>.</returns>
+    public bool RemovePrefabFromBLocks(ushort id)
+    {
+        var prefab = _prefabs[id];
+
+        Debug.Assert(prefab.Count <= 4 * 4 * 4, "prefab.Count should be smaller that it's max size.");
+        Span<int3> offsets = stackalloc int3[4 * 4 * 4];
+
+        int len = 0;
+        foreach (var offset in prefab.Keys)
+        {
+            offsets[len++] = offset;
+        }
+
+        return RemoveIdsFromPrefab(prefab.Id, offsets[..len]);
+    }
+
+    /// <summary>
     /// Adds a segment to a prefab.
     /// </summary>
     /// <param name="id">Id of the prefab.</param>
@@ -625,8 +646,10 @@ public class PrefabList : ICloneable
         }
     }
 
-    private void RemoveIdsFromPrefab(ushort prefabId, ReadOnlySpan<int3> offsets)
+    private bool RemoveIdsFromPrefab(ushort prefabId, ReadOnlySpan<int3> offsets)
     {
+        bool found = false;
+
         foreach (var prefab in _prefabs.Values)
         {
             for (int z = 0; z < prefab.Blocks.Size.Z; z++)
@@ -637,6 +660,8 @@ public class PrefabList : ICloneable
                     {
                         if (prefab.Blocks.GetBlockUnchecked(new int3(x, y, z)) == prefabId)
                         {
+                            found = true;
+
                             foreach (var offset in offsets)
                             {
                                 prefab.Blocks.SetBlock(new int3(x, y, z) + offset, 0);
@@ -646,6 +671,8 @@ public class PrefabList : ICloneable
                 }
             }
         }
+
+        return found;
     }
 
     private bool CanAddIdToPrefab(ushort prefabId, int3 offset)

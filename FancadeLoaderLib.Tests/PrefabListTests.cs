@@ -484,6 +484,78 @@ public class PrefabListTests
     }
 
     [Test]
+    public async Task RemovePrefabFromBLocks_RemovesIds()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreateDummyPrefab(1, 2);
+        var prefab2 = CreateDummyPrefab(3, 2);
+        var prefab3 = CreateDummyPrefab(5, 2);
+
+        var blocks = prefab1.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 1), prefab2);
+        blocks.SetPrefab(new int3(0, 0, 2), prefab3);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+        prefabList.AddPrefab(prefab3);
+
+        bool removed = prefabList.RemovePrefabFromBLocks(prefab2.Id);
+
+        await Assert.That(removed).IsTrue();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)0);
+
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)6);
+        }
+    }
+
+    [Test]
+    public async Task RemovePrefabFromBLocks_WhenNotContained_ReturnsFalse()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreateDummyPrefab(1, 2);
+        var prefab2 = CreateDummyPrefab(3, 2);
+        var prefab3 = CreateDummyPrefab(5, 2);
+
+        var blocks = prefab1.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 1), prefab3);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+        prefabList.AddPrefab(prefab3);
+
+        bool removed = prefabList.RemovePrefabFromBLocks(prefab2.Id);
+
+        await Assert.That(removed).IsFalse();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)6);
+        }
+    }
+
+    [Test]
     public async Task AddSegmentToPrefab_AppendsSegment()
     {
         var prefabList = new PrefabList()
