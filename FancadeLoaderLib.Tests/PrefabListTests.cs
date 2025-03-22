@@ -232,13 +232,15 @@ public class PrefabListTests
 
         var newPrefab = CreateDummyPrefab(3, 3);
 
-        prefabList.UpdatePrefab(newPrefab, false);
+        var prevPrefab = prefabList.UpdatePrefab(newPrefab, false);
 
         using (Assert.Multiple())
         {
             await Assert.That(prefabList.PrefabCount).IsEqualTo(3);
             await Assert.That(prefabList.SegmentCount).IsEqualTo(7);
         }
+
+        await Assert.That(prevPrefab).IsEqualTo(prefab2);
 
         using (Assert.Multiple())
         {

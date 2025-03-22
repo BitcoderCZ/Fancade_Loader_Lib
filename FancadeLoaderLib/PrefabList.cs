@@ -328,7 +328,8 @@ public class PrefabList : ICloneable
     /// If <see langword="true"/>, blocks will be overwritten,
     /// if <see langword="false"/>, if a segment of <paramref name="value"/> would be placed at a position that is already occupied, an <see cref="InvalidOperationException"/> will be thrown.
     /// </param>
-    public void UpdatePrefab(Prefab value, bool overwriteBlocks)
+    /// <returns>The prefab that was at the specified id, before the update.</returns>
+    public Prefab UpdatePrefab(Prefab value, bool overwriteBlocks)
     {
         var prev = _prefabs[value.Id];
 
@@ -384,6 +385,8 @@ public class PrefabList : ICloneable
 
             AddIdsToPrefab(value.Id, ids[..len]);
         }
+
+        return prev;
     }
 
     /// <summary>
