@@ -56,11 +56,11 @@ public class PartialPrefabListTests
     {
         var prefabList = new PartialPrefabList()
         {
-            IdOffset = 0,
+            IdOffset = 1,
         };
 
-        var segments = CreateDummySegments(0, 3).ToList();
-        var prefab = CreateDummyPrefab(0, segments);
+        var segments = CreateDummySegments(1, 3).ToArray();
+        var prefab = CreateDummyPrefab(1, segments);
         prefabList.AddPrefab(prefab);
 
         using (Assert.Multiple())
@@ -71,8 +71,11 @@ public class PartialPrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefabList.GetPrefab(0)).IsEqualTo(prefab);
-            await Assert.That(prefabList.GetSegment(0)).IsEqualTo(segments[0]);
+            await Assert.That(prefabList.GetPrefab(1)).IsEqualTo(prefab);
+            foreach (var (segment, segmentId) in prefab.EnumerateWithId())
+            {
+                await Assert.That(prefabList.GetSegment(segmentId)).IsEqualTo(segment);
+            }
         }
     }
 
@@ -81,7 +84,7 @@ public class PartialPrefabListTests
     {
         var prefabList = new PartialPrefabList()
         {
-            IdOffset = 5,
+            IdOffset = 1,
         };
 
         var prefab = CreateDummyPrefab(0, 3);
@@ -95,8 +98,8 @@ public class PartialPrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefabList.GetPrefab(5)).IsEqualTo(prefab);
-            await Assert.That(prefab.Id).IsEqualTo((ushort)5);
+            await Assert.That(prefabList.GetPrefab(1)).IsEqualTo(prefab);
+            await Assert.That(prefab.Id).IsEqualTo((ushort)1);
         }
     }
 
@@ -105,11 +108,11 @@ public class PartialPrefabListTests
     {
         var prefabList = new PartialPrefabList()
         {
-            IdOffset = 0,
+            IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(0, 1);
-        var prefab2 = CreateDummyPrefab(1, 1);
+        var prefab1 = CreateDummyPrefab(1, 1);
+        var prefab2 = CreateDummyPrefab(2, 1);
 
         prefabList.AddPrefab(prefab1);
         prefabList.InsertPrefab(prefab2);
@@ -120,7 +123,11 @@ public class PartialPrefabListTests
             await Assert.That(prefabList.SegmentCount).IsEqualTo(2);
         }
 
-        await Assert.That(prefabList.GetPrefab(1)).IsEqualTo(prefab2);
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(1)).IsEqualTo(prefab1);
+            await Assert.That(prefabList.GetPrefab(2)).IsEqualTo(prefab2);
+        }
     }
 
     [Test]
@@ -128,15 +135,15 @@ public class PartialPrefabListTests
     {
         var prefabList = new PartialPrefabList()
         {
-            IdOffset = 0,
+            IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(0, 1);
-        var prefab3 = CreateDummyPrefab(1, 1);
+        var prefab1 = CreateDummyPrefab(1, 1);
+        var prefab3 = CreateDummyPrefab(2, 1);
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab3);
 
-        var prefab2 = CreateDummyPrefab(1, 1);
+        var prefab2 = CreateDummyPrefab(2, 1);
         prefabList.InsertPrefab(prefab2);
 
         using (Assert.Multiple())
@@ -147,16 +154,16 @@ public class PartialPrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefabList.GetPrefab(0)).IsEqualTo(prefab1);
-            await Assert.That(prefabList.GetPrefab(1)).IsEqualTo(prefab2);
-            await Assert.That(prefabList.GetPrefab(2)).IsEqualTo(prefab3);
+            await Assert.That(prefabList.GetPrefab(1)).IsEqualTo(prefab1);
+            await Assert.That(prefabList.GetPrefab(2)).IsEqualTo(prefab2);
+            await Assert.That(prefabList.GetPrefab(3)).IsEqualTo(prefab3);
         }
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefab1.Id).IsEqualTo((ushort)0);
-            await Assert.That(prefab2.Id).IsEqualTo((ushort)1);
-            await Assert.That(prefab3.Id).IsEqualTo((ushort)2);
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)2);
+            await Assert.That(prefab3.Id).IsEqualTo((ushort)3);
         }
     }
 
@@ -165,18 +172,18 @@ public class PartialPrefabListTests
     {
         var prefabList = new PartialPrefabList()
         {
-            IdOffset = 0,
+            IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(0, 2);
-        var prefab2 = CreateDummyPrefab(2, 2);
-        var prefab3 = CreateDummyPrefab(4, 2);
+        var prefab1 = CreateDummyPrefab(1, 2);
+        var prefab2 = CreateDummyPrefab(3, 2);
+        var prefab3 = CreateDummyPrefab(5, 2);
 
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
         prefabList.AddPrefab(prefab3);
 
-        var newPrefab = CreateDummyPrefab(2, 3);
+        var newPrefab = CreateDummyPrefab(3, 3);
 
         prefabList.UpdatePrefab(newPrefab);
 
@@ -188,14 +195,14 @@ public class PartialPrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefab1.Id).IsEqualTo((ushort)0);
-            await Assert.That(newPrefab.Id).IsEqualTo((ushort)2);
-            await Assert.That(prefab3.Id).IsEqualTo((ushort)5);
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(newPrefab.Id).IsEqualTo((ushort)3);
+            await Assert.That(prefab3.Id).IsEqualTo((ushort)6);
         }
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefabList.GetPrefab(2)).IsEqualTo(newPrefab);
+            await Assert.That(prefabList.GetPrefab(3)).IsEqualTo(newPrefab);
 
             foreach (var (segment, segmentId) in newPrefab.EnumerateWithId())
             {
@@ -209,16 +216,16 @@ public class PartialPrefabListTests
     {
         var prefabList = new PartialPrefabList()
         {
-            IdOffset = 0,
+            IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(0, 2);
-        var prefab2 = CreateDummyPrefab(2, 1);
+        var prefab1 = CreateDummyPrefab(1, 2);
+        var prefab2 = CreateDummyPrefab(3, 1);
 
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        bool removed = prefabList.RemovePrefab(0);
+        bool removed = prefabList.RemovePrefab(1);
 
         await Assert.That(removed).IsTrue();
 
@@ -228,23 +235,26 @@ public class PartialPrefabListTests
             await Assert.That(prefabList.SegmentCount).IsEqualTo(1);
         }
 
-        await Assert.That(() => prefabList.GetPrefab(2)).Throws<KeyNotFoundException>();
-        await Assert.That(prefab2.Id).IsEqualTo((ushort)0);
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.ContainsPrefab(3)).IsFalse();
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)1);
+        }
     }
 
     [Test]
-    public async Task AddSegmentToPrefab_AppendsPrefabAndSegments()
+    public async Task AddSegmentToPrefab_AppendsSegment()
     {
         var prefabList = new PartialPrefabList()
         {
-            IdOffset = 0,
+            IdOffset = 1,
         };
 
-        var prefab = CreateDummyPrefab(0, 1);
+        var prefab = CreateDummyPrefab(1, 1);
         prefabList.AddPrefab(prefab);
 
-        var newSegment = new PartialPrefabSegment(0, new byte3(1, 0, 0));
-        prefabList.AddSegmentToPrefab(0, newSegment);
+        var newSegment = new PartialPrefabSegment(1, new byte3(1, 0, 0));
+        prefabList.AddSegmentToPrefab(1, newSegment);
 
         using (Assert.Multiple())
         {
@@ -252,7 +262,7 @@ public class PartialPrefabListTests
             await Assert.That(prefabList.SegmentCount).IsEqualTo(2);
         }
 
-        await Assert.That(prefabList.GetSegment(1)).IsEqualTo(newSegment);
+        await Assert.That(prefabList.GetSegment(2)).IsEqualTo(newSegment);
     }
 
     [Test]
@@ -260,17 +270,17 @@ public class PartialPrefabListTests
     {
         var prefabList = new PartialPrefabList()
         {
-            IdOffset = 0,
+            IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(0, 1);
-        var prefab2 = CreateDummyPrefab(1, 2);
+        var prefab1 = CreateDummyPrefab(1, 1);
+        var prefab2 = CreateDummyPrefab(2, 2);
 
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        var newSegment = new PartialPrefabSegment(0, new byte3(1, 0, 0));
-        prefabList.AddSegmentToPrefab(0, newSegment);
+        var newSegment = new PartialPrefabSegment(1, new byte3(1, 0, 0));
+        prefabList.AddSegmentToPrefab(1, newSegment);
 
         using (Assert.Multiple())
         {
@@ -280,8 +290,8 @@ public class PartialPrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefab1.Id).IsEqualTo((ushort)0);
-            await Assert.That(prefab2.Id).IsEqualTo((ushort)2);
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)3);
         }
     }
 
@@ -290,13 +300,13 @@ public class PartialPrefabListTests
     {
         var prefabList = new PartialPrefabList()
         {
-            IdOffset = 0,
+            IdOffset = 1,
         };
 
-        var prefab = CreateDummyPrefab(0, 2);
+        var prefab = CreateDummyPrefab(1, 2);
         prefabList.AddPrefab(prefab);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(0, new byte3(1, 0, 0));
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new byte3(1, 0, 0));
 
         await Assert.That(removed).IsTrue();
 
@@ -304,7 +314,7 @@ public class PartialPrefabListTests
         {
             await Assert.That(prefab.Count).IsEqualTo(1);
             await Assert.That(prefabList.SegmentCount).IsEqualTo(1);
-            await Assert.That(prefabList.GetSegment(0)).IsEqualTo(prefab[byte3.Zero]);
+            await Assert.That(prefabList.GetSegment(1)).IsEqualTo(prefab[byte3.Zero]);
         }
     }
 
