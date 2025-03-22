@@ -509,13 +509,13 @@ public partial class PartialPrefabList : ICloneable
     private bool WillBeLastPrefab(PartialPrefab prefab)
         => prefab.Id == SegmentCount + IdOffset;
 
-    private void IncreaseAfter(int index, ushort amount)
+    private void IncreaseAfter(ushort id, ushort amount)
     {
         for (int i = 0; i < _segments.Count; i++)
         {
             PartialPrefabSegment segment = _segments[i];
 
-            if (segment.PrefabId >= index)
+            if (segment.PrefabId >= id)
             {
                 segment.PrefabId += amount;
             }
@@ -523,34 +523,34 @@ public partial class PartialPrefabList : ICloneable
 
         List<ushort> prefabsToChangeId = [];
 
-        foreach (var (id, prefab) in _prefabs)
+        foreach (var (prefabId, prefab) in _prefabs)
         {
-            if (id >= index)
+            if (prefabId >= id)
             {
-                prefabsToChangeId.Add(id);
+                prefabsToChangeId.Add(prefabId);
             }
         }
 
-        foreach (ushort id in prefabsToChangeId.OrderByDescending(item => item))
+        foreach (ushort prefabId in prefabsToChangeId.OrderByDescending(item => item))
         {
-            bool removed = _prefabs.Remove(id, out var prefab);
+            bool removed = _prefabs.Remove(prefabId, out var prefab);
 
             Debug.Assert(removed, "Prefab should have been removed.");
             Debug.Assert(prefab is not null, $"{nameof(prefab)} shouldn't be null.");
 
-            ushort newId = (ushort)(id + amount);
+            ushort newId = (ushort)(prefabId + amount);
             prefab.Id = newId;
             _prefabs[newId] = prefab;
         }
     }
 
-    private void DecreaseAfter(int index, ushort amount)
+    private void DecreaseAfter(ushort id, ushort amount)
     {
         for (int i = 0; i < _segments.Count; i++)
         {
             PartialPrefabSegment segment = _segments[i];
 
-            if (segment.PrefabId >= index)
+            if (segment.PrefabId >= id)
             {
                 segment.PrefabId -= amount;
             }
@@ -558,22 +558,22 @@ public partial class PartialPrefabList : ICloneable
 
         List<ushort> prefabsToChangeId = [];
 
-        foreach (var (id, prefab) in _prefabs)
+        foreach (var (prefabId, prefab) in _prefabs)
         {
-            if (id >= index)
+            if (prefabId >= id)
             {
-                prefabsToChangeId.Add(id);
+                prefabsToChangeId.Add(prefabId);
             }
         }
 
-        foreach (ushort id in prefabsToChangeId.OrderBy(item => item))
+        foreach (ushort prefabId in prefabsToChangeId.OrderBy(item => item))
         {
-            bool removed = _prefabs.Remove(id, out var prefab);
+            bool removed = _prefabs.Remove(prefabId, out var prefab);
 
             Debug.Assert(removed, "Prefab should have been removed.");
             Debug.Assert(prefab is not null, $"{nameof(prefab)} shouldn't be null.");
 
-            ushort newId = (ushort)(id - amount);
+            ushort newId = (ushort)(prefabId - amount);
             prefab.Id = newId;
             _prefabs[newId] = prefab;
         }
