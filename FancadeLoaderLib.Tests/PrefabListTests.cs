@@ -75,6 +75,30 @@ public class PrefabListTests
     }
 
     [Test]
+    public async Task AddPrefab_UpdatesPrefabId()
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 5,
+        };
+
+        var prefab = CreateDummyPrefab(0, 3);
+        prefabList.AddPrefab(prefab);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.PrefabCount).IsEqualTo(1);
+            await Assert.That(prefabList.SegmentCount).IsEqualTo(3);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(5)).IsEqualTo(prefab);
+            await Assert.That(prefab.Id).IsEqualTo((ushort)5);
+        }
+    }
+
+    [Test]
     public async Task InsertPrefab_LastPrefabCondition_WorksLikeAddPrefab()
     {
         var prefabList = new PrefabList()

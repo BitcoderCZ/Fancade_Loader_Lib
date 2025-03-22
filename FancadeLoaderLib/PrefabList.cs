@@ -279,13 +279,13 @@ public class PrefabList : ICloneable
     /// <summary>
     /// Adds a prefab to the <see cref="PrefabList"/>.
     /// </summary>
-    /// <param name="value">The prefab to add, it's id must be equal to <see cref="SegmentCount"/> + <see cref="IdOffset"/>.</param>
+    /// <remarks>
+    /// The prefab's id is changed to <see cref="SegmentCount"/> + <see cref="IdOffset"/>.
+    /// </remarks>
+    /// <param name="value">The prefab to add.</param>
     public void AddPrefab(Prefab value)
     {
-        if (value.Id != SegmentCount + IdOffset)
-        {
-            ThrowArgumentException($"{nameof(value)}.{nameof(value.Id)} ({value.Id}) must be equal to {nameof(SegmentCount)} + {nameof(IdOffset)}.", $"{nameof(value)}.{nameof(value.Id)}");
-        }
+        value.Id = (ushort)(SegmentCount + IdOffset);
 
         _prefabs.Add(value.Id, value);
         _segments.AddRange(value.Values);
@@ -526,7 +526,7 @@ public class PrefabList : ICloneable
         => prefab.Id + prefab.Count >= SegmentCount + IdOffset;
 
     private bool WillBeLastPrefab(Prefab prefab)
-        => prefab.Id >= SegmentCount + IdOffset;
+        => prefab.Id == SegmentCount + IdOffset;
 
     private void RemoveIdFromBlocks(ushort id)
     {
