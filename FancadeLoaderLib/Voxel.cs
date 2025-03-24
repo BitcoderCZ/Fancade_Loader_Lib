@@ -42,6 +42,23 @@ public unsafe struct Voxel : IEquatable<Voxel>
     public fixed bool Attribs[6];
 #endif
 
+    public Voxel(byte color, bool attrib)
+    {
+        Colors[0] = color;
+        Colors[1] = color;
+        Colors[2] = color;
+        Colors[3] = color;
+        Colors[4] = color;
+        Colors[5] = color;
+
+        Attribs[0] = attrib;
+        Attribs[1] = attrib;
+        Attribs[2] = attrib;
+        Attribs[3] = attrib;
+        Attribs[4] = attrib;
+        Attribs[5] = attrib;
+    }
+
     /// <summary>
     /// Gets a value indicating whether this voxel is empty.
     /// </summary>
