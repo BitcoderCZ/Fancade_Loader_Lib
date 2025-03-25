@@ -19,11 +19,11 @@ public class PrefabListTests
     [Test]
     public async Task Constructor_WithCollection_InitializesPrefabsAndSegments()
     {
-        var segments1 = CreateDummySegments(0, 2).ToList();
-        var segments2 = CreateDummySegments(2, 3).ToList();
+        var segments1 = CreateSegments(0, 2).ToList();
+        var segments2 = CreateSegments(2, 3).ToList();
 
-        var prefab1 = CreateDummyPrefab(0, segments1);
-        var prefab2 = CreateDummyPrefab(2, segments2);
+        var prefab1 = CreatePrefab(0, segments1);
+        var prefab2 = CreatePrefab(2, segments2);
 
         var prefabList = new PrefabList([prefab1, prefab2]);
 
@@ -45,8 +45,8 @@ public class PrefabListTests
     {
         using (Assert.Multiple())
         {
-            await Assert.That(() => new PrefabList([CreateDummyPrefab(0, 2), CreateDummyPrefab(3, 1)])).Throws<ArgumentException>();
-            await Assert.That(() => new PrefabList([CreateDummyPrefab(0, 3), CreateDummyPrefab(1, 1)])).Throws<ArgumentException>();
+            await Assert.That(() => new PrefabList([CreatePrefab(0, 2), CreatePrefab(3, 1)])).Throws<ArgumentException>();
+            await Assert.That(() => new PrefabList([CreatePrefab(0, 3), CreatePrefab(1, 1)])).Throws<ArgumentException>();
         }
     }
 
@@ -58,8 +58,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var segments = CreateDummySegments(1, 3).ToList();
-        var prefab = CreateDummyPrefab(1, segments);
+        var segments = CreateSegments(1, 3).ToList();
+        var prefab = CreatePrefab(1, segments);
         prefabList.AddPrefab(prefab);
 
         using (Assert.Multiple())
@@ -86,7 +86,7 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab = CreateDummyPrefab(0, 3);
+        var prefab = CreatePrefab(0, 3);
         prefabList.AddPrefab(prefab);
 
         using (Assert.Multiple())
@@ -110,8 +110,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 1);
-        var prefab2 = CreateDummyPrefab(2, 1);
+        var prefab1 = CreatePrefab(1, 1);
+        var prefab2 = CreatePrefab(2, 1);
 
         prefabList.AddPrefab(prefab1);
         prefabList.InsertPrefab(prefab2);
@@ -137,12 +137,12 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 1);
-        var prefab3 = CreateDummyPrefab(2, 1);
+        var prefab1 = CreatePrefab(1, 1);
+        var prefab3 = CreatePrefab(2, 1);
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab3);
 
-        var prefab2 = CreateDummyPrefab(2, 1);
+        var prefab2 = CreatePrefab(2, 1);
         prefabList.InsertPrefab(prefab2);
 
         using (Assert.Multiple())
@@ -174,8 +174,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab3 = CreateDummyPrefab(3, 2);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab3 = CreatePrefab(3, 2);
 
         var blocks = prefab1.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -192,7 +192,7 @@ public class PrefabListTests
             await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)4);
         }
 
-        var prefab2 = CreateDummyPrefab(3, 2);
+        var prefab2 = CreatePrefab(3, 2);
         prefabList.InsertPrefab(prefab2);
 
         blocks.SetPrefab(new int3(0, 0, 1), prefab2);
@@ -222,15 +222,15 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 2);
-        var prefab3 = CreateDummyPrefab(5, 2);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 2);
+        var prefab3 = CreatePrefab(5, 2);
 
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
         prefabList.AddPrefab(prefab3);
 
-        var newPrefab = CreateDummyPrefab(3, 3);
+        var newPrefab = CreatePrefab(3, 3);
 
         var prevPrefab = prefabList.UpdatePrefab(newPrefab, false);
 
@@ -268,9 +268,9 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 2);
-        var prefab3 = CreateDummyPrefab(5, 2);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 2);
+        var prefab3 = CreatePrefab(5, 2);
 
         var blocks = prefab1.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -281,7 +281,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab2);
         prefabList.AddPrefab(prefab3);
 
-        var newPrefab = CreateDummyPrefab(3, 3);
+        var newPrefab = CreatePrefab(3, 3);
 
         prefabList.UpdatePrefab(newPrefab, false);
 
@@ -307,9 +307,9 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 3);
-        var prefab3 = CreateDummyPrefab(6, 2);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 3);
+        var prefab3 = CreatePrefab(6, 2);
 
         var blocks = prefab1.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -320,7 +320,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab2);
         prefabList.AddPrefab(prefab3);
 
-        var newPrefab = CreateDummyPrefab(3, 2);
+        var newPrefab = CreatePrefab(3, 2);
 
         prefabList.UpdatePrefab(newPrefab, false);
 
@@ -346,8 +346,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 3);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 3);
 
         var blocks = prefab2.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -356,7 +356,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        var newPrefab = CreateDummyPrefab(1, 3);
+        var newPrefab = CreatePrefab(1, 3);
 
         await Assert.That(() => prefabList.UpdatePrefab(newPrefab, false)).Throws<InvalidOperationException>();
 
@@ -391,8 +391,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 3);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 3);
 
         var blocks = prefab2.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -401,7 +401,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        var newPrefab = CreateDummyPrefab(1, 3);
+        var newPrefab = CreatePrefab(1, 3);
 
         prefabList.UpdatePrefab(newPrefab, true);
 
@@ -430,8 +430,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 1);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 1);
 
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
@@ -461,8 +461,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 1);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 1);
 
         var blocks = prefab2.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -493,9 +493,9 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 2);
-        var prefab3 = CreateDummyPrefab(5, 2);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 2);
+        var prefab3 = CreatePrefab(5, 2);
 
         var blocks = prefab1.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -531,9 +531,9 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 2);
-        var prefab3 = CreateDummyPrefab(5, 2);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 2);
+        var prefab3 = CreatePrefab(5, 2);
 
         var blocks = prefab1.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -565,7 +565,7 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab = CreateDummyPrefab(1, 1);
+        var prefab = CreatePrefab(1, 1);
 
         var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
 
@@ -589,8 +589,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 1);
-        var prefab2 = CreateDummyPrefab(2, 2);
+        var prefab1 = CreatePrefab(1, 1);
+        var prefab2 = CreatePrefab(2, 2);
 
         var blocks = prefab2.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -631,7 +631,7 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab = CreateDummyPrefab(1, 1);
+        var prefab = CreatePrefab(1, 1);
 
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
@@ -658,7 +658,7 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab = CreateDummyPrefab(1, 1);
+        var prefab = CreatePrefab(1, 1);
 
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
@@ -686,8 +686,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 1);
-        var prefab2 = CreateDummyPrefab(2, 2);
+        var prefab1 = CreatePrefab(1, 1);
+        var prefab2 = CreatePrefab(2, 2);
 
         var blocks = prefab1.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -715,7 +715,7 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab = CreateDummyPrefab(1, 1);
+        var prefab = CreatePrefab(1, 1);
 
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
@@ -745,7 +745,7 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab = CreateDummyPrefab(1, 1);
+        var prefab = CreatePrefab(1, 1);
 
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
@@ -775,7 +775,7 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab = CreateDummyPrefab(1, 2);
+        var prefab = CreatePrefab(1, 2);
         prefabList.AddPrefab(prefab);
 
         bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0));
@@ -798,8 +798,8 @@ public class PrefabListTests
             IdOffset = 1,
         };
 
-        var prefab1 = CreateDummyPrefab(1, 2);
-        var prefab2 = CreateDummyPrefab(3, 2);
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 2);
 
         var blocks = prefab2.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -838,8 +838,8 @@ public class PrefabListTests
             IdOffset = 5,
         };
 
-        var prefab1 = CreateDummyPrefab(5, 2);
-        var prefab2 = CreateDummyPrefab(7, 1);
+        var prefab1 = CreatePrefab(5, 2);
+        var prefab2 = CreatePrefab(7, 1);
 
         var blocks = prefab1.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -878,8 +878,8 @@ public class PrefabListTests
             IdOffset = 15,
         };
 
-        var prefab1 = CreateDummyPrefab(15, 2);
-        var prefab2 = CreateDummyPrefab(17, 1);
+        var prefab1 = CreatePrefab(15, 2);
+        var prefab2 = CreatePrefab(17, 1);
 
         var blocks = prefab1.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab1);
@@ -918,9 +918,9 @@ public class PrefabListTests
             IdOffset = 25,
         };
 
-        var prefab1 = CreateDummyPrefab(25, 2);
-        var prefab2 = CreateDummyPrefab(27, 1);
-        var prefab3 = CreateDummyPrefab(28, 3);
+        var prefab1 = CreatePrefab(25, 2);
+        var prefab2 = CreatePrefab(27, 1);
+        var prefab3 = CreatePrefab(28, 3);
 
         var segment = prefab3[new int3(1, 0, 0)];
         segment.Voxels = new Voxel[8 * 8 * 8];
@@ -958,13 +958,13 @@ public class PrefabListTests
         }
     }
 
-    private static Prefab CreateDummyPrefab(ushort id, IEnumerable<PrefabSegment> segments)
+    private static Prefab CreatePrefab(ushort id, IEnumerable<PrefabSegment> segments)
         => new Prefab(id, $"Prefab {id}", PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, null, null, null, segments);
 
-    private static Prefab CreateDummyPrefab(ushort id, int prefabCount)
-        => CreateDummyPrefab(id, CreateDummySegments(id, prefabCount));
+    private static Prefab CreatePrefab(ushort id, int segmentCount)
+        => CreatePrefab(id, CreateSegments(id, segmentCount));
 
-    private static IEnumerable<PrefabSegment> CreateDummySegments(ushort id, int count)
+    private static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count)
     {
         Debug.Assert(count < 4 * 4 * 4);
 

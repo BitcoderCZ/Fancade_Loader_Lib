@@ -9,7 +9,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using System.Text;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
@@ -56,7 +58,8 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         }
 
         _id = id;
-        _name = name;
+        Unsafe.SkipInit(out _name); // initialized by the property
+        Name = name;
         Collider = collider;
         Type = type;
         BackgroundColor = backgroundColor;
@@ -108,7 +111,8 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
             ThrowArgumentException($"{nameof(name)} cannot be null or empty.", nameof(name));
         }
 
-        _name = name;
+        Unsafe.SkipInit(out _name); // initialized by the property
+        Name = name;
         Collider = collider;
         Type = type;
         BackgroundColor = backgroundColor;
@@ -195,6 +199,10 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
             if (string.IsNullOrEmpty(value))
             {
                 ThrowArgumentException($"{nameof(Name)} cannot be null or empty.", nameof(value));
+            }
+            else if (Encoding.UTF8.GetByteCount(value) > 255)
+            {
+                ThrowArgumentException($"{nameof(Name)}, when UTF-8 encoded, cannot be longer than 255 bytes.", nameof(value));
             }
 
             _name = value;

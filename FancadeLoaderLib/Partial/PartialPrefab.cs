@@ -8,6 +8,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Partial;
@@ -45,7 +47,8 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
         }
 
         _id = id;
-        _name = name;
+        Unsafe.SkipInit(out _name); // initialized by the property
+        Name = name;
         Type = type;
 
         _segments = new(segments.Select(segment =>
@@ -84,7 +87,8 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
             ThrowArgumentException($"{nameof(name)} cannot be null or empty.", nameof(name));
         }
 
-        _name = name;
+        Unsafe.SkipInit(out _name); // initialized by the property
+        Name = name;
         Type = type;
 
         ushort? id = null;
@@ -175,6 +179,10 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
             if (string.IsNullOrEmpty(value))
             {
                 ThrowArgumentException($"{nameof(Name)} cannot be null or empty.", nameof(value));
+            }
+            else if (Encoding.UTF8.GetByteCount(value) > 255)
+            {
+                ThrowArgumentException($"{nameof(Name)}, when UTF-8 encoded, cannot be longer than 255 bytes.", nameof(value));
             }
 
             _name = value;
