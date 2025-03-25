@@ -116,6 +116,34 @@ public class PrefabSegment : ICloneable
     }
 
     /// <summary>
+    /// Gets a value indicating whether this <see cref="PrefabSegment"/> is empty.
+    /// </summary>
+    /// <value><see langword="true"/> if <see cref="Voxels"/> is null or <see cref="Voxel.IsEmpty"/> is true for all of the voxels; otherwise, <see langword="false"/>.</value>
+    public bool IsEmpty
+    {
+        get
+        {
+            if (Voxels is null)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < Voxels.Length; i++)
+            {
+                if (!Voxels[i].IsEmpty)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    public static int IndexVoxels(int3 pos)
+        => pos.ToIndex(8, 8);
+
+    /// <summary>
     /// Converts raw voxel data to <see cref="Voxel"/>s.
     /// </summary>
     /// <param name="voxels">The voxel data to convert.</param>
@@ -262,7 +290,7 @@ public class PrefabSegment : ICloneable
             destination[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[5]) << 7);
         }
     }
-
+    
     /// <summary>
     /// Creates a deep copy of this <see cref="PrefabSegment"/>.
     /// </summary>

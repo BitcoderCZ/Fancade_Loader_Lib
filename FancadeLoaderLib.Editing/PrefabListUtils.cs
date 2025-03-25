@@ -3,8 +3,12 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
+using MathUtils.Vectors;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
 
@@ -56,4 +60,36 @@ public static class PrefabListUtils
     /// <returns><see cref="IEnumerable{T}"/> iterating over the blocks in <paramref name="list"/>.</returns>
     public static IEnumerable<PartialPrefab> GetBlocks(this PartialPrefabList list)
         => list.Prefabs.Where(group => group.Type != PrefabType.Level);
+
+    /// <summary>
+    /// Removes all empty segments from a prefab.
+    /// </summary>
+    /// <param name="list">The list to remove the segments from.</param>
+    /// <param name="id">Id of the prefab.</param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    /// <returns>How many segments were removed.</returns>
+    public static int RemoveEmptySegmentsFromPrefab(this PrefabList list, ushort id, BlockInstancesCache? cache = null)
+    {
+        var prefab = list.GetPrefab(id);
+
+        int removedCount = 0;
+
+        Debug.Assert(prefab.Count <= 4 * 4 * 4, "prefab.Count should be smaller that it's max size.");
+        Span<int3> toRemove = stackalloc int3[4 * 4 * 4];
+
+        foreach (var (pos, segment) in prefab)
+        {
+            if (segment.IsEmpty)
+            {
+                toRemove[removedCount++] = pos;
+            }
+        }
+
+        foreach (var pos in toRemove[..removedCount])
+        {
+            list.RemoveSegmentFromPrefab(id, pos, cache);
+        }
+
+        return removedCount;
+    }
 }
