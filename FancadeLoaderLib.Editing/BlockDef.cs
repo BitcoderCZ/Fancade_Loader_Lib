@@ -43,7 +43,7 @@ public sealed class BlockDef
             {
                 for (int x = 0; x < size.X; x++)
                 {
-                    segments.Add(new PartialPrefabSegment(id, new byte3(x, y, z)));
+                    segments.Add(new PartialPrefabSegment(id, new int3(x, y, z)));
                 }
             }
         }

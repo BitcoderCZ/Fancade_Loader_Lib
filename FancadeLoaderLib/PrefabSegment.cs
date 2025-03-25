@@ -5,6 +5,7 @@
 using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -30,12 +31,14 @@ public class PrefabSegment : ICloneable
 
     private Voxel[]? _voxels;
 
+    private int3 _posInPrefab;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="PrefabSegment"/> class.
     /// </summary>
     /// <param name="prefabId">Id of the prefab this segment is in.</param>
     /// <param name="posInPrefab">Position of this segment in prefab.</param>
-    public PrefabSegment(ushort prefabId, byte3 posInPrefab)
+    public PrefabSegment(ushort prefabId, int3 posInPrefab)
     {
         PrefabId = prefabId;
         PosInPrefab = posInPrefab;
@@ -47,7 +50,7 @@ public class PrefabSegment : ICloneable
     /// <param name="prefabId">Id of the prefab this segment is in.</param>
     /// <param name="posInPrefab">Position of this segment in prefab.</param>
     /// <param name="voxels">Voxels/model of this prefab.</param>
-    public PrefabSegment(ushort prefabId, byte3 posInPrefab, Voxel[]? voxels)
+    public PrefabSegment(ushort prefabId, int3 posInPrefab, Voxel[]? voxels)
     {
         PrefabId = prefabId;
         PosInPrefab = posInPrefab;
@@ -73,7 +76,23 @@ public class PrefabSegment : ICloneable
     /// Gets the position of this segment in prefab.
     /// </summary>
     /// <value>Position of this segment in prefab.</value>
-    public byte3 PosInPrefab { get; internal set; }
+    public int3 PosInPrefab
+    {
+        get => _posInPrefab;
+        internal set
+        {
+            if (value.X >= Prefab.MaxSize || value.Y >= Prefab.MaxSize || value.Z >= Prefab.MaxSize)
+            {
+                ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(PosInPrefab)} cannot be larger than or equal to {Prefab.MaxSize}.");
+            }
+            else if (value.X < 0 || value.Y < 0 || value.Z < 0)
+            {
+                ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(PosInPrefab)} cannot be negative.");
+            }
+
+            _posInPrefab = value;
+        }
+    }
 
     /// <summary>
     /// Gets or sets the voxels/model of this segment.

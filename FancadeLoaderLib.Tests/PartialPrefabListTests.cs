@@ -253,7 +253,7 @@ public class PartialPrefabListTests
         var prefab = CreateDummyPrefab(1, 1);
         prefabList.AddPrefab(prefab);
 
-        var newSegment = new PartialPrefabSegment(1, new byte3(1, 0, 0));
+        var newSegment = new PartialPrefabSegment(1, new int3(1, 0, 0));
         prefabList.AddSegmentToPrefab(1, newSegment);
 
         using (Assert.Multiple())
@@ -279,7 +279,7 @@ public class PartialPrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        var newSegment = new PartialPrefabSegment(1, new byte3(1, 0, 0));
+        var newSegment = new PartialPrefabSegment(1, new int3(1, 0, 0));
         prefabList.AddSegmentToPrefab(1, newSegment);
 
         using (Assert.Multiple())
@@ -306,7 +306,7 @@ public class PartialPrefabListTests
         var prefab = CreateDummyPrefab(1, 2);
         prefabList.AddPrefab(prefab);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(1, new byte3(1, 0, 0));
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0));
 
         await Assert.That(removed).IsTrue();
 
@@ -314,7 +314,7 @@ public class PartialPrefabListTests
         {
             await Assert.That(prefab.Count).IsEqualTo(1);
             await Assert.That(prefabList.SegmentCount).IsEqualTo(1);
-            await Assert.That(prefabList.GetSegment(1)).IsEqualTo(prefab[byte3.Zero]);
+            await Assert.That(prefabList.GetSegment(1)).IsEqualTo(prefab[int3.Zero]);
         }
     }
 
@@ -332,7 +332,7 @@ public class PartialPrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(1, new byte3(1, 0, 0));
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0));
 
         await Assert.That(removed).IsTrue();
 
@@ -464,7 +464,7 @@ public class PartialPrefabListTests
             {
                 for (int x = 0; x < 4; x++)
                 {
-                    yield return new PartialPrefabSegment(id, new byte3(x, y, z));
+                    yield return new PartialPrefabSegment(id, new int3(x, y, z));
                     if (++c >= count)
                     {
                         yield break;

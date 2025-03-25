@@ -11,7 +11,7 @@ namespace FancadeLoaderLib.Editing;
 
 public sealed class BlockVoxelsGenerator
 {
-    private readonly Dictionary<byte3, Voxel[]> _blocks = [];
+    private readonly Dictionary<int3, Voxel[]> _blocks = [];
 
     private BlockVoxelsGenerator()
     {
@@ -20,9 +20,9 @@ public sealed class BlockVoxelsGenerator
     private delegate void LoopDelegate(ref Voxel voxel);
 
 #if NET8_0_OR_GREATER
-    public static IEnumerable<KeyValuePair<byte3, Voxel[]>> CreateScript(int2 sizeInBlocks)
+    public static IEnumerable<KeyValuePair<int3, Voxel[]>> CreateScript(int2 sizeInBlocks)
 #else
-    public static unsafe IEnumerable<KeyValuePair<byte3, Voxel[]>> CreateScript(int2 sizeInBlocks)
+    public static unsafe IEnumerable<KeyValuePair<int3, Voxel[]>> CreateScript(int2 sizeInBlocks)
 #endif
     {
         if (sizeInBlocks.X < 1 || sizeInBlocks.Y < 1)
@@ -37,7 +37,7 @@ public sealed class BlockVoxelsGenerator
 
         BlockVoxelsGenerator generator = new BlockVoxelsGenerator();
 
-        generator.Fill(byte3.Zero, sizeInVoxels, FcColor.Black);
+        generator.Fill(int3.Zero, sizeInVoxels, FcColor.Black);
 
         generator.Loop(new int3(1, 2, 1), new int3(sizeInVoxels.X - 1, 3, sizeInVoxels.Z - 1), (ref Voxel voxel) =>
         {
@@ -68,7 +68,7 @@ public sealed class BlockVoxelsGenerator
     private static int Index(int x, int y, int z)
         => x + (y * 8) + (z * 8 * 8);
 
-    private Voxel[] GetBlock(byte3 pos)
+    private Voxel[] GetBlock(int3 pos)
     {
         if (!_blocks.TryGetValue(pos, out Voxel[]? voxels))
         {
@@ -85,7 +85,7 @@ public sealed class BlockVoxelsGenerator
         int3 voxelBlockPos = blockPos * 8;
         int3 inBlockPos = pos - voxelBlockPos;
 
-        return ref GetBlock((byte3)blockPos)[Index(inBlockPos)];
+        return ref GetBlock(blockPos)[Index(inBlockPos)];
     }
 
     private unsafe void Fill(int3 from, int3 to, FcColor color)
@@ -134,7 +134,7 @@ public sealed class BlockVoxelsGenerator
             {
                 for (int bx = 0; bx <= toBlock.X; bx++)
                 {
-                    byte3 blockPos = new byte3(bx, by, bz);
+                    int3 blockPos = new int3(bx, by, bz);
                     int3 voxelPos = blockPos * 8;
                     Voxel[] block = GetBlock(blockPos);
 
@@ -188,7 +188,7 @@ public sealed class BlockVoxelsGenerator
             {
                 for (int bx = 0; bx <= toBlock.X; bx++)
                 {
-                    byte3 blockPos = new byte3(bx, by, bz);
+                    int3 blockPos = new int3(bx, by, bz);
                     int3 voxelPos = blockPos * 8;
                     Voxel[] block = GetBlock(blockPos);
 

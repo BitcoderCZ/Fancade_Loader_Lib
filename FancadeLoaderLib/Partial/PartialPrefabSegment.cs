@@ -4,6 +4,7 @@
 
 using MathUtils.Vectors;
 using System;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Partial;
 
@@ -12,12 +13,14 @@ namespace FancadeLoaderLib.Partial;
 /// </summary>
 public class PartialPrefabSegment : ICloneable
 {
+    private int3 _posInPrefab;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="PartialPrefabSegment"/> class.
     /// </summary>
     /// <param name="prefabId">Id of the prefab this segment is in.</param>
     /// <param name="posInPrefab">Position of this segment in prefab.</param>
-    public PartialPrefabSegment(ushort prefabId, byte3 posInPrefab)
+    public PartialPrefabSegment(ushort prefabId, int3 posInPrefab)
     {
         PrefabId = prefabId;
         PosInPrefab = posInPrefab;
@@ -43,7 +46,23 @@ public class PartialPrefabSegment : ICloneable
     /// Gets the position of this segment in prefab.
     /// </summary>
     /// <value>Position of this segment in prefab.</value>
-    public byte3 PosInPrefab { get; internal set; }
+    public int3 PosInPrefab
+    {
+        get => _posInPrefab;
+        internal set
+        {
+            if (value.X >= Prefab.MaxSize || value.Y >= Prefab.MaxSize || value.Z >= Prefab.MaxSize)
+            {
+                ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(PosInPrefab)} cannot be larger than or equal to {Prefab.MaxSize}.");
+            }
+            else if (value.X < 0 || value.Y < 0 || value.Z < 0)
+            {
+                ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(PosInPrefab)} cannot be negative.");
+            }
+
+            _posInPrefab = value;
+        }
+    }
 
     /// <summary>
     /// Creates a copy of this <see cref="PartialPrefabSegment"/>.

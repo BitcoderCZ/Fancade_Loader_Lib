@@ -150,9 +150,9 @@ public class BlockData
 
         CheckLowerBounds(pos, nameof(pos));
 
-        byte3 size = prefab.Size;
+        int3 size = prefab.Size;
 
-        if (size == byte3.Zero)
+        if (size == int3.Zero)
         {
             return;
         }
@@ -180,9 +180,9 @@ public class BlockData
 
         CheckLowerBounds(pos, nameof(pos));
 
-        byte3 size = prefab.Size;
+        int3 size = prefab.Size;
 
-        if (size == byte3.Zero)
+        if (size == int3.Zero)
         {
             return;
         }

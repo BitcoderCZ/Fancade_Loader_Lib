@@ -468,7 +468,7 @@ public partial class PartialPrefabList : ICloneable
     /// <param name="id">Id of the prefab.</param>
     /// <param name="posInPrefab">Position of the segment to remove.</param>
     /// <returns><see langword="true"/> if the segment was removed from the prefab; otherwise <see langword="false"/>.</returns>
-    public bool RemoveSegmentFromPrefab(ushort id, byte3 posInPrefab)
+    public bool RemoveSegmentFromPrefab(ushort id, int3 posInPrefab)
     {
         var prefab = _prefabs[id];
 

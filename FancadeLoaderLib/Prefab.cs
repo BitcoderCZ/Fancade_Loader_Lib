@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Security.Cryptography;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
@@ -16,14 +17,14 @@ namespace FancadeLoaderLib;
 /// <summary>
 /// Represents a fancade prefab, processed for easier manipulation.
 /// </summary>
-public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
+public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
 {
     /// <summary>
     /// The maximum allowed size for a prefab in each axis.
     /// </summary>
     public const int MaxSize = 4;
 
-    private readonly Dictionary<byte3, PrefabSegment> _segments;
+    private readonly Dictionary<int3, PrefabSegment> _segments;
 
     private ushort _id;
 
@@ -76,7 +77,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
                 ThrowArgumentException($"{nameof(PrefabSegment.PrefabId)} must be the same for all segments in {nameof(segments)}", nameof(segments));
             }
 
-            return new KeyValuePair<byte3, PrefabSegment>(segment.PosInPrefab, segment);
+            return new KeyValuePair<int3, PrefabSegment>(segment.PosInPrefab, segment);
         }));
 
         CalculateSize();
@@ -132,7 +133,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 
             id = segment.PrefabId;
 
-            return new KeyValuePair<byte3, PrefabSegment>(segment.PosInPrefab, segment);
+            return new KeyValuePair<int3, PrefabSegment>(segment.PosInPrefab, segment);
         }));
 
         _id = id!.Value;
@@ -145,7 +146,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     /// </summary>
     /// <param name="id">Id of this prefab.</param>
     public Prefab(ushort id)
-        : this(id, "New Block", PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, new BlockData(), [], [], [new PrefabSegment(id, byte3.Zero)])
+        : this(id, "New Block", PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, new BlockData(), [], [], [new PrefabSegment(id, int3.Zero)])
     {
     }
 
@@ -163,8 +164,8 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
         _segments = deepCopy
-            ? new Dictionary<byte3, PrefabSegment>(other._segments.Select(item => new KeyValuePair<byte3, PrefabSegment>(item.Key, item.Value.Clone())))
-            : new Dictionary<byte3, PrefabSegment>(other._segments);
+            ? new Dictionary<int3, PrefabSegment>(other._segments.Select(item => new KeyValuePair<int3, PrefabSegment>(item.Key, item.Value.Clone())))
+            : new Dictionary<int3, PrefabSegment>(other._segments);
 #pragma warning restore IDE0306
 
         _id = other.Id;
@@ -264,10 +265,10 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     /// Gets the size of this prefab.
     /// </summary>
     /// <value>Size of this prefab.</value>
-    public byte3 Size { get; private set; }
+    public int3 Size { get; private set; }
 
     /// <inheritdoc/>
-    public ICollection<byte3> Keys => _segments.Keys;
+    public ICollection<int3> Keys => _segments.Keys;
 
     /// <inheritdoc/>
     public ICollection<PrefabSegment> Values => _segments.Values;
@@ -279,11 +280,11 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     public int Count => _segments.Count;
 
     /// <inheritdoc/>
-    bool ICollection<KeyValuePair<byte3, PrefabSegment>>.IsReadOnly => false;
+    bool ICollection<KeyValuePair<int3, PrefabSegment>>.IsReadOnly => false;
 
     /// <inheritdoc/>
-    [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It makes sense to use byte3 here.")]
-    public PrefabSegment this[byte3 index]
+    [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It makes sense to use int3 here.")]
+    public PrefabSegment this[int3 index]
     {
         get => _segments[index];
         set => _segments[index] = ValidateSegment(value, nameof(value));
@@ -296,7 +297,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     /// <param name="name">Name of the prefab.</param>
     /// <returns>The new instance of <see cref="Prefab"/>.</returns>
     public static Prefab CreateBlock(ushort id, string name)
-        => new Prefab(id, name, PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, new(), [], [], [new PrefabSegment(id, byte3.Zero, new Voxel[8 * 8 * 8])]);
+        => new Prefab(id, name, PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, new(), [], [], [new PrefabSegment(id, int3.Zero, new Voxel[8 * 8 * 8])]);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Prefab"/> class, with the default values for a level.
@@ -493,7 +494,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
                     backgroundColor: (byte)BackgroundColor,
                     colliderByte: (byte)Collider,
                     groupId: Id,
-                    posInGroup: posInGroup,
+                    posInGroup: (byte3)posInGroup,
                     voxels: voxels,
                     blocks: Blocks is null ? null : (clone ? Blocks.Array.Clone() : Blocks.Array),
                     settings: clone && Settings is not null ? [.. Settings] : Settings,
@@ -519,7 +520,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
                     backgroundColor: (byte)BackgroundColor,
                     colliderByte: (byte)Collider,
                     groupId: Id,
-                    posInGroup: posInGroup,
+                    posInGroup: (byte3)posInGroup,
                     voxels: voxels,
                     blocks: null,
                     settings: null,
@@ -530,7 +531,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     }
 
     /// <inheritdoc/>
-    void IDictionary<byte3, PrefabSegment>.Add(byte3 key, PrefabSegment value)
+    void IDictionary<int3, PrefabSegment>.Add(int3 key, PrefabSegment value)
     {
         ValidatePos(key, nameof(key));
 
@@ -538,7 +539,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 
         value.PosInPrefab = key; // only change pos if successfully added
 
-        Size = byte3.Max(Size, key + byte3.One);
+        Size = int3.Max(Size, key + int3.One);
     }
 
     /// <summary>
@@ -551,7 +552,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 
         _segments.Add(value.PosInPrefab, ValidateSegment(value, nameof(value)));
 
-        Size = byte3.Max(Size, value.PosInPrefab + byte3.One);
+        Size = int3.Max(Size, value.PosInPrefab + int3.One);
     }
 
     /// <summary>
@@ -568,12 +569,12 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
             return false;
         }
 
-        Size = byte3.Max(Size, value.PosInPrefab + byte3.One);
+        Size = int3.Max(Size, value.PosInPrefab + int3.One);
         return true;
     }
 
     /// <inheritdoc/>
-    public bool ContainsKey(byte3 key)
+    public bool ContainsKey(int3 key)
         => _segments.ContainsKey(key);
 
     /// <summary>
@@ -584,7 +585,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     /// </remarks>
     /// <param name="key">Position of the segment to remove.</param>
     /// <returns><see langword="true"/> if the segment was removed; otherwise, <see langword="true"/>.</returns>
-    public bool Remove(byte3 key)
+    public bool Remove(int3 key)
     {
         if (Count == 1)
         {
@@ -610,7 +611,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     /// <param name="key">Position of the segment to remove.</param>
     /// <param name="value">The segment that was at the specified position, if there was one.</param>
     /// <returns><see langword="true"/> if the segment was removed; otherwise, <see langword="true"/>.</returns>
-    public bool Remove(byte3 key, [MaybeNullWhen(false)] out PrefabSegment value)
+    public bool Remove(int3 key, [MaybeNullWhen(false)] out PrefabSegment value)
     {
         if (Count == 1)
         {
@@ -630,9 +631,9 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 
     /// <inheritdoc/>
 #if NET5_0_OR_GREATER
-    public bool TryGetValue(byte3 key, [MaybeNullWhen(false)] out PrefabSegment value)
+    public bool TryGetValue(int3 key, [MaybeNullWhen(false)] out PrefabSegment value)
 #else
-    public bool TryGetValue(byte3 key, out PrefabSegment value)
+    public bool TryGetValue(int3 key, out PrefabSegment value)
 #endif
         => _segments.TryGetValue(key, out value);
 
@@ -641,7 +642,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     /// </summary>
     /// <param name="key">Position of the segment.</param>
     /// <returns>The index of the segment if found; otherwise, <c>-1</c>.</returns>
-    public int IndexOf(byte3 key)
+    public int IndexOf(int3 key)
     {
         int index = 0;
 
@@ -651,7 +652,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
             {
                 for (int x = 0; x < Size.X; x++)
                 {
-                    byte3 pos = new byte3(x, y, z);
+                    int3 pos = new int3(x, y, z);
 
                     if (pos == key)
                     {
@@ -678,48 +679,44 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
 
         _segments.Clear();
 
-        first.PosInPrefab = byte3.Zero;
+        first.PosInPrefab = int3.Zero;
         _segments.Add(first.PosInPrefab, first);
 
-        Size = byte3.One;
+        Size = int3.One;
     }
 
     /// <inheritdoc/>
-    void ICollection<KeyValuePair<byte3, PrefabSegment>>.Add(KeyValuePair<byte3, PrefabSegment> item)
+    void ICollection<KeyValuePair<int3, PrefabSegment>>.Add(KeyValuePair<int3, PrefabSegment> item)
     {
         ValidatePos(item.Key, $"{nameof(item)}.Key");
 
         PrefabSegment res = ValidateSegment(item.Value, nameof(item) + ".Value");
 
-        if (!ReferenceEquals(item.Value, res))
-        {
-            item = new KeyValuePair<byte3, PrefabSegment>(item.Key, res);
-        }
+        res.PosInPrefab = item.Key;
+        Add(res);
 
-        ((ICollection<KeyValuePair<byte3, PrefabSegment>>)_segments).Add(item);
-
-        item.Value.PosInPrefab = item.Key; // only change pos if successfully added
-
-        Size = byte3.Max(Size, item.Key + byte3.One);
+        Size = int3.Max(Size, item.Key + int3.One);
     }
 
     /// <inheritdoc/>
-    bool ICollection<KeyValuePair<byte3, PrefabSegment>>.Contains(KeyValuePair<byte3, PrefabSegment> item)
-        => ((ICollection<KeyValuePair<byte3, PrefabSegment>>)_segments).Contains(item);
+    bool ICollection<KeyValuePair<int3, PrefabSegment>>.Contains(KeyValuePair<int3, PrefabSegment> item)
+        => ((ICollection<KeyValuePair<int3, PrefabSegment>>)_segments).Contains(item);
 
     /// <inheritdoc/>
-    void ICollection<KeyValuePair<byte3, PrefabSegment>>.CopyTo(KeyValuePair<byte3, PrefabSegment>[] array, int arrayIndex)
-        => ((ICollection<KeyValuePair<byte3, PrefabSegment>>)_segments).CopyTo(array, arrayIndex);
+    void ICollection<KeyValuePair<int3, PrefabSegment>>.CopyTo(KeyValuePair<int3, PrefabSegment>[] array, int arrayIndex)
+        => ((ICollection<KeyValuePair<int3, PrefabSegment>>)_segments).CopyTo(array, arrayIndex);
 
     /// <inheritdoc/>
-    bool ICollection<KeyValuePair<byte3, PrefabSegment>>.Remove(KeyValuePair<byte3, PrefabSegment> item)
+    bool ICollection<KeyValuePair<int3, PrefabSegment>>.Remove(KeyValuePair<int3, PrefabSegment> item)
     {
         if (Count == 1)
         {
             ThrowInvalidOperationException($"{nameof(Prefab)} cannot be empty.");
         }
 
-        bool removed = ((ICollection<KeyValuePair<byte3, PrefabSegment>>)_segments).Remove(item);
+        item.Value.PosInPrefab = item.Key;
+
+        bool removed = ((ICollection<KeyValuePair<int3, PrefabSegment>>)_segments).Remove(item);
 
         if (removed)
         {
@@ -743,7 +740,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
             {
                 for (int x = 0; x < Size.X; x++)
                 {
-                    if (_segments.TryGetValue(new byte3(x, y, z), out var segment))
+                    if (_segments.TryGetValue(new int3(x, y, z), out var segment))
                     {
                         yield return (segment, id++);
                     }
@@ -753,7 +750,7 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     }
 
     /// <inheritdoc/>
-    public IEnumerator<KeyValuePair<byte3, PrefabSegment>> GetEnumerator()
+    public IEnumerator<KeyValuePair<int3, PrefabSegment>> GetEnumerator()
     {
         for (int z = 0; z < Size.Z; z++)
         {
@@ -761,9 +758,9 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
             {
                 for (int x = 0; x < Size.X; x++)
                 {
-                    if (_segments.TryGetValue(new byte3(x, y, z), out var segment))
+                    if (_segments.TryGetValue(new int3(x, y, z), out var segment))
                     {
-                        yield return new KeyValuePair<byte3, PrefabSegment>(new byte3(x, y, z), segment);
+                        yield return new KeyValuePair<int3, PrefabSegment>(new int3(x, y, z), segment);
                     }
                 }
             }
@@ -786,21 +783,25 @@ public sealed class Prefab : IDictionary<byte3, PrefabSegment>, ICloneable
     object ICloneable.Clone()
         => new Prefab(this, true);
 
-    private static void ValidatePos(byte3 pos, string paramName)
+    private static void ValidatePos(int3 pos, string paramName)
     {
         if (pos.X >= MaxSize || pos.Y >= MaxSize || pos.Z >= MaxSize)
         {
             ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be larger than {MaxSize}.");
         }
+        else if (pos.X < 0 || pos.Y < 0 || pos.Z < 0)
+        {
+            ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be negative.");
+        }
     }
 
     private void CalculateSize()
     {
-        Size = byte3.Zero;
+        Size = int3.Zero;
 
         foreach (var pos in _segments.Keys)
         {
-            Size = byte3.Max(Size, pos + byte3.One);
+            Size = int3.Max(Size, pos + int3.One);
         }
     }
 

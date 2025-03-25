@@ -567,7 +567,7 @@ public class PrefabListTests
 
         var prefab = CreateDummyPrefab(1, 1);
 
-        var newSegment = new PrefabSegment(1, new byte3(1, 0, 0));
+        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
 
         prefabList.AddPrefab(prefab);
         prefabList.AddSegmentToPrefab(1, newSegment, false);
@@ -599,7 +599,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        var newPrefab = new PrefabSegment(1, new byte3(1, 0, 0));
+        var newPrefab = new PrefabSegment(1, new int3(1, 0, 0));
         prefabList.AddSegmentToPrefab(1, newPrefab, false);
 
         using (Assert.Multiple())
@@ -639,7 +639,7 @@ public class PrefabListTests
 
         prefabList.AddPrefab(prefab);
 
-        var newSegment = new PrefabSegment(1, new byte3(1, 0, 0));
+        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
         await Assert.That(() => prefabList.AddSegmentToPrefab(1, newSegment, false)).Throws<InvalidOperationException>();
 
         using (Assert.Multiple())
@@ -666,7 +666,7 @@ public class PrefabListTests
 
         prefabList.AddPrefab(prefab);
 
-        var newSegment = new PrefabSegment(1, new byte3(1, 0, 0));
+        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
 
         prefabList.AddSegmentToPrefab(1, newSegment, true);
 
@@ -696,7 +696,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        var newSegment = new PrefabSegment(1, new byte3(1, 0, 0));
+        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
         prefabList.AddSegmentToPrefab(1, newSegment, true);
 
         using (Assert.Multiple())
@@ -723,7 +723,7 @@ public class PrefabListTests
 
         prefabList.AddPrefab(prefab);
 
-        var newSegment = new PrefabSegment(1, new byte3(1, 0, 0));
+        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
 
         bool added = prefabList.TryAddSegmentToPrefab(1, newSegment, false);
 
@@ -753,7 +753,7 @@ public class PrefabListTests
 
         prefabList.AddPrefab(prefab);
 
-        var newSegment = new PrefabSegment(1, new byte3(1, 0, 0));
+        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
 
         bool added = prefabList.TryAddSegmentToPrefab(1, newSegment, true);
 
@@ -778,7 +778,7 @@ public class PrefabListTests
         var prefab = CreateDummyPrefab(1, 2);
         prefabList.AddPrefab(prefab);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(1, new byte3(1, 0, 0));
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0));
 
         await Assert.That(removed).IsTrue();
 
@@ -786,7 +786,7 @@ public class PrefabListTests
         {
             await Assert.That(prefab.Count).IsEqualTo(1);
             await Assert.That(prefabList.SegmentCount).IsEqualTo(1);
-            await Assert.That(prefabList.GetSegment(1)).IsEqualTo(prefab[byte3.Zero]);
+            await Assert.That(prefabList.GetSegment(1)).IsEqualTo(prefab[int3.Zero]);
         }
     }
 
@@ -808,7 +808,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(1, new byte3(1, 0, 0));
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0));
 
         await Assert.That(removed).IsTrue();
 
@@ -922,7 +922,7 @@ public class PrefabListTests
         var prefab2 = CreateDummyPrefab(27, 1);
         var prefab3 = CreateDummyPrefab(28, 3);
 
-        var segment = prefab3[new byte3(1, 0, 0)];
+        var segment = prefab3[new int3(1, 0, 0)];
         segment.Voxels = new Voxel[8 * 8 * 8];
         segment.Voxels[0].Colors[0] = (byte)FcColor.Brown;
         segment.Voxels[0].Attribs[0] = true;
@@ -975,7 +975,7 @@ public class PrefabListTests
             {
                 for (int x = 0; x < 4; x++)
                 {
-                    yield return new PrefabSegment(id, new byte3(x, y, z));
+                    yield return new PrefabSegment(id, new int3(x, y, z));
                     if (++c >= count)
                     {
                         yield break;

@@ -15,11 +15,11 @@ namespace FancadeLoaderLib.Partial;
 /// <summary>
 /// Represents a fancade prefab, with only <see cref="Id"/>, <see cref="Name"/>, <see cref="Type"/> and the positions of segments.
 /// </summary>
-public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, ICloneable
+public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICloneable
 {
     private const int MaxSize = Prefab.MaxSize;
 
-    private readonly Dictionary<byte3, PartialPrefabSegment> _segments;
+    private readonly Dictionary<int3, PartialPrefabSegment> _segments;
 
     private ushort _id;
 
@@ -60,7 +60,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
                 ThrowArgumentException($"{nameof(PartialPrefabSegment.PrefabId)} must be the same for all segments in {nameof(segments)}", nameof(segments));
             }
 
-            return new KeyValuePair<byte3, PartialPrefabSegment>(segment.PosInPrefab, segment);
+            return new KeyValuePair<int3, PartialPrefabSegment>(segment.PosInPrefab, segment);
         }));
 
         CalculateSize();
@@ -103,7 +103,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 
             id = segment.PrefabId;
 
-            return new KeyValuePair<byte3, PartialPrefabSegment>(segment.PosInPrefab, segment);
+            return new KeyValuePair<int3, PartialPrefabSegment>(segment.PosInPrefab, segment);
         }));
 
         _id = id!.Value;
@@ -116,7 +116,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
     /// </summary>
     /// <param name="id">Id of this prefab.</param>
     public PartialPrefab(ushort id)
-        : this(id, "New Block", PrefabType.Normal, [new PartialPrefabSegment(id, byte3.Zero)])
+        : this(id, "New Block", PrefabType.Normal, [new PartialPrefabSegment(id, int3.Zero)])
     {
     }
 
@@ -133,7 +133,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
         Size = prefab.Size;
         Type = prefab.Type;
 
-        _segments = new Dictionary<byte3, PartialPrefabSegment>(prefab.Select(item => new KeyValuePair<byte3, PartialPrefabSegment>(item.Key, new PartialPrefabSegment(item.Value.PrefabId, item.Value.PosInPrefab))));
+        _segments = new Dictionary<int3, PartialPrefabSegment>(prefab.Select(item => new KeyValuePair<int3, PartialPrefabSegment>(item.Key, new PartialPrefabSegment(item.Value.PrefabId, item.Value.PosInPrefab))));
     }
 
     /// <summary>
@@ -150,8 +150,8 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
         _segments = deepCopy
-            ? new Dictionary<byte3, PartialPrefabSegment>(other._segments.Select(item => new KeyValuePair<byte3, PartialPrefabSegment>(item.Key, item.Value.Clone())))
-            : new Dictionary<byte3, PartialPrefabSegment>(other._segments);
+            ? new Dictionary<int3, PartialPrefabSegment>(other._segments.Select(item => new KeyValuePair<int3, PartialPrefabSegment>(item.Key, item.Value.Clone())))
+            : new Dictionary<int3, PartialPrefabSegment>(other._segments);
 #pragma warning restore IDE0306
 
         _id = other.Id;
@@ -209,10 +209,10 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
     /// Gets the size of this prefab.
     /// </summary>
     /// <value>Size of this prefab.</value>
-    public byte3 Size { get; private set; }
+    public int3 Size { get; private set; }
 
     /// <inheritdoc/>
-    public ICollection<byte3> Keys => _segments.Keys;
+    public ICollection<int3> Keys => _segments.Keys;
 
     /// <inheritdoc/>
     public ICollection<PartialPrefabSegment> Values => _segments.Values;
@@ -227,15 +227,15 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
     public bool IsReadOnly => false;
 
     /// <inheritdoc/>
-    [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It makes sense to use byte3 here.")]
-    public PartialPrefabSegment this[byte3 index]
+    [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It makes sense to use int3 here.")]
+    public PartialPrefabSegment this[int3 index]
     {
         get => _segments[index];
         set => _segments[index] = ValidateSegment(value, nameof(value));
     }
 
     /// <inheritdoc/>
-    void IDictionary<byte3, PartialPrefabSegment>.Add(byte3 key, PartialPrefabSegment value)
+    void IDictionary<int3, PartialPrefabSegment>.Add(int3 key, PartialPrefabSegment value)
     {
         ValidatePos(key, nameof(key));
 
@@ -243,7 +243,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 
         value.PosInPrefab = key; // only change pos if successfully added
 
-        Size = byte3.Max(Size, key + byte3.One);
+        Size = int3.Max(Size, key + int3.One);
     }
 
     /// <summary>
@@ -256,7 +256,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 
         _segments.Add(value.PosInPrefab, ValidateSegment(value, nameof(value)));
 
-        Size = byte3.Max(Size, value.PosInPrefab + byte3.One);
+        Size = int3.Max(Size, value.PosInPrefab + int3.One);
     }
 
     /// <summary>
@@ -273,12 +273,12 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
             return false;
         }
 
-        Size = byte3.Max(Size, value.PosInPrefab + byte3.One);
+        Size = int3.Max(Size, value.PosInPrefab + int3.One);
         return true;
     }
 
     /// <inheritdoc/>
-    public bool ContainsKey(byte3 key)
+    public bool ContainsKey(int3 key)
         => _segments.ContainsKey(key);
 
     /// <summary>
@@ -289,7 +289,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
     /// </remarks>
     /// <param name="key">Position of the segment to remove.</param>
     /// <returns><see langword="true"/> if the segment was removed; otherwise, <see langword="true"/>.</returns>
-    public bool Remove(byte3 key)
+    public bool Remove(int3 key)
     {
         if (Count == 1)
         {
@@ -315,7 +315,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
     /// <param name="key">The position of the segment to remove.</param>
     /// <param name="value">The removed segment.</param>
     /// <returns><see langword="true"/> if the segment is successfully found and removed; otherwise, <see langword="false"/>.</returns>
-    public bool Remove(byte3 key, [MaybeNullWhen(false)] out PartialPrefabSegment value)
+    public bool Remove(int3 key, [MaybeNullWhen(false)] out PartialPrefabSegment value)
     {
         if (Count == 1)
         {
@@ -335,9 +335,9 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 
     /// <inheritdoc/>
 #if NET5_0_OR_GREATER
-    public bool TryGetValue(byte3 key, [MaybeNullWhen(false)] out PartialPrefabSegment value)
+    public bool TryGetValue(int3 key, [MaybeNullWhen(false)] out PartialPrefabSegment value)
 #else
-    public bool TryGetValue(byte3 key, out PartialPrefabSegment value)
+    public bool TryGetValue(int3 key, out PartialPrefabSegment value)
 #endif
         => _segments.TryGetValue(key, out value);
 
@@ -346,7 +346,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
     /// </summary>
     /// <param name="key">Position of the segment.</param>
     /// <returns>The index of the segment if found; otherwise, <c>-1</c>.</returns>
-    public int IndexOf(byte3 key)
+    public int IndexOf(int3 key)
     {
         int index = 0;
 
@@ -356,7 +356,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
             {
                 for (int x = 0; x < Size.X; x++)
                 {
-                    byte3 pos = new byte3(x, y, z);
+                    int3 pos = new int3(x, y, z);
 
                     if (pos == key)
                     {
@@ -383,48 +383,42 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
 
         _segments.Clear();
 
-        first.PosInPrefab = byte3.Zero;
+        first.PosInPrefab = int3.Zero;
         _segments.Add(first.PosInPrefab, first);
 
-        Size = byte3.One;
+        Size = int3.One;
     }
 
     /// <inheritdoc/>
-    void ICollection<KeyValuePair<byte3, PartialPrefabSegment>>.Add(KeyValuePair<byte3, PartialPrefabSegment> item)
+    void ICollection<KeyValuePair<int3, PartialPrefabSegment>>.Add(KeyValuePair<int3, PartialPrefabSegment> item)
     {
         ValidatePos(item.Key, $"{nameof(item)}.Key");
 
         PartialPrefabSegment res = ValidateSegment(item.Value, nameof(item) + ".Value");
 
-        if (!ReferenceEquals(item.Value, res))
-        {
-            item = new KeyValuePair<byte3, PartialPrefabSegment>(item.Key, res);
-        }
+        res.PosInPrefab = item.Key;
+        Add(res);
 
-        ((ICollection<KeyValuePair<byte3, PartialPrefabSegment>>)_segments).Add(item);
-
-        item.Value.PosInPrefab = item.Key; // only change pos if successfully added
-
-        Size = byte3.Max(Size, item.Key + byte3.One);
+        Size = int3.Max(Size, item.Key + int3.One);
     }
 
     /// <inheritdoc/>
-    bool ICollection<KeyValuePair<byte3, PartialPrefabSegment>>.Contains(KeyValuePair<byte3, PartialPrefabSegment> item)
-        => ((ICollection<KeyValuePair<byte3, PartialPrefabSegment>>)_segments).Contains(item);
+    bool ICollection<KeyValuePair<int3, PartialPrefabSegment>>.Contains(KeyValuePair<int3, PartialPrefabSegment> item)
+        => ((ICollection<KeyValuePair<int3, PartialPrefabSegment>>)_segments).Contains(item);
 
     /// <inheritdoc/>
-    void ICollection<KeyValuePair<byte3, PartialPrefabSegment>>.CopyTo(KeyValuePair<byte3, PartialPrefabSegment>[] array, int arrayIndex)
-        => ((ICollection<KeyValuePair<byte3, PartialPrefabSegment>>)_segments).CopyTo(array, arrayIndex);
+    void ICollection<KeyValuePair<int3, PartialPrefabSegment>>.CopyTo(KeyValuePair<int3, PartialPrefabSegment>[] array, int arrayIndex)
+        => ((ICollection<KeyValuePair<int3, PartialPrefabSegment>>)_segments).CopyTo(array, arrayIndex);
 
     /// <inheritdoc/>
-    bool ICollection<KeyValuePair<byte3, PartialPrefabSegment>>.Remove(KeyValuePair<byte3, PartialPrefabSegment> item)
+    bool ICollection<KeyValuePair<int3, PartialPrefabSegment>>.Remove(KeyValuePair<int3, PartialPrefabSegment> item)
     {
         if (Count == 1)
         {
             ThrowInvalidOperationException($"{nameof(PartialPrefab)} cannot be empty.");
         }
 
-        bool removed = ((ICollection<KeyValuePair<byte3, PartialPrefabSegment>>)_segments).Remove(item);
+        bool removed = ((ICollection<KeyValuePair<int3, PartialPrefabSegment>>)_segments).Remove(item);
 
         if (removed)
         {
@@ -448,7 +442,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
             {
                 for (int x = 0; x < Size.X; x++)
                 {
-                    if (_segments.TryGetValue(new byte3(x, y, z), out var segment))
+                    if (_segments.TryGetValue(new int3(x, y, z), out var segment))
                     {
                         yield return (segment, id++);
                     }
@@ -458,7 +452,7 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
     }
 
     /// <inheritdoc/>
-    public IEnumerator<KeyValuePair<byte3, PartialPrefabSegment>> GetEnumerator()
+    public IEnumerator<KeyValuePair<int3, PartialPrefabSegment>> GetEnumerator()
     {
         for (int z = 0; z < Size.Z; z++)
         {
@@ -466,9 +460,9 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
             {
                 for (int x = 0; x < Size.X; x++)
                 {
-                    if (_segments.TryGetValue(new byte3(x, y, z), out var segment))
+                    if (_segments.TryGetValue(new int3(x, y, z), out var segment))
                     {
-                        yield return new KeyValuePair<byte3, PartialPrefabSegment>(new byte3(x, y, z), segment);
+                        yield return new KeyValuePair<int3, PartialPrefabSegment>(new int3(x, y, z), segment);
                     }
                 }
             }
@@ -534,32 +528,36 @@ public sealed class PartialPrefab : IDictionary<byte3, PartialPrefabSegment>, IC
                     name: Name,
                     type: Type,
                     groupId: Id,
-                    posInGroup: posInPrefab)
+                    posInGroup: (byte3)posInPrefab)
                 : new OldPartialPrefab(
                     name: "New Block",
                     type: Type,
                     groupId: Id,
-                    posInGroup: posInPrefab);
+                    posInGroup: (byte3)posInPrefab);
 
             i++;
         }
     }
 
-    private static void ValidatePos(byte3 pos, string paramName)
+    private static void ValidatePos(int3 pos, string paramName)
     {
         if (pos.X >= MaxSize || pos.Y >= MaxSize || pos.Z >= MaxSize)
         {
             ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be larger than {MaxSize}.");
         }
+        else if (pos.X < 0 || pos.Y < 0 || pos.Z < 0)
+        {
+            ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be negative.");
+        }
     }
 
     private void CalculateSize()
     {
-        Size = byte3.Zero;
+        Size = int3.Zero;
 
         foreach (var pos in _segments.Keys)
         {
-            Size = byte3.Max(Size, pos + byte3.One);
+            Size = int3.Max(Size, pos + int3.One);
         }
     }
 

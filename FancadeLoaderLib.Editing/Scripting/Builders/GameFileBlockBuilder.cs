@@ -77,7 +77,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
             {
                 prefab = Prefab.CreateBlock((ushort)(game.Prefabs.SegmentCount + RawGame.CurrentNumbStockPrefabs), PrefabName);
                 prefab.Type = (PrefabType)PrefabType;
-                prefab[byte3.Zero].Voxels = BlockVoxelsGenerator.CreateScript(int2.One).First().Value;
+                prefab[int3.Zero].Voxels = BlockVoxelsGenerator.CreateScript(int2.One).First().Value;
 
                 game.Prefabs.AddPrefab(prefab);
             }
