@@ -214,7 +214,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task UpdatePrefab_UpdatesPrefabAndSegments()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task UpdatePrefab_UpdatesPrefabAndSegments(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -231,7 +233,7 @@ public class PrefabListTests
 
         var newPrefab = CreatePrefab(3, 3);
 
-        var prevPrefab = prefabList.UpdatePrefab(newPrefab, false);
+        var prevPrefab = prefabList.UpdatePrefab(newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, newPrefab.Id) : null);
 
         using (Assert.Multiple())
         {
@@ -260,7 +262,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task UpdatePrefab_AddsIds()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task UpdatePrefab_AddsIds(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -282,7 +286,7 @@ public class PrefabListTests
 
         var newPrefab = CreatePrefab(3, 3);
 
-        prefabList.UpdatePrefab(newPrefab, false);
+        prefabList.UpdatePrefab(newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, newPrefab.Id) : null);
 
         using (Assert.Multiple())
         {
@@ -299,7 +303,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task UpdatePrefab_RemovesIds()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task UpdatePrefab_RemovesIds(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -321,7 +327,7 @@ public class PrefabListTests
 
         var newPrefab = CreatePrefab(3, 2);
 
-        prefabList.UpdatePrefab(newPrefab, false);
+        prefabList.UpdatePrefab(newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, newPrefab.Id) : null);
 
         using (Assert.Multiple())
         {
@@ -338,7 +344,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task UpdatePrefab_WithObstruction_ThrowsException()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task UpdatePrefab_WithObstruction_ThrowsException(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -357,7 +365,7 @@ public class PrefabListTests
 
         var newPrefab = CreatePrefab(1, 3);
 
-        await Assert.That(() => prefabList.UpdatePrefab(newPrefab, false)).Throws<InvalidOperationException>();
+        await Assert.That(() => prefabList.UpdatePrefab(newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, newPrefab.Id) : null)).Throws<InvalidOperationException>();
 
         using (Assert.Multiple())
         {
@@ -383,7 +391,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task UpdatePrefab_WithObstruction_OverwriteTrue_DoesNotThrow()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task UpdatePrefab_WithObstruction_OverwriteTrue_DoesNotThrow(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -402,7 +412,7 @@ public class PrefabListTests
 
         var newPrefab = CreatePrefab(1, 3);
 
-        prefabList.UpdatePrefab(newPrefab, true);
+        prefabList.UpdatePrefab(newPrefab, true, cache ? new BlockInstancesCache(prefabList.Prefabs, newPrefab.Id) : null);
 
         using (Assert.Multiple())
         {
@@ -422,7 +432,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task RemovePrefab_RemovesPrefabAndSegments()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task RemovePrefab_RemovesPrefabAndSegments(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -435,7 +447,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        bool removed = prefabList.RemovePrefab(1);
+        bool removed = prefabList.RemovePrefab(1, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         await Assert.That(removed).IsTrue();
 
@@ -453,7 +465,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task RemovePrefab_RemovesAndUpdatesBlockIds()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task RemovePrefab_RemovesAndUpdatesBlockIds(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -470,7 +484,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        bool removed = prefabList.RemovePrefab(1);
+        bool removed = prefabList.RemovePrefab(1, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         await Assert.That(removed).IsTrue();
 
@@ -485,7 +499,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task RemovePrefabFromBLocks_RemovesIds()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task RemovePrefabFromBLocks_RemovesIds(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -505,7 +521,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab2);
         prefabList.AddPrefab(prefab3);
 
-        bool removed = prefabList.RemovePrefabFromBLocks(prefab2.Id);
+        bool removed = prefabList.RemovePrefabFromBLocks(prefab2.Id, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab2.Id) : null);
 
         await Assert.That(removed).IsTrue();
 
@@ -523,7 +539,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task RemovePrefabFromBLocks_WhenNotContained_ReturnsFalse()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task RemovePrefabFromBLocks_WhenNotContained_ReturnsFalse(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -542,7 +560,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab2);
         prefabList.AddPrefab(prefab3);
 
-        bool removed = prefabList.RemovePrefabFromBLocks(prefab2.Id);
+        bool removed = prefabList.RemovePrefabFromBLocks(prefab2.Id, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab2.Id) : null);
 
         await Assert.That(removed).IsFalse();
 
@@ -557,7 +575,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task AddSegmentToPrefab_AppendsSegment()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task AddSegmentToPrefab_AppendsSegment(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -569,7 +589,7 @@ public class PrefabListTests
         var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
 
         prefabList.AddPrefab(prefab);
-        prefabList.AddSegmentToPrefab(1, newSegment, false);
+        prefabList.AddSegmentToPrefab(1, newSegment, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         using (Assert.Multiple())
         {
@@ -581,7 +601,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task AddSegmentToPrefab_UpdatesIdsAndShiftBlockIds()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task AddSegmentToPrefab_UpdatesIdsAndShiftBlockIds(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -599,7 +621,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab2);
 
         var newPrefab = new PrefabSegment(1, new int3(1, 0, 0));
-        prefabList.AddSegmentToPrefab(1, newPrefab, false);
+        prefabList.AddSegmentToPrefab(1, newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         using (Assert.Multiple())
         {
@@ -623,7 +645,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task AddSegmentToPrefab_WithObstruction_ThrowsException()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task AddSegmentToPrefab_WithObstruction_ThrowsException(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -639,7 +663,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab);
 
         var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
-        await Assert.That(() => prefabList.AddSegmentToPrefab(1, newSegment, false)).Throws<InvalidOperationException>();
+        await Assert.That(() => prefabList.AddSegmentToPrefab(1, newSegment, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null)).Throws<InvalidOperationException>();
 
         using (Assert.Multiple())
         {
@@ -650,7 +674,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task AddSegmentToPrefab_WithObstruction_OverwriteTrue_DoesNotThrow()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task AddSegmentToPrefab_WithObstruction_OverwriteTrue_DoesNotThrow(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -667,7 +693,7 @@ public class PrefabListTests
 
         var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
 
-        prefabList.AddSegmentToPrefab(1, newSegment, true);
+        prefabList.AddSegmentToPrefab(1, newSegment, true, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         using (Assert.Multiple())
         {
@@ -678,7 +704,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task AddSegmentToPrefab_OverwritesPrefabsCorrectly()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task AddSegmentToPrefab_OverwritesPrefabsCorrectly(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -696,7 +724,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab2);
 
         var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
-        prefabList.AddSegmentToPrefab(1, newSegment, true);
+        prefabList.AddSegmentToPrefab(1, newSegment, true, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         using (Assert.Multiple())
         {
@@ -707,7 +735,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task TryAddSegmentToPrefab_WithObstruction_ReturnsFalse()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task TryAddSegmentToPrefab_WithObstruction_ReturnsFalse(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -724,7 +754,7 @@ public class PrefabListTests
 
         var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
 
-        bool added = prefabList.TryAddSegmentToPrefab(1, newSegment, false);
+        bool added = prefabList.TryAddSegmentToPrefab(1, newSegment, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         await Assert.That(added).IsFalse();
 
@@ -737,7 +767,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task TryAddSegmentToPrefab_WithObstruction_OverwriteTrue_ReturnsTrue()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task TryAddSegmentToPrefab_WithObstruction_OverwriteTrue_ReturnsTrue(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -754,7 +786,7 @@ public class PrefabListTests
 
         var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
 
-        bool added = prefabList.TryAddSegmentToPrefab(1, newSegment, true);
+        bool added = prefabList.TryAddSegmentToPrefab(1, newSegment, true, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         await Assert.That(added).IsTrue();
 
@@ -767,7 +799,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task RemoveSegmentFromPrefab_RemovesSegmentAndUpdatesPrefabs()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task RemoveSegmentFromPrefab_RemovesSegmentAndUpdatesPrefabs(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -777,7 +811,7 @@ public class PrefabListTests
         var prefab = CreatePrefab(1, 2);
         prefabList.AddPrefab(prefab);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0));
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0), cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         await Assert.That(removed).IsTrue();
 
@@ -790,7 +824,9 @@ public class PrefabListTests
     }
 
     [Test]
-    public async Task RemoveSegmentFromPrefab_UpdatesIdsAndShiftBlockIds()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task RemoveSegmentFromPrefab_UpdatesIdsAndShiftBlockIds(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -807,7 +843,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0));
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0), cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         await Assert.That(removed).IsTrue();
 
