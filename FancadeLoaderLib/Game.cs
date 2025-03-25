@@ -7,6 +7,8 @@ using FancadeLoaderLib.Utils;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -48,7 +50,7 @@ public class Game : ICloneable
     {
         if (prefabs is null)
         {
-            ThrowHelper.ThrowArgumentNullException(nameof(prefabs));
+            ThrowArgumentNullException(nameof(prefabs));
         }
 
         Name = name;
@@ -78,9 +80,13 @@ public class Game : ICloneable
         get => _name;
         set
         {
-            if (value is null)
+            if (string.IsNullOrEmpty(value))
             {
-                ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(Name)} cannot be null.");
+                ThrowArgumentException($"{nameof(Name)} cannot be null or empty.", nameof(value));
+            }
+            else if (Encoding.UTF8.GetByteCount(value) > 255)
+            {
+                ThrowArgumentException($"{nameof(Name)}, when UTF-8 encoded, cannot be longer than 255 bytes.", nameof(value));
             }
 
             _name = value;
@@ -96,9 +102,13 @@ public class Game : ICloneable
         get => _author;
         set
         {
-            if (value is null)
+            if (string.IsNullOrEmpty(value))
             {
-                ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(Author)} cannot be null.");
+                ThrowArgumentException($"{nameof(Author)} cannot be null or empty.", nameof(value));
+            }
+            else if (Encoding.UTF8.GetByteCount(value) > 255)
+            {
+                ThrowArgumentException($"{nameof(Author)}, when UTF-8 encoded, cannot be longer than 255 bytes.", nameof(value));
             }
 
             _author = value;
@@ -116,7 +126,11 @@ public class Game : ICloneable
         {
             if (value is null)
             {
-                ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(Description)} cannot be null.");
+                ThrowArgumentNullException($"{nameof(Description)} cannot be null.", nameof(value));
+            }
+            else if (Encoding.UTF8.GetByteCount(value) > 255)
+            {
+                ThrowArgumentException($"{nameof(Description)}, when UTF-8 encoded, cannot be longer than 255 bytes.", nameof(value));
             }
 
             _description = value;
@@ -133,7 +147,7 @@ public class Game : ICloneable
     {
         if (game is null)
         {
-            ThrowHelper.ThrowArgumentNullException(nameof(game));
+            ThrowArgumentNullException(nameof(game));
         }
 
         var prefabs = new PrefabList();

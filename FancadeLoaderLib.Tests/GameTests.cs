@@ -1,10 +1,65 @@
 ﻿using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
+using TUnit.Assertions.AssertConditions.Throws;
 
 namespace FancadeLoaderLib.Tests;
 
 public class GameTests
 {
+    [Test]
+    public async Task Constructor_NameAuthorDescriptionNotTooLong_DoesNotThrow()
+    {
+        string name = new string('a', 255);
+        string author = new string('b', 255);
+        string description = new string('c', 255);
+
+        Game game = new Game(name, author, description, new());
+
+        await Assert.That(game.Name).IsEqualTo(name);
+        await Assert.That(game.Author).IsEqualTo(author);
+        await Assert.That(game.Description).IsEqualTo(description);
+    }
+
+    [Test]
+    public async Task Constructor_NameTooLong_Throws()
+    {
+        string name = new string('a', 256);
+
+        await Assert.That(() => new Game(name)).Throws<ArgumentException>();
+    }
+
+    [Test]
+    public async Task Constructor_NameEmpty_Throws()
+    {
+        string name = string.Empty;
+
+        await Assert.That(() => new Game(name)).Throws<ArgumentException>();
+    }
+
+    [Test]
+    public async Task Constructor_AuthorTooLong_Throws()
+    {
+        string author = new string('a', 256);
+
+        await Assert.That(() => new Game("a", author, "a", new())).Throws<ArgumentException>();
+    }
+
+    [Test]
+    public async Task Constructor_AuthorEmpty_Throws()
+    {
+        string author = string.Empty;
+
+        await Assert.That(() => new Game("a", author, "a", new())).Throws<ArgumentException>();
+    }
+
+    [Test]
+    public async Task Constructor_DescriptionTooLong_Throws()
+    {
+        string description = new string('a', 256);
+
+        await Assert.That(() => new Game("a", "a", description, new())).Throws<ArgumentException>();
+    }
+
     [Test]
     public async Task SaveLoad_PersistsAndRestoresData()
     {

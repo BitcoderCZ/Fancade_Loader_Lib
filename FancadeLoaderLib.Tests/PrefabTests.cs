@@ -28,6 +28,7 @@ public class PrefabTests
 
         await Assert.That(() => CreatePrefab(1, name, 1)).Throws<ArgumentException>();
     }
+
     [Test]
     public async Task Name_ValueNotTooLong_DoesNotThrow()
     {
