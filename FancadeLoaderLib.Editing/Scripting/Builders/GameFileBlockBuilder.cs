@@ -4,12 +4,12 @@
 
 using FancadeLoaderLib.Partial;
 using FancadeLoaderLib.Raw;
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.Builders;
 
@@ -34,10 +34,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 
     public GameFileBlockBuilder(Game inGame, ushort prefabId)
     {
-        if (inGame is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(inGame));
-        }
+        ThrowIfNull(inGame, nameof(inGame));
 
         InGame = inGame;
 

@@ -3,8 +3,8 @@
 // </copyright>
 
 using FancadeLoaderLib.Editing.Scripting.Terminals;
-using FancadeLoaderLib.Utils;
 using System;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.TerminalStores;
 
@@ -21,7 +21,7 @@ public readonly struct TerminalStore : ITerminalStore
     {
         if (block.Type.BlockType != BlockType.Active)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(BlockType)}.{nameof(BlockType.Active)}.", nameof(block));
+            ThrowArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(BlockType)}.{nameof(BlockType.Active)}.", nameof(block));
         }
     }
 
@@ -33,15 +33,8 @@ public readonly struct TerminalStore : ITerminalStore
 
     public TerminalStore(Block @in, string inTerminalName, Block @out, string outTerminalName)
     {
-        if (@in is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(@in));
-        }
-
-        if (@out is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(@out));
-        }
+        ThrowIfNull(@in, nameof(@in));
+        ThrowIfNull(@out, nameof(@out));
 
         In = new BlockTerminal(@in, @in.Type[inTerminalName]);
         _out = [new BlockTerminal(@out, @out.Type[outTerminalName])];

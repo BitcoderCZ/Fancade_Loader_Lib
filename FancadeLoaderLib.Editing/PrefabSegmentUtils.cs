@@ -2,7 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
 
@@ -18,10 +18,7 @@ public static class PrefabSegmentUtils
     /// <returns><see langword="true"/> if <see cref="PrefabSegment.Voxels"/> is null or <see cref="Voxel.IsEmpty"/> is true for all of the voxels; otherwise, <see langword="false"/>.</returns>
     public static bool IsEmpty(this PrefabSegment segment)
     {
-        if (segment is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(segment));
-        }
+        ThrowIfNull(segment, nameof(segment));
 
         if (segment.Voxels is null)
         {

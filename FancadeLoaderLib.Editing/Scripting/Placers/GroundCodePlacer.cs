@@ -4,13 +4,13 @@
 
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Utils;
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.Placers;
 
@@ -45,7 +45,7 @@ public class GroundCodePlacer : IScopedCodePlacer
         {
             if (value < 3)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(BlockXOffset)} must be greater than 2.");
+                ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(BlockXOffset)} must be greater than 2.");
             }
 
             _blockXOffset = value;
@@ -150,10 +150,7 @@ public class GroundCodePlacer : IScopedCodePlacer
     {
         public static void Process(CodeBlock block, int blockXOffset)
         {
-            if (block is null)
-            {
-                ThrowHelper.ThrowArgumentNullException(nameof(block));
-            }
+            ThrowIfNull(block, nameof(block));
 
             MultiValueDictionary<int, CodeBlock> xToBlocks = block.AllChildren.ToMultiValueDictionary(child => child.LayerPos, child => child);
 
@@ -245,10 +242,7 @@ public class GroundCodePlacer : IScopedCodePlacer
 
         protected CodeBlock(GroundCodePlacer placer, int pos, CodeBlock parent, int layerOffset)
         {
-            if (parent is null)
-            {
-                ThrowHelper.ThrowArgumentNullException(nameof(parent));
-            }
+            ThrowIfNull(parent, nameof(parent));
 
             Debug.Assert(layerOffset == 1 || layerOffset == -1, $"{nameof(layerOffset)} == 1 || {nameof(layerOffset)} == -1, Value: '{layerOffset}'");
 
@@ -305,10 +299,7 @@ public class GroundCodePlacer : IScopedCodePlacer
 
         public Block PlaceBlock(BlockDef blockType)
         {
-            if (blockType is null)
-            {
-                ThrowHelper.ThrowArgumentNullException(nameof(blockType));
-            }
+            ThrowIfNull(blockType, nameof(blockType));
 
             if (BlockCount != 0)
             {

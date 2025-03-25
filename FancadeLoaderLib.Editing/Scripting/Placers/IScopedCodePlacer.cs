@@ -3,8 +3,8 @@
 // </copyright>
 
 using FancadeLoaderLib.Editing.Utils;
-using FancadeLoaderLib.Utils;
 using System;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.Placers;
 
@@ -29,10 +29,7 @@ public static class IScopedCodePlacerUtils
 {
     public static IDisposable StatementBlock(this IScopedCodePlacer placer)
     {
-        if (placer is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(placer));
-        }
+        ThrowIfNull(placer, nameof(placer));
 
         placer.EnterStatementBlock();
         return new Disposable(placer.ExitStatementBlock);
@@ -40,10 +37,7 @@ public static class IScopedCodePlacerUtils
 
     public static IDisposable ExpressionBlock(this IScopedCodePlacer placer)
     {
-        if (placer is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(placer));
-        }
+        ThrowIfNull(placer, nameof(placer));
 
         placer.EnterExpressionBlock();
         return new Disposable(placer.ExitExpressionBlock);
@@ -51,10 +45,7 @@ public static class IScopedCodePlacerUtils
 
     public static IDisposable HighlightBlock(this IScopedCodePlacer placer)
     {
-        if (placer is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(placer));
-        }
+        ThrowIfNull(placer, nameof(placer));
 
         placer.EnterHighlight();
         return new Disposable(placer.ExitHightlight);

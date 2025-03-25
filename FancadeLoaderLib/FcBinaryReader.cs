@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Buffers.Binary;
@@ -11,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -53,14 +53,11 @@ public sealed class FcBinaryReader : IDisposable
     /// <param name="leaveOpen">If <paramref name="stream"/> should be left open after <see cref="Dispose"/> is called.</param>
     public FcBinaryReader(Stream stream, bool leaveOpen)
     {
-        if (stream is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(stream));
-        }
+        ThrowIfNull(stream, nameof(stream));
 
         if (!stream.CanRead)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(stream)} isn't readable.");
+            ThrowArgumentException($"{nameof(stream)} isn't readable.");
         }
 
         Stream = stream;
@@ -77,7 +74,7 @@ public sealed class FcBinaryReader : IDisposable
 
         if (!Stream.CanRead)
         {
-            ThrowHelper.ThrowArgumentException("Can't read from stream.");
+            ThrowArgumentException("Can't read from stream.");
         }
     }
 

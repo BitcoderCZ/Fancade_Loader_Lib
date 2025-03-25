@@ -3,7 +3,6 @@
 // </copyright>
 
 using FancadeLoaderLib.Raw;
-using FancadeLoaderLib.Utils;
 using System;
 using System.IO;
 using System.Linq;
@@ -48,10 +47,7 @@ public class Game : ICloneable
     public Game(string name, string author, string description, PrefabList prefabs)
 #pragma warning restore CS8618
     {
-        if (prefabs is null)
-        {
-            ThrowArgumentNullException(nameof(prefabs));
-        }
+        ThrowIfNull(prefabs, nameof(prefabs));
 
         Name = name;
         Author = author;
@@ -145,10 +141,7 @@ public class Game : ICloneable
     /// <returns>A new instance of the <see cref="Game"/> class from a <see cref="RawGame"/>.</returns>
     public static Game FromRaw(RawGame game, bool clonePrefabs = true)
     {
-        if (game is null)
-        {
-            ThrowArgumentNullException(nameof(game));
-        }
+        ThrowIfNull(game, nameof(game));
 
         var prefabs = new PrefabList();
 

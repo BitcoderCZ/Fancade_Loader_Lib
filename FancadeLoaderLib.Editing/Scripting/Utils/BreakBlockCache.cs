@@ -3,9 +3,9 @@
 // </copyright>
 
 using FancadeLoaderLib.Editing.Scripting.TerminalStores;
-using FancadeLoaderLib.Utils;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.Utils;
 
@@ -25,11 +25,11 @@ public sealed class BreakBlockCache
     {
         if (maxUsesPerAxis < 1)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(maxUsesPerAxis), $"{nameof(maxUsesPerAxis)} must be greater than 0.");
+            ThrowArgumentOutOfRangeException(nameof(maxUsesPerAxis), $"{nameof(maxUsesPerAxis)} must be greater than 0.");
         }
         else if (maxUsesPerAxis > FancadeConstants.MaxWireSplits)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(maxUsesPerAxis), $"{nameof(maxUsesPerAxis)} must be smaller than {FancadeConstants.MaxWireSplits}.");
+            ThrowArgumentOutOfRangeException(nameof(maxUsesPerAxis), $"{nameof(maxUsesPerAxis)} must be smaller than {FancadeConstants.MaxWireSplits}.");
         }
 
         _lastBlock = ValidateBlock(breakBlock, nameof(breakBlock));
@@ -75,7 +75,7 @@ public sealed class BreakBlockCache
 
         if (axis < 0 || axis > 2)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(axis));
+            ThrowArgumentOutOfRangeException(nameof(axis));
         }
 
         if (CheckAndInc(axis))

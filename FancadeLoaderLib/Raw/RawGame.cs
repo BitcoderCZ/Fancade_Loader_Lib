@@ -2,10 +2,10 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Raw;
 
@@ -60,10 +60,7 @@ public class RawGame
     /// <param name="name">Name of this game.</param>
     public RawGame(string name)
     {
-        if (name is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(name));
-        }
+        ThrowIfNull(name, nameof(name));
 
         Name = name;
         Author = "Unknown Author";
@@ -85,25 +82,10 @@ public class RawGame
     public RawGame(string name, string author, string description, ushort idOffset, List<RawPrefab> prefabs)
 #pragma warning restore CA1002
     {
-        if (name is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(name));
-        }
-
-        if (author is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(author));
-        }
-
-        if (description is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(description));
-        }
-
-        if (prefabs is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(prefabs));
-        }
+        ThrowIfNull(name, nameof(name));
+        ThrowIfNull(author, nameof(author));
+        ThrowIfNull(description, nameof(description));
+        ThrowIfNull(prefabs, nameof(prefabs));
 
         Name = name;
         Author = author;
@@ -161,20 +143,17 @@ public class RawGame
     /// <returns>A <see cref="RawGame"/> read from <paramref name="reader"/>.</returns>
     public static RawGame Load(FcBinaryReader reader)
     {
-        if (reader is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(reader));
-        }
+        ThrowIfNull(reader, nameof(reader));
 
         ushort fileVersion = reader.ReadUInt16();
 
         if (fileVersion > CurrentFileVersion || fileVersion < 26)
         {
-            ThrowHelper.ThrowUnsupportedVersionException(fileVersion);
+            ThrowUnsupportedVersionException(fileVersion);
         }
         else if (fileVersion == 26)
         {
-            ThrowHelper.ThrowNotImplementedException("Loading file verison 26 has not yet been implemented.");
+            ThrowNotImplementedException("Loading file verison 26 has not yet been implemented.");
         }
 
         string name = reader.ReadString();
@@ -216,10 +195,7 @@ public class RawGame
     /// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
     public void Save(FcBinaryWriter writer)
     {
-        if (writer is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(writer));
-        }
+        ThrowIfNull(writer, nameof(writer));
 
         writer.WriteUInt16(CurrentFileVersion);
         writer.WriteString(Name);

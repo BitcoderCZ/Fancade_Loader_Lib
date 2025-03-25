@@ -1,7 +1,6 @@
 ﻿using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
-using TUnit.Assertions.Extensions;
 
 namespace FancadeLoaderLib.Tests;
 

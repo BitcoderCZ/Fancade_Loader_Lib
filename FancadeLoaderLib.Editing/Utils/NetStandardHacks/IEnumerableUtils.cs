@@ -2,9 +2,9 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Utils.NetStandardHacks;
 
@@ -37,15 +37,8 @@ internal static class IEnumerableUtils
     /// </remarks>
     public static TSource? MinBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, IComparer<TKey>? comparer)
     {
-        if (source is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(source));
-        }
-
-        if (keySelector is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(keySelector));
-        }
+        ThrowIfNull(source, nameof(source));
+        ThrowIfNull(keySelector, nameof(keySelector));
 
         comparer ??= Comparer<TKey>.Default;
 

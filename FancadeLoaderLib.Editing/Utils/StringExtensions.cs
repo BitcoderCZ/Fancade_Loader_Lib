@@ -2,9 +2,9 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Utils;
 
@@ -20,7 +20,7 @@ internal static class StringExtensions
     {
         if (maxLength < 1)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(maxLength));
+            ThrowArgumentOutOfRangeException(nameof(maxLength));
         }
 
         if (str.IsEmpty)

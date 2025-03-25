@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using static FancadeLoaderLib.Utils.ThrowHelper;
@@ -109,7 +108,7 @@ public class PrefabSegment : ICloneable
         {
             if (value is not null && value.Length != NumbVoxels)
             {
-                ThrowHelper.ThrowArgumentException($"{nameof(Voxels)} must be {NumbVoxels} long, but {nameof(value)}.Length is {value.Length}.", nameof(value));
+                ThrowArgumentException($"{nameof(Voxels)} must be {NumbVoxels} long, but {nameof(value)}.Length is {value.Length}.", nameof(value));
             }
 
             _voxels = value;
@@ -123,14 +122,11 @@ public class PrefabSegment : ICloneable
     /// <returns>The converted <see cref="Voxel"/>s.</returns>
     public static unsafe Voxel[] VoxelsFromRaw(byte[] voxels)
     {
-        if (voxels is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(voxels));
-        }
+        ThrowIfNull(voxels, nameof(voxels));
 
         if (voxels.Length < NumbVoxels * 6)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels * 6}.", nameof(voxels));
+            ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels * 6}.", nameof(voxels));
         }
 
         Voxel[] result = new Voxel[NumbVoxels];
@@ -173,12 +169,12 @@ public class PrefabSegment : ICloneable
     {
         if (voxels.Length < NumbVoxels * 6)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels * 6}.", nameof(voxels));
+            ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels * 6}.", nameof(voxels));
         }
 
         if (destination.Length < NumbVoxels)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(destination)}'s length must be greater than or equal to {NumbVoxels}.", nameof(voxels));
+            ThrowArgumentException($"{nameof(destination)}'s length must be greater than or equal to {NumbVoxels}.", nameof(voxels));
         }
 
         for (int i = 0; i < NumbVoxels; i++)
@@ -215,14 +211,11 @@ public class PrefabSegment : ICloneable
     /// <returns>The converted raw voxel data.</returns>
     public static unsafe byte[] VoxelsToRaw(Voxel[] voxels)
     {
-        if (voxels is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(voxels));
-        }
+        ThrowIfNull(voxels, nameof(voxels));
 
         if (voxels.Length < NumbVoxels)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels}.", nameof(voxels));
+            ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels}.", nameof(voxels));
         }
 
         byte[] result = new byte[NumbVoxels * 6];
@@ -250,12 +243,12 @@ public class PrefabSegment : ICloneable
     {
         if (voxels.Length < NumbVoxels)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels}.", nameof(voxels));
+            ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels}.", nameof(voxels));
         }
 
         if (destination.Length < NumbVoxels * 6)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(destination)}'s length must be greater than or equal to {NumbVoxels * 6}.", nameof(destination));
+            ThrowArgumentException($"{nameof(destination)}'s length must be greater than or equal to {NumbVoxels * 6}.", nameof(destination));
         }
 
         for (int i = 0; i < NumbVoxels; i++)

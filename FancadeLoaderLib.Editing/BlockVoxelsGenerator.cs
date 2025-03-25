@@ -2,10 +2,10 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
 
@@ -27,7 +27,7 @@ public sealed class BlockVoxelsGenerator
     {
         if (sizeInBlocks.X < 1 || sizeInBlocks.Y < 1)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(sizeInBlocks));
+            ThrowArgumentOutOfRangeException(nameof(sizeInBlocks));
         }
 
         int3 sizeInVoxels = new int3((sizeInBlocks.X * 8) - 1, 3, (sizeInBlocks.Y * 8) - 1);

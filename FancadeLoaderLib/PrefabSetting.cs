@@ -2,10 +2,10 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Numerics;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -48,7 +48,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     {
         if (!IsValueValid(value, type))
         {
-            ThrowHelper.ThrowArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for type '{type}'", nameof(value));
+            ThrowArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for type '{type}'", nameof(value));
         }
 
         Index = index;
@@ -86,7 +86,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
         {
             if (!IsValueValid(value, Type))
             {
-                ThrowHelper.ThrowArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(SettingType)} '{Type}'", nameof(value));
+                ThrowArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(SettingType)} '{Type}'", nameof(value));
             }
 
             _value = value;
@@ -156,10 +156,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     /// <returns>A <see cref="PrefabSetting"/> read from <paramref name="reader"/>.</returns>
     public static PrefabSetting Load(FcBinaryReader reader)
     {
-        if (reader is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(reader));
-        }
+        ThrowIfNull(reader, nameof(reader));
 
         byte valueIndex = reader.ReadUInt8();
         SettingType type = (SettingType)reader.ReadUInt8();
@@ -189,10 +186,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     /// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
     public readonly void Save(FcBinaryWriter writer)
     {
-        if (writer is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(writer));
-        }
+        ThrowIfNull(writer, nameof(writer));
 
         writer.WriteUInt8(Index);
         writer.WriteUInt8((byte)Type);
@@ -232,7 +226,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     {
         if (!IsValueValid(value, type))
         {
-            ThrowHelper.ThrowArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(type)} '{type}'", nameof(value));
+            ThrowArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for {nameof(type)} '{type}'", nameof(value));
         }
 
         _type = type;

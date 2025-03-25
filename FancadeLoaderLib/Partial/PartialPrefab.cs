@@ -147,10 +147,7 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
     /// <param name="deepCopy">If deep copy should be performed.</param>
     public PartialPrefab(PartialPrefab other, bool deepCopy)
     {
-        if (other is null)
-        {
-            ThrowArgumentNullException(nameof(other));
-        }
+        ThrowIfNull(other, nameof(other));
 
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
         _segments = deepCopy
@@ -504,10 +501,7 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
     /// <returns>The converted <see cref="PrefabSegment"/>.</returns>
     internal static unsafe PartialPrefab FromRaw(ushort id, IEnumerable<OldPartialPrefab> prefabs)
     {
-        if (prefabs is null)
-        {
-            ThrowArgumentNullException(nameof(prefabs));
-        }
+        ThrowIfNull(prefabs, nameof(prefabs));
 
         OldPartialPrefab? rawPrefab = prefabs.FirstOrDefault();
 

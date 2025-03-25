@@ -1,11 +1,6 @@
 ﻿using FancadeLoaderLib.Partial;
 using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TUnit.Assertions.AssertConditions.Throws;
 
 namespace FancadeLoaderLib.Tests;

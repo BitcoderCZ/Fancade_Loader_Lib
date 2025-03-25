@@ -3,11 +3,11 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -48,10 +48,7 @@ public class BlockData
     /// <param name="blocks">The blocks to set <see cref="Array"/> to, doesn't clone.</param>
     public BlockData(Array3D<ushort> blocks)
     {
-        if (blocks is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(blocks));
-        }
+        ThrowIfNull(blocks, nameof(blocks));
 
         Array = blocks;
 
@@ -64,10 +61,7 @@ public class BlockData
     /// <param name="data">The <see cref="BlockData"/> to copy.</param>
     public BlockData(BlockData data)
     {
-        if (data is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(data));
-        }
+        ThrowIfNull(data, nameof(data));
 
         Array = data.Array.Clone();
         Size = data.Size;
@@ -143,10 +137,7 @@ public class BlockData
     /// <param name="prefab">The prefab to place.</param>
     public void SetPrefab(int3 pos, Prefab prefab)
     {
-        if (prefab is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(prefab));
-        }
+        ThrowIfNull(prefab, nameof(prefab));
 
         CheckLowerBounds(pos, nameof(pos));
 
@@ -173,10 +164,7 @@ public class BlockData
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetPrefab(int3 pos, PartialPrefab prefab)
     {
-        if (prefab is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(prefab));
-        }
+        ThrowIfNull(prefab, nameof(prefab));
 
         CheckLowerBounds(pos, nameof(pos));
 
@@ -519,15 +507,15 @@ public class BlockData
     {
         if (move.X < 0)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(move.X));
+            ThrowArgumentOutOfRangeException(nameof(move.X));
         }
         else if (move.Y < 0)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(move.Y));
+            ThrowArgumentOutOfRangeException(nameof(move.Y));
         }
         else if (move.Z < 0)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(move.Z));
+            ThrowArgumentOutOfRangeException(nameof(move.Z));
         }
 
         if ((move.X | move.Y | move.Z) == 0)
@@ -585,14 +573,14 @@ public class BlockData
     {
         if (startPos.X >= Size.X || startPos.Y >= Size.Y || startPos.Z >= Size.Z)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(startPos));
+            ThrowArgumentOutOfRangeException(nameof(startPos));
         }
 
         int3 dest = startPos + move;
 
         if (dest.X < 0 || dest.Y < 0 || dest.Z < 0)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException();
+            ThrowArgumentOutOfRangeException();
         }
 
         int3 moveSize = Size - startPos;
@@ -682,7 +670,7 @@ public class BlockData
     {
         if (pos.X < 0 || pos.Y < 0 || pos.Z < 0)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(argumentName);
+            ThrowArgumentOutOfRangeException(argumentName);
         }
     }
 
@@ -691,7 +679,7 @@ public class BlockData
     {
         if (!InBounds(pos))
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(argumentName);
+            ThrowArgumentOutOfRangeException(argumentName);
         }
     }
 
@@ -700,7 +688,7 @@ public class BlockData
     {
         if (pos.X >= Size.X || pos.Y >= Size.Y || pos.Z >= Size.Z)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(argumentName);
+            ThrowArgumentOutOfRangeException(argumentName);
         }
     }
 

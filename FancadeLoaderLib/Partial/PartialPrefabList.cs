@@ -54,10 +54,7 @@ public partial class PartialPrefabList : ICloneable
     /// <param name="prefabs">The <see cref="IEnumerable{T}"/> whose elements are copied to the new <see cref="PartialPrefabList"/>.</param>
     public PartialPrefabList(IEnumerable<PartialPrefab> prefabs)
     {
-        if (prefabs is null)
-        {
-            ThrowArgumentNullException(nameof(prefabs));
-        }
+        ThrowIfNull(prefabs, nameof(prefabs));
 
         _prefabs = prefabs.ToDictionary(prefab => prefab.Id);
         ValidatePrefabs(_prefabs.Values, nameof(prefabs)); // validate using _prefabs.Values to avoid iterating over collection multiple times
@@ -163,10 +160,7 @@ public partial class PartialPrefabList : ICloneable
     /// <returns>A <see cref="PartialPrefabList"/> read from <paramref name="reader"/>.</returns>
     public static PartialPrefabList Load(FcBinaryReader reader)
     {
-        if (reader is null)
-        {
-            ThrowArgumentNullException(nameof(reader));
-        }
+        ThrowIfNull(reader, nameof(reader));
 
         uint count = reader.ReadUInt32();
         ushort idOffset = reader.ReadUInt16();
@@ -212,10 +206,7 @@ public partial class PartialPrefabList : ICloneable
     /// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
     public void Save(FcBinaryWriter writer)
     {
-        if (writer is null)
-        {
-            ThrowArgumentNullException(nameof(writer));
-        }
+        ThrowIfNull(writer, nameof(writer));
 
         writer.WriteUInt32((uint)SegmentCount);
         writer.WriteUInt16(IdOffset);

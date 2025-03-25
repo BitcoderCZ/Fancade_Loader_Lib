@@ -2,13 +2,13 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -50,14 +50,11 @@ public sealed class FcBinaryWriter : IDisposable
     /// <param name="leaveOpen">If <paramref name="stream"/> should be left open after <see cref="Dispose"/> is called.</param>
     public FcBinaryWriter(Stream stream, bool leaveOpen)
     {
-        if (stream is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(stream));
-        }
+        ThrowIfNull(stream, nameof(stream));
 
         if (!stream.CanRead)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(stream)} isn't writeable.");
+            ThrowArgumentException($"{nameof(stream)} isn't writeable.");
         }
 
         Stream = stream;
@@ -74,7 +71,7 @@ public sealed class FcBinaryWriter : IDisposable
 
         if (!Stream.CanRead)
         {
-            ThrowHelper.ThrowArgumentException("Can't write to stream.");
+            ThrowArgumentException("Can't write to stream.");
         }
     }
 
@@ -102,10 +99,7 @@ public sealed class FcBinaryWriter : IDisposable
     /// <param name="value">The value to write.</param>
     public void WriteBytes(byte[] value)
     {
-        if (value is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(value));
-        }
+        ThrowIfNull(value, nameof(value));
 
         WriteBytes(value, 0, value.Length);
     }
@@ -231,7 +225,7 @@ public sealed class FcBinaryWriter : IDisposable
         int written = Encoding.ASCII.GetBytes(value, buffer);
         if (written > byte.MaxValue)
         {
-            ThrowHelper.ThrowArgumentNullException(nameof(value), $"{nameof(value)}, when encoded as ASCII is too long, maximum length is 255.");
+            ThrowArgumentException($"{nameof(value)}, when encoded as ASCII is too long, maximum length is 255.", nameof(value));
         }
 
         WriteUInt8((byte)written);

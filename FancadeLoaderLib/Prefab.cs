@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
@@ -161,10 +160,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// <param name="deepCopy">If deep copy should be performed.</param>
     public Prefab(Prefab other, bool deepCopy)
     {
-        if (other is null)
-        {
-            ThrowArgumentNullException(nameof(other));
-        }
+        ThrowIfNull(other, nameof(other));
 
 #pragma warning disable IDE0306 // Simplify collection initialization - no it fucking can't be 
         _segments = deepCopy
@@ -335,10 +331,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// <returns>The converted <see cref="PrefabSegment"/>.</returns>
     public static unsafe Prefab FromRaw(ushort id, IEnumerable<RawPrefab> rawPrefabs, ushort idOffset, short idOffsetAddition, bool clone = true)
     {
-        if (rawPrefabs is null)
-        {
-            ThrowArgumentNullException(nameof(rawPrefabs));
-        }
+        ThrowIfNull(rawPrefabs, nameof(rawPrefabs));
 
         RawPrefab? rawPrefab = rawPrefabs.FirstOrDefault();
 

@@ -2,12 +2,12 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Utils;
 
@@ -116,20 +116,9 @@ public static class MultiValueDictionaryUtils
     public static MultiValueDictionary<TKey, TValue> ToMultiValueDictionary<T, TKey, TValue>(this IEnumerable<T> collection, Func<T, TKey> keySelector, Func<T, TValue> valueSelector)
         where TKey : notnull
     {
-        if (collection is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(collection));
-        }
-
-        if (keySelector is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(keySelector));
-        }
-
-        if (valueSelector is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(valueSelector));
-        }
+        ThrowIfNull(collection, nameof(collection));
+        ThrowIfNull(keySelector, nameof(keySelector));
+        ThrowIfNull(valueSelector, nameof(valueSelector));
 
         MultiValueDictionary<TKey, TValue> dict =
 #if NET6_0_OR_GREATER

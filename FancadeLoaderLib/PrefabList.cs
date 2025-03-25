@@ -52,10 +52,7 @@ public class PrefabList : ICloneable
     /// <param name="prefabs">The <see cref="IEnumerable{T}"/> whose elements are copied to the new <see cref="PrefabList"/>.</param>
     public PrefabList(IEnumerable<Prefab> prefabs)
     {
-        if (prefabs is null)
-        {
-            ThrowArgumentNullException(nameof(prefabs));
-        }
+        ThrowIfNull(prefabs, nameof(prefabs));
 
         _prefabs = prefabs.ToDictionary(group => group.Id);
         ValidatePrefabs(_prefabs.Values, nameof(prefabs)); // validate using _prefabs.Values to avoid iterating over collection multiple times
@@ -149,10 +146,7 @@ public class PrefabList : ICloneable
     /// <returns>A <see cref="PrefabList"/> read from <paramref name="reader"/>.</returns>
     public static PrefabList Load(FcBinaryReader reader)
     {
-        if (reader is null)
-        {
-            ThrowArgumentNullException(nameof(reader));
-        }
+        ThrowIfNull(reader, nameof(reader));
 
         uint count = reader.ReadUInt32();
         ushort idOffset = reader.ReadUInt16();
@@ -198,10 +192,7 @@ public class PrefabList : ICloneable
     /// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
     public void Save(FcBinaryWriter writer)
     {
-        if (writer is null)
-        {
-            ThrowArgumentNullException(nameof(writer));
-        }
+        ThrowIfNull(writer, nameof(writer));
 
         writer.WriteUInt32((uint)SegmentCount);
         writer.WriteUInt16(IdOffset);

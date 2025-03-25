@@ -2,9 +2,9 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -65,10 +65,7 @@ public struct Connection : IEquatable<Connection>
     /// <returns>A <see cref="Connection"/> read from <paramref name="reader"/>.</returns>
     public static Connection Load(FcBinaryReader reader)
     {
-        if (reader is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(reader));
-        }
+        ThrowIfNull(reader, nameof(reader));
 
         ushort3 from = reader.ReadVec3US();
         ushort3 to = reader.ReadVec3US();
@@ -84,10 +81,7 @@ public struct Connection : IEquatable<Connection>
     /// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
     public readonly void Save(FcBinaryWriter writer)
     {
-        if (writer is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(writer));
-        }
+        ThrowIfNull(writer, nameof(writer));
 
         writer.WriteUshort3(From);
         writer.WriteUshort3(To);

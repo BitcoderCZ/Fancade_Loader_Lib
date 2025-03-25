@@ -2,13 +2,14 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using System.Buffers;
 using System.IO;
 using System.IO.Compression;
+
 #if !NET6_0_OR_GREATER
 using ComponentAce.Compression.Libs.zlib;
 #endif
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -26,6 +27,9 @@ public static class Zlib
     /// <param name="to">The decompressed stream.</param>
     public static void Decompress(Stream from, Stream to)
     {
+        ThrowIfNull(from, nameof(from));
+        ThrowIfNull(to, nameof(to));
+
 #if NET6_0_OR_GREATER
         using ZLibStream zlib = new ZLibStream(from, CompressionMode.Decompress, true);
 
@@ -62,10 +66,8 @@ public static class Zlib
     /// <param name="to">The compressed stream.</param>
     public static void Compress(Stream from, Stream to)
     {
-        if (from is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(from));
-        }
+        ThrowIfNull(from, nameof(from));
+        ThrowIfNull(to, nameof(to));
 
 #if NET6_0_OR_GREATER
         using ZLibStream zlib = new ZLibStream(to, CompressionLevel.SmallestSize, true);

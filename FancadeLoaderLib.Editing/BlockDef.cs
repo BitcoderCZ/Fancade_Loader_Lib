@@ -4,13 +4,13 @@
 
 using FancadeLoaderLib.Editing.Utils;
 using FancadeLoaderLib.Partial;
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
 
@@ -33,7 +33,7 @@ public sealed class BlockDef
     {
         if (size.X < 1 || size.Y < 1 || size.Z < 1)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(size), $"{nameof(size)} cannot be negative or zero.");
+            ThrowArgumentOutOfRangeException(nameof(size), $"{nameof(size)} cannot be negative or zero.");
         }
 
         List<PartialPrefabSegment> segments = new(size.X * size.Y * size.Z);

@@ -8,10 +8,10 @@ using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Scripting.TerminalStores;
 using FancadeLoaderLib.Editing.Scripting.Utils;
 using FancadeLoaderLib.Editing.Utils;
-using FancadeLoaderLib.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting;
 
@@ -61,10 +61,7 @@ public sealed class CodeWriter
 
     public ITerminalStore SetVariable(string name, object value)
     {
-        if (value is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(value));
-        }
+        ThrowIfNull(value, nameof(value));
 
         var wireType = WireTypeUtils.FromType(value.GetType());
 
@@ -84,10 +81,7 @@ public sealed class CodeWriter
 
     public ITerminalStore SetVariable(string name, ITerminal terminal)
     {
-        if (terminal is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(terminal));
-        }
+        ThrowIfNull(terminal, nameof(terminal));
 
         var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminal.WireType));
 
@@ -100,10 +94,7 @@ public sealed class CodeWriter
 
     public ITerminalStore SetVariable(string name, Func<ITerminal> getTerminalFunc, WireType terminalType)
     {
-        if (getTerminalFunc is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(getTerminalFunc));
-        }
+        ThrowIfNull(getTerminalFunc, nameof(getTerminalFunc));
 
         var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminalType));
 
@@ -251,10 +242,7 @@ public sealed class CodeWriter
 
     public (ITerminalStore Store, ITerminal TrueTerminal, ITerminal FalseTerminal) PlaceIf(Func<ITerminal> getConditionTerminalFunc)
     {
-        if (getConditionTerminalFunc is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(getConditionTerminalFunc));
-        }
+        ThrowIfNull(getConditionTerminalFunc, nameof(getConditionTerminalFunc));
 
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.If);
 
@@ -290,7 +278,7 @@ public sealed class CodeWriter
     {
         if (touchFinger < 0 || touchFinger > FancadeConstants.TouchSensorMaxFinger)
         {
-            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(touchFinger));
+            ThrowArgumentOutOfRangeException(nameof(touchFinger));
         }
 
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.TouchSensor);
@@ -319,10 +307,7 @@ public sealed class CodeWriter
 
     public (ITerminalStore Store, ITerminal CollidedTerminal, ITerminal SecondObjectTerminal, ITerminal ImpulseTerminal, ITerminal NormalTerminal) PlaceCollision(Func<ITerminal> getFirstObjectTerminalFunc)
     {
-        if (getFirstObjectTerminalFunc is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(getFirstObjectTerminalFunc));
-        }
+        ThrowIfNull(getFirstObjectTerminalFunc, nameof(getFirstObjectTerminalFunc));
 
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Collision);
 
@@ -333,15 +318,8 @@ public sealed class CodeWriter
 
     public (ITerminalStore Store, ITerminal DoTerminal, ITerminal CounterTerminal) PlaceLoop(Func<ITerminal> getStartTerminalFunc, Func<ITerminal> getStopTerminalFunc)
     {
-        if (getStartTerminalFunc is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(getStartTerminalFunc));
-        }
-
-        if (getStopTerminalFunc is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(getStopTerminalFunc));
-        }
+        ThrowIfNull(getStartTerminalFunc, nameof(getStartTerminalFunc));
+        ThrowIfNull(getStopTerminalFunc, nameof(getStopTerminalFunc));
 
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Loop);
 
@@ -353,10 +331,7 @@ public sealed class CodeWriter
 
     public ITerminalStore PlaceIncrementNumber(Func<ITerminal> getVariableTerminalFunc)
     {
-        if (getVariableTerminalFunc is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(getVariableTerminalFunc));
-        }
+        ThrowIfNull(getVariableTerminalFunc, nameof(getVariableTerminalFunc));
 
         Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.IncrementNumber);
 
@@ -367,10 +342,7 @@ public sealed class CodeWriter
 
     public ITerminalStore PlaceDecrementNumber(Func<ITerminal> getVariableTerminalFunc)
     {
-        if (getVariableTerminalFunc is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(getVariableTerminalFunc));
-        }
+        ThrowIfNull(getVariableTerminalFunc, nameof(getVariableTerminalFunc));
 
         Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.DecrementNumber);
 

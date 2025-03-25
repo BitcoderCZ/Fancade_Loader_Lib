@@ -2,11 +2,11 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Raw;
 
@@ -237,10 +237,7 @@ public class RawPrefab
     /// <returns>A <see cref="RawPrefab"/> read from <paramref name="reader"/>.</returns>
     public static unsafe RawPrefab Load(FcBinaryReader reader)
     {
-        if (reader is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(reader));
-        }
+        ThrowIfNull(reader, nameof(reader));
 
         byte header0 = reader.ReadUInt8();
         byte header1 = reader.ReadUInt8();
@@ -396,10 +393,7 @@ public class RawPrefab
     /// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
     public unsafe void Save(FcBinaryWriter writer)
     {
-        if (writer is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(writer));
-        }
+        ThrowIfNull(writer, nameof(writer));
 
         ushort header = 0;
 
