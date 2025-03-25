@@ -61,6 +61,16 @@ public class GameTests
     }
 
     [Test]
+    public async Task Constructor_DescriptionEmpty_DoesNotThrow()
+    {
+        string description = string.Empty;
+
+        Game game = new Game("a", "a", description, new());
+
+        await Assert.That(game.Description).IsEqualTo(description);
+    }
+
+    [Test]
     public async Task SaveLoad_PersistsAndRestoresData()
     {
         var game = new Game("A", "B", "C", new());
