@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace FancadeLoaderLib.Tests;
+namespace FancadeLoaderLib.Tests.Common;
 
-internal sealed class PrefabSegmentComparer : IEqualityComparer<PrefabSegment>
+public sealed class PrefabSegmentComparer : IEqualityComparer<PrefabSegment>
 {
     public bool Equals(PrefabSegment? x, PrefabSegment? y)
     {

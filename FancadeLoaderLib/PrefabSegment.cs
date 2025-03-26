@@ -290,7 +290,7 @@ public class PrefabSegment : ICloneable
             destination[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[5]) << 7);
         }
     }
-    
+
     /// <summary>
     /// Creates a deep copy of this <see cref="PrefabSegment"/>.
     /// </summary>

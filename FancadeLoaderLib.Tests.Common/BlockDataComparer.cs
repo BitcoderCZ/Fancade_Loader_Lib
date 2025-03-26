@@ -2,9 +2,9 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace FancadeLoaderLib.Tests;
+namespace FancadeLoaderLib.Tests.Common;
 
-internal sealed class BlockDataComparer : IEqualityComparer<BlockData>
+public sealed class BlockDataComparer : IEqualityComparer<BlockData>
 {
     public bool Equals(BlockData? x, BlockData? y)
     {

@@ -1,9 +1,9 @@
 ﻿using FancadeLoaderLib.Partial;
 using System.Diagnostics.CodeAnalysis;
 
-namespace FancadeLoaderLib.Tests;
+namespace FancadeLoaderLib.Tests.Common;
 
-internal sealed class PartialPrefabComparer : IEqualityComparer<PartialPrefab>
+public sealed class PartialPrefabComparer : IEqualityComparer<PartialPrefab>
 {
     private readonly PartialPrefabSegmentComparer _prefabComparer = new();
 

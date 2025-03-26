@@ -1,19 +1,30 @@
 ﻿using FancadeLoaderLib.Editing.Utils;
-using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
 using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
 
 public static class PrefabUtils
 {
-    public static bool Fill(this Prefab prefab, PrefabList prefabList, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks,  BlockInstancesCache? cache)
+    /// <summary>
+    /// Fill a region of a prefab.
+    /// </summary>
+    /// <param name="prefab">The prefab to fill.</param>
+    /// <param name="fromVoxel">The start position of the fill, inclusive.</param>
+    /// <param name="toVoxel">The end position of the fill, inclusive.</param>
+    /// <param name="value">The value to fill with.</param>
+    /// <param name="overwriteVoxels">
+    /// If <see langword="true"/>, non empty voxels will be overwritten,
+    /// if <see langword="false"/>, only empty voxels will be written to.
+    /// </param>
+    /// <param name="overwriteBlocks">
+    /// If <see langword="true"/>, blocks will be overwritten (if segments get added to the prefab),
+    /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, an <see cref="InvalidOperationException"/> will be thrown.
+    /// </param>
+    /// <param name="prefabList">A <see cref="PrefabList"/> that <paramref name="prefab"/> is in.</param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    public static void Fill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
     {
         if (cache is not null && cache.BLockId != prefab.Id)
         {
@@ -27,10 +38,7 @@ public static class PrefabUtils
 
         if (!value.IsEmpty)
         {
-            if (!prefab.EnsureSegments(prefabList, fromSegment, toSegment, overwriteBlocks, cache))
-            {
-                return false;
-            }
+            prefab.EnsureSegmentVoxels(fromSegment, toSegment, overwriteBlocks, prefabList, cache);
         }
 
         if (overwriteVoxels || value.IsEmpty)
@@ -72,12 +80,18 @@ public static class PrefabUtils
 
         if (value.IsEmpty)
         {
-            prefabList.RemoveEmptySegmentsFromPrefab(prefab.Id, cache);
+            prefabList?.RemoveEmptySegmentsFromPrefab(prefab.Id, cache);
         }
-
-        return true;
     }
 
+    /// <summary>
+    /// Sets the color of a side of voxels in a specified region.
+    /// </summary>
+    /// <param name="prefab">The prefab to fill.</param>
+    /// <param name="fromVoxel">The start position of the fill, inclusive.</param>
+    /// <param name="toVoxel">The end position of the fill, inclusive.</param>
+    /// <param name="sideIndex">Index of the side to set the color.</param>
+    /// <param name="color">The color to set.</param>
 #if NETSTANDARD
     public static unsafe void FillColor(this Prefab prefab, int3 fromVoxel, int3 toVoxel, int sideIndex, FcColor color)
 #else
@@ -102,7 +116,7 @@ public static class PrefabUtils
                     if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && segment.Voxels is not null)
                     {
                         int index = PrefabSegment.IndexVoxels(new int3(x, y, z) % 8);
-                        if (segment.Voxels[index].IsEmpty)
+                        if (!segment.Voxels[index].IsEmpty)
                         {
                             segment.Voxels[index].Colors[sideIndex] = colorByte;
                         }
@@ -112,10 +126,25 @@ public static class PrefabUtils
         }
     }
 
-    public static bool EnsureSegments(this Prefab prefab, PrefabList prefabList, int3 from, int3 to, bool overwriteBlocks, BlockInstancesCache? cache)
+    /// <summary>
+    /// Makes sure that <paramref name="prefab"/> contains segments with <see cref="PrefabSegment.Voxels"/> in a specified region.
+    /// </summary>
+    /// <param name="prefab">The prefab to add the segments to.</param>
+    /// <param name="from">The start position of regiom, inclusive.</param>
+    /// <param name="to">The end position of regiom, inclusive.</param>
+    /// <param name="overwriteBlocks">
+    /// If <see langword="true"/>, blocks will be overwritten (if segments get added to the prefab),
+    /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, an <see cref="InvalidOperationException"/> will be thrown.
+    /// </param>
+    /// <param name="prefabList">A <see cref="PrefabList"/> that <paramref name="prefab"/> is in.</param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    /// <returns><see langword="true"/> if segments were added; otherwise, <see langword="false"/>.</returns>
+    public static bool EnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
     {
         from = ClampSegmentToPrefab(from);
         to = ClampSegmentToPrefab(to);
+
+        bool added = false;
 
         for (int z = from.Z; z <= to.Z; z++)
         {
@@ -124,22 +153,38 @@ public static class PrefabUtils
                 for (int x = from.X; x <= to.X; x++)
                 {
                     int3 pos = new int3(x, y, z);
-                    if (!prefab.ContainsKey(pos))
+                    if (prefab.TryGetValue(pos, out var segment))
                     {
-                        prefabList.AddSegmentToPrefab(prefab.Id, new PrefabSegment(prefab.Id, pos), overwriteBlocks, cache);
+                        if (segment.Voxels is null)
+                        {
+                            segment.Voxels = new Voxel[8 * 8 * 8];
+                        }
+                    }
+                    else
+                    {
+                        added = true;
+
+                        if (prefabList is not null)
+                        {
+                            prefabList.AddSegmentToPrefab(prefab.Id, new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]), overwriteBlocks, cache);
+                        }
+                        else
+                        {
+                            prefab.Add(new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]));
+                        }
                     }
                 }
             }
         }
 
-        return true;
+        return added;
     }
 
     public static int3 ClampSegmentToPrefab(int3 pos)
         => int3.Max(int3.Min(pos, new int3(Prefab.MaxSize, Prefab.MaxSize, Prefab.MaxSize) - 1), int3.Zero);
 
     public static int3 ClampVoxelToPrefab(int3 pos)
-        => int3.Max(int3.Min(pos, new int3(8 * Prefab.MaxSize, 8 * Prefab.MaxSize, 8 * Prefab.MaxSize)) - 1, int3.Zero);
+        => int3.Max(int3.Min(pos, new int3(8 * Prefab.MaxSize, 8 * Prefab.MaxSize, 8 * Prefab.MaxSize) - 1), int3.Zero);
 
     public static int3 ClampVoxelToSegment(int3 pos)
         => int3.Max(int3.Min(pos, new int3(7, 7, 7)), int3.Zero);

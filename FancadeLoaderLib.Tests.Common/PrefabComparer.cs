@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace FancadeLoaderLib.Tests;
+namespace FancadeLoaderLib.Tests.Common;
 
-internal sealed class PrefabComparer : IEqualityComparer<Prefab>
+public sealed class PrefabComparer : IEqualityComparer<Prefab>
 {
     private readonly BlockDataComparer _blockDataComparer = new();
     private readonly PrefabSegmentComparer _prefabComparer = new();

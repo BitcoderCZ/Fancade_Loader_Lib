@@ -2,8 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using static FancadeLoaderLib.Utils.ThrowHelper;
-
 namespace FancadeLoaderLib.Editing;
 
 /// <summary>

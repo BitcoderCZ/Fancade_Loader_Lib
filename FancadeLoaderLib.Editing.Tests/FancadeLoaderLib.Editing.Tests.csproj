@@ -7,19 +7,12 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="TUnit" Version="0.18.60" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FancadeLoaderLib.Editing\FancadeLoaderLib.Editing.csproj" />
     <ProjectReference Include="..\FancadeLoaderLib.Tests.Common\FancadeLoaderLib.Tests.Common.csproj" />
     <ProjectReference Include="..\FancadeLoaderLib\FancadeLoaderLib.csproj" />
   </ItemGroup>
