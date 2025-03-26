@@ -398,6 +398,16 @@ public partial class PartialPrefabList : ICloneable
     }
 
     /// <summary>
+    /// Determines if a segment can be added to a prefab.
+    /// </summary>
+    /// <param name="id">Id of the prefab.</param>
+    /// <param name="value">The segment to test if it can be added to the prefab.</param>
+    /// <returns><see langword="true"/> if <paramref name="value"/> can be added to the prefab; otherwise <see langword="false"/>.</returns>
+    public bool CanAddSegmentToPrefab(ushort id, PrefabSegment value)
+        => _prefabs.TryGetValue(id, out var prefab) &&
+            !prefab.ContainsKey(value.PosInPrefab);
+
+    /// <summary>
     /// Adds a segment to a prefab.
     /// </summary>
     /// <param name="id">Id of the prefab.</param>

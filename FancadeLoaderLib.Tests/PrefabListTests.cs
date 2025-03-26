@@ -579,6 +579,56 @@ public class PrefabListTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
+    public async Task CanAddSegmentToPrefab_WithObstruction_ReturnsFalse(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab = CreatePrefab(1, 1);
+
+        var blocks = prefab.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab);
+        blocks.SetBlock(new int3(1, 0, 0), 5);
+
+        prefabList.AddPrefab(prefab);
+
+        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
+
+        bool added = prefabList.CanAddSegmentToPrefab(1, newSegment, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
+
+        await Assert.That(added).IsFalse();
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task CanAddSegmentToPrefab_WithObstruction_OverwriteTrue_ReturnsTrue(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab = CreatePrefab(1, 1);
+
+        var blocks = prefab.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab);
+        blocks.SetBlock(new int3(1, 0, 0), 5);
+
+        prefabList.AddPrefab(prefab);
+
+        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
+
+        bool added = prefabList.CanAddSegmentToPrefab(1, newSegment, true, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
+
+        await Assert.That(added).IsTrue();
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
     public async Task AddSegmentToPrefab_AppendsSegment(bool cache)
     {
         var prefabList = new PrefabList()

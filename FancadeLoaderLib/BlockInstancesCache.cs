@@ -169,4 +169,25 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
             }
         }
     }
+
+    internal bool CanAddBlock(int3 offset)
+    {
+        if (IsEmpty)
+        {
+            return true;
+        }
+
+        foreach (var (prefab, positions) in _instances)
+        {
+            foreach (var pos in positions)
+            {
+                if (prefab.Blocks.GetBlockOrDefault(pos + offset) != 0)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }

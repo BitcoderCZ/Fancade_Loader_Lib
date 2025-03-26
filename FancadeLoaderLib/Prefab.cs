@@ -574,6 +574,30 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         return true;
     }
 
+    /// <summary>
+    /// Adds segments to this prefab.
+    /// </summary>
+    /// <param name="values">The segments to add.</param>
+    public void AddRange(IEnumerable<PrefabSegment> values)
+    {
+        foreach (var value in values)
+        {
+            ValidatePos(value.PosInPrefab, $"{nameof(value)}.{nameof(value.PosInPrefab)}");
+
+            if (_segments.ContainsKey(value.PosInPrefab))
+            {
+                ThrowArgumentException($"Cannot add the segment, because a segment with it's position is already in the prefab.");
+            }
+        }
+
+        foreach (var value in values)
+        {
+            _segments.Add(value.PosInPrefab, ValidateSegment(value, nameof(value)));
+
+            Size = int3.Max(Size, value.PosInPrefab + int3.One);
+        }
+    }
+
     /// <inheritdoc/>
     public bool ContainsKey(int3 key)
         => _segments.ContainsKey(key);
