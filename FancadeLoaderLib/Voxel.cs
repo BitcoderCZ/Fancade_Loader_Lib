@@ -84,23 +84,33 @@ public unsafe struct Voxel : IEquatable<Voxel>
     /// <value><see langword="true"/> if this voxel is empty; otherwise, <see langword="false"/>.</value>
     public readonly bool IsEmpty => Colors[0] == 0;
 
-#if NET8_0_OR_GREATER
     public static bool operator ==(Voxel left, Voxel right)
-        => ((ReadOnlySpan<byte>)left.Colors).SequenceEqual(right.Colors) && ((ReadOnlySpan<bool>)left.Attribs).SequenceEqual(right.Attribs);
-#else
-    public static unsafe bool operator ==(Voxel left, Voxel right)
-        => MemoryMarshal.CreateReadOnlySpan(ref left.Colors[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Colors[0], 6)) &&
-        MemoryMarshal.CreateReadOnlySpan(ref left.Attribs[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Attribs[0], 6));
-#endif
+        => left.Colors[0] == right.Colors[0] &&
+           left.Colors[1] == right.Colors[1] &&
+           left.Colors[2] == right.Colors[2] &&
+           left.Colors[3] == right.Colors[3] &&
+           left.Colors[4] == right.Colors[4] &&
+           left.Colors[5] == right.Colors[5] &&
+           left.Attribs[0] == right.Attribs[0] &&
+           left.Attribs[1] == right.Attribs[1] &&
+           left.Attribs[2] == right.Attribs[2] &&
+           left.Attribs[3] == right.Attribs[3] &&
+           left.Attribs[4] == right.Attribs[4] &&
+           left.Attribs[5] == right.Attribs[5];
 
-#if NET8_0_OR_GREATER
     public static bool operator !=(Voxel left, Voxel right)
-        => !((ReadOnlySpan<byte>)left.Colors).SequenceEqual(right.Colors) || !((ReadOnlySpan<bool>)left.Attribs).SequenceEqual(right.Attribs);
-#else
-    public static unsafe bool operator !=(Voxel left, Voxel right)
-        => !MemoryMarshal.CreateReadOnlySpan(ref left.Colors[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Colors[0], 6)) ||
-        !MemoryMarshal.CreateReadOnlySpan(ref left.Attribs[0], 6).SequenceEqual(MemoryMarshal.CreateReadOnlySpan(ref right.Attribs[0], 6));
-#endif
+        => left.Colors[0] != right.Colors[0] ||
+           left.Colors[1] != right.Colors[1] ||
+           left.Colors[2] != right.Colors[2] ||
+           left.Colors[3] != right.Colors[3] ||
+           left.Colors[4] != right.Colors[4] ||
+           left.Colors[5] != right.Colors[5] ||
+           left.Attribs[0] != right.Attribs[0] ||
+           left.Attribs[1] != right.Attribs[1] ||
+           left.Attribs[2] != right.Attribs[2] ||
+           left.Attribs[3] != right.Attribs[3] ||
+           left.Attribs[4] != right.Attribs[4] ||
+           left.Attribs[5] != right.Attribs[5];
 
     /// <inheritdoc/>
     public readonly override int GetHashCode()
