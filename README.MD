@@ -4,6 +4,7 @@ C# lib for loading and saving games for [Fancade](https://www.fancade.com/)
 ## Usage
 ```csharp
 using FancadeLoaderLib;
+using FancadeLoaderLib.Raw;
 
 // Load game
 Game game;
