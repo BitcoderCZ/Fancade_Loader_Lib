@@ -1,4 +1,5 @@
-﻿using FancadeLoaderLib.Tests.Common;
+﻿using FancadeLoaderLib.Exceptions;
+using FancadeLoaderLib.Tests.Common;
 using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
@@ -366,7 +367,7 @@ public class PrefabListTests
 
         var newPrefab = CreatePrefab(1, 3);
 
-        await Assert.That(() => prefabList.UpdatePrefab(newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, newPrefab.Id) : null)).Throws<InvalidOperationException>();
+        await Assert.That(() => prefabList.UpdatePrefab(newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, newPrefab.Id) : null)).Throws<BlockObstructedException>();
 
         using (Assert.Multiple())
         {
@@ -664,7 +665,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab);
 
         var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
-        await Assert.That(() => prefabList.AddSegmentToPrefab(1, newSegment, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null)).Throws<InvalidOperationException>();
+        await Assert.That(() => prefabList.AddSegmentToPrefab(1, newSegment, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null)).Throws<BlockObstructedException>();
 
         using (Assert.Multiple())
         {

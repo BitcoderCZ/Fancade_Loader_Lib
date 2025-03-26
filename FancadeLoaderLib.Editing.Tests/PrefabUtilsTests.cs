@@ -1,4 +1,5 @@
-﻿using FancadeLoaderLib.Tests.Common;
+﻿using FancadeLoaderLib.Exceptions;
+using FancadeLoaderLib.Tests.Common;
 using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
@@ -151,7 +152,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Black, true);
 
-        await Assert.That(() => prefab1.Fill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null)).Throws<InvalidOperationException>();
+        await Assert.That(() => prefab1.Fill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null)).Throws<BlockObstructedException>();
     }
 
     [Test]
@@ -310,7 +311,7 @@ public class PrefabUtilsTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        await Assert.That(() => prefab1.EnsureSegmentVoxels(new int3(0, 0, 0), new int3(1, 0, 0), false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null)).Throws<InvalidOperationException>();
+        await Assert.That(() => prefab1.EnsureSegmentVoxels(new int3(0, 0, 0), new int3(1, 0, 0), false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null)).Throws<BlockObstructedException>();
     }
 
     [Test]

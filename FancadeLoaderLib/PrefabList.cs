@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Exceptions;
 using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
 using System;
@@ -317,7 +318,7 @@ public class PrefabList : ICloneable
     /// <param name="value">The prefab that will replace the previous prefab at it's id.</param>
     /// <param name="overwriteBlocks">
     /// If <see langword="true"/>, blocks will be overwritten,
-    /// if <see langword="false"/>, if a segment of <paramref name="value"/> would be placed at a position that is already occupied, an <see cref="InvalidOperationException"/> will be thrown.
+    /// if <see langword="false"/>, if a segment of <paramref name="value"/> would be placed at a position that is already occupied, an <see cref="BlockObstructedException"/> will be thrown.
     /// </param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns>The prefab that was at the specified id, before the update.</returns>
@@ -332,7 +333,7 @@ public class PrefabList : ICloneable
 
         if (!overwriteBlocks && !CanUpdatePrefabIds(prev, value))
         {
-            throw new InvalidOperationException($"Cannot update prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+            throw new BlockObstructedException($"Cannot update prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
         }
 
         if (prev.Count > 1)
@@ -494,7 +495,7 @@ public class PrefabList : ICloneable
     /// <param name="value">The segment to add to the prefab.</param>
     /// <param name="overwriteBlocks">
     /// If <see langword="true"/>, blocks will be overwritten,
-    /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, an <see cref="InvalidOperationException"/> will be thrown.
+    /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, an <see cref="BlockObstructedException"/> will be thrown.
     /// </param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     public void AddSegmentToPrefab(ushort id, PrefabSegment value, bool overwriteBlocks, BlockInstancesCache? cache = null)
@@ -508,7 +509,7 @@ public class PrefabList : ICloneable
 
         if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab))
         {
-            throw new InvalidOperationException($"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+            throw new BlockObstructedException($"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
         }
 
         ushort segmentId = (ushort)(prefab.Id + prefab.Count);

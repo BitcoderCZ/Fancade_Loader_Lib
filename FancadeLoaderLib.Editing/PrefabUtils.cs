@@ -1,4 +1,5 @@
 ﻿using FancadeLoaderLib.Editing.Utils;
+using FancadeLoaderLib.Exceptions;
 using MathUtils.Vectors;
 using System;
 using static FancadeLoaderLib.Utils.ThrowHelper;
@@ -20,7 +21,7 @@ public static class PrefabUtils
     /// </param>
     /// <param name="overwriteBlocks">
     /// If <see langword="true"/>, blocks will be overwritten (if segments get added to the prefab),
-    /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, an <see cref="InvalidOperationException"/> will be thrown.
+    /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, an <see cref="BlockObstructedException"/> will be thrown.
     /// </param>
     /// <param name="prefabList">A <see cref="PrefabList"/> that <paramref name="prefab"/> is in.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
@@ -134,7 +135,7 @@ public static class PrefabUtils
     /// <param name="to">The end position of regiom, inclusive.</param>
     /// <param name="overwriteBlocks">
     /// If <see langword="true"/>, blocks will be overwritten (if segments get added to the prefab),
-    /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, an <see cref="InvalidOperationException"/> will be thrown.
+    /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, an <see cref="BlockObstructedException"/> will be thrown.
     /// </param>
     /// <param name="prefabList">A <see cref="PrefabList"/> that <paramref name="prefab"/> is in.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
