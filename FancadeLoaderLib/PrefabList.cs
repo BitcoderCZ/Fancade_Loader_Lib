@@ -492,14 +492,14 @@ public class PrefabList : ICloneable
     /// Determines if a segment can be added to a prefab.
     /// </summary>
     /// <param name="id">Id of the prefab.</param>
-    /// <param name="value">The segment to test if it can be added to the prefab.</param>
+    /// <param name="segmentPos">Position of the segment.</param>
     /// <param name="overwriteBlocks">
     /// If <see langword="true"/>, block overwritting is allowed,
     /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, <see langword="false"/> is returned.
     /// </param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if <paramref name="value"/> can be added to the prefab; otherwise <see langword="false"/>.</returns>
-    public bool CanAddSegmentToPrefab(ushort id, PrefabSegment value, bool overwriteBlocks, BlockInstancesCache? cache = null)
+    public bool CanAddSegmentToPrefab(ushort id, int3 segmentPos, bool overwriteBlocks, BlockInstancesCache? cache = null)
     {
         if (cache is not null && cache.BLockId != id)
         {
@@ -507,8 +507,8 @@ public class PrefabList : ICloneable
         }
 
         return _prefabs.TryGetValue(id, out var prefab) && 
-            (overwriteBlocks || (cache is null ? CanAddIdToPrefab(id, value.PosInPrefab) : cache.CanAddBlock(value.PosInPrefab))) && 
-            !prefab.ContainsKey(value.PosInPrefab);
+            (overwriteBlocks || (cache is null ? CanAddIdToPrefab(id, segmentPos) : cache.CanAddBlock(segmentPos))) && 
+            !prefab.ContainsKey(segmentPos);
     }
 
     /// <summary>

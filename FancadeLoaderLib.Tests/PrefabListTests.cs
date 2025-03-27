@@ -594,7 +594,7 @@ public class PrefabListTests
 
         prefabList.AddPrefab(prefab);
 
-        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
+        var newSegment = new int3(1, 0, 0);
 
         bool added = prefabList.CanAddSegmentToPrefab(1, newSegment, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
@@ -619,7 +619,7 @@ public class PrefabListTests
 
         prefabList.AddPrefab(prefab);
 
-        var newSegment = new PrefabSegment(1, new int3(1, 0, 0));
+        var newSegment = new int3(1, 0, 0);
 
         bool added = prefabList.CanAddSegmentToPrefab(1, newSegment, true, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
