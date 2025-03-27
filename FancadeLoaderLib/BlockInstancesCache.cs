@@ -50,13 +50,23 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         });
     }
 
+    /// <summary>
+    /// Gets the id of the block this <see cref="BlockInstancesCache"/> was created for.
+    /// </summary>
+    /// <value>Id of the block this <see cref="BlockInstancesCache"/> was created for.</value>
     public ushort BLockId { get; private set; }
 
+    /// <summary>
+    /// Gets a value indicating whether this <see cref="BlockInstancesCache"/> is empty.
+    /// </summary>
+    /// <value><see langword="true"/> if no blocks with id <see cref="BLockId"/> were found, when this <see cref="BlockInstancesCache"/> was created; otherwise, <see langword="false"/>.</value>
     public bool IsEmpty { get; private set; }
 
+    /// <inheritdoc/>
     public IEnumerator<(Prefab Prefab, IEnumerable<int3> Position)> GetEnumerator()
         => _instances.GetEnumerator();
 
+    /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator()
         => GetEnumerator();
 

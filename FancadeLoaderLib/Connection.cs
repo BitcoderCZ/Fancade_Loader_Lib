@@ -52,9 +52,17 @@ public struct Connection : IEquatable<Connection>
         ToVoxel = toVoxel;
     }
 
+    /// <summary>Returns a value that indicates whether the 2 <see cref="Connection"/>s are equal.</summary>
+    /// <param name="left">The first <see cref="Connection"/> to compare.</param>
+    /// <param name="right">The second <see cref="Connection"/> to compare.</param>
+    /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator ==(Connection left, Connection right)
         => left.From == right.From && left.To == right.To && left.FromVoxel == right.FromVoxel && left.ToVoxel == right.ToVoxel;
 
+    /// <summary>Returns a value that indicates whether the 2 <see cref="Connection"/>s are not equal.</summary>
+    /// <param name="left">The first <see cref="Connection"/> to compare.</param>
+    /// <param name="right">The second <see cref="Connection"/> to compare.</param>
+    /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are not equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator !=(Connection left, Connection right)
         => !(left == right);
 

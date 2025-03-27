@@ -140,6 +140,14 @@ public class PrefabSegment : ICloneable
         }
     }
 
+    /// <summary>
+    /// Converts a 3D index into a 1D index, used to índex into <see cref="Voxels"/>.
+    /// </summary>
+    /// <remarks>
+    /// Does not check that <paramref name="pos"/> is in bounds.
+    /// </remarks>
+    /// <param name="pos">The 3D index.</param>
+    /// <returns>The converted 1D index.</returns>
     public static int IndexVoxels(int3 pos)
         => pos.ToIndex(8, 8);
 

@@ -285,7 +285,7 @@ public class PrefabList : ICloneable
     }
 
     /// <summary>
-    /// Adds a prefab to the <see cref="PartialPrefabList"/>.
+    /// Adds a prefab to the <see cref="PrefabList"/>.
     /// </summary>
     /// <remarks>
     /// The prefab's segments must not be modified while it is in the <see cref="PrefabList"/>.
@@ -406,7 +406,7 @@ public class PrefabList : ICloneable
     }
 
     /// <summary>
-    /// Removed a prefab with the specified id from the <see cref="PartialPrefabList"/>.
+    /// Removed a prefab with the specified id from the <see cref="PrefabList"/>.
     /// </summary>
     /// <param name="id">Id of the prefab to remove.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
@@ -438,7 +438,7 @@ public class PrefabList : ICloneable
     }
 
     /// <summary>
-    /// Removed a prefab with the specified id from the <see cref="PartialPrefabList"/>.
+    /// Removed a prefab with the specified id from the <see cref="PrefabList"/>.
     /// </summary>
     /// <param name="id">Id of the prefab to remove.</param>
     /// <param name="prefab">The prefab that was removed.</param>
@@ -498,7 +498,7 @@ public class PrefabList : ICloneable
     /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, <see langword="false"/> is returned.
     /// </param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
-    /// <returns><see langword="true"/> if <paramref name="value"/> can be added to the prefab; otherwise <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if <paramref name="segmentPos"/> can be added to the prefab; otherwise <see langword="false"/>.</returns>
     public bool CanAddSegmentToPrefab(ushort id, int3 segmentPos, bool overwriteBlocks, BlockInstancesCache? cache = null)
     {
         if (cache is not null && cache.BLockId != id)

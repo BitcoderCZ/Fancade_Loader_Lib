@@ -363,7 +363,18 @@ public class BlockData
         }
     }
 
-    public void TrimNegative(bool shrink = true, bool trimY = false)
+    /// <summary>
+    /// Shifts and resizes the <see cref="BlockData"/>, so that it is either empty, or there are blocks on the 0 position of each of the axis.
+    /// </summary>
+    /// <param name="resize">
+    /// If <see langword="true"/>, the underlying array should will be resized;
+    /// if <see langword="false"/>, blocks will be shifted and <see cref="Size"/> will get change, but the underlying array will not get resized.
+    /// </param>
+    /// <param name="trimY">
+    /// If <see langword="true"/>, the y axis will be trimmed (unless there are no blocks, a block will be at (x,0,x));
+    /// if <see langword="false"/>, the y axis will not be trimmed.
+    /// </param>
+    public void TrimNegative(bool resize = true, bool trimY = false)
     {
         if (Size == int3.Zero)
         {
@@ -444,7 +455,7 @@ public class BlockData
                     return; // can't move
                 }
 
-                if (shrink)
+                if (resize)
                 {
                     Move(-minPos, minPos);
                     Size -= minPos;
@@ -461,7 +472,7 @@ public class BlockData
             else if (scanPos.X == Size.X - 1)
             {
                 // no blocks
-                if (shrink)
+                if (resize)
                 {
                     Resize(int3.Zero, false);
                 }
@@ -569,6 +580,12 @@ public class BlockData
         }
     }
 
+    /// <summary>
+    /// Moves a region of blocks by a specified offset while ensuring the array size is sufficient.
+    /// </summary>
+    /// <param name="move"><see cref="int3"/> representing the movement offset along the X, Y, and Z axes.</param>
+    /// <param name="startPos">The start pos of the region to move, the end pos is <see cref="Size"/>.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when any component of <paramref name="move"/> is negative.</exception>
     public void Move(int3 move, int3 startPos)
     {
         if (startPos.X >= Size.X || startPos.Y >= Size.Y || startPos.Z >= Size.Z)

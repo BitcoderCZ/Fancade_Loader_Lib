@@ -11,14 +11,11 @@ using System.IO;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("FancadeLoaderLib.Editing")]
+[assembly: InternalsVisibleTo("FanEdit")]
 
 namespace FancadeLoaderLib.Utils;
 
-#if NETSTANDARD2_1_OR_GREATER
-public static class ThrowHelper
-#else
 internal static class ThrowHelper
-#endif
 {
     [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]

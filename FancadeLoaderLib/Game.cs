@@ -191,7 +191,7 @@ public class Game : ICloneable
     /// Makes this game editable.
     /// </summary>
     /// <remarks>
-    /// Sets <see cref="PrefabSegment.Editable"/> of all prefabs in <see cref="Prefabs"/> to <see langword="true"/>.
+    /// Sets <see cref="Prefab.Editable"/> of all prefabs in <see cref="Prefabs"/> to <see langword="true"/>.
     /// </remarks>
     /// <param name="changeAuthor">If <see langword="true"/>, <see cref="Author"/> is changed to "Unknown Author"; otherwise only <see cref="Prefab.Editable"/> is set to <see langword="true"/>.</param>
     public void MakeEditable(bool changeAuthor)
@@ -222,7 +222,7 @@ public class Game : ICloneable
     /// Converts this <see cref="Game"/> into <see cref="RawGame"/>.
     /// </summary>
     /// <param name="clonePrefabs">If the prefabs should be copied, if <see langword="true"/>, this <see cref="Game"/> instance shouldn't be used anymore.</param>
-    /// <returns>A new instance of the <see cref="RawGame"/> class from this <see cref="game"/>.</returns>
+    /// <returns>A new instance of the <see cref="RawGame"/> class from this <see cref="Game"/>.</returns>
     public RawGame ToRaw(bool clonePrefabs)
         => new RawGame(Name, Author, Description, RawGame.CurrentNumbStockPrefabs, [.. Prefabs.Prefabs.OrderBy(item => item.Id).SelectMany(item => item.ToRaw(clonePrefabs)).ToList()]);
 

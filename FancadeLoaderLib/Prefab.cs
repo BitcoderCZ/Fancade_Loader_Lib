@@ -93,7 +93,6 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// <param name="type">The type of this prefab.</param>
     /// <param name="backgroundColor">The background color of this prefab.</param>
     /// <param name="editable">If this prefab is editable.</param>
-    /// <param name="voxels">Voxels/model of this prefab.</param>
     /// <param name="blocks">The blocks inside this prefab.</param>
     /// <param name="settings">Settings of the blocks inside this prefab.</param>
     /// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>

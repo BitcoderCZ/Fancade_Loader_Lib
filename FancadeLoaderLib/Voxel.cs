@@ -42,6 +42,11 @@ public unsafe struct Voxel : IEquatable<Voxel>
     public fixed bool Attribs[6];
 #endif
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Voxel"/> struct.
+    /// </summary>
+    /// <param name="color">The color to assign to all the sides.</param>
+    /// <param name="attrib">The attrib to assign to all the sides.</param>
     public Voxel(byte color, bool attrib)
     {
         Colors[0] = color;
@@ -59,6 +64,11 @@ public unsafe struct Voxel : IEquatable<Voxel>
         Attribs[5] = attrib;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Voxel"/> struct.
+    /// </summary>
+    /// <param name="color">The color to assign to all the sides.</param>
+    /// <param name="attrib">The attrib to assign to all the sides.</param>
     public Voxel(FcColor color, bool attrib)
     {
         byte colorByte = (byte)color;
@@ -84,6 +94,10 @@ public unsafe struct Voxel : IEquatable<Voxel>
     /// <value><see langword="true"/> if this voxel is empty; otherwise, <see langword="false"/>.</value>
     public readonly bool IsEmpty => Colors[0] == 0;
 
+    /// <summary>Returns a value that indicates whether the 2 <see cref="Voxel"/>s are equal.</summary>
+    /// <param name="left">The first <see cref="Voxel"/> to compare.</param>
+    /// <param name="right">The second <see cref="Voxel"/> to compare.</param>
+    /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator ==(Voxel left, Voxel right)
         => left.Colors[0] == right.Colors[0] &&
            left.Colors[1] == right.Colors[1] &&
@@ -98,6 +112,10 @@ public unsafe struct Voxel : IEquatable<Voxel>
            left.Attribs[4] == right.Attribs[4] &&
            left.Attribs[5] == right.Attribs[5];
 
+    /// <summary>Returns a value that indicates whether the 2 <see cref="Voxel"/>s are not equal.</summary>
+    /// <param name="left">The first <see cref="Voxel"/> to compare.</param>
+    /// <param name="right">The second <see cref="Voxel"/> to compare.</param>
+    /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are not equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator !=(Voxel left, Voxel right)
         => left.Colors[0] != right.Colors[0] ||
            left.Colors[1] != right.Colors[1] ||

@@ -26,17 +26,33 @@ public readonly struct Rotation : IEquatable<Rotation>
         Value = value;
     }
 
+    /// <summary>
+    /// Converts a <see cref="Rotation"/> to a <see cref="float3"/>.
+    /// </summary>
+    /// <param name="value">The <see cref="Rotation"/> to convert.</param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "Use the value field.")]
-    public static explicit operator float3(Rotation a)
-        => a.Value;
+    public static explicit operator float3(Rotation value)
+        => value.Value;
 
+    /// <summary>
+    /// Converts a <see cref="float3"/> to a <see cref="Rotation"/>.
+    /// </summary>
+    /// <param name="value">The <see cref="float3"/> to convert.</param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "Use the constructor.")]
-    public static explicit operator Rotation(float3 a)
-        => new Rotation(a);
+    public static explicit operator Rotation(float3 value)
+        => new Rotation(value);
 
+    /// <summary>Returns a value that indicates whether the 2 <see cref="Rotation"/>s are equal.</summary>
+    /// <param name="left">The first <see cref="Rotation"/> to compare.</param>
+    /// <param name="right">The second <see cref="Rotation"/> to compare.</param>
+    /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator ==(Rotation left, Rotation right)
         => left.Value == right.Value;
 
+    /// <summary>Returns a value that indicates whether the 2 <see cref="Rotation"/>s are not equal.</summary>
+    /// <param name="left">The first <see cref="Rotation"/> to compare.</param>
+    /// <param name="right">The second <see cref="Rotation"/> to compare.</param>
+    /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are not equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator !=(Rotation left, Rotation right)
         => left.Value != right.Value;
 

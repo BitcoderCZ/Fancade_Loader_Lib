@@ -93,9 +93,17 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
         }
     }
 
+    /// <summary>Returns a value that indicates whether the 2 <see cref="PrefabSetting"/>s are equal.</summary>
+    /// <param name="left">The first <see cref="PrefabSetting"/> to compare.</param>
+    /// <param name="right">The second <see cref="PrefabSetting"/> to compare.</param>
+    /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator ==(PrefabSetting left, PrefabSetting right)
         => left.Index == right.Index && left.Position == right.Position && left.Type == right.Type && left.Value.Equals(right.Value);
 
+    /// <summary>Returns a value that indicates whether the 2 <see cref="PrefabSetting"/>s are not equal.</summary>
+    /// <param name="left">The first <see cref="PrefabSetting"/> to compare.</param>
+    /// <param name="right">The second <see cref="PrefabSetting"/> to compare.</param>
+    /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are not equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator !=(PrefabSetting left, PrefabSetting right)
         => left.Index != right.Index || left.Position != right.Position || left.Type != right.Type || !left.Value.Equals(right.Value);
 
