@@ -19,20 +19,44 @@ namespace FancadeLoaderLib.Editing;
 /// </summary>
 public sealed class BlockDef
 {
+    /// <summary>
+    /// The <see cref="PartialPrefab"/> of this block.
+    /// </summary>
     public readonly PartialPrefab Prefab;
 
-    public readonly BlockType BlockType;
+    /// <summary>
+    /// The script type of this block.
+    /// </summary>
+    public readonly ScriptBlockType BlockType;
 
+    /// <summary>
+    /// The terminals of this block.
+    /// </summary>
     public readonly ImmutableArray<TerminalDef> Terminals;
 
-    public BlockDef(PartialPrefab prefab, BlockType blockType, TerminalBuilder terminals)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BlockDef"/> class.
+    /// </summary>
+    /// <param name="prefab">The <see cref="PartialPrefab"/> of the block.</param>
+    /// <param name="blockType">The script type of the block.</param>
+    /// <param name="terminals">The terminals of the block.</param>
+    public BlockDef(PartialPrefab prefab, ScriptBlockType blockType, TerminalBuilder terminals)
     {
         Prefab = prefab;
         BlockType = blockType;
         Terminals = terminals.Build(Prefab.Size, BlockType);
     }
 
-    public BlockDef(string name, ushort id, BlockType blockType, PrefabType prefabType, int3 size, TerminalBuilder terminals)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BlockDef"/> class.
+    /// </summary>
+    /// <param name="name">Name of the block.</param>
+    /// <param name="id">Id of the block.</param>
+    /// <param name="blockType">The script type of the block.</param>
+    /// <param name="prefabType">The prefab type of the block.</param>
+    /// <param name="size">Size of the block.</param>
+    /// <param name="terminals">The terminals of the block.</param>
+    public BlockDef(string name, ushort id, ScriptBlockType blockType, PrefabType prefabType, int3 size, TerminalBuilder terminals)
     {
         if (size.X < 1 || size.Y < 1 || size.Z < 1)
         {
@@ -56,12 +80,29 @@ public sealed class BlockDef
         Terminals = terminals.Build(Prefab.Size, BlockType);
     }
 
-    public TerminalDef Before => BlockType == BlockType.Active ? Terminals.Get(^1) : throw new InvalidOperationException("Only active blocks have Before and After");
+    /// <summary>
+    /// Gets the before terminal, if <see cref="BlockType"/> is equal to <see cref="ScriptBlockType.Active"/>; otherwise, throws.
+    /// </summary>
+    /// <value>The before terminal.</value>
+    public TerminalDef Before => BlockType == ScriptBlockType.Active ? Terminals.Get(^1) : throw new InvalidOperationException("Only active blocks have Before and After");
 
-    public TerminalDef After => BlockType == BlockType.Active ? Terminals[0] : throw new InvalidOperationException("Only active blocks have Before and After");
+    /// <summary>
+    /// Gets the after terminal, if <see cref="BlockType"/> is equal to <see cref="ScriptBlockType.Active"/>; otherwise, throws.
+    /// </summary>
+    /// <value>The after terminal.</value>
+    public TerminalDef After => BlockType == ScriptBlockType.Active ? Terminals[0] : throw new InvalidOperationException("Only active blocks have Before and After");
 
+    /// <summary>
+    /// Gets the size of this block.
+    /// </summary>
+    /// <value>The size of this block.</value>
     public int3 Size => Prefab.Size;
 
+    /// <summary>
+    /// Gets a terminal by it's name.
+    /// </summary>
+    /// <param name="terminalName">Name of the terminal.</param>
+    /// <returns>The terminal with the specified name.</returns>
     public TerminalDef this[string terminalName]
     {
         get
@@ -81,6 +122,6 @@ public sealed class BlockDef
 
     [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]
-    public static void ThrowKeyNotFoundException(string paramName)
+    private static void ThrowKeyNotFoundException(string paramName)
         => throw new KeyNotFoundException(paramName);
 }

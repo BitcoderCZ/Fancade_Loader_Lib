@@ -1,4 +1,4 @@
-﻿// <copyright file="StringExtensions.cs" company="BitcoderCZ">
+﻿// <copyright file="StringUtils.cs" company="BitcoderCZ">
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 

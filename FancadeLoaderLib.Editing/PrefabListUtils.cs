@@ -20,7 +20,7 @@ public static class PrefabListUtils
     /// Gets all of the levels from the prefab list.
     /// </summary>
     /// <remarks>
-    /// <see cref="PrefabSegment.Type"/> == <see cref="PrefabType.Level"/>.
+    /// <see cref="Prefab.Type"/> == <see cref="PrefabType.Level"/>.
     /// </remarks>
     /// <param name="list">The list to get the levels from.</param>
     /// <returns><see cref="IEnumerable{T}"/> iterating over the levels in <paramref name="list"/>.</returns>
@@ -31,7 +31,7 @@ public static class PrefabListUtils
     /// Gets all of the levels from the prefab list.
     /// </summary>
     /// <remarks>
-    /// <see cref="PartialPrefabSegment.Type"/> == <see cref="PrefabType.Level"/>.
+    /// <see cref="Prefab.Type"/> == <see cref="PrefabType.Level"/>.
     /// </remarks>
     /// <param name="list">The list to get the levels from.</param>
     /// <returns><see cref="IEnumerable{T}"/> iterating over the levels in <paramref name="list"/>.</returns>

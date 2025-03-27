@@ -26,7 +26,7 @@ public interface ITerminal
     /// <summary>
     /// Gets the voxel position of this terminal relative to <see cref="BlockPosition"/>.
     /// </summary>
-    /// <value>The voxel position of this terminal</value>
+    /// <value>The voxel position of this terminal.</value>
     int3? VoxelPosition { get; }
 
     /// <summary>

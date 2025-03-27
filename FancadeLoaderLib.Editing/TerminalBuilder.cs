@@ -9,25 +9,50 @@ using System.Runtime.InteropServices;
 
 namespace FancadeLoaderLib.Editing;
 
-#pragma warning disable CA1815 // Override equals and operator equals on value types
+/// <summary>
+/// A helper for creating terminals.
+/// </summary>
 public readonly struct TerminalBuilder
-#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
+    /// <summary>
+    /// An empty <see cref="TerminalBuilder"/>.
+    /// </summary>
     public static readonly TerminalBuilder Empty = new TerminalBuilder(0);
 
     private readonly List<TerminalModel> _terminals = [];
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TerminalBuilder"/> struct.
+    /// </summary>
+    /// <param name="inititalCapacity">The initial capacity of the <see cref="TerminalBuilder"/>.</param>
     public TerminalBuilder(int inititalCapacity)
     {
         _terminals = new List<TerminalModel>(inititalCapacity);
     }
 
+    /// <summary>
+    /// Creates a new <see cref="TerminalBuilder"/>.
+    /// </summary>
+    /// <returns>The new <see cref="TerminalBuilder"/>.</returns>
     public static TerminalBuilder Create()
         => new TerminalBuilder(8);
 
+    /// <summary>
+    /// Adds a terminal.
+    /// </summary>
+    /// <param name="wireType">Wire type of the terminal.</param>
+    /// <param name="type">Type of the terminal.</param>
+    /// <returns>This instance after the add operation has completed.</returns>
     public TerminalBuilder Add(WireType wireType, TerminalType type)
         => Add(wireType, type, null);
 
+    /// <summary>
+    /// Adds a terminal.
+    /// </summary>
+    /// <param name="wireType">Wire type of the terminal.</param>
+    /// <param name="type">Type of the terminal.</param>
+    /// <param name="name">Name of the terminal.</param>
+    /// <returns>This instance after the add operation has completed.</returns>
     public TerminalBuilder Add(WireType wireType, TerminalType type, string? name)
     {
         _terminals.Add(new TerminalModel(wireType, type, name));
@@ -35,11 +60,17 @@ public readonly struct TerminalBuilder
         return this;
     }
 
-    public ImmutableArray<TerminalDef> Build(int3 blockSize, BlockType blockType)
+    /// <summary>
+    /// Builds this <see cref="TerminalBuilder"/>.
+    /// </summary>
+    /// <param name="blockSize">Size of the block the terminals belong to, determines their positions.</param>
+    /// <param name="blockType">Type of the block the terminals belong to.</param>
+    /// <returns>The built terminals.</returns>
+    public ImmutableArray<TerminalDef> Build(int3 blockSize, ScriptBlockType blockType)
     {
         TerminalDef[] terminals = new TerminalDef[_terminals.Count];
 
-        int off = blockType == BlockType.Active ? 1 : 0;
+        int off = blockType == ScriptBlockType.Active ? 1 : 0;
 
         int countIn = 0;
         int countOut = 0;
@@ -72,7 +103,7 @@ public readonly struct TerminalBuilder
                 : new TerminalDef(terminal.WireType, terminal.Type, terminal.Name, i, new int3(outXPos, 1, (countOut++ * 8) + 3));
         }
 
-        if (blockType == BlockType.Active)
+        if (blockType == ScriptBlockType.Active)
         {
             terminals[0] = new TerminalDef(_terminals[0].WireType, _terminals[0].Type, "After", 0, new int3(3, 1, 0));
             terminals[^1] = new TerminalDef(_terminals[^1].WireType, _terminals[^1].Type, "Before", _terminals.Count - 1, new int3(3, 1, (blockSize.Z * 8) - 2));

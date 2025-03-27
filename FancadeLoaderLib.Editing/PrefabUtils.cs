@@ -8,6 +8,9 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
 
+/// <summary>
+/// Utils for working with <see cref="Prefab"/>.
+/// </summary>
 public static class PrefabUtils
 {
     /// <summary>
@@ -345,15 +348,35 @@ public static class PrefabUtils
         return true;
     }
 
+    /// <summary>
+    /// Clamps a segment position.
+    /// </summary>
+    /// <param name="pos">The position to clamp.</param>
+    /// <returns>The clamped position.</returns>
     public static int3 ClampSegmentToPrefab(int3 pos)
         => int3.Max(int3.Min(pos, new int3(Prefab.MaxSize, Prefab.MaxSize, Prefab.MaxSize) - 1), int3.Zero);
 
+    /// <summary>
+    /// Clamps a voxel position to a prefab.
+    /// </summary>
+    /// <param name="pos">The position to clamp.</param>
+    /// <returns>The clamped position.</returns>
     public static int3 ClampVoxelToPrefab(int3 pos)
         => int3.Max(int3.Min(pos, new int3(8 * Prefab.MaxSize, 8 * Prefab.MaxSize, 8 * Prefab.MaxSize) - 1), int3.Zero);
 
+    /// <summary>
+    /// Clamps a voxel position to a segment.
+    /// </summary>
+    /// <param name="pos">The position to clamp.</param>
+    /// <returns>The clamped position.</returns>
     public static int3 ClampVoxelToSegment(int3 pos)
         => int3.Max(int3.Min(pos, new int3(7, 7, 7)), int3.Zero);
 
+    /// <summary>
+    /// Converts a voxel position to a segment position.
+    /// </summary>
+    /// <param name="pos">The position to convert.</param>
+    /// <returns>The converted postition.</returns>
     public static int3 VoxelToSegment(int3 pos)
         => pos / 8;
 }

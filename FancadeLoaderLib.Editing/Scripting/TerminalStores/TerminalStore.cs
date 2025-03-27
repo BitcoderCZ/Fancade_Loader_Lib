@@ -18,13 +18,13 @@ public readonly struct TerminalStore : ITerminalStore
     /// <summary>
     /// Initializes a new instance of the <see cref="TerminalStore"/> struct.
     /// </summary>
-    /// <param name="block">The <see cref="Block"/> to create this <see cref="TerminalStore"/> from, must be <see cref="BlockType.Active"/>.</param>
+    /// <param name="block">The <see cref="Block"/> to create this <see cref="TerminalStore"/> from, must be <see cref="ScriptBlockType.Active"/>.</param>
     public TerminalStore(Block block)
         : this(block, block.Type.Before, block, block.Type.After)
     {
-        if (block.Type.BlockType != BlockType.Active)
+        if (block.Type.BlockType != ScriptBlockType.Active)
         {
-            ThrowArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(BlockType)}.{nameof(BlockType.Active)}.", nameof(block));
+            ThrowArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(ScriptBlockType)}.{nameof(ScriptBlockType.Active)}.", nameof(block));
         }
     }
 
@@ -80,16 +80,16 @@ public readonly struct TerminalStore : ITerminalStore
     /// <remarks>
     /// Uses <see cref="BlockDef.Before"/> for the terminal.
     /// </remarks>
-    /// <param name="block">The input block, must be <see cref="BlockType.Active"/>.</param>
+    /// <param name="block">The input block, must be <see cref="ScriptBlockType.Active"/>.</param>
     /// <returns>The created <see cref="TerminalStore"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="block"/> is <see langword="null"/>.</exception>
-    /// <exception cref="ArgumentException">Throws when <paramref name="block"/>'s type is not <see cref="BlockType.Active"/>.</exception>
+    /// <exception cref="ArgumentException">Throws when <paramref name="block"/>'s type is not <see cref="ScriptBlockType.Active"/>.</exception>
     public static TerminalStore CreateIn(Block block)
         => block is null
             ? throw new ArgumentNullException(nameof(block))
-            : block.Type.BlockType == BlockType.Active
+            : block.Type.BlockType == ScriptBlockType.Active
             ? CreateIn(block, block.Type.Before)
-            : throw new ArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(BlockType)}.{nameof(BlockType.Active)}.", nameof(block));
+            : throw new ArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(ScriptBlockType)}.{nameof(ScriptBlockType.Active)}.", nameof(block));
 
     /// <summary>
     /// Creates an input-only <see cref="TerminalStore"/>.
@@ -106,16 +106,16 @@ public readonly struct TerminalStore : ITerminalStore
     /// <remarks>
     /// Uses <see cref="BlockDef.After"/> for the terminal.
     /// </remarks>
-    /// <param name="block">The output block, must be <see cref="BlockType.Active"/>.</param>
+    /// <param name="block">The output block, must be <see cref="ScriptBlockType.Active"/>.</param>
     /// <returns>The created <see cref="TerminalStore"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="block"/> is <see langword="null"/>.</exception>
-    /// <exception cref="ArgumentException">Throws when <paramref name="block"/>'s type is not <see cref="BlockType.Active"/>.</exception>
+    /// <exception cref="ArgumentException">Throws when <paramref name="block"/>'s type is not <see cref="ScriptBlockType.Active"/>.</exception>
     public static TerminalStore CreateOut(Block block)
         => block is null
             ? throw new ArgumentNullException(nameof(block))
-            : block.Type.BlockType == BlockType.Active
+            : block.Type.BlockType == ScriptBlockType.Active
             ? CreateOut(block, block.Type.After)
-            : throw new ArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(BlockType)}.{nameof(BlockType.Active)}.", nameof(block));
+            : throw new ArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(ScriptBlockType)}.{nameof(ScriptBlockType.Active)}.", nameof(block));
 
     /// <summary>
     /// Creates an output-only <see cref="TerminalStore"/>.

@@ -4,8 +4,18 @@
 
 namespace FancadeLoaderLib.Editing;
 
+/// <summary>
+/// Represents the type of a terminal.
+/// </summary>
 public enum TerminalType
 {
+    /// <summary>
+    /// The terminal is an input.
+    /// </summary>
     In,
+
+    /// <summary>
+    /// The terminal is an output.
+    /// </summary>
     Out,
 }
