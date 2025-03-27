@@ -145,7 +145,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
             SettingRecord set = settings[i];
             prefab.Settings.Add(new PrefabSetting()
             {
-                Index = (byte)set.ValueIndex,
+                Index = (byte)set.SettingIndex,
                 Type = set.Value switch
                 {
                     byte => SettingType.Byte,
@@ -167,9 +167,9 @@ public sealed class GameFileBlockBuilder : BlockBuilder
             prefab.Connections.Add(new Connection()
             {
                 From = (ushort3)con.From.BlockPosition,
-                FromVoxel = (ushort3)(con.From.VoxelPosition ?? ChooseSubPos(con.From.BlockPosition)),
+                FromVoxel = (ushort3)(con.From.VoxelPosition ?? ChooseTerminalVoxelPos(con.From.BlockPosition)),
                 To = (ushort3)con.To.BlockPosition,
-                ToVoxel = (ushort3)(con.To.VoxelPosition ?? ChooseSubPos(con.To.BlockPosition)),
+                ToVoxel = (ushort3)(con.To.VoxelPosition ?? ChooseTerminalVoxelPos(con.To.BlockPosition)),
             });
         }
 

@@ -218,9 +218,9 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
             };
 
 #if NET6_0_OR_GREATER
-            builder.AppendLine(CultureInfo.InvariantCulture, $"setBlockValue({set.Block.Position.X},{set.Block.Position.Y},{set.Block.Position.Z},{set.ValueIndex},{val});");
+            builder.AppendLine(CultureInfo.InvariantCulture, $"setBlockValue({set.Block.Position.X},{set.Block.Position.Y},{set.Block.Position.Z},{set.SettingIndex},{val});");
 #else
-            builder.AppendLine($"setBlockValue({set.Block.Position.X},{set.Block.Position.Y},{set.Block.Position.Z},{set.ValueIndex},{val});");
+            builder.AppendLine($"setBlockValue({set.Block.Position.X},{set.Block.Position.Y},{set.Block.Position.Z},{set.SettingIndex},{val});");
 #endif
         }
 
@@ -280,7 +280,7 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
                 writer.WriteInt32(set.Block.Position.X);
                 writer.WriteInt32(set.Block.Position.Y);
                 writer.WriteInt32(set.Block.Position.Z);
-                writer.WriteInt32(set.ValueIndex);
+                writer.WriteInt32(set.SettingIndex);
 
                 if (set.Value is byte numB)
                 {

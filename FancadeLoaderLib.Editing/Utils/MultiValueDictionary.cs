@@ -11,7 +11,7 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Utils;
 
-public sealed class MultiValueDictionary<TKey, TValue> : IDictionary<TKey, List<TValue>>
+internal sealed class MultiValueDictionary<TKey, TValue> : IDictionary<TKey, List<TValue>>
     where TKey : notnull
 {
     private readonly Dictionary<TKey, List<TValue>> _dict;
@@ -110,7 +110,7 @@ public sealed class MultiValueDictionary<TKey, TValue> : IDictionary<TKey, List<
 }
 
 #pragma warning disable SA1204 // Static elements should appear before instance elements
-public static class MultiValueDictionaryUtils
+internal static class MultiValueDictionaryUtils
 #pragma warning restore SA1204
 {
     public static MultiValueDictionary<TKey, TValue> ToMultiValueDictionary<T, TKey, TValue>(this IEnumerable<T> collection, Func<T, TKey> keySelector, Func<T, TValue> valueSelector)

@@ -106,13 +106,23 @@ public abstract class BlockBuilder
     /// <returns>An object representing fancade game, or from which a game can be created.</returns>
     public abstract object Build(int3 buildPos);
 
+    /// <summary>
+    /// Removes all blocks, connections and settings from the <see cref="BlockBuilder"/>.
+    /// </summary>
     public virtual void Clear()
     {
         segments.Clear();
+        highlightedBlocks.Clear();
         connections.Clear();
         settings.Clear();
     }
 
+    /// <summary>
+    /// Combines <see cref="segments"/> and <see cref="highlightedBlocks"/> into a <see cref="Block"/> array.
+    /// </summary>
+    /// <param name="buildPos">The position at which blocks should be placed.</param>
+    /// <param name="sortByPos">If the blocks should be sorted by their Z and X position.</param>
+    /// <returns>The created <see cref="Block"/> array.</returns>
     protected Block[] PreBuild(int3 buildPos, bool sortByPos)
     {
         if (buildPos.X < 0 || buildPos.Y < 0 || buildPos.Z < 0)
@@ -171,17 +181,43 @@ public abstract class BlockBuilder
         return blocks;
     }
 
-    protected virtual int3 ChooseSubPos(int3 pos)
+    /// <summary>
+    /// Choose the voxel position of the therminal for a given block position.
+    /// </summary>
+    /// <param name="pos">Position of the block the terminal is on.</param>
+    /// <returns>The voxel position of the terminal.</returns>
+    protected virtual int3 ChooseTerminalVoxelPos(int3 pos)
         => new int3(7, 3, 3);
 
+    /// <summary>
+    /// Represents a connection between 2 terminals.
+    /// </summary>
+    /// <param name="From">The first terminal.</param>
+    /// <param name="To">The second terminal.</param>
     protected readonly record struct ConnectionRecord(ITerminal From, ITerminal To);
 
-    protected readonly record struct SettingRecord(Block Block, int ValueIndex, object Value);
+    /// <summary>
+    /// Represents a setting of a block.
+    /// </summary>
+    /// <param name="Block">The block to apply the setting to.</param>
+    /// <param name="SettingIndex">Index of the setting.</param>
+    /// <param name="Value">The setting value.</param>
+    protected readonly record struct SettingRecord(Block Block, int SettingIndex, object Value);
 
-    protected class BlockSegment
+    /// <summary>
+    /// Represents a segment of blocks.
+    /// </summary>
+    protected sealed class BlockSegment
     {
+        /// <summary>
+        /// The blocks in this segment.
+        /// </summary>
         public readonly ImmutableArray<Block> Blocks;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BlockSegment"/> class.
+        /// </summary>
+        /// <param name="blocks">The blocks to be placed in this segment.</param>
         public BlockSegment(IEnumerable<Block> blocks)
         {
             ThrowIfNull(blocks, nameof(blocks));
@@ -195,12 +231,28 @@ public abstract class BlockBuilder
             CalculateMinMax();
         }
 
+        /// <summary>
+        /// Gets the minimum position of the blocks in this segment.
+        /// </summary>
+        /// <value>The minimum position of the blocks in this segment.</value>
         public int3 MinPos { get; private set; }
 
+        /// <summary>
+        /// Gets the maximum position of the blocks in this segment.
+        /// </summary>
+        /// <value>The maximum position of the blocks in this segment.</value>
         public int3 MaxPos { get; private set; }
 
+        /// <summary>
+        /// Gets the size of this segment.
+        /// </summary>
+        /// <value>The size of this segment.</value>
         public int3 Size => MaxPos - MinPos + int3.One;
 
+        /// <summary>
+        /// Moves this segment.
+        /// </summary>
+        /// <param name="move"><see cref="int3"/> representing the movement offset along the X, Y, and Z axes.</param>
         public void Move(int3 move)
         {
             if (move == int3.Zero)

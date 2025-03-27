@@ -9,6 +9,9 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.Utils;
 
+/// <summary>
+/// A helper class for reusing break vector/rotation blocks.
+/// </summary>
 public sealed class BreakBlockCache
 {
     private readonly int _maxUsesPerAxis;
@@ -21,6 +24,11 @@ public sealed class BreakBlockCache
     private int _yUseCount;
     private int _zUseCount;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BreakBlockCache"/> class.
+    /// </summary>
+    /// <param name="breakBlock">The initial break vector/rotation block.</param>
+    /// <param name="maxUsesPerAxis">Maximum number of uses, per axis.</param>
     public BreakBlockCache(Block? breakBlock, int maxUsesPerAxis)
     {
         if (maxUsesPerAxis < 1)
@@ -36,6 +44,10 @@ public sealed class BreakBlockCache
         _maxUsesPerAxis = maxUsesPerAxis;
     }
 
+    /// <summary>
+    /// Sets the break vector/rotation block to use.
+    /// </summary>
+    /// <param name="breakBlock">The break vector/rotation block.</param>
     public void SetNewBlock(Block breakBlock)
     {
         _lastBlock = ValidateBlock(breakBlock, nameof(breakBlock));
@@ -45,9 +57,21 @@ public sealed class BreakBlockCache
         _zUseCount = 0;
     }
 
+    /// <summary>
+    /// Gets if the break vector/rotation block can be retrieved.
+    /// </summary>
+    /// <returns><see langword="true"/> if the block can be retrieved; otherwise, <see langword="false"/>.</returns>
     public bool CanGet()
         => _lastBlock is not null && !_invalid;
 
+    /// <summary>
+    /// Try to get the break vector/rotation block.
+    /// </summary>
+    /// <remarks>
+    /// Increments the number of uses for all axes.
+    /// </remarks>
+    /// <param name="breakBlock">The break vector/rotation block.</param>
+    /// <returns><see langword="true"/> if the block was retrieved successfully; otherwise, <see langword="false"/>.</returns>
     public bool TryGet([NotNullWhen(true)] out Block? breakBlock)
     {
         if (_lastBlock is not null &&
@@ -65,6 +89,12 @@ public sealed class BreakBlockCache
         }
     }
 
+    /// <summary>
+    /// Try to get a <see cref="ITerminalStore"/> for an axis.
+    /// </summary>
+    /// <param name="axis">Index of the axis.</param>
+    /// <param name="store">The terminal for the axis.</param>
+    /// <returns><see langword="true"/> if the terminal was retrieved successfully; otherwise, <see langword="false"/>.</returns>
     public bool TryGetAxis(int axis, [NotNullWhen(true)] out ITerminalStore? store)
     {
         if (_lastBlock is null)

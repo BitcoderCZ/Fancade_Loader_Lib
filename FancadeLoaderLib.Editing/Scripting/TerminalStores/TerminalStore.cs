@@ -75,9 +75,12 @@ public readonly struct TerminalStore : ITerminalStore
     public ReadOnlySpan<ITerminal> Out => _out;
 
     /// <summary>
-    /// Creates a <see cref="TerminalStore"/> only for the block's input.
+    /// Creates an input-only <see cref="TerminalStore"/>.
     /// </summary>
-    /// <param name="block">The block to create this <see cref="TerminalStore"/> for, must be <see cref="BlockType.Active"/>.</param>
+    /// <remarks>
+    /// Uses <see cref="BlockDef.Before"/> for the terminal.
+    /// </remarks>
+    /// <param name="block">The input block, must be <see cref="BlockType.Active"/>.</param>
     /// <returns>The created <see cref="TerminalStore"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="block"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Throws when <paramref name="block"/>'s type is not <see cref="BlockType.Active"/>.</exception>
@@ -88,9 +91,25 @@ public readonly struct TerminalStore : ITerminalStore
             ? CreateIn(block, block.Type.Before)
             : throw new ArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(BlockType)}.{nameof(BlockType.Active)}.", nameof(block));
 
+    /// <summary>
+    /// Creates an input-only <see cref="TerminalStore"/>.
+    /// </summary>
+    /// <param name="block">The input block.</param>
+    /// <param name="terminal">The input terminal.</param>
+    /// <returns>The created <see cref="TerminalStore"/>.</returns>
     public static TerminalStore CreateIn(Block block, TerminalDef terminal)
         => new TerminalStore(new BlockTerminal(block, terminal), []);
 
+    /// <summary>
+    /// Creates an output-only <see cref="TerminalStore"/>.
+    /// </summary>
+    /// <remarks>
+    /// Uses <see cref="BlockDef.After"/> for the terminal.
+    /// </remarks>
+    /// <param name="block">The output block, must be <see cref="BlockType.Active"/>.</param>
+    /// <returns>The created <see cref="TerminalStore"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="block"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Throws when <paramref name="block"/>'s type is not <see cref="BlockType.Active"/>.</exception>
     public static TerminalStore CreateOut(Block block)
         => block is null
             ? throw new ArgumentNullException(nameof(block))
@@ -98,6 +117,12 @@ public readonly struct TerminalStore : ITerminalStore
             ? CreateOut(block, block.Type.After)
             : throw new ArgumentException($"{nameof(block)}.{nameof(Block.Type)}.{nameof(BlockDef.BlockType)} must be {nameof(BlockType)}.{nameof(BlockType.Active)}.", nameof(block));
 
+    /// <summary>
+    /// Creates an output-only <see cref="TerminalStore"/>.
+    /// </summary>
+    /// <param name="block">The output block.</param>
+    /// <param name="terminal">The output terminal.</param>
+    /// <returns>The created <see cref="TerminalStore"/>.</returns>
     public static TerminalStore CreateOut(Block block, TerminalDef terminal)
         => new TerminalStore(NopTerminal.Instance, [new BlockTerminal(block, terminal)]);
 }

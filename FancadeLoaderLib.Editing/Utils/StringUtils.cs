@@ -8,7 +8,7 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Utils;
 
-internal static class StringExtensions
+internal static class StringUtils
 {
     /// <summary>
     /// Splits <paramref name="str"/> into ranges of <paramref name="maxLength"/>, trying to split on spaces.

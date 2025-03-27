@@ -14,6 +14,9 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
 
+/// <summary>
+/// Represents the type of a fancade block.
+/// </summary>
 public sealed class BlockDef
 {
     public readonly PartialPrefab Prefab;
