@@ -14,24 +14,33 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.Placers;
 
-public class GroundCodePlacer : IScopedCodePlacer
+/// <summary>
+/// A <see cref="IScopedCodePlacer"/> that places blocks on the ground, attempting to place them as a human would.
+/// </summary>
+public sealed class GroundCodePlacer : IScopedCodePlacer
 {
-    protected readonly Stack<StatementCodeBlock> statements = new();
-    protected readonly Stack<ExpressionCodeBlock> expressions = new();
-
-    [SuppressMessage("Performance", "CA1805:Do not initialize unnecessarily", Justification = "Clarity.")]
-    protected bool inHighlight = false;
+    private readonly Stack<StatementCodeBlock> _statements = new();
+    private readonly Stack<ExpressionCodeBlock> _expressions = new();
 
     private readonly BlockBuilder _builder;
+
+    private bool _inHighlight = false;
+
     private int _blockXOffset = 3;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GroundCodePlacer"/> class.
+    /// </summary>
+    /// <param name="builder">The <see cref="BlockBuilder"/> to use.</param>
     public GroundCodePlacer(BlockBuilder builder)
     {
         _builder = builder;
     }
 
-    public int CurrentCodeBlockBlocks => expressions.Count != 0 ? expressions.Peek().BlockCount : statements.Peek().BlockCount;
+    /// <inheritdoc/>
+    public int CurrentCodeBlockBlocks => _expressions.Count != 0 ? _expressions.Peek().BlockCount : _statements.Peek().BlockCount;
 
+    /// <inheritdoc/>
     public int PlacedBlockCount { get; private set; }
 
     /// <summary>
@@ -52,18 +61,19 @@ public class GroundCodePlacer : IScopedCodePlacer
         }
     }
 
+    /// <inheritdoc/>
     public Block PlaceBlock(BlockDef blockType)
     {
         Block block;
 
-        if (inHighlight)
+        if (_inHighlight)
         {
             block = new Block(blockType, int3.Zero);
             _builder.AddHighlightedBlock(block);
         }
         else
         {
-            block = expressions.Count != 0 ? expressions.Peek().PlaceBlock(blockType) : statements.Peek().PlaceBlock(blockType);
+            block = _expressions.Count != 0 ? _expressions.Peek().PlaceBlock(blockType) : _statements.Peek().PlaceBlock(blockType);
         }
 
         PlacedBlockCount++;
@@ -71,33 +81,37 @@ public class GroundCodePlacer : IScopedCodePlacer
         return block;
     }
 
+    /// <inheritdoc/>
     public void Connect(ITerminal fromTerminal, ITerminal toTerminal)
         => _builder.Connect(fromTerminal, toTerminal);
 
+    /// <inheritdoc/>
     public void SetSetting(Block block, int settingIndex, object value)
         => _builder.SetSetting(block, settingIndex, value);
 
+    /// <inheritdoc/>
     public void EnterStatementBlock()
     {
-        Debug.Assert(expressions.Count == 0, "Cannot enter a statement block while being in an expression block");
+        Debug.Assert(_expressions.Count == 0, "Cannot enter a statement block while being in an expression block");
 
-        if (statements.Count == 0)
+        if (_statements.Count == 0)
         {
-            statements.Push(CreateFunction());
+            _statements.Push(CreateFunction());
         }
         else
         {
-            statements.Push(statements.Peek().CreateStatementChild());
+            _statements.Push(_statements.Peek().CreateStatementChild());
         }
     }
 
+    /// <inheritdoc/>
     public void ExitStatementBlock()
     {
-        Debug.Assert(expressions.Count == 0, "Cannot exit a statement block while being in an expression block");
+        Debug.Assert(_expressions.Count == 0, "Cannot exit a statement block while being in an expression block");
 
-        StatementCodeBlock statement = statements.Pop();
+        StatementCodeBlock statement = _statements.Pop();
 
-        if (statements.Count == 0 && statement.AllBlocks.Any())
+        if (_statements.Count == 0 && statement.AllBlocks.Any())
         {
             // end of function
             LayerStack.Process(statement, BlockXOffset);
@@ -106,27 +120,29 @@ public class GroundCodePlacer : IScopedCodePlacer
         }
     }
 
+    /// <inheritdoc/>
     public void EnterExpressionBlock()
     {
-        Debug.Assert(statements.Count > 0, "Cannot enter an expression block without being in a statement block");
+        Debug.Assert(_statements.Count > 0, "Cannot enter an expression block without being in a statement block");
 
-        if (expressions.Count == 0)
+        if (_expressions.Count == 0)
         {
-            expressions.Push(statements.Peek().CreateExpressionChild());
+            _expressions.Push(_statements.Peek().CreateExpressionChild());
         }
         else
         {
-            expressions.Push(expressions.Peek().CreateExpressionChild());
+            _expressions.Push(_expressions.Peek().CreateExpressionChild());
         }
     }
 
+    /// <inheritdoc/>
     public void ExitExpressionBlock()
     {
-        Debug.Assert(statements.Count > 0, "Cannot exit an expression block without being in a statement block");
+        Debug.Assert(_statements.Count > 0, "Cannot exit an expression block without being in a statement block");
 
-        ExpressionCodeBlock expression = expressions.Pop();
+        ExpressionCodeBlock expression = _expressions.Pop();
 
-        if (statements.Count == 1)
+        if (_statements.Count == 1)
         {
             Debug.Assert(expression.Parent?.Parent is not null, "Parent of parent shouldn't be null.");
 
@@ -135,18 +151,18 @@ public class GroundCodePlacer : IScopedCodePlacer
         }
     }
 
+    /// <inheritdoc/>
     public void EnterHighlight()
-        => inHighlight = true;
+        => _inHighlight = true;
 
+    /// <inheritdoc/>
     public void ExitHightlight()
-        => inHighlight = false;
+        => _inHighlight = false;
 
-    protected StatementCodeBlock CreateFunction()
+    private StatementCodeBlock CreateFunction()
         => new StatementCodeBlock(this, 0);
 
-#pragma warning disable CA1711 // Identifiers should not have incorrect suffix
-    protected static class LayerStack
-#pragma warning restore CA1711 // Identifiers should not have incorrect suffix
+    private static class LayerStack
     {
         public static void Process(CodeBlock block, int blockXOffset)
         {
@@ -226,15 +242,13 @@ public class GroundCodePlacer : IScopedCodePlacer
         }
     }
 
-    protected abstract class CodeBlock
+    private abstract class CodeBlock
     {
-#pragma warning disable CA1002 // Do not expose generic lists
         public readonly List<Block> Blocks = [];
 
         public readonly CodeBlock? Parent;
 
         public List<CodeBlock> Children = [];
-#pragma warning restore CA1002 // Do not expose generic lists
 
         protected readonly GroundCodePlacer Placer;
 
@@ -339,7 +353,7 @@ public class GroundCodePlacer : IScopedCodePlacer
         }
     }
 
-    protected class StatementCodeBlock : CodeBlock
+    private sealed class StatementCodeBlock : CodeBlock
     {
         public StatementCodeBlock(GroundCodePlacer placer, int pos)
             : base(placer, pos)
@@ -380,7 +394,7 @@ public class GroundCodePlacer : IScopedCodePlacer
         }
     }
 
-    protected class ExpressionCodeBlock : CodeBlock
+    private sealed class ExpressionCodeBlock : CodeBlock
     {
         public ExpressionCodeBlock(GroundCodePlacer placer, int pos, CodeBlock parent, int layerOffset)
             : base(placer, pos, parent, layerOffset)

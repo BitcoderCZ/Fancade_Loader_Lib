@@ -13,15 +13,38 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.Builders;
 
+/// <summary>
+/// <see cref="BlockBuilder"/> that creates the output as <see cref="Game"/> object.
+/// </summary>
 public sealed class GameFileBlockBuilder : BlockBuilder
 {
+    /// <summary>
+    /// The game to write the output to.
+    /// </summary>
     public readonly Game? InGame;
 
+    /// <summary>
+    /// Name of the prefab to add.
+    /// </summary>
     public readonly string? PrefabName;
+
+    /// <summary>
+    /// Type of the prefab to add.
+    /// </summary>
     public readonly PrefabType? PrefabType;
 
+    /// <summary>
+    /// Id of the prefab to place the output in.
+    /// </summary>
     public readonly ushort? PrefabId;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GameFileBlockBuilder"/> class.
+    /// Places the output into a new prefab.
+    /// </summary>
+    /// <param name="inGame">The game to write the output to.</param>
+    /// <param name="prefabName">Name of the prefab to add.</param>
+    /// <param name="prefabType">Type of the prefab to add.</param>
     public GameFileBlockBuilder(Game? inGame, string prefabName, PrefabType prefabType)
     {
         InGame = inGame;
@@ -32,6 +55,12 @@ public sealed class GameFileBlockBuilder : BlockBuilder
         PrefabType = prefabType;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GameFileBlockBuilder"/> class.
+    /// Places the output into an existing prefab.
+    /// </summary>
+    /// <param name="inGame">The game to write the output to.</param>
+    /// <param name="prefabId">Id of the prefab to place the output in.</param>
     public GameFileBlockBuilder(Game inGame, ushort prefabId)
     {
         ThrowIfNull(inGame, nameof(inGame));
@@ -43,10 +72,19 @@ public sealed class GameFileBlockBuilder : BlockBuilder
         PrefabId = prefabId;
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the output should be placed into a new prefab.
+    /// </summary>
+    /// <value><see langword="true"/> if the output will be placed into a new prefab; otherwise, <see langword="false"/>.</value>
     [MemberNotNullWhen(true, nameof(PrefabName), nameof(PrefabType))]
     [MemberNotNullWhen(false, nameof(PrefabId))]
     public bool CreateNewPrefab { get; private set; }
 
+    /// <summary>
+    /// Builds the blocks, connections and settings into a <see cref="Game"/> object.
+    /// </summary>
+    /// <param name="buildPos">The position at which blocks should be placed.</param>
+    /// <returns>The created <see cref="Game"/> object or <see cref="InGame"/> if it is not <see langword="null"/>.</returns>
 #if NET5_0_OR_GREATER
     public override Game Build(int3 buildPos)
 #else

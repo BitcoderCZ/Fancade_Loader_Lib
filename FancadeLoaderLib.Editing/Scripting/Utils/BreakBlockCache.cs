@@ -81,7 +81,7 @@ public sealed class BreakBlockCache
         if (CheckAndInc(axis))
         {
             // x - 2, y - 1, z - 0
-            store = TerminalStore.COut(_lastBlock, _lastBlock.Type.Terminals[2 - axis]);
+            store = TerminalStore.CreateOut(_lastBlock, _lastBlock.Type.Terminals[2 - axis]);
             return true;
         }
         else

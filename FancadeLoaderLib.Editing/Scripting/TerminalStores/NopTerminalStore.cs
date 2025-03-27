@@ -7,15 +7,23 @@ using System;
 
 namespace FancadeLoaderLib.Editing.Scripting.TerminalStores;
 
+/// <summary>
+/// A <see cref="ITerminalStore"/> that doesn't connect to anything.
+/// </summary>
 public sealed class NopTerminalStore : ITerminalStore
 {
+    /// <summary>
+    /// The <see cref="NopTerminalStore"/> instance.
+    /// </summary>
     public static readonly NopTerminalStore Instance = new NopTerminalStore();
 
     private NopTerminalStore()
     {
     }
 
+    /// <inheritdoc/>
     public ITerminal In => NopTerminal.Instance;
 
+    /// <inheritdoc/>
     public ReadOnlySpan<ITerminal> Out => [];
 }

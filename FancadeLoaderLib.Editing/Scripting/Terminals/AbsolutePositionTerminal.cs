@@ -6,20 +6,29 @@ using MathUtils.Vectors;
 
 namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 
-#pragma warning disable CA1815 // Override equals and operator equals on value types
+/// <summary>
+/// A <see cref="ITerminal"/> that connects to an absolute position.
+/// </summary>
 public readonly struct AbsolutePositionTerminal : ITerminal
-#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AbsolutePositionTerminal"/> struct.
+    /// </summary>
+    /// <param name="blockPosition">The position of the block this terminal is on.</param>
     public AbsolutePositionTerminal(int3 blockPosition)
     {
         BlockPosition = blockPosition;
     }
 
+    /// <inheritdoc/>
     public int3 BlockPosition { get; }
 
+    /// <inheritdoc/>
     public int TerminalIndex { get; init; }
 
+    /// <inheritdoc/>
     public int3? VoxelPosition { get; init; }
 
+    /// <inheritdoc/>
     public WireType WireType { get; init; }
 }

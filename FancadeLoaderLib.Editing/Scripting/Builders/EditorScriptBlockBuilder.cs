@@ -13,6 +13,9 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.Builders;
 
+/// <summary>
+/// <see cref="BlockBuilder"/> that creates the output as an EditorScript <see cref="string"/>, that can be executed in the web version of Fancade.
+/// </summary>
 public sealed class EditorScriptBlockBuilder : BlockBuilder
 {
     /*
@@ -131,14 +134,36 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
 		var t=function(t,e){const n=t.replace(/[^A-Za-z0-9+/]/g,""),a=n.length,g=e?Math.ceil((3*a+1>>2)/e)*e:3*a+1>>2,r=new Uint8Array(g);let I,o,l=0,c=0;for(let t=0;t<a;t++)if(o=3&t,l|=((f=n.charCodeAt(t))>64&&f<91?f-65:f>96&&f<123?f-71:f>47&&f<58?f+4:43===f?62:47===f?63:0)<<6*(3-o),3===o||a-t==1){for(I=0;I<3&&c<g;)r[c]=l>>>(16>>>I&24)&255,I++,c++;l=0}var f;return r}("[CODE]"),e=new DataView(t.buffer),n=new TextDecoder,a=0,g=e.getInt32(a,!0);a+=4;for(var r=0;r<g;r++){var I=e.getInt32(a,!0),o=e.getInt32(a+4,!0),l=e.getInt32(a+8,!0),c=e.getInt32(a+12,!0);a+=16,setBlock(I,o,l,c)}updateChanges();var f=e.getInt32(a,!0);a+=4;for(r=0;r<f;r++){let g=e.getInt32(a,!0),r=e.getInt32(a+4,!0),I=e.getInt32(a+8,!0),o=e.getInt32(a+12,!0),l=e.getInt32(a+16,!0);var v;if(a+=20,0==l)v=e.getFloat32(a,!0),a+=4;else if(1==l){var s=e.getInt32(a,!0);a+=4;var u=t.subarray(a,a+s);a+=s,v=n.decode(u)}else 2==l&&(v=[e.getFloat32(a,!0),e.getFloat32(a+4,!0),e.getFloat32(a+8,!0)],a+=12);setBlockValue(g,r,I,o,v)}updateChanges();var d=e.getInt32(a,!0);a+=4;for(r=0;r<d;r++){var i=e.getInt32(a,!0),h=e.getInt32(a+4,!0),C=e.getInt32(a+8,!0),p=e.getInt32(a+12,!0),w=e.getInt32(a+16,!0),F=e.getInt32(a+20,!0),A=e.getInt32(a+24,!0),D=e.getInt32(a+28,!0);a+=32,connect(i,h,C,A,p,w,F,D)}updateChanges();
 		""";
 
+    /// <summary>
+    /// The type of "compression" to use for the generated output.
+    /// </summary>
     public enum CompressionType
     {
+        /// <summary>
+        /// The generated output consists of individual functions calls.
+        /// </summary>
         None,
+
+        /// <summary>
+        /// The generated output consists of a base64 encoded string and functions to decode it.
+        /// </summary>
+        /// <remarks>
+        /// Smaller than <see cref="None"/> for larger inputs.
+        /// </remarks>
         Base64,
     }
 
+    /// <summary>
+    /// Gets the <see cref="CompressionType"/> to use, <see cref="CompressionType.Base64"/> by default.
+    /// </summary>
+    /// <value>The <see cref="CompressionType"/> to use.</value>
     public CompressionType Compression { get; init; } = CompressionType.Base64;
 
+    /// <summary>
+    /// Builds the blocks, connections and settings into an EditorScript <see cref="string"/>.
+    /// </summary>
+    /// <param name="buildPos">The position at which blocks should be placed.</param>
+    /// <returns>An EditorScript <see cref="string"/> that can be ran in the web version of fancade.</returns>
 #if NET5_0_OR_GREATER
     public override string Build(int3 buildPos)
 #else

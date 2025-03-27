@@ -9,6 +9,9 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
 
+/// <summary>
+/// A helper for generating the <see cref="Voxel"/>s for prefabs.
+/// </summary>
 public sealed class BlockVoxelsGenerator
 {
     private readonly Dictionary<int3, Voxel[]> _blocks = [];
@@ -19,6 +22,14 @@ public sealed class BlockVoxelsGenerator
 
     private delegate void LoopDelegate(ref Voxel voxel);
 
+    /// <summary>
+    /// Generates the voxels for a script block.
+    /// </summary>
+    /// <remarks>
+    /// Size in voxels is (<paramref name="sizeInBlocks"/>.x * 8 - 1, 3, <paramref name="sizeInBlocks"/>.y * 8 - 1).
+    /// </remarks>
+    /// <param name="sizeInBlocks">The X and Z size of the prefab in blocks.</param>
+    /// <returns>The generated voxels.</returns>
 #if NET8_0_OR_GREATER
     public static IEnumerable<KeyValuePair<int3, Voxel[]>> CreateScript(int2 sizeInBlocks)
 #else

@@ -130,20 +130,20 @@ public sealed class CodeWriter
                 {
                     Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(wireType));
 
-                    _codePlacer.Connect(TerminalStore.COut(listBlock, listBlock.Type["Element"]), TerminalStore.CIn(setBlock, setBlock.Type["Variable"]));
+                    _codePlacer.Connect(TerminalStore.CreateOut(listBlock, listBlock.Type["Element"]), TerminalStore.CreateIn(setBlock, setBlock.Type["Variable"]));
 
                     using (ExpressionBlock())
                     {
                         lastElementTerminal ??= PlaceVariable(variableName, wireType);
 
-                        _codePlacer.Connect(lastElementTerminal, TerminalStore.CIn(listBlock, listBlock.Type["Variable"]));
+                        _codePlacer.Connect(lastElementTerminal, TerminalStore.CreateIn(listBlock, listBlock.Type["Variable"]));
 
                         lastElementTerminal = new BlockTerminal(listBlock, "Element");
 
-                        _codePlacer.Connect(i == 0 ? PlaceLiteral((float)startIndex) : PlaceLiteral(1f), TerminalStore.CIn(listBlock, listBlock.Type["Index"]));
+                        _codePlacer.Connect(i == 0 ? PlaceLiteral((float)startIndex) : PlaceLiteral(1f), TerminalStore.CreateIn(listBlock, listBlock.Type["Index"]));
                     }
 
-                    _codePlacer.Connect(PlaceLiteral(values[i]), TerminalStore.CIn(setBlock, setBlock.Type["Value"]));
+                    _codePlacer.Connect(PlaceLiteral(values[i]), TerminalStore.CreateIn(setBlock, setBlock.Type["Value"]));
                 }
             }
         }
@@ -170,20 +170,20 @@ public sealed class CodeWriter
             {
                 Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(wireType));
 
-                _codePlacer.Connect(TerminalStore.COut(listBlock, listBlock.Type["Element"]), TerminalStore.CIn(setBlock, setBlock.Type["Variable"]));
+                _codePlacer.Connect(TerminalStore.CreateOut(listBlock, listBlock.Type["Element"]), TerminalStore.CreateIn(setBlock, setBlock.Type["Variable"]));
 
                 using (ExpressionBlock())
                 {
                     lastElementTerminal ??= PlaceVariable(variableName, wireType);
 
-                    _codePlacer.Connect(lastElementTerminal, TerminalStore.CIn(listBlock, listBlock.Type["Variable"]));
+                    _codePlacer.Connect(lastElementTerminal, TerminalStore.CreateIn(listBlock, listBlock.Type["Variable"]));
 
                     lastElementTerminal = new BlockTerminal(listBlock, "Element");
 
-                    _codePlacer.Connect(i == 0 ? PlaceVariable(startIndexVariableName, WireType.Float) : PlaceLiteral(1f), TerminalStore.CIn(listBlock, listBlock.Type["Index"]));
+                    _codePlacer.Connect(i == 0 ? PlaceVariable(startIndexVariableName, WireType.Float) : PlaceLiteral(1f), TerminalStore.CreateIn(listBlock, listBlock.Type["Index"]));
                 }
 
-                _codePlacer.Connect(PlaceLiteral(values[i]), TerminalStore.CIn(setBlock, setBlock.Type["Value"]));
+                _codePlacer.Connect(PlaceLiteral(values[i]), TerminalStore.CreateIn(setBlock, setBlock.Type["Value"]));
             }
         }
 

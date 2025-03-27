@@ -10,6 +10,9 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting.Placers;
 
+/// <summary>
+/// A <see cref="IScopedCodePlacer"/> that places blocks in towers.
+/// </summary>
 public sealed class TowerCodePlacer : IScopedCodePlacer
 {
     private readonly List<Block> _blocks = new List<Block>(256);
@@ -20,21 +23,25 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
     private bool _inHighlight = false;
     private int _statementDepth;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TowerCodePlacer"/> class.
+    /// </summary>
+    /// <param name="builder">The <see cref="BlockBuilder"/> to use.</param>
     public TowerCodePlacer(BlockBuilder builder)
     {
         _builder = builder;
     }
 
-    public enum Move
-    {
-        X,
-        Z,
-    }
-
+    /// <inheritdoc/>
     public int CurrentCodeBlockBlocks => _blocks.Count;
 
+    /// <inheritdoc/>
     public int PlacedBlockCount => _blocks.Count;
 
+    /// <summary>
+    /// Gets or sets the maximum height of the towers.
+    /// </summary>
+    /// <value>The maximum height of the towers, once it is reached a new tower is started.</value>
     public int MaxHeight
     {
         get => _maxHeight;
@@ -49,8 +56,16 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
         }
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the towers will be placed in a square.
+    /// </summary>
+    /// <value>
+    /// If <see langword="true"/>, the towers will be placed in a square;
+    /// if <see langword="false"/>, the towers will be placed in a line.
+    /// </value>
     public bool SquarePlacement { get; set; } = true;
 
+    /// <inheritdoc/>
     public Block PlaceBlock(BlockDef blockType)
     {
         Block block;
@@ -69,15 +84,19 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
         return block;
     }
 
+    /// <inheritdoc/>
     public void Connect(ITerminal fromTerminal, ITerminal toTerminal)
         => _builder.Connect(fromTerminal, toTerminal);
 
+    /// <inheritdoc/>
     public void SetSetting(Block block, int settingIndex, object value)
         => _builder.SetSetting(block, settingIndex, value);
 
+    /// <inheritdoc/>
     public void EnterStatementBlock()
         => _statementDepth++;
 
+    /// <inheritdoc/>
     public void ExitStatementBlock()
     {
         const int move = 4;
@@ -127,17 +146,21 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
         }
     }
 
+    /// <inheritdoc/>
     public void EnterExpressionBlock()
     {
     }
 
+    /// <inheritdoc/>
     public void ExitExpressionBlock()
     {
     }
 
+    /// <inheritdoc/>
     public void EnterHighlight()
         => _inHighlight = true;
 
+    /// <inheritdoc/>
     public void ExitHightlight()
         => _inHighlight = false;
 }

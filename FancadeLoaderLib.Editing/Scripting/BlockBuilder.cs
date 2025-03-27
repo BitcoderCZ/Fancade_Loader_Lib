@@ -13,15 +13,35 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting;
 
+/// <summary>
+/// A class to abstract away the placing and connecting of blocks.
+/// </summary>
 public abstract class BlockBuilder
 {
-#pragma warning disable CA1002 // Do not expose generic lists
+    /// <summary>
+    /// The <see cref="BlockSegment"/>s to place.
+    /// </summary>
     protected List<BlockSegment> segments = [];
-    protected List<Block> highlightedBlocks = [];
-    protected List<ConnectionRecord> connections = [];
-    protected List<SettingRecord> settings = [];
-#pragma warning restore CA1002 // Do not expose generic lists
 
+    /// <summary>
+    /// The highlighted <see cref="Block"/>s to place.
+    /// </summary>
+    protected List<Block> highlightedBlocks = [];
+
+    /// <summary>
+    /// The <see cref="ConnectionRecord"/>s to connect.
+    /// </summary>
+    protected List<ConnectionRecord> connections = [];
+
+    /// <summary>
+    /// The <see cref="SettingRecord"/>s to set.
+    /// </summary>
+    protected List<SettingRecord> settings = [];
+
+    /// <summary>
+    /// Adds blocks to the <see cref="BlockBuilder"/>.
+    /// </summary>
+    /// <param name="blocks">The blocks to add.</param>
     public virtual void AddBlockSegments(IEnumerable<Block> blocks)
     {
         BlockSegment segment = new BlockSegment(blocks);
@@ -29,33 +49,61 @@ public abstract class BlockBuilder
         segments.Add(segment);
     }
 
+    /// <summary>
+    /// Adds a "highlighted" block to the <see cref="BlockBuilder"/>.
+    /// </summary>
+    /// <remarks>
+    /// The block will be placed in a position that is easily visible.
+    /// </remarks>
+    /// <param name="block">The block to add.</param>
     public virtual void AddHighlightedBlock(Block block)
         => highlightedBlocks.Add(block);
 
-    public virtual void Connect(ITerminal fromTerminal, ITerminal toTerminal)
-        => connections.Add(new ConnectionRecord(fromTerminal, toTerminal));
+    /// <summary>
+    /// Connects 2 <see cref="ITerminal"/>s together.
+    /// </summary>
+    /// <param name="from">The first <see cref="ITerminal"/>.</param>
+    /// <param name="to">The second <see cref="ITerminal"/>.</param>
+    public virtual void Connect(ITerminal from, ITerminal to)
+        => connections.Add(new ConnectionRecord(from, to));
 
-    public void Connect(ITerminalStore fromStore, ITerminalStore toStore)
+    /// <summary>
+    /// Connects 2 <see cref="ITerminalStore"/>s together.
+    /// </summary>
+    /// <param name="from">The first <see cref="ITerminalStore"/>.</param>
+    /// <param name="to">The second <see cref="ITerminalStore"/>.</param>
+    public void Connect(ITerminalStore from, ITerminalStore to)
     {
-        if (fromStore is NopTerminalStore or null || toStore is NopTerminalStore or null)
+        if (from is NopTerminalStore or null || to is NopTerminalStore or null)
         {
             return;
         }
 
-        if (toStore.In is null)
+        if (to.In is null)
         {
             return;
         }
 
-        foreach (var target in fromStore.Out)
+        foreach (var target in from.Out)
         {
-            Connect(target, toStore.In);
+            Connect(target, to.In);
         }
     }
 
+    /// <summary>
+    /// Adds a setting to a block.
+    /// </summary>
+    /// <param name="block">The block to add the setting to.</param>
+    /// <param name="settingIndex">Index of the setting.</param>
+    /// <param name="value">The setting value.</param>
     public virtual void SetSetting(Block block, int settingIndex, object value)
         => settings.Add(new SettingRecord(block, settingIndex, value));
 
+    /// <summary>
+    /// Builds the blocks, connections and settings into an output.
+    /// </summary>
+    /// <param name="buildPos">The position at which blocks should be placed.</param>
+    /// <returns>An object representing fancade game, or from which a game can be created.</returns>
     public abstract object Build(int3 buildPos);
 
     public virtual void Clear()
