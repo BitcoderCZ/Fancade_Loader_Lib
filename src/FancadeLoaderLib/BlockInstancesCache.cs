@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FancadeLoaderLib;
@@ -23,6 +24,12 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         BLockId = blockId;
 
         IsEmpty = true;
+
+#if NET9_0_OR_GREATER
+        Lock instancesLock = new();
+#else
+        object instancesLock = new();
+#endif
 
         Parallel.ForEach(prefabs, prefab =>
         {
@@ -46,7 +53,10 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
                 }
             }
 
-            _instances.Add((prefab, positions));
+            lock (instancesLock)
+            {
+                _instances.Add((prefab, positions));
+            }
         });
     }
 
