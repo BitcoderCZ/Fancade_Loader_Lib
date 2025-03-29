@@ -47,6 +47,27 @@ public class PrefabTests
     }
 
     [Test]
+    public async Task IsEmpty_ReturnsTrue_WhenEmpty()
+    {
+        Prefab prefab = CreatePrefab(1, "abc", Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize);
+
+        await Assert.That(prefab.IsEmpty).IsTrue();
+    }
+
+    [Test]
+    public async Task IsEmpty_ReturnsFalse_WhenNotEmpty()
+    {
+        Prefab prefab = CreatePrefab(1, "abc", Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize);
+
+        var voxels = new Voxel[8 * 8 * 8];
+        voxels[0] = new Voxel(FcColor.Blue, false);
+
+        prefab[int3.One * Prefab.MaxSize - 1].Voxels = voxels;
+
+        await Assert.That(prefab.IsEmpty).IsFalse();
+    }
+
+    [Test]
     [Arguments(Prefab.MaxSize - 1, 0, 0)]
     [Arguments(0, Prefab.MaxSize - 1, 0)]
     [Arguments(0, 0, Prefab.MaxSize - 1)]

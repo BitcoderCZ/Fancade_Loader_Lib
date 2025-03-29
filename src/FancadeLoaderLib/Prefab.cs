@@ -270,6 +270,26 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// <value>Size of this prefab.</value>
     public int3 Size { get; private set; }
 
+    /// <summary>
+    /// Gets a value indicating whether the <see cref="Prefab"/> is empty.
+    /// </summary>
+    /// <value><see langword="true"/> if <see cref="PrefabSegment.IsEmpty"/> is <see langword="true"/> for all of the segments; otherwise, <see langword="false"/>.</value>
+    public bool IsEmpty
+    {
+        get
+        {
+            foreach (var segment in _segments.Values)
+            {
+                if (!segment.IsEmpty)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
     /// <inheritdoc/>
     public ICollection<int3> Keys => _segments.Keys;
 
