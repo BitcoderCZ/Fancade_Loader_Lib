@@ -324,11 +324,6 @@ public class PrefabList : ICloneable
     /// <returns>The prefab that was at the specified id, before the update.</returns>
     public Prefab UpdatePrefab(Prefab value, bool overwriteBlocks, BlockInstancesCache? cache = null)
     {
-        if (cache is not null && cache.BLockId != value.Id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(value)}.{nameof(Prefab.Id)}.", nameof(cache));
-        }
-
         var prev = _prefabs[value.Id];
 
         if (!overwriteBlocks && !CanUpdatePrefabIds(prev, value))
@@ -352,14 +347,7 @@ public class PrefabList : ICloneable
 
             offsets = offsets[..len];
 
-            if (cache is null)
-            {
-                RemoveIdsFromPrefab(prev.Id, offsets);
-            }
-            else
-            {
-                cache.RemoveBlocks(offsets);
-            }
+            RemoveIdsFromPrefab(prev.Id, offsets, cache);
         }
 
         _segments.RemoveRange(prev.Id - IdOffset, prev.Count);
@@ -392,14 +380,7 @@ public class PrefabList : ICloneable
 
             ids = ids[..len];
 
-            if (cache is null)
-            {
-                AddIdsToPrefab(value.Id, ids);
-            }
-            else
-            {
-                cache.AddBlocks(this, ids);
-            }
+            AddIdsToPrefab(value.Id, ids, cache);
         }
 
         return prev;
@@ -413,11 +394,6 @@ public class PrefabList : ICloneable
     /// <returns><see langword="true"/> if the prefab was removed; otherwise <see langword="false"/>.</returns>
     public bool RemovePrefab(ushort id, BlockInstancesCache? cache = null)
     {
-        if (cache is not null && cache.BLockId != id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(id)}.", nameof(cache));
-        }
-
         if (!_prefabs.Remove(id, out var prefab))
         {
             return false;
@@ -446,11 +422,6 @@ public class PrefabList : ICloneable
     /// <returns><see langword="true"/> if the prefab was removed; otherwise <see langword="false"/>.</returns>
     public bool RemovePrefab(ushort id, [MaybeNullWhen(false)] out Prefab prefab, BlockInstancesCache? cache = null)
     {
-        if (cache is not null && cache.BLockId != id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(id)}.", nameof(cache));
-        }
-
         if (!_prefabs.Remove(id, out prefab))
         {
             return false;
@@ -478,11 +449,6 @@ public class PrefabList : ICloneable
     /// <returns><see langword="true"/> if the prefab was removed (it was found at least once); otherwise <see langword="false"/>.</returns>
     public bool RemovePrefabFromBLocks(ushort id, BlockInstancesCache? cache = null)
     {
-        if (cache is not null && cache.BLockId != id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(id)}.", nameof(cache));
-        }
-
         var prefab = _prefabs[id];
 
         return RemovePrefabFromBLocks(prefab, cache);
@@ -500,16 +466,9 @@ public class PrefabList : ICloneable
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if <paramref name="segmentPos"/> can be added to the prefab; otherwise <see langword="false"/>.</returns>
     public bool CanAddSegmentToPrefab(ushort id, int3 segmentPos, bool overwriteBlocks, BlockInstancesCache? cache = null)
-    {
-        if (cache is not null && cache.BLockId != id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(id)}.", nameof(cache));
-        }
-
-        return _prefabs.TryGetValue(id, out var prefab) && 
-            (overwriteBlocks || (cache is null ? CanAddIdToPrefab(id, segmentPos) : cache.CanAddBlock(segmentPos))) && 
+        => _prefabs.TryGetValue(id, out var prefab) &&
+            (overwriteBlocks || CanAddIdToPrefab(id, segmentPos, cache)) &&
             !prefab.ContainsKey(segmentPos);
-    }
 
     /// <summary>
     /// Adds a segment to a prefab.
@@ -523,14 +482,9 @@ public class PrefabList : ICloneable
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     public void AddSegmentToPrefab(ushort id, PrefabSegment value, bool overwriteBlocks, BlockInstancesCache? cache = null)
     {
-        if (cache is not null && cache.BLockId != id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(id)}.", nameof(cache));
-        }
-
         var prefab = _prefabs[id];
 
-        if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab))
+        if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab, cache))
         {
             throw new BlockObstructedException($"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
         }
@@ -541,14 +495,7 @@ public class PrefabList : ICloneable
         {
             prefab.Add(value);
             _segments.Add(value);
-            if (cache is null)
-            {
-                AddIdToPrefab(id, value.PosInPrefab, segmentId);
-            }
-            else
-            {
-                cache.AddBlock(this, value.PosInPrefab, segmentId);
-            }
+            AddIdToPrefab(id, value.PosInPrefab, segmentId, cache);
 
             return;
         }
@@ -557,14 +504,7 @@ public class PrefabList : ICloneable
 
         IncreaseAfter(segmentId, 1);
         _segments.Insert(segmentId - IdOffset, value);
-        if (cache is null)
-        {
-            AddIdToPrefab(id, value.PosInPrefab, segmentId);
-        }
-        else
-        {
-            cache.AddBlock(this, value.PosInPrefab, segmentId);
-        }
+        AddIdToPrefab(id, value.PosInPrefab, segmentId, cache);
     }
 
     /// <summary>
@@ -580,17 +520,12 @@ public class PrefabList : ICloneable
     /// <returns><see langword="true"/> if the segment was added to the prefab; otherwise <see langword="false"/>.</returns>
     public bool TryAddSegmentToPrefab(ushort id, PrefabSegment value, bool overwriteBlocks, BlockInstancesCache? cache = null)
     {
-        if (cache is not null && cache.BLockId != id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(id)}.", nameof(cache));
-        }
-
         if (!_prefabs.TryGetValue(id, out var prefab))
         {
             return false;
         }
 
-        if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab))
+        if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab, cache))
         {
             return false;
         }
@@ -605,28 +540,14 @@ public class PrefabList : ICloneable
         if (IsLastPrefab(prefab))
         {
             _segments.Add(value);
-            if (cache is null)
-            {
-                AddIdToPrefab(id, value.PosInPrefab, segmentId);
-            }
-            else
-            {
-                cache.AddBlock(this, value.PosInPrefab, segmentId);
-            }
+            AddIdToPrefab(id, value.PosInPrefab, segmentId, cache);
 
             return true;
         }
 
         IncreaseAfter(segmentId, 1);
         _segments.Insert(segmentId - IdOffset, value);
-        if (cache is null)
-        {
-            AddIdToPrefab(id, value.PosInPrefab, segmentId);
-        }
-        else
-        {
-            cache.AddBlock(this, value.PosInPrefab, segmentId);
-        }
+        AddIdToPrefab(id, value.PosInPrefab, segmentId, cache);
 
         return true;
     }
@@ -640,11 +561,6 @@ public class PrefabList : ICloneable
     /// <returns><see langword="true"/> if the segment was removed from the prefab; otherwise <see langword="false"/>.</returns>
     public bool RemoveSegmentFromPrefab(ushort id, int3 posInPrefab, BlockInstancesCache? cache = null)
     {
-        if (cache is not null && cache.BLockId != id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(id)}.", nameof(cache));
-        }
-
         var prefab = _prefabs[id];
 
         int segmentIndex = prefab.IndexOf(posInPrefab);
@@ -656,14 +572,7 @@ public class PrefabList : ICloneable
         ushort segmentId = (ushort)(id + segmentIndex);
 
         _segments.RemoveAt(segmentId - IdOffset);
-        if (cache is null)
-        {
-            RemoveIdFromBlocks(segmentId);
-        }
-        else
-        {
-            cache.RemoveBlock(posInPrefab);
-        }
+        RemoveIdFromPrefab(id, posInPrefab, cache);
 
         if (segmentId == SegmentCount + IdOffset - 1)
         {
@@ -731,15 +640,7 @@ public class PrefabList : ICloneable
 
         offsets = offsets[..len];
 
-        if (cache is null)
-        {
-            return RemoveIdsFromPrefab(prefab.Id, offsets);
-        }
-        else
-        {
-            cache.RemoveBlocks(offsets);
-            return !cache.IsEmpty;
-        }
+        return RemoveIdsFromPrefab(prefab.Id, offsets, cache);
     }
 
     private bool IsLastPrefab(Prefab prefab)
@@ -748,23 +649,25 @@ public class PrefabList : ICloneable
     private bool WillBeLastPrefab(Prefab prefab)
         => prefab.Id == SegmentCount + IdOffset;
 
-    private void RemoveIdFromBlocks(ushort id)
+    private void RemoveIdFromPrefab(ushort prefabId, int3 offset, BlockInstancesCache? cache)
     {
+        if (cache is not null)
+        {
+            cache.RemoveBlock(offset);
+            return;
+        }
+
         foreach (var prefab in _prefabs.Values)
         {
-            ushort[] array = prefab.Blocks.Array.Array;
-
             for (int z = 0; z < prefab.Blocks.Size.Z; z++)
             {
                 for (int y = 0; y < prefab.Blocks.Size.Y; y++)
                 {
                     for (int x = 0; x < prefab.Blocks.Size.X; x++)
                     {
-                        int i = prefab.Blocks.Index(new int3(x, y, z));
-
-                        if (array[i] == id)
+                        if (prefab.Blocks.GetBlockUnchecked(new int3(x, y, z)) == prefabId)
                         {
-                            array[i] = 0;
+                            prefab.Blocks.SetBlock(new int3(x, y, z) + offset, 0);
                         }
                     }
                 }
@@ -772,8 +675,14 @@ public class PrefabList : ICloneable
         }
     }
 
-    private bool RemoveIdsFromPrefab(ushort prefabId, ReadOnlySpan<int3> offsets)
+    private bool RemoveIdsFromPrefab(ushort prefabId, ReadOnlySpan<int3> offsets, BlockInstancesCache? cache)
     {
+        if (cache is not null)
+        {
+            cache.RemoveBlocks(offsets);
+            return !cache.IsEmpty;
+        }
+
         bool found = false;
 
         foreach (var prefab in _prefabs.Values)
@@ -801,8 +710,13 @@ public class PrefabList : ICloneable
         return found;
     }
 
-    private bool CanAddIdToPrefab(ushort prefabId, int3 offset)
+    private bool CanAddIdToPrefab(ushort prefabId, int3 offset, BlockInstancesCache? cache)
     {
+        if (cache is not null)
+        {
+            return cache.CanAddBlock(offset);
+        }
+
         foreach (var prefab in _prefabs.Values)
         {
             for (int z = 0; z < prefab.Blocks.Size.Z; z++)
@@ -872,8 +786,14 @@ public class PrefabList : ICloneable
         return true;
     }
 
-    private void AddIdToPrefab(ushort prefabId, int3 offset, ushort id)
+    private void AddIdToPrefab(ushort prefabId, int3 offset, ushort id, BlockInstancesCache? cache)
     {
+        if (cache is not null)
+        {
+            cache.AddBlock(this, offset, id);
+            return;
+        }
+
         foreach (var prefab in _prefabs.Values)
         {
             for (int z = 0; z < prefab.Blocks.Size.Z; z++)
@@ -906,8 +826,14 @@ public class PrefabList : ICloneable
         }
     }
 
-    private void AddIdsToPrefab(ushort prefabId, ReadOnlySpan<(int3 Offset, ushort Id)> ids)
+    private void AddIdsToPrefab(ushort prefabId, ReadOnlySpan<(int3 Offset, ushort Id)> ids, BlockInstancesCache? cache)
     {
+        if (cache is not null)
+        {
+            cache.AddBlocks(this, ids);
+            return;
+        }
+
         foreach (var prefab in _prefabs.Values)
         {
             for (int z = 0; z < prefab.Blocks.Size.Z; z++)

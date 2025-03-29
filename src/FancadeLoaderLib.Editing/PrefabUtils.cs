@@ -32,11 +32,6 @@ public static class PrefabUtils
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     public static void Fill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
     {
-        if (cache is not null && cache.BLockId != prefab.Id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(prefab)}.{nameof(Prefab.Id)}.", nameof(cache));
-        }
-
         (fromVoxel, toVoxel) = VectorUtils.MinMax(ClampVoxelToPrefab(fromVoxel), ClampVoxelToPrefab(toVoxel));
 
         int3 fromSegment = VoxelToSegment(fromVoxel);
@@ -110,11 +105,6 @@ public static class PrefabUtils
     /// <returns><see langword="true"/> if the fill was successful; otherwise, <see langword="false"/>.</returns>
     public static bool TryFill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
     {
-        if (cache is not null && cache.BLockId != prefab.Id)
-        {
-            ThrowArgumentException($"{nameof(cache)}.{nameof(BlockInstancesCache.BLockId)} must be equal to {nameof(prefab)}.{nameof(Prefab.Id)}.", nameof(cache));
-        }
-
         (fromVoxel, toVoxel) = VectorUtils.MinMax(ClampVoxelToPrefab(fromVoxel), ClampVoxelToPrefab(toVoxel));
 
         int3 fromSegment = VoxelToSegment(fromVoxel);
