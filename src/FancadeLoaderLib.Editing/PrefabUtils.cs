@@ -32,7 +32,15 @@ public static class PrefabUtils
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     public static void Fill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
     {
-        (fromVoxel, toVoxel) = VectorUtils.MinMax(ClampVoxelToPrefab(fromVoxel), ClampVoxelToPrefab(toVoxel));
+        (fromVoxel, toVoxel) = VectorUtils.MinMax(fromVoxel, toVoxel);
+
+        if (!HasOverlap(fromVoxel, toVoxel, int3.Zero, (int3.One * 8 * Prefab.MaxSize) - 1))
+        {
+            return;
+        }
+
+        fromVoxel = ClampVoxelToPrefab(fromVoxel);
+        toVoxel = ClampVoxelToPrefab(toVoxel);
 
         int3 fromSegment = VoxelToSegment(fromVoxel);
         int3 toSegment = VoxelToSegment(toVoxel);
@@ -105,7 +113,15 @@ public static class PrefabUtils
     /// <returns><see langword="true"/> if the fill was successful; otherwise, <see langword="false"/>.</returns>
     public static bool TryFill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
     {
-        (fromVoxel, toVoxel) = VectorUtils.MinMax(ClampVoxelToPrefab(fromVoxel), ClampVoxelToPrefab(toVoxel));
+        (fromVoxel, toVoxel) = VectorUtils.MinMax(fromVoxel, toVoxel);
+
+        if (!HasOverlap(fromVoxel, toVoxel, int3.Zero, (int3.One * 8 * Prefab.MaxSize) - 1))
+        {
+            return true;
+        }
+
+        fromVoxel = ClampVoxelToPrefab(fromVoxel);
+        toVoxel = ClampVoxelToPrefab(toVoxel);
 
         int3 fromSegment = VoxelToSegment(fromVoxel);
         int3 toSegment = VoxelToSegment(toVoxel);
@@ -182,7 +198,15 @@ public static class PrefabUtils
             ThrowArgumentOutOfRangeException(nameof(sideIndex), $"{nameof(sideIndex)} must be between 0 and 5.");
         }
 
-        (fromVoxel, toVoxel) = VectorUtils.MinMax(ClampVoxelToPrefab(fromVoxel), ClampVoxelToPrefab(toVoxel));
+        (fromVoxel, toVoxel) = VectorUtils.MinMax(fromVoxel, toVoxel);
+
+        if (!HasOverlap(fromVoxel, toVoxel, int3.Zero, (int3.One * 8 * Prefab.MaxSize) - 1))
+        {
+            return;
+        }
+
+        fromVoxel = ClampVoxelToPrefab(fromVoxel);
+        toVoxel = ClampVoxelToPrefab(toVoxel);
 
         byte colorByte = (byte)color;
 
@@ -220,6 +244,13 @@ public static class PrefabUtils
     /// <returns><see langword="true"/> if segments were added; otherwise, <see langword="false"/>.</returns>
     public static bool EnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
     {
+        (from, to) = VectorUtils.MinMax(from, to);
+
+        if (!HasOverlap(from, to, int3.Zero, (int3.One * Prefab.MaxSize) - 1))
+        {
+            return false;
+        }
+
         from = ClampSegmentToPrefab(from);
         to = ClampSegmentToPrefab(to);
 
@@ -275,10 +306,17 @@ public static class PrefabUtils
     /// <returns><see langword="true"/> if the operation was successful; otherwise, <see langword="false"/>.</returns>
     public static bool TryEnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache, out bool segmentsAdded)
     {
+        segmentsAdded = false;
+
+        (from, to) = VectorUtils.MinMax(from, to);
+
+        if (!HasOverlap(from, to, int3.Zero, (int3.One * Prefab.MaxSize) - 1))
+        {
+            return true;
+        }
+
         from = ClampSegmentToPrefab(from);
         to = ClampSegmentToPrefab(to);
-
-        segmentsAdded = false;
 
         List<int3>? segmentsToAdd = null;
         if (prefabList is not null)
@@ -369,4 +407,9 @@ public static class PrefabUtils
     /// <returns>The converted postition.</returns>
     public static int3 VoxelToSegment(int3 pos)
         => pos / 8;
+
+    private static bool HasOverlap(int3 minA, int3 maxA, int3 minB, int3 maxB)
+        => (minA.X <= maxB.X && maxA.X >= minB.X) &&
+            (minA.Y <= maxB.Y && maxA.Y >= minB.Y) &&
+            (minA.Z <= maxB.Z && maxA.Z >= minB.Z);
 }

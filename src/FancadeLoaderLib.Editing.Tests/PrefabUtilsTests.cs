@@ -11,6 +11,28 @@ public class PrefabUtilsTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
+    public async Task Fill_PosOutOfBounds_DoesNothing(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab = CreatePrefab(1, 1);
+        prefabList.AddPrefab(prefab);
+
+        var prefabClone = prefab.Clone(true);
+
+        var voxel = new Voxel(FcColor.Blue, false);
+
+        prefab.Fill(new int3(-10, -10, -10), new int3(-1, -1, -1), voxel, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
+
+        await Assert.That(prefab).IsEqualTo(prefabClone, new PrefabComparer());
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
     public async Task Fill_FillVoxels(bool cache)
     {
         var prefabList = new PrefabList()
@@ -182,6 +204,30 @@ public class PrefabUtilsTests
 
         await Assert.That(prefab1.Size).IsEqualTo(new int3(2, 1, 1));
         await Assert.That(prefab2.Id).IsEqualTo((ushort)3);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task TryFill_PosOutOfBounds_DoesNothing(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab = CreatePrefab(1, 1);
+        prefabList.AddPrefab(prefab);
+
+        var prefabClone = prefab.Clone(true);
+
+        var voxel = new Voxel(FcColor.Blue, false);
+
+        bool filled = prefab.TryFill(new int3(-10, -10, -10), new int3(-1, -1, -1), voxel, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
+
+        await Assert.That(filled).IsTrue();
+
+        await Assert.That(prefab).IsEqualTo(prefabClone, new PrefabComparer());
     }
 
     [Test]
