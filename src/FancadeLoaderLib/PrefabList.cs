@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.InteropServices;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
@@ -326,9 +327,9 @@ public class PrefabList : ICloneable
     {
         var prev = _prefabs[value.Id];
 
-        if (!overwriteBlocks && !CanUpdatePrefabIds(prev, value))
+        if (!overwriteBlocks && !CanUpdatePrefabIds(prev, value, cache, out var obstructionInfo))
         {
-            throw new BlockObstructedException($"Cannot update prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+            throw new BlockObstructedException(obstructionInfo, $"Cannot update prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
         }
 
         if (prev.Count > 1)
@@ -467,7 +468,7 @@ public class PrefabList : ICloneable
     /// <returns><see langword="true"/> if <paramref name="segmentPos"/> can be added to the prefab; otherwise <see langword="false"/>.</returns>
     public bool CanAddSegmentToPrefab(ushort id, int3 segmentPos, bool overwriteBlocks, BlockInstancesCache? cache = null)
         => _prefabs.TryGetValue(id, out var prefab) &&
-            (overwriteBlocks || CanAddIdToPrefab(id, segmentPos, cache)) &&
+            (overwriteBlocks || CanAddIdToPrefab(id, segmentPos, cache, out _)) &&
             !prefab.ContainsKey(segmentPos);
 
     /// <summary>
@@ -484,9 +485,9 @@ public class PrefabList : ICloneable
     {
         var prefab = _prefabs[id];
 
-        if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab, cache))
+        if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab, cache, out var obstructionInfo))
         {
-            throw new BlockObstructedException($"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+            throw new BlockObstructedException(obstructionInfo, $"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
         }
 
         ushort segmentId = (ushort)(prefab.Id + prefab.Count);
@@ -525,7 +526,7 @@ public class PrefabList : ICloneable
             return false;
         }
 
-        if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab, cache))
+        if (!overwriteBlocks && !CanAddIdToPrefab(id, value.PosInPrefab, cache, out _))
         {
             return false;
         }
@@ -710,11 +711,11 @@ public class PrefabList : ICloneable
         return found;
     }
 
-    private bool CanAddIdToPrefab(ushort prefabId, int3 offset, BlockInstancesCache? cache)
+    private bool CanAddIdToPrefab(ushort prefabId, int3 offset, BlockInstancesCache? cache, out BlockObstructionInfo obstructionInfo)
     {
         if (cache is not null)
         {
-            return cache.CanAddBlock(offset);
+            return cache.CanAddBlock(offset, out obstructionInfo);
         }
 
         foreach (var prefab in _prefabs.Values)
@@ -731,6 +732,7 @@ public class PrefabList : ICloneable
                         {
                             if (prefab.Blocks.GetBlockOrDefault(pos + offset) != 0)
                             {
+                                obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
                                 return false;
                             }
                         }
@@ -739,10 +741,11 @@ public class PrefabList : ICloneable
             }
         }
 
+        obstructionInfo = default;
         return true;
     }
 
-    private bool CanUpdatePrefabIds(Prefab oldPrefab, Prefab newPrefab)
+    private bool CanUpdatePrefabIds(Prefab oldPrefab, Prefab newPrefab, BlockInstancesCache? cache, out BlockObstructionInfo obstructionInfo)
     {
         Debug.Assert(oldPrefab.Id == newPrefab.Id, "Ids should be equal.");
 
@@ -756,6 +759,11 @@ public class PrefabList : ICloneable
             {
                 newPositions.Add(pos);
             }
+        }
+
+        if (cache is not null)
+        {
+            return cache.CanAddBlocks(CollectionsMarshal.AsSpan(newPositions), out obstructionInfo);
         }
 
         foreach (var prefab in _prefabs.Values)
@@ -774,6 +782,7 @@ public class PrefabList : ICloneable
                             {
                                 if (prefab.Blocks.GetBlockOrDefault(pos + offset) != 0)
                                 {
+                                    obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
                                     return false;
                                 }
                             }
@@ -783,6 +792,7 @@ public class PrefabList : ICloneable
             }
         }
 
+        obstructionInfo = default;
         return true;
     }
 

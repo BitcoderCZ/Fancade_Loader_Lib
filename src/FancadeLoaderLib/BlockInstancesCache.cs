@@ -190,8 +190,10 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         }
     }
 
-    internal bool CanAddBlock(int3 offset)
+    internal bool CanAddBlock(int3 offset, out BlockObstructionInfo obstructionInfo)
     {
+        obstructionInfo = default;
+
         if (IsEmpty)
         {
             return true;
@@ -203,7 +205,35 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
             {
                 if (prefab.Blocks.GetBlockOrDefault(pos + offset) != 0)
                 {
+                    obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
                     return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    internal bool CanAddBlocks(ReadOnlySpan<int3> offsets, out BlockObstructionInfo obstructionInfo)
+    {
+        obstructionInfo = default;
+
+        if (IsEmpty)
+        {
+            return true;
+        }
+
+        foreach (var (prefab, positions) in _instances)
+        {
+            foreach (var pos in positions)
+            {
+                foreach (var offset in offsets)
+                {
+                    if (prefab.Blocks.GetBlockOrDefault(pos + offset) != 0)
+                    {
+                        obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
+                        return false;
+                    }
                 }
             }
         }
