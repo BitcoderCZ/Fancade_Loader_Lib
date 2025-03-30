@@ -380,6 +380,39 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
     }
 
     /// <summary>
+    /// Determines the indes of a segment, if it was at the specified position.
+    /// </summary>
+    /// <param name="key">Position of the segment.</param>
+    /// <returns>The index of the segment if it is in bounds; otherwise, <c>-1</c>.</returns>
+    public int GetNewSegmentIndex(int3 key)
+    {
+        int index = 0;
+
+        for (int z = 0; z < MaxSize; z++)
+        {
+            for (int y = 0; y < MaxSize; y++)
+            {
+                for (int x = 0; x < MaxSize; x++)
+                {
+                    int3 pos = new int3(x, y, z);
+
+                    if (pos == key)
+                    {
+                        return index;
+                    }
+
+                    if (_segments.ContainsKey(pos))
+                    {
+                        index++;
+                    }
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    /// <summary>
     /// Removes all, but the first segment.
     /// </summary>
     public void Clear()

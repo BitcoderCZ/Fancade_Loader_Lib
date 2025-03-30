@@ -266,6 +266,72 @@ public class PrefabListTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
+    public async Task UpdatePrefab_NotLastSegment_UpdatesPrefabAndSegments(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, [new int3(0, 0, 0), new int3(0, 0, 1)]);
+        var prefab3 = CreatePrefab(5, 2);
+
+        var blocks = prefab1.Blocks;
+
+        blocks.SetPrefab(new int3(0, 0, 0), prefab2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+        prefabList.AddPrefab(prefab3);
+
+        var newPrefab = CreatePrefab(3, [new int3(0, 0, 0), new int3(0, 1, 0), new int3(0, 0, 1)]);
+
+        var prevPrefab = prefabList.UpdatePrefab(newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, newPrefab.Id) : null);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlock(new int3(0, 1, 0))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)5);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 0))).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 1, 0))).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 1))).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.PrefabCount).IsEqualTo(3);
+            await Assert.That(prefabList.SegmentCount).IsEqualTo(7);
+        }
+
+        await Assert.That(prevPrefab).IsEqualTo(prefab2);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(newPrefab.Id).IsEqualTo((ushort)3);
+            await Assert.That(prefab3.Id).IsEqualTo((ushort)6);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetPrefab(3)).IsEqualTo(newPrefab);
+
+            foreach (var (segment, segmentId) in newPrefab.EnumerateWithId())
+            {
+                await Assert.That(prefabList.GetSegment(segmentId)).IsEqualTo(segment);
+            }
+        }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
     public async Task UpdatePrefab_AddsIds(bool cache)
     {
         var prefabList = new PrefabList()
@@ -699,6 +765,51 @@ public class PrefabListTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
+    public async Task AddSegmentToPrefab_NotLastSegment_UpdatesIdsAndShiftBlockIds(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreatePrefab(1, [new int3(0, 0, 0), new int3(0, 0, 1)]);
+        var prefab2 = CreatePrefab(3, 2);
+
+        var blocks = prefab2.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 2), prefab2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        var newPrefab = new PrefabSegment(1, new int3(0, 1, 0));
+        prefabList.AddSegmentToPrefab(1, newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.PrefabCount).IsEqualTo(2);
+            await Assert.That(prefabList.SegmentCount).IsEqualTo(5);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)4);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(0, 1, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)5);
+        }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
     public async Task AddSegmentToPrefab_WithObstruction_ThrowsException(bool cache)
     {
         var prefabList = new PrefabList()
@@ -783,6 +894,53 @@ public class PrefabListTests
             await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
             await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
             await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)0);
+        }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task TryAddSegmentToPrefab_NotLastSegment_UpdatesIdsAndShiftBlockIds(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreatePrefab(1, [new int3(0, 0, 0), new int3(0, 0, 1)]);
+        var prefab2 = CreatePrefab(3, 2);
+
+        var blocks = prefab2.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 2), prefab2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        var newPrefab = new PrefabSegment(1, new int3(0, 1, 0));
+        bool added = prefabList.TryAddSegmentToPrefab(1, newPrefab, false, cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
+
+        await Assert.That(added).IsTrue();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.PrefabCount).IsEqualTo(2);
+            await Assert.That(prefabList.SegmentCount).IsEqualTo(5);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)4);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(0, 1, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)5);
         }
     }
 
@@ -1051,6 +1209,9 @@ public class PrefabListTests
     private static Prefab CreatePrefab(ushort id, int segmentCount)
         => CreatePrefab(id, CreateSegments(id, segmentCount));
 
+    private static Prefab CreatePrefab(ushort id, int3[] posititons)
+        => CreatePrefab(id, CreateSegments(id, posititons));
+
     private static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count)
     {
         Debug.Assert(count < 4 * 4 * 4);
@@ -1066,6 +1227,25 @@ public class PrefabListTests
                     if (++c >= count)
                     {
                         yield break;
+                    }
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<PrefabSegment> CreateSegments(ushort id, int3[] posititons)
+    {
+        Debug.Assert(posititons.Length < 4 * 4 * 4);
+
+        for (int z = 0; z < 4; z++)
+        {
+            for (int y = 0; y < 4; y++)
+            {
+                for (int x = 0; x < 4; x++)
+                {
+                    if (posititons.Contains(new int3(x, y, z)))
+                    {
+                        yield return new PrefabSegment(id, new int3(x, y, z));
                     }
                 }
             }

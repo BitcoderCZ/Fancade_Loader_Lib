@@ -490,7 +490,7 @@ public class PrefabList : ICloneable
             throw new BlockObstructedException(obstructionInfo, $"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
         }
 
-        ushort segmentId = (ushort)(prefab.Id + prefab.Count);
+        ushort segmentId = (ushort)(prefab.Id + prefab.GetNewSegmentIndex(value.PosInPrefab));
 
         if (IsLastPrefab(prefab))
         {
@@ -536,7 +536,7 @@ public class PrefabList : ICloneable
             return false;
         }
 
-        ushort segmentId = (ushort)(prefab.Id + prefab.Count - 1);
+        ushort segmentId = (ushort)(prefab.Id + prefab.GetNewSegmentIndex(value.PosInPrefab));
 
         if (IsLastPrefab(prefab))
         {
@@ -569,6 +569,8 @@ public class PrefabList : ICloneable
         {
             return false;
         }
+
+        Debug.Assert(segmentIndex != -1, "Because the segment was succesfully removed, it's index before removal shoudn't be -1.");
 
         ushort segmentId = (ushort)(id + segmentIndex);
 

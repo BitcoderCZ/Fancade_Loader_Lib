@@ -296,6 +296,88 @@ public class PartialPrefabListTests
     }
 
     [Test]
+    public async Task AddSegmentToPrefab_NotLastSegment_UpdatesIds()
+    {
+        var prefabList = new PartialPrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreatePrefab(1, [new int3(0, 0, 0), new int3(0, 0, 1)]);
+        var prefab2 = CreatePrefab(3, 2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        var newSegment = new PartialPrefabSegment(1, new int3(0, 1, 0));
+        prefabList.AddSegmentToPrefab(1, newSegment);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.PrefabCount).IsEqualTo(2);
+            await Assert.That(prefabList.SegmentCount).IsEqualTo(5);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetSegment(1)).IsEqualTo(prefab1[new int3(0, 0, 0)]);
+            await Assert.That(prefabList.GetSegment(2)).IsEqualTo(prefab1[new int3(0, 1, 0)]);
+            await Assert.That(prefabList.GetSegment(3)).IsEqualTo(prefab1[new int3(0, 0, 1)]);
+
+            await Assert.That(prefabList.GetSegment(4)).IsEqualTo(prefab2[new int3(0, 0, 0)]);
+            await Assert.That(prefabList.GetSegment(5)).IsEqualTo(prefab2[new int3(1, 0, 0)]);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)4);
+        }
+    }
+
+    [Test]
+    public async Task TryAddSegmentToPrefab_NotLastSegment_UpdatesIds()
+    {
+        var prefabList = new PartialPrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreatePrefab(1, [new int3(0, 0, 0), new int3(0, 0, 1)]);
+        var prefab2 = CreatePrefab(3, 2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        var newSegment = new PartialPrefabSegment(1, new int3(0, 1, 0));
+        bool added = prefabList.TryAddSegmentToPrefab(1, newSegment);
+
+        await Assert.That(added).IsTrue();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.PrefabCount).IsEqualTo(2);
+            await Assert.That(prefabList.SegmentCount).IsEqualTo(5);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetSegment(1)).IsEqualTo(prefab1[new int3(0, 0, 0)]);
+            await Assert.That(prefabList.GetSegment(2)).IsEqualTo(prefab1[new int3(0, 1, 0)]);
+            await Assert.That(prefabList.GetSegment(3)).IsEqualTo(prefab1[new int3(0, 0, 1)]);
+
+            await Assert.That(prefabList.GetSegment(4)).IsEqualTo(prefab2[new int3(0, 0, 0)]);
+            await Assert.That(prefabList.GetSegment(5)).IsEqualTo(prefab2[new int3(1, 0, 0)]);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)4);
+        }
+    }
+
+    [Test]
     public async Task RemoveSegmentFromPrefab_RemovesSegmentsAndUpdatesPrefab()
     {
         var prefabList = new PartialPrefabList()
@@ -453,6 +535,9 @@ public class PartialPrefabListTests
     private static PartialPrefab CreatePrefab(ushort id, int segmentCount)
         => CreatePrefab(id, CreateSegments(id, segmentCount));
 
+    private static PartialPrefab CreatePrefab(ushort id, int3[] posititons)
+        => CreatePrefab(id, CreateSegments(id, posititons));
+
     private static IEnumerable<PartialPrefabSegment> CreateSegments(ushort id, int count)
     {
         Debug.Assert(count < 4 * 4 * 4);
@@ -468,6 +553,25 @@ public class PartialPrefabListTests
                     if (++c >= count)
                     {
                         yield break;
+                    }
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<PartialPrefabSegment> CreateSegments(ushort id, int3[] posititons)
+    {
+        Debug.Assert(posititons.Length < 4 * 4 * 4);
+
+        for (int z = 0; z < 4; z++)
+        {
+            for (int y = 0; y < 4; y++)
+            {
+                for (int x = 0; x < 4; x++)
+                {
+                    if (posititons.Contains(new int3(x, y, z)))
+                    {
+                        yield return new PartialPrefabSegment(id, new int3(x, y, z));
                     }
                 }
             }

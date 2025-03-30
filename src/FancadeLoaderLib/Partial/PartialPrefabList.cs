@@ -416,7 +416,7 @@ public partial class PartialPrefabList : ICloneable
     {
         var prefab = _prefabs[id];
 
-        ushort segmentId = (ushort)(prefab.Id + prefab.Count);
+        ushort segmentId = (ushort)(prefab.Id + prefab.GetNewSegmentIndex(value.PosInPrefab));
 
         if (IsLastPrefab(prefab))
         {
@@ -449,7 +449,7 @@ public partial class PartialPrefabList : ICloneable
             return false;
         }
 
-        ushort segmentId = (ushort)(prefab.Id + prefab.Count - 1);
+        ushort segmentId = (ushort)(prefab.Id + prefab.GetNewSegmentIndex(value.PosInPrefab));
 
         if (IsLastPrefab(prefab))
         {
@@ -478,6 +478,8 @@ public partial class PartialPrefabList : ICloneable
         {
             return false;
         }
+
+        Debug.Assert(segmentIndex != -1, "Because the segment was succesfully removed, it's index before removal shoudn't be -1.");
 
         ushort segmentId = (ushort)(id + segmentIndex);
 
