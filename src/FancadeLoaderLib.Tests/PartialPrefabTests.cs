@@ -2,6 +2,7 @@
 using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
+using static FancadeLoaderLib.Tests.Common.PartialPrefabGenerator;
 
 namespace FancadeLoaderLib.Tests;
 
@@ -12,7 +13,7 @@ public class PartialPrefabTests
     {
         string name = new string('a', 255);
 
-        PartialPrefab prefab = CreatePrefab(1, name, 1);
+        PartialPrefab prefab = CreatePrefab(1, 1, name);
 
         await Assert.That(prefab.Name).IsEqualTo(name);
     }
@@ -22,7 +23,7 @@ public class PartialPrefabTests
     {
         string name = new string('a', 256);
 
-        await Assert.That(() => CreatePrefab(1, name, 1)).Throws<ArgumentException>();
+        await Assert.That(() => CreatePrefab(1, 1, name)).Throws<ArgumentException>();
     }
 
     [Test]
@@ -30,7 +31,7 @@ public class PartialPrefabTests
     {
         string name = new string('a', 255);
 
-        PartialPrefab prefab = CreatePrefab(1, "abc", 1);
+        PartialPrefab prefab = CreatePrefab(1, 1, "abc");
 
         prefab.Name = name;
 
@@ -42,7 +43,7 @@ public class PartialPrefabTests
     {
         string name = new string('a', 256);
 
-        PartialPrefab prefab = CreatePrefab(1, "abc", 1);
+        PartialPrefab prefab = CreatePrefab(1, 1, "abc");
 
         await Assert.That(() => prefab.Name = name).Throws<ArgumentException>();
     }
@@ -53,7 +54,7 @@ public class PartialPrefabTests
     [Arguments(0, 0, Prefab.MaxSize - 1)]
     public async Task Add_PosInBounds_DoesNotThrow(int x, int y, int z)
     {
-        PartialPrefab prefab = CreatePrefab(1, "abc", 1);
+        PartialPrefab prefab = CreatePrefab(1, 1);
 
         prefab.Add(new PartialPrefabSegment(1, new int3(x, y, z)));
 
@@ -69,35 +70,8 @@ public class PartialPrefabTests
     [Arguments(0, 0, Prefab.MaxSize)]
     public async Task Add_PosOutOfBounds_Throws(int x, int y, int z)
     {
-        PartialPrefab prefab = CreatePrefab(1, "abc", 1);
+        PartialPrefab prefab = CreatePrefab(1, 1);
 
         await Assert.That(() => prefab.Add(new PartialPrefabSegment(1, new int3(x, y, z)))).Throws<ArgumentOutOfRangeException>();
-    }
-
-    private static PartialPrefab CreatePrefab(ushort id, string name, IEnumerable<PartialPrefabSegment> segments)
-        => new PartialPrefab(id, name, PrefabType.Normal, segments);
-
-    private static PartialPrefab CreatePrefab(ushort id, string name, int segmentCount)
-        => CreatePrefab(id, name, CreateSegments(id, segmentCount));
-
-    private static IEnumerable<PartialPrefabSegment> CreateSegments(ushort id, int count)
-    {
-        Debug.Assert(count < 4 * 4 * 4);
-
-        int c = 0;
-        for (int z = 0; z < 4; z++)
-        {
-            for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                    yield return new PartialPrefabSegment(id, new int3(x, y, z));
-                    if (++c >= count)
-                    {
-                        yield break;
-                    }
-                }
-            }
-        }
     }
 }

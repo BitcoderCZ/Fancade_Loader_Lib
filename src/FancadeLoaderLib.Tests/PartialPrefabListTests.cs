@@ -3,6 +3,7 @@ using FancadeLoaderLib.Tests.Common;
 using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
+using static FancadeLoaderLib.Tests.Common.PartialPrefabGenerator;
 
 namespace FancadeLoaderLib.Tests;
 
@@ -526,55 +527,6 @@ public class PartialPrefabListTests
 
             await Assert.That(loadedPartialPrefabList.Prefabs).IsEquivalentTo(prefabList.Prefabs, new PartialPrefabComparer());
             await Assert.That(loadedPartialPrefabList.Segments).IsEquivalentTo(prefabList.Segments, new PartialPrefabSegmentComparer());
-        }
-    }
-
-    private static PartialPrefab CreatePrefab(ushort id, IEnumerable<PartialPrefabSegment> segments)
-        => new PartialPrefab(id, $"Prefab {id}", PrefabType.Normal, segments);
-
-    private static PartialPrefab CreatePrefab(ushort id, int segmentCount)
-        => CreatePrefab(id, CreateSegments(id, segmentCount));
-
-    private static PartialPrefab CreatePrefab(ushort id, int3[] posititons)
-        => CreatePrefab(id, CreateSegments(id, posititons));
-
-    private static IEnumerable<PartialPrefabSegment> CreateSegments(ushort id, int count)
-    {
-        Debug.Assert(count < 4 * 4 * 4);
-
-        int c = 0;
-        for (int z = 0; z < 4; z++)
-        {
-            for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                    yield return new PartialPrefabSegment(id, new int3(x, y, z));
-                    if (++c >= count)
-                    {
-                        yield break;
-                    }
-                }
-            }
-        }
-    }
-
-    private static IEnumerable<PartialPrefabSegment> CreateSegments(ushort id, int3[] posititons)
-    {
-        Debug.Assert(posititons.Length < 4 * 4 * 4);
-
-        for (int z = 0; z < 4; z++)
-        {
-            for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                    if (posititons.Contains(new int3(x, y, z)))
-                    {
-                        yield return new PartialPrefabSegment(id, new int3(x, y, z));
-                    }
-                }
-            }
         }
     }
 }

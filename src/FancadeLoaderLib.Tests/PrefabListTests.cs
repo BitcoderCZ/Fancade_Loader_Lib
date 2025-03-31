@@ -3,6 +3,7 @@ using FancadeLoaderLib.Tests.Common;
 using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
+using static FancadeLoaderLib.Tests.Common.PrefabGenerator;
 
 namespace FancadeLoaderLib.Tests;
 
@@ -799,6 +800,13 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
+            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 0))).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 1, 0))).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 1))).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
+        }
+
+        using (Assert.Multiple())
+        {
             await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
             await Assert.That(blocks.GetBlock(new int3(0, 1, 0))).IsEqualTo((ushort)2);
             await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
@@ -932,6 +940,13 @@ public class PrefabListTests
         {
             await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
             await Assert.That(prefab2.Id).IsEqualTo((ushort)4);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 0))).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 1, 0))).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 1))).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
         }
 
         using (Assert.Multiple())
@@ -1200,55 +1215,6 @@ public class PrefabListTests
 
             await Assert.That(loadedPrefabList.Prefabs).IsEquivalentTo(prefabList.Prefabs, new PrefabComparer());
             await Assert.That(loadedPrefabList.Segments).IsEquivalentTo(prefabList.Segments, new PrefabSegmentComparer());
-        }
-    }
-
-    private static Prefab CreatePrefab(ushort id, IEnumerable<PrefabSegment> segments)
-        => new Prefab(id, $"Prefab {id}", PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, null, null, null, segments);
-
-    private static Prefab CreatePrefab(ushort id, int segmentCount)
-        => CreatePrefab(id, CreateSegments(id, segmentCount));
-
-    private static Prefab CreatePrefab(ushort id, int3[] posititons)
-        => CreatePrefab(id, CreateSegments(id, posititons));
-
-    private static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count)
-    {
-        Debug.Assert(count < 4 * 4 * 4);
-
-        int c = 0;
-        for (int z = 0; z < 4; z++)
-        {
-            for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                    yield return new PrefabSegment(id, new int3(x, y, z));
-                    if (++c >= count)
-                    {
-                        yield break;
-                    }
-                }
-            }
-        }
-    }
-
-    private static IEnumerable<PrefabSegment> CreateSegments(ushort id, int3[] posititons)
-    {
-        Debug.Assert(posititons.Length < 4 * 4 * 4);
-
-        for (int z = 0; z < 4; z++)
-        {
-            for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                    if (posititons.Contains(new int3(x, y, z)))
-                    {
-                        yield return new PrefabSegment(id, new int3(x, y, z));
-                    }
-                }
-            }
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
+using static FancadeLoaderLib.Tests.Common.PrefabGenerator;
 
 namespace FancadeLoaderLib.Tests;
 
@@ -11,7 +12,7 @@ public class PrefabTests
     {
         string name = new string('a', 255);
 
-        Prefab prefab = CreatePrefab(1, name, 1);
+        Prefab prefab = CreatePrefab(1, 1, name);
 
         await Assert.That(prefab.Name).IsEqualTo(name);
     }
@@ -21,7 +22,7 @@ public class PrefabTests
     {
         string name = new string('a', 256);
 
-        await Assert.That(() => CreatePrefab(1, name, 1)).Throws<ArgumentException>();
+        await Assert.That(() => CreatePrefab(1, 1, name)).Throws<ArgumentException>();
     }
 
     [Test]
@@ -29,7 +30,7 @@ public class PrefabTests
     {
         string name = new string('a', 255);
 
-        Prefab prefab = CreatePrefab(1, "abc", 1);
+        Prefab prefab = CreatePrefab(1, 1, "abc");
 
         prefab.Name = name;
 
@@ -41,7 +42,7 @@ public class PrefabTests
     {
         string name = new string('a', 256);
 
-        Prefab prefab = CreatePrefab(1, "abc", 1);
+        Prefab prefab = CreatePrefab(1, 1, "abc");
 
         await Assert.That(() => prefab.Name = name).Throws<ArgumentException>();
     }
@@ -49,7 +50,7 @@ public class PrefabTests
     [Test]
     public async Task IsEmpty_ReturnsTrue_WhenEmpty()
     {
-        Prefab prefab = CreatePrefab(1, "abc", Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize);
+        Prefab prefab = CreatePrefab(1, Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize);
 
         await Assert.That(prefab.IsEmpty).IsTrue();
     }
@@ -57,7 +58,7 @@ public class PrefabTests
     [Test]
     public async Task IsEmpty_ReturnsFalse_WhenNotEmpty()
     {
-        Prefab prefab = CreatePrefab(1, "abc", Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize);
+        Prefab prefab = CreatePrefab(1, Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize);
 
         var voxels = new Voxel[8 * 8 * 8];
         voxels[0] = new Voxel(FcColor.Blue, false);
@@ -73,7 +74,7 @@ public class PrefabTests
     [Arguments(0, 0, Prefab.MaxSize - 1)]
     public async Task Add_PosInBounds_DoesNotThrow(int x, int y, int z)
     {
-        Prefab prefab = CreatePrefab(1, "abc", 1);
+        Prefab prefab = CreatePrefab(1, 1);
 
         prefab.Add(new PrefabSegment(1, new int3(x, y, z)));
 
@@ -89,35 +90,8 @@ public class PrefabTests
     [Arguments(0, 0, Prefab.MaxSize)]
     public async Task Add_PosOutOfBounds_Throws(int x, int y, int z)
     {
-        Prefab prefab = CreatePrefab(1, "abc", 1);
+        Prefab prefab = CreatePrefab(1, 1);
 
         await Assert.That(() => prefab.Add(new PrefabSegment(1, new int3(x, y, z)))).Throws<ArgumentOutOfRangeException>();
-    }
-
-    private static Prefab CreatePrefab(ushort id, string name, IEnumerable<PrefabSegment> segments)
-        => new Prefab(id, name, PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, null, null, null, segments);
-
-    private static Prefab CreatePrefab(ushort id, string name, int segmentCount)
-        => CreatePrefab(id, name, CreateSegments(id, segmentCount));
-
-    private static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count)
-    {
-        Debug.Assert(count < 4 * 4 * 4);
-
-        int c = 0;
-        for (int z = 0; z < 4; z++)
-        {
-            for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                    yield return new PrefabSegment(id, new int3(x, y, z));
-                    if (++c >= count)
-                    {
-                        yield break;
-                    }
-                }
-            }
-        }
     }
 }
