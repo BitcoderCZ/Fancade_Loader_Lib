@@ -421,7 +421,7 @@ public partial class PartialPrefabList : ICloneable
         if (IsLastPrefab(prefab))
         {
             prefab.Add(value);
-            _segments.Add(value);
+            _segments.Insert(segmentId - IdOffset, value);
             return;
         }
 
@@ -453,7 +453,7 @@ public partial class PartialPrefabList : ICloneable
 
         if (IsLastPrefab(prefab))
         {
-            _segments.Add(value);
+            _segments.Insert(segmentId - IdOffset, value);
             return true;
         }
 

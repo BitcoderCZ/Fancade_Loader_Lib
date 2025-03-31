@@ -4,7 +4,6 @@
 
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Scripting.TerminalStores;
-using System.Collections;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting;

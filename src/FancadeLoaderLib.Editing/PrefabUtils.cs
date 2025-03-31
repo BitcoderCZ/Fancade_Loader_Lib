@@ -1,7 +1,6 @@
 ﻿using FancadeLoaderLib.Editing.Utils;
 using FancadeLoaderLib.Exceptions;
 using MathUtils.Vectors;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using static FancadeLoaderLib.Utils.ThrowHelper;

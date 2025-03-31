@@ -34,7 +34,7 @@ public sealed class CodeWriter
     {
         _codePlacer = codePlacer is IScopedCodePlacer scoped ? scoped : new ScopedCodePlacerWrapper(codePlacer);
     }
-    
+
     /// <summary>
     /// Places a literal value.
     /// </summary>

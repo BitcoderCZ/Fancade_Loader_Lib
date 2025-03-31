@@ -3,6 +3,7 @@ using FancadeLoaderLib.Tests.Common;
 using MathUtils.Vectors;
 using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
+using static FancadeLoaderLib.Tests.Common.PrefabGenerator;
 
 namespace FancadeLoaderLib.Editing.Tests;
 
@@ -104,7 +105,7 @@ public class PrefabUtilsTests
             IdOffset = 1,
         };
 
-        var prefab = CreatePrefab(1, 1);
+        var prefab = CreatePrefab(1, 1, initVoxels: true);
         prefabList.AddPrefab(prefab);
 
         var voxels = prefab[int3.Zero].Voxels!;
@@ -131,7 +132,7 @@ public class PrefabUtilsTests
             IdOffset = 1,
         };
 
-        var prefab = CreatePrefab(1, 1);
+        var prefab = CreatePrefab(1, 1, initVoxels: true);
         prefabList.AddPrefab(prefab);
 
         var voxels = prefab[int3.Zero].Voxels!;
@@ -292,7 +293,7 @@ public class PrefabUtilsTests
     [Test]
     public async Task FillColor_NoVoxels_DoesNothing()
     {
-        var prefab = CreatePrefab(1, 1);
+        var prefab = CreatePrefab(1, 1, initVoxels: true);
         var prefabClone = prefab.Clone(true);
 
         prefab.FillColor(new int3(0, 0, 0), int3.One * 8 * Prefab.MaxSize - 1, 0, FcColor.Blue);
@@ -303,7 +304,7 @@ public class PrefabUtilsTests
     [Test]
     public async Task FillColor_FillsColor()
     {
-        var prefab = CreatePrefab(1, 1);
+        var prefab = CreatePrefab(1, 1, initVoxels: true);
 
         var voxels = prefab[int3.Zero].Voxels!;
 
@@ -342,7 +343,7 @@ public class PrefabUtilsTests
             IdOffset = 1,
         };
 
-        var prefab = CreatePrefab(1, 1);
+        var prefab = CreatePrefab(1, 1, initVoxels: true);
 
         prefabList.AddPrefab(prefab);
 
@@ -449,6 +450,29 @@ public class PrefabUtilsTests
     }
 
     [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task EnsureSegmentVoxels_AddsNotLastSegmentCorrectly(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab = CreatePrefab(1, [new int3(0, 0, 0), new int3(0, 0, 1)], initVoxels: false);
+        prefabList.AddPrefab(prefab);
+
+        prefab.EnsureSegmentVoxels(new int3(0, 1, 0), new int3(0, 1, 0), true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefabList.GetSegment(1).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+            await Assert.That(prefabList.GetSegment(2).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
+            await Assert.That(prefabList.GetSegment(3).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
+        }
+    }
+
+    [Test]
     [Arguments(-1, -1, -1, 0, 0, 0)]
     [Arguments(int.MaxValue, int.MaxValue, int.MaxValue, Prefab.MaxSize - 1, Prefab.MaxSize - 1, Prefab.MaxSize - 1)]
     public async Task ClampSegmentToPrefab_Clamps(int x, int y, int z, int expectedX, int expectedY, int expectedZ)
@@ -524,33 +548,6 @@ public class PrefabUtilsTests
                         {
                             Assert.Fail($"{nameof(prefab)} should contain a segment at {PrefabUtils.VoxelToSegment(pos)}.");
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    private static Prefab CreatePrefab(ushort id, IEnumerable<PrefabSegment> segments)
-        => new Prefab(id, $"Prefab {id}", PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, null, null, null, segments);
-
-    private static Prefab CreatePrefab(ushort id, int segmentCount, bool initVoxels = true)
-        => CreatePrefab(id, CreateSegments(id, segmentCount, initVoxels));
-
-    private static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count, bool initVoxels)
-    {
-        Debug.Assert(count < 4 * 4 * 4);
-
-        int c = 0;
-        for (int z = 0; z < 4; z++)
-        {
-            for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                    yield return new PrefabSegment(id, new int3(x, y, z), initVoxels ? new Voxel[8 * 8 * 8] : null);
-                    if (++c >= count)
-                    {
-                        yield break;
                     }
                 }
             }

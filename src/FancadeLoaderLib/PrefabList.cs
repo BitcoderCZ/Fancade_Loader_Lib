@@ -495,7 +495,7 @@ public class PrefabList : ICloneable
         if (IsLastPrefab(prefab))
         {
             prefab.Add(value);
-            _segments.Add(value);
+            _segments.Insert(segmentId - IdOffset, value);
             AddIdToPrefab(id, value.PosInPrefab, segmentId, cache);
 
             return;
@@ -540,7 +540,7 @@ public class PrefabList : ICloneable
 
         if (IsLastPrefab(prefab))
         {
-            _segments.Add(value);
+            _segments.Insert(segmentId - IdOffset, value);
             AddIdToPrefab(id, value.PosInPrefab, segmentId, cache);
 
             return true;

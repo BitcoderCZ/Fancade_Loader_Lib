@@ -1,5 +1,4 @@
 ﻿using MathUtils.Vectors;
-using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
 using static FancadeLoaderLib.Tests.Common.PrefabGenerator;
 

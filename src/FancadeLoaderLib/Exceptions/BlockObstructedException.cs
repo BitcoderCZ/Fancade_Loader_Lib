@@ -1,7 +1,5 @@
 ﻿using MathUtils.Vectors;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FancadeLoaderLib.Exceptions;
 

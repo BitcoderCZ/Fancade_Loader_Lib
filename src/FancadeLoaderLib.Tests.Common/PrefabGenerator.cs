@@ -1,10 +1,5 @@
 ﻿using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FancadeLoaderLib.Tests.Common;
 
@@ -13,13 +8,13 @@ public static class PrefabGenerator
     public static Prefab CreatePrefab(ushort id, IEnumerable<PrefabSegment> segments, string? name = null)
         => new Prefab(id, name ?? $"Prefab {id}", PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, null, null, null, segments);
 
-    public static Prefab CreatePrefab(ushort id, int segmentCount, string? name = null)
-        => CreatePrefab(id, CreateSegments(id, segmentCount), name);
+    public static Prefab CreatePrefab(ushort id, int segmentCount, string? name = null, bool initVoxels = false)
+        => CreatePrefab(id, CreateSegments(id, segmentCount, initVoxels), name);
 
-    public static Prefab CreatePrefab(ushort id, int3[] posititons, string? name = null)
-        => CreatePrefab(id, CreateSegments(id, posititons), name);
+    public static Prefab CreatePrefab(ushort id, int3[] posititons, string? name = null, bool initVoxels = false)
+        => CreatePrefab(id, CreateSegments(id, posititons, initVoxels), name);
 
-    public static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count)
+    public static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count, bool initVoxels = false)
     {
         Debug.Assert(count < 4 * 4 * 4);
 
@@ -30,7 +25,7 @@ public static class PrefabGenerator
             {
                 for (int x = 0; x < 4; x++)
                 {
-                    yield return new PrefabSegment(id, new int3(x, y, z));
+                    yield return new PrefabSegment(id, new int3(x, y, z), initVoxels ? new Voxel[8 * 8 * 8] : null);
                     if (++c >= count)
                     {
                         yield break;
@@ -40,7 +35,7 @@ public static class PrefabGenerator
         }
     }
 
-    public static IEnumerable<PrefabSegment> CreateSegments(ushort id, int3[] posititons)
+    public static IEnumerable<PrefabSegment> CreateSegments(ushort id, int3[] posititons, bool initVoxels = false)
     {
         Debug.Assert(posititons.Length < 4 * 4 * 4);
 
@@ -52,7 +47,7 @@ public static class PrefabGenerator
                 {
                     if (posititons.Contains(new int3(x, y, z)))
                     {
-                        yield return new PrefabSegment(id, new int3(x, y, z));
+                        yield return new PrefabSegment(id, new int3(x, y, z), initVoxels ? new Voxel[8 * 8 * 8] : null);
                     }
                 }
             }
