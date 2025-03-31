@@ -28,7 +28,7 @@ public class PrefabUtilsTests
 
         prefab.Fill(new int3(-10, -10, -10), new int3(-1, -1, -1), voxel, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
 
-        await Assert.That(prefab).IsEqualTo(prefabClone, new PrefabComparer());
+        await Assert.That(prefab).IsEqualTo(prefabClone, PrefabComparer.Instance);
     }
 
     [Test]
@@ -228,7 +228,7 @@ public class PrefabUtilsTests
 
         await Assert.That(filled).IsTrue();
 
-        await Assert.That(prefab).IsEqualTo(prefabClone, new PrefabComparer());
+        await Assert.That(prefab).IsEqualTo(prefabClone, PrefabComparer.Instance);
     }
 
     [Test]
@@ -298,7 +298,7 @@ public class PrefabUtilsTests
 
         prefab.FillColor(new int3(0, 0, 0), int3.One * 8 * Prefab.MaxSize - 1, 0, FcColor.Blue);
 
-        await Assert.That(prefab).IsEqualTo(prefabClone, new PrefabComparer());
+        await Assert.That(prefab).IsEqualTo(prefabClone, PrefabComparer.Instance);
     }
 
     [Test]

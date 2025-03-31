@@ -107,8 +107,8 @@ public class GameTests
                 await Assert.That(loadedGame.Prefabs.IdOffset).IsEqualTo(game.Prefabs.IdOffset);
             }
 
-            await Assert.That(loadedGame.Prefabs.Prefabs).IsEquivalentTo(game.Prefabs.Prefabs, new PrefabComparer());
-            await Assert.That(loadedGame.Prefabs.Segments).IsEquivalentTo(game.Prefabs.Segments, new PrefabSegmentComparer());
+            await Assert.That(loadedGame.Prefabs.Prefabs).IsEquivalentTo(game.Prefabs.Prefabs, PrefabComparer.Instance);
+            await Assert.That(loadedGame.Prefabs.Segments).IsEquivalentTo(game.Prefabs.Segments, PrefabSegmentComparer.Instance);
         }
     }
 
@@ -141,8 +141,8 @@ public class GameTests
                 await Assert.That(loadedGame.Prefabs.IdOffset).IsEqualTo(game.Prefabs.IdOffset);
             }
 
-            await Assert.That(loadedGame.Prefabs.Prefabs).IsEquivalentTo(game.Prefabs.Prefabs, new PrefabComparer());
-            await Assert.That(loadedGame.Prefabs.Segments).IsEquivalentTo(game.Prefabs.Segments, new PrefabSegmentComparer());
+            await Assert.That(loadedGame.Prefabs.Prefabs).IsEquivalentTo(game.Prefabs.Prefabs, PrefabComparer.Instance);
+            await Assert.That(loadedGame.Prefabs.Segments).IsEquivalentTo(game.Prefabs.Segments, PrefabSegmentComparer.Instance);
         }
     }
 }

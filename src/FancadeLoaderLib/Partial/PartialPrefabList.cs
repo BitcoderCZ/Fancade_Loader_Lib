@@ -294,7 +294,7 @@ public partial class PartialPrefabList : ICloneable
         value.Id = (ushort)(SegmentCount + IdOffset);
 
         _prefabs.Add(value.Id, value);
-        _segments.AddRange(value.Values);
+        _segments.AddRange(value.OrderedValues);
     }
 
     /// <summary>
@@ -319,7 +319,7 @@ public partial class PartialPrefabList : ICloneable
 
         IncreaseAfter(value.Id, (ushort)value.Count);
         _prefabs.Add(value.Id, value);
-        _segments.InsertRange(value.Id - IdOffset, value.Values);
+        _segments.InsertRange(value.Id - IdOffset, value.OrderedValues);
     }
 
     /// <summary>
@@ -345,7 +345,7 @@ public partial class PartialPrefabList : ICloneable
         }
 
         _prefabs[prev.Id] = value;
-        _segments.InsertRange(value.Id - IdOffset, value.Values);
+        _segments.InsertRange(value.Id - IdOffset, value.OrderedValues);
     }
 
     /// <summary>
@@ -534,7 +534,7 @@ public partial class PartialPrefabList : ICloneable
     }
 
     private static IEnumerable<PartialPrefabSegment> SegmentsFromPrefabs(IEnumerable<KeyValuePair<ushort, PartialPrefab>> prefabs)
-        => prefabs.OrderBy(item => item.Key).SelectMany(item => item.Value.Values);
+        => prefabs.OrderBy(item => item.Key).SelectMany(item => item.Value.OrderedValues);
 
     private bool IsLastPrefab(PartialPrefab prefab)
         => prefab.Id + prefab.Count >= SegmentCount + IdOffset;

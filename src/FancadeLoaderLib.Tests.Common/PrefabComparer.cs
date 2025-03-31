@@ -4,8 +4,14 @@ namespace FancadeLoaderLib.Tests.Common;
 
 public sealed class PrefabComparer : IEqualityComparer<Prefab>
 {
-    private readonly BlockDataComparer _blockDataComparer = new();
-    private readonly PrefabSegmentComparer _prefabComparer = new();
+    public static readonly PrefabComparer Instance = new();
+
+    private PrefabComparer()
+    {
+    }
+
+    private readonly BlockDataComparer _blockDataComparer = BlockDataComparer.Instance;
+    private readonly PrefabSegmentComparer _prefabComparer = PrefabSegmentComparer.Instance;
 
     public bool Equals(Prefab? x, Prefab? y)
     {
@@ -27,8 +33,8 @@ public sealed class PrefabComparer : IEqualityComparer<Prefab>
             x.Editable == y.Editable &&
             x.Settings.SequenceEqual(y.Settings) &&
             x.Connections.SequenceEqual(y.Connections) &&
-            x.Keys.SequenceEqual(y.Keys) &&
-            x.Values.SequenceEqual(y.Values, _prefabComparer) &&
+            x.OrderedKeys.SequenceEqual(y.OrderedKeys) &&
+            x.OrderedValues.SequenceEqual(y.OrderedValues, _prefabComparer) &&
             _blockDataComparer.Equals(x.Blocks, y.Blocks);
     }
 

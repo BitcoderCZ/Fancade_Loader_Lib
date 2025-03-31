@@ -1,6 +1,7 @@
 ﻿using FancadeLoaderLib.Partial;
 using FancadeLoaderLib.Tests.Common;
 using MathUtils.Vectors;
+using System.Linq;
 using TUnit.Assertions.AssertConditions.Throws;
 using static FancadeLoaderLib.Tests.Common.PartialPrefabGenerator;
 
@@ -36,8 +37,8 @@ public class PartialPrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefabList.Prefabs).IsEquivalentTo([prefab1, prefab2], new PartialPrefabComparer());
-            await Assert.That(prefabList.Segments).IsEquivalentTo(segments1.Concat(segments2));
+            await Assert.That(prefabList.Prefabs).IsEquivalentTo([prefab1, prefab2], PartialPrefabComparer.Instance);
+            await Assert.That(prefabList.Segments).IsEquivalentTo(segments1.Order(PartialPrefabSegmentPositionComparer.Instance).Concat(segments2.Order(PartialPrefabSegmentPositionComparer.Instance)));
         }
     }
 
@@ -524,8 +525,8 @@ public class PartialPrefabListTests
                 await Assert.That(loadedPartialPrefabList.IdOffset).IsEqualTo(prefabList.IdOffset);
             }
 
-            await Assert.That(loadedPartialPrefabList.Prefabs).IsEquivalentTo(prefabList.Prefabs, new PartialPrefabComparer());
-            await Assert.That(loadedPartialPrefabList.Segments).IsEquivalentTo(prefabList.Segments, new PartialPrefabSegmentComparer());
+            await Assert.That(loadedPartialPrefabList.Prefabs).IsEquivalentTo(prefabList.Prefabs, PartialPrefabComparer.Instance);
+            await Assert.That(loadedPartialPrefabList.Segments).IsEquivalentTo(prefabList.Segments, PartialPrefabSegmentComparer.Instance);
         }
     }
 }

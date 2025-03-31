@@ -4,6 +4,12 @@ namespace FancadeLoaderLib.Tests.Common;
 
 public sealed class PrefabSegmentComparer : IEqualityComparer<PrefabSegment>
 {
+    public static readonly PrefabSegmentComparer Instance = new();
+
+    private PrefabSegmentComparer()
+    {
+    }
+
     public bool Equals(PrefabSegment? x, PrefabSegment? y)
     {
         if (ReferenceEquals(x, y))

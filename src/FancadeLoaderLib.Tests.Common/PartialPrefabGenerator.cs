@@ -19,39 +19,26 @@ public static class PartialPrefabGenerator
     {
         Debug.Assert(count < 4 * 4 * 4);
 
-        int c = 0;
-        for (int z = 0; z < 4; z++)
+        // Generate in reverse to catch potential bugs caused by segments not being ordered
+        for (int i = count - 1; i >= 0; i--)
         {
-            for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                    yield return new PartialPrefabSegment(id, new int3(x, y, z));
-                    if (++c >= count)
-                    {
-                        yield break;
-                    }
-                }
-            }
+            int x = i % 4;
+            int y = (i / 4) % 4;
+            int z = i / (4 * 4);
+
+            yield return new PartialPrefabSegment(id, new int3(x, y, z));
         }
     }
 
-    public static IEnumerable<PartialPrefabSegment> CreateSegments(ushort id, int3[] posititons)
+    public static IEnumerable<PartialPrefabSegment> CreateSegments(ushort id, int3[] positions)
     {
-        Debug.Assert(posititons.Length < 4 * 4 * 4);
+        Debug.Assert(positions.Length < 4 * 4 * 4);
 
-        for (int z = 0; z < 4; z++)
+        // Generate in reverse to catch potential bugs caused by segments not being ordered
+        for (int i = positions.Length - 1; i >= 0; i--)
         {
-            for (int y = 0; y < 4; y++)
-            {
-                for (int x = 0; x < 4; x++)
-                {
-                    if (posititons.Contains(new int3(x, y, z)))
-                    {
-                        yield return new PartialPrefabSegment(id, new int3(x, y, z));
-                    }
-                }
-            }
+            int3 pos = positions[i];
+            yield return new PartialPrefabSegment(id, pos);
         }
     }
 }

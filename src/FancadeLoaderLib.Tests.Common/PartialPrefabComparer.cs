@@ -5,7 +5,13 @@ namespace FancadeLoaderLib.Tests.Common;
 
 public sealed class PartialPrefabComparer : IEqualityComparer<PartialPrefab>
 {
-    private readonly PartialPrefabSegmentComparer _prefabComparer = new();
+    public static readonly PartialPrefabComparer Instance = new();
+
+    private PartialPrefabComparer()
+    {
+    }
+
+    private readonly PartialPrefabSegmentComparer _prefabComparer = PartialPrefabSegmentComparer.Instance;
 
     public bool Equals(PartialPrefab? x, PartialPrefab? y)
     {
@@ -22,8 +28,8 @@ public sealed class PartialPrefabComparer : IEqualityComparer<PartialPrefab>
             x.Count == y.Count &&
             x.Name == y.Name &&
             x.Type == y.Type &&
-            x.Keys.SequenceEqual(y.Keys) &&
-            x.Values.SequenceEqual(y.Values, _prefabComparer);
+            x.OrderedKeys.SequenceEqual(y.OrderedKeys) &&
+            x.OrderedValues.SequenceEqual(y.OrderedValues, _prefabComparer);
     }
 
     public int GetHashCode([DisallowNull] PartialPrefab obj)

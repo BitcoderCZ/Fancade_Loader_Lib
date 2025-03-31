@@ -36,8 +36,8 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefabList.Prefabs).IsEquivalentTo([prefab1, prefab2], new PrefabComparer());
-            await Assert.That(prefabList.Segments).IsEquivalentTo(segments1.Concat(segments2));
+            await Assert.That(prefabList.Prefabs).IsEquivalentTo([prefab1, prefab2], PrefabComparer.Instance);
+            await Assert.That(prefabList.Segments).IsEquivalentTo(segments1.Order(PrefabSegmentPositionComparer.Instance).Concat(segments2.Order(PrefabSegmentPositionComparer.Instance)));
         }
     }
 
@@ -1212,8 +1212,8 @@ public class PrefabListTests
                 await Assert.That(loadedPrefabList.IdOffset).IsEqualTo(prefabList.IdOffset);
             }
 
-            await Assert.That(loadedPrefabList.Prefabs).IsEquivalentTo(prefabList.Prefabs, new PrefabComparer());
-            await Assert.That(loadedPrefabList.Segments).IsEquivalentTo(prefabList.Segments, new PrefabSegmentComparer());
+            await Assert.That(loadedPrefabList.Prefabs).IsEquivalentTo(prefabList.Prefabs, PrefabComparer.Instance);
+            await Assert.That(loadedPrefabList.Segments).IsEquivalentTo(prefabList.Segments, PrefabSegmentComparer.Instance);
         }
     }
 }

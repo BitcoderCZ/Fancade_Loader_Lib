@@ -6,6 +6,12 @@ namespace FancadeLoaderLib.Tests.Common;
 
 public sealed class BlockDataComparer : IEqualityComparer<BlockData>
 {
+    public static readonly BlockDataComparer Instance = new();
+
+    private BlockDataComparer()
+    {
+    }
+
     public bool Equals(BlockData? x, BlockData? y)
     {
         if (ReferenceEquals(x, y))

@@ -219,8 +219,56 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
     /// <inheritdoc/>
     public ICollection<int3> Keys => _segments.Keys;
 
+    /// <summary>
+    /// Gets the segment positions, in id order.
+    /// </summary>
+    /// <value>Segment positions, in id order.</value>
+    public IEnumerable<int3> OrderedKeys
+    {
+        get
+        {
+            for (int z = 0; z < Size.Z; z++)
+            {
+                for (int y = 0; y < Size.Y; y++)
+                {
+                    for (int x = 0; x < Size.X; x++)
+                    {
+                        if (_segments.ContainsKey(new int3(x, y, z)))
+                        {
+                            yield return new int3(x, y, z);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /// <inheritdoc/>
     public ICollection<PartialPrefabSegment> Values => _segments.Values;
+
+    /// <summary>
+    /// Gets the <see cref="PartialPrefabSegment"/>s, in id order.
+    /// </summary>
+    /// <value><see cref="PartialPrefabSegment"/>s, in id order.</value>
+    public IEnumerable<PartialPrefabSegment> OrderedValues
+    {
+        get
+        {
+            for (int z = 0; z < Size.Z; z++)
+            {
+                for (int y = 0; y < Size.Y; y++)
+                {
+                    for (int x = 0; x < Size.X; x++)
+                    {
+                        if (_segments.TryGetValue(new int3(x, y, z), out var segment))
+                        {
+                            yield return segment;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Gets the number of segments in the <see cref="Prefab"/>.

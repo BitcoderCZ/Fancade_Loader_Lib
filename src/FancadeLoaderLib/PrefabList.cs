@@ -282,7 +282,7 @@ public class PrefabList : ICloneable
         value.Id = (ushort)(SegmentCount + IdOffset);
 
         _prefabs.Add(value.Id, value);
-        _segments.AddRange(value.Values);
+        _segments.AddRange(value.OrderedValues);
     }
 
     /// <summary>
@@ -307,7 +307,7 @@ public class PrefabList : ICloneable
 
         IncreaseAfter(value.Id, (ushort)value.Count);
         _prefabs.Add(value.Id, value);
-        _segments.InsertRange(value.Id - IdOffset, value.Values);
+        _segments.InsertRange(value.Id - IdOffset, value.OrderedValues);
     }
 
     /// <summary>
@@ -363,7 +363,7 @@ public class PrefabList : ICloneable
         }
 
         _prefabs[prev.Id] = value;
-        _segments.InsertRange(value.Id - IdOffset, value.Values);
+        _segments.InsertRange(value.Id - IdOffset, value.OrderedValues);
 
         if (value.Count > 1)
         {
@@ -626,7 +626,7 @@ public class PrefabList : ICloneable
     }
 
     private static IEnumerable<PrefabSegment> SegmentsFromPrefabs(IEnumerable<KeyValuePair<ushort, Prefab>> prefabs)
-        => prefabs.OrderBy(item => item.Key).SelectMany(item => item.Value.Values);
+        => prefabs.OrderBy(item => item.Key).SelectMany(item => item.Value.OrderedValues);
 
     private bool RemovePrefabFromBLocks(Prefab prefab, BlockInstancesCache? cache = null)
     {
