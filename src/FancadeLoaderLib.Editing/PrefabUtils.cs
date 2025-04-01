@@ -1,6 +1,7 @@
 ﻿using FancadeLoaderLib.Editing.Utils;
 using FancadeLoaderLib.Exceptions;
 using MathUtils.Vectors;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using static FancadeLoaderLib.Utils.ThrowHelper;
@@ -29,7 +30,30 @@ public static class PrefabUtils
     /// </param>
     /// <param name="prefabList">A <see cref="PrefabList"/> that <paramref name="prefab"/> is in.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
-    public static void Fill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
+    public static void Fill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList prefabList, BlockInstancesCache? cache)
+        => Fill(
+            prefab,
+            fromVoxel,
+            toVoxel,
+            value,
+            overwriteVoxels,
+            addSegment: segment => prefabList.AddSegmentToPrefab(prefab.Id, segment, overwriteBlocks, cache),
+            removeEmptySegments: () => prefabList.RemoveEmptySegmentsFromPrefab(prefab.Id, cache));
+
+    /// <summary>
+    /// Fill a region of a prefab.
+    /// </summary>
+    /// <param name="prefab">The prefab to fill.</param>
+    /// <param name="fromVoxel">The start position of the fill, inclusive.</param>
+    /// <param name="toVoxel">The end position of the fill, inclusive.</param>
+    /// <param name="value">The value to fill with.</param>
+    /// <param name="overwriteVoxels">
+    /// If <see langword="true"/>, non empty voxels will be overwritten,
+    /// if <see langword="false"/>, only empty voxels will be written to.
+    /// </param>
+    /// <param name="addSegment">An <see cref="Action{T}"/> that adds a segment to <paramref name="prefab"/>.</param>
+    /// <param name="removeEmptySegments">An <see cref="Action{T}"/> that removes empty segments (<see cref="PrefabSegment.IsEmpty"/> is <see langword="true"/>) from <paramref name="prefab"/>.</param>
+    public static void Fill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, Action<PrefabSegment> addSegment, Action removeEmptySegments)
     {
         (fromVoxel, toVoxel) = VectorUtils.MinMax(fromVoxel, toVoxel);
 
@@ -46,7 +70,7 @@ public static class PrefabUtils
 
         if (!value.IsEmpty)
         {
-            prefab.EnsureSegmentVoxels(fromSegment, toSegment, overwriteBlocks, prefabList, cache);
+            prefab.EnsureSegmentVoxels(fromSegment, toSegment, addSegment);
         }
 
         if (overwriteVoxels || value.IsEmpty)
@@ -88,7 +112,7 @@ public static class PrefabUtils
 
         if (value.IsEmpty)
         {
-            prefabList?.RemoveEmptySegmentsFromPrefab(prefab.Id, cache);
+            removeEmptySegments();
         }
     }
 
@@ -110,7 +134,33 @@ public static class PrefabUtils
     /// <param name="prefabList">A <see cref="PrefabList"/> that <paramref name="prefab"/> is in.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if the fill was successful; otherwise, <see langword="false"/>.</returns>
-    public static bool TryFill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
+    public static bool TryFill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList prefabList, BlockInstancesCache? cache)
+        => TryFill(
+            prefab,
+            fromVoxel,
+            toVoxel,
+            value,
+            overwriteVoxels,
+            canAddSegment: segmentPos => prefabList.CanAddSegmentToPrefab(prefab.Id, segmentPos, overwriteBlocks, cache),
+            addSegment: segment => prefabList.AddSegmentToPrefab(prefab.Id, segment, overwriteBlocks, cache),
+            removeEmptySegments: () => prefabList.RemoveEmptySegmentsFromPrefab(prefab.Id, cache));
+
+    /// <summary>
+    /// Try to fill a region of a prefab.
+    /// </summary>
+    /// <param name="prefab">The prefab to fill.</param>
+    /// <param name="fromVoxel">The start position of the fill, inclusive.</param>
+    /// <param name="toVoxel">The end position of the fill, inclusive.</param>
+    /// <param name="value">The value to fill with.</param>
+    /// <param name="overwriteVoxels">
+    /// If <see langword="true"/>, non empty voxels will be overwritten,
+    /// if <see langword="false"/>, only empty voxels will be written to.
+    /// </param>
+    /// <param name="canAddSegment">A <see cref="Func{T, TResult}"/> that gets if a segment at the specified position can be added.</param>
+    /// <param name="addSegment">An <see cref="Action{T}"/> that adds a segment to <paramref name="prefab"/>.</param>
+    /// <param name="removeEmptySegments">An <see cref="Action{T}"/> that removes empty segments (<see cref="PrefabSegment.IsEmpty"/> is <see langword="true"/>) from <paramref name="prefab"/>.</param>
+    /// <returns><see langword="true"/> if the fill was successful; otherwise, <see langword="false"/>.</returns>
+    public static bool TryFill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, Func<int3, bool> canAddSegment, Action<PrefabSegment> addSegment, Action removeEmptySegments)
     {
         (fromVoxel, toVoxel) = VectorUtils.MinMax(fromVoxel, toVoxel);
 
@@ -127,7 +177,7 @@ public static class PrefabUtils
 
         if (!value.IsEmpty)
         {
-            if (!prefab.TryEnsureSegmentVoxels(fromSegment, toSegment, overwriteBlocks, prefabList, cache, out _))
+            if (!prefab.TryEnsureSegmentVoxels(fromSegment, toSegment, canAddSegment, addSegment, out _))
             {
                 return false;
             }
@@ -172,7 +222,7 @@ public static class PrefabUtils
 
         if (value.IsEmpty)
         {
-            prefabList?.RemoveEmptySegmentsFromPrefab(prefab.Id, cache);
+            removeEmptySegments();
         }
 
         return true;
@@ -241,7 +291,22 @@ public static class PrefabUtils
     /// <param name="prefabList">A <see cref="PrefabList"/> that <paramref name="prefab"/> is in.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if segments were added; otherwise, <see langword="false"/>.</returns>
-    public static bool EnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache)
+    public static bool EnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, bool overwriteBlocks, PrefabList prefabList, BlockInstancesCache? cache)
+        => EnsureSegmentVoxels(
+            prefab,
+            from,
+            to,
+            addSegment: segment => prefabList.AddSegmentToPrefab(prefab.Id, segment, overwriteBlocks, cache));
+
+    /// <summary>
+    /// Makes sure that <paramref name="prefab"/> contains segments with <see cref="PrefabSegment.Voxels"/> in a specified region.
+    /// </summary>
+    /// <param name="prefab">The prefab to add the segments to.</param>
+    /// <param name="from">The start position of regiom, inclusive.</param>
+    /// <param name="to">The end position of regiom, inclusive.</param>
+    /// <param name="addSegment">An <see cref="Action{T}"/> that adds a segment to <paramref name="prefab"/>.</param>
+    /// <returns><see langword="true"/> if segments were added; otherwise, <see langword="false"/>.</returns>
+    public static bool EnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, Action<PrefabSegment> addSegment)
     {
         (from, to) = VectorUtils.MinMax(from, to);
 
@@ -273,14 +338,7 @@ public static class PrefabUtils
                     {
                         added = true;
 
-                        if (prefabList is not null)
-                        {
-                            prefabList.AddSegmentToPrefab(prefab.Id, new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]), overwriteBlocks, cache);
-                        }
-                        else
-                        {
-                            prefab.Add(new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]));
-                        }
+                        addSegment(new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]));
                     }
                 }
             }
@@ -303,7 +361,26 @@ public static class PrefabUtils
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <param name="segmentsAdded"><see langword="true"/> if segments were added; otherwise, <see langword="false"/>.</param>
     /// <returns><see langword="true"/> if the operation was successful; otherwise, <see langword="false"/>.</returns>
-    public static bool TryEnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, bool overwriteBlocks, PrefabList? prefabList, BlockInstancesCache? cache, out bool segmentsAdded)
+    public static bool TryEnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, bool overwriteBlocks, PrefabList prefabList, BlockInstancesCache? cache, out bool segmentsAdded)
+        => TryEnsureSegmentVoxels(
+            prefab,
+            from,
+            to,
+            canAddSegment: segmentPos => prefabList.CanAddSegmentToPrefab(prefab.Id, segmentPos, overwriteBlocks, cache),
+            addSegment: segment => prefabList.AddSegmentToPrefab(prefab.Id, segment, overwriteBlocks, cache),
+            out segmentsAdded);
+
+    /// <summary>
+    /// Makes sure that <paramref name="prefab"/> contains segments with <see cref="PrefabSegment.Voxels"/> in a specified region.
+    /// </summary>
+    /// <param name="prefab">The prefab to add the segments to.</param>
+    /// <param name="from">The start position of regiom, inclusive.</param>
+    /// <param name="to">The end position of regiom, inclusive.</param>
+    /// <param name="canAddSegment">A <see cref="Func{T, TResult}"/> that gets if a segment at the specified position can be added.</param>
+    /// <param name="addSegment">An <see cref="Action{T}"/> that adds a segment to <paramref name="prefab"/>.</param>
+    /// <param name="segmentsAdded"><see langword="true"/> if segments were added; otherwise, <see langword="false"/>.</param>
+    /// <returns><see langword="true"/> if the operation was successful; otherwise, <see langword="false"/>.</returns>
+    public static bool TryEnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, Func<int3, bool> canAddSegment, Action<PrefabSegment> addSegment, out bool segmentsAdded)
     {
         segmentsAdded = false;
 
@@ -317,11 +394,7 @@ public static class PrefabUtils
         from = ClampSegmentToPrefab(from);
         to = ClampSegmentToPrefab(to);
 
-        List<int3>? segmentsToAdd = null;
-        if (prefabList is not null)
-        {
-            segmentsToAdd = [];
-        }
+        List<int3>? segmentsToAdd = [];
 
         for (int z = from.Z; z <= to.Z; z++)
         {
@@ -341,35 +414,23 @@ public static class PrefabUtils
                     {
                         segmentsAdded = true;
 
-                        if (prefabList is not null)
-                        {
-                            Debug.Assert(segmentsToAdd is not null, "When prefabList is not null, segmentsToAdd should not be null.");
-                            segmentsToAdd.Add(pos);
-                        }
-                        else
-                        {
-                            prefab.Add(new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]));
-                        }
+                        segmentsToAdd.Add(pos);
                     }
                 }
             }
         }
 
-        if (prefabList is not null)
+        foreach (var pos in segmentsToAdd)
         {
-            Debug.Assert(segmentsToAdd is not null, "When prefabList is not null, segmentsToAdd should not be null.");
-            foreach (var pos in segmentsToAdd)
+            if (!canAddSegment(pos))
             {
-                if (!prefabList.CanAddSegmentToPrefab(prefab.Id, pos, overwriteBlocks, cache))
-                {
-                    return false;
-                }
+                return false;
             }
+        }
 
-            foreach (var pos in segmentsToAdd)
-            {
-                prefabList.AddSegmentToPrefab(prefab.Id, new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]), overwriteBlocks, cache);
-            }
+        foreach (var pos in segmentsToAdd)
+        {
+            addSegment(new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]));
         }
 
         return true;
