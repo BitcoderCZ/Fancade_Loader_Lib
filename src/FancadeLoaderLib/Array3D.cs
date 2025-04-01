@@ -6,6 +6,7 @@ using MathUtils.Vectors;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
@@ -30,6 +31,10 @@ public class Array3D<T> : IEnumerable<T>
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
+        else if ((size.X == 1 || size.Y == 1 || size.Z == 1) && (size.X == 0 || size.Y == 0 || size.Z == 0))
+        {
+            ThrowArgumentOutOfRangeException(nameof(size));
+        }
 
         Size = size;
         _layerSize = Size.X * Size.Y;
@@ -44,6 +49,15 @@ public class Array3D<T> : IEnumerable<T>
     /// <param name="size">Size of the array.</param>
     public Array3D(IEnumerable<T> collection, int3 size)
     {
+        if (size.X < 0 || size.Y < 0 || size.Z < 0)
+        {
+            ThrowArgumentOutOfRangeException(nameof(size));
+        }
+        else if ((size.X == 1 || size.Y == 1 || size.Z == 1) && (size.X == 0 || size.Y == 0 || size.Z == 0))
+        {
+            ThrowArgumentOutOfRangeException(nameof(size));
+        }
+
         Size = size;
         _layerSize = Size.X * Size.Y;
 
@@ -63,6 +77,15 @@ public class Array3D<T> : IEnumerable<T>
     public Array3D(T[] array, int3 size)
     {
         ThrowIfNull(array, nameof(array));
+
+        if (size.X < 0 || size.Y < 0 || size.Z < 0)
+        {
+            ThrowArgumentOutOfRangeException(nameof(size));
+        }
+        else if ((size.X == 1 || size.Y == 1 || size.Z == 1) && (size.X == 0 || size.Y == 0 || size.Z == 0))
+        {
+            ThrowArgumentOutOfRangeException(nameof(size));
+        }
 
         Size = size;
         _layerSize = Size.X * Size.Y;
@@ -256,13 +279,14 @@ public class Array3D<T> : IEnumerable<T>
         {
             return; // same length
         }
+        else if ((newSize.X == 1 || newSize.Y == 1 || newSize.Z == 1) && (newSize.X == 0 || newSize.Y == 0 || newSize.Z == 0))
+        {
+            ThrowArgumentOutOfRangeException(nameof(newSize));
+        }
 
         T[] newArray = new T[newSize.X * newSize.Y * newSize.Z];
-
         int newLayerSize = newSize.X * newSize.Y;
-
         int minX = Math.Min(Size.X, newSize.X);
-
         for (int z = 0; z < newSize.Z; z++)
         {
             for (int y = 0; y < newSize.Y; y++)
