@@ -93,4 +93,24 @@ public class PrefabTests
 
         await Assert.That(() => prefab.Add(new PrefabSegment(1, new int3(x, y, z)))).Throws<ArgumentOutOfRangeException>();
     }
+
+    [Test]
+    public async Task Remove_ShiftsSegments()
+    {
+        Prefab prefab = CreatePrefab(1, 2);
+
+        bool removed = prefab.Remove(new int3(0, 0, 0), out _, out var shift);
+
+        await Assert.That(removed).IsTrue();
+
+        await Assert.That(shift).IsEqualTo(new int3(1, 0, 0));
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab.Size).IsEqualTo(int3.One);
+            await Assert.That(prefab.ContainsKey(new int3(0, 0, 0))).IsTrue();
+            await Assert.That(prefab.ContainsKey(new int3(1, 0, 0))).IsFalse();
+            await Assert.That(prefab[new int3(0, 0, 0)].PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+        }
+    }
 }

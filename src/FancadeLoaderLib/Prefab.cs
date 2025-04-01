@@ -83,6 +83,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         }));
 
         CalculateSize();
+        ShiftToZero();
     }
 
     /// <summary>
@@ -141,6 +142,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         _id = id!.Value;
 
         CalculateSize();
+        ShiftToZero();
     }
 
     /// <summary>
@@ -354,7 +356,6 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     bool ICollection<KeyValuePair<int3, PrefabSegment>>.IsReadOnly => false;
 
     /// <inheritdoc/>
-    [SuppressMessage("Design", "CA1043:Use Integral Or String Argument For Indexers", Justification = "It makes sense to use int3 here.")]
     public PrefabSegment this[int3 index]
     {
         get => _segments[index];
@@ -689,6 +690,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         if (removed)
         {
             CalculateSize();
+            ShiftToZero();
         }
 
         return removed;
@@ -716,6 +718,41 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         if (removed)
         {
             CalculateSize();
+            ShiftToZero();
+        }
+
+        return removed;
+    }
+
+    /// <summary>
+    /// Removes a segment at the specified position.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Prefab"/> cannot be empty, this method will not succeed if <see cref="Count"/> is <c>1</c>.
+    /// </remarks>
+    /// <param name="key">Position of the segment to remove.</param>
+    /// <param name="value">The segment that was at the specified position, if there was one.</param>
+    /// <param name="shift">By how many blocks have the segments moved.</param>
+    /// <returns><see langword="true"/> if the segment was removed; otherwise, <see langword="true"/>.</returns>
+    public bool Remove(int3 key, [MaybeNullWhen(false)] out PrefabSegment value, out int3 shift)
+    {
+        if (Count == 1)
+        {
+            value = null;
+            shift = default;
+            return false;
+        }
+
+        bool removed = _segments.Remove(key, out value);
+
+        if (removed)
+        {
+            CalculateSize();
+            shift = ShiftToZero();
+        }
+        else
+        {
+            shift = int3.Zero;
         }
 
         return removed;
@@ -846,6 +883,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         if (removed)
         {
             CalculateSize();
+            ShiftToZero();
         }
 
         return removed;
@@ -928,6 +966,38 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         {
             Size = int3.Max(Size, pos + int3.One);
         }
+    }
+
+    private int3 ShiftToZero()
+    {
+        int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+
+        foreach (var pos in _segments.Keys)
+        {
+            minPos = int3.Min(minPos, pos);
+        }
+
+        for (int z = minPos.Z; z < MaxSize; z++)
+        {
+            for (int y = minPos.Y; y < MaxSize; y++)
+            {
+                for (int x = minPos.X; x < MaxSize; x++)
+                {
+                    int3 pos = new int3(x, y, z);
+
+                    if (_segments.TryGetValue(pos, out var segment))
+                    {
+                        _segments.Remove(pos);
+                        _segments.Add(pos - minPos, segment);
+                        segment.PosInPrefab -= minPos;
+                    }
+                }
+            }
+        }
+
+        Size -= minPos;
+
+        return minPos;
     }
 
     private PrefabSegment ValidateSegment(PrefabSegment? segment, string paramName)
