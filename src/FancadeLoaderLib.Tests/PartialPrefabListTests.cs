@@ -430,6 +430,34 @@ public class PartialPrefabListTests
     }
 
     [Test]
+    public async Task RemoveSegmentFromPrefab_DoesNotChangePrefabId()
+    {
+        var prefabList = new PartialPrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(0, 0, 0));
+
+        await Assert.That(removed).IsTrue();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)2);
+
+            await Assert.That(prefab1.Count).IsEqualTo(1);
+            await Assert.That(prefab2.Count).IsEqualTo(2);
+        }
+    }
+
+    [Test]
     public async Task IdOffset_Increase_UpdatesIds()
     {
         var prefabList = new PartialPrefabList()

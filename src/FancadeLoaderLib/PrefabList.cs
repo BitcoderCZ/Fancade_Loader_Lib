@@ -583,7 +583,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
             return true;
         }
 
-        DecreaseAfter(segmentId, 1);
+        DecreaseAfter((ushort)(segmentId + 1), 1);
 
         return true;
     }

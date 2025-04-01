@@ -1090,6 +1090,48 @@ public class PrefabListTests
     }
 
     [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task RemoveSegmentFromPrefab_DoesNotChangePrefabId(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 2);
+
+        var blocks = prefab2.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 1), prefab2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(0, 0, 0), cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
+
+        await Assert.That(removed).IsTrue();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)2);
+
+            await Assert.That(prefab1.Count).IsEqualTo(1);
+            await Assert.That(prefab2.Count).IsEqualTo(2);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)3);
+        }
+    }
+
+    [Test]
     public async Task IdOffset_Increase_UpdatesIds()
     {
         var prefabList = new PrefabList()
