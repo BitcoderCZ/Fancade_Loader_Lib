@@ -5,6 +5,7 @@
 using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -21,7 +22,7 @@ namespace FancadeLoaderLib.Partial;
 /// <remarks>
 /// Ids are automatically changed when prefabs are inserter/removed.
 /// </remarks>
-public partial class PartialPrefabList : ICloneable
+public partial class PartialPrefabList : IEnumerable<PartialPrefab>, ICloneable
 {
     internal readonly Dictionary<ushort, PartialPrefab> _prefabs;
     internal readonly List<PartialPrefabSegment> _segments;
@@ -494,6 +495,14 @@ public partial class PartialPrefabList : ICloneable
 
         return true;
     }
+
+    /// <inheritdoc/>
+    public IEnumerator<PartialPrefab> GetEnumerator()
+        => _prefabs.Values.GetEnumerator();
+
+    /// <inheritdoc/>
+    IEnumerator IEnumerable.GetEnumerator()
+        => GetEnumerator();
 
     /// <summary>
     /// Removes all prefabs and segments from the <see cref="PartialPrefabList"/>.

@@ -6,6 +6,7 @@ using FancadeLoaderLib.Exceptions;
 using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -21,7 +22,7 @@ namespace FancadeLoaderLib;
 /// <remarks>
 /// Ids are automatically changed when prefabs are inserter/removed.
 /// </remarks>
-public class PrefabList : ICloneable
+public class PrefabList : IEnumerable<Prefab>, ICloneable
 {
     internal readonly Dictionary<ushort, Prefab> _prefabs;
     internal readonly List<PrefabSegment> _segments;
@@ -595,6 +596,14 @@ public class PrefabList : ICloneable
         _prefabs.Clear();
         _segments.Clear();
     }
+
+    /// <inheritdoc/>
+    public IEnumerator<Prefab> GetEnumerator()
+        => _prefabs.Values.GetEnumerator();
+
+    /// <inheritdoc/>
+    IEnumerator IEnumerable.GetEnumerator()
+        => GetEnumerator();
 
     /// <summary>
     /// Creates a copy of this <see cref="PrefabList"/>.
