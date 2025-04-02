@@ -28,9 +28,15 @@ public static class PrefabUtils
     /// If <see langword="true"/>, blocks will be overwritten (if segments get added to the prefab),
     /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, <see cref="BlockObstructedException"/> is thrown.
     /// </param>
+    /// <param name="keepInPlace">
+    /// Only applies if <paramref name="value"/> <see cref="Voxel.IsEmpty"/> is <see langword="true"/>.
+    /// <para></para>
+    /// If <see langword="true"/>, the prefab will be moved back by shift from <see cref="Prefab.Remove(int3, out PrefabSegment, out int3)"/>,
+    /// if <see langword="false"/>, the prefab may move.
+    /// </param>
     /// <param name="prefabList">A <see cref="PrefabList"/> that <paramref name="prefab"/> is in.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
-    public static void Fill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList prefabList, BlockInstancesCache? cache)
+    public static void Fill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, bool keepInPlace, PrefabList prefabList, BlockInstancesCache? cache)
         => Fill(
             prefab,
             fromVoxel,
@@ -38,7 +44,7 @@ public static class PrefabUtils
             value,
             overwriteVoxels,
             addSegment: segment => prefabList.AddSegmentToPrefab(prefab.Id, segment, overwriteBlocks, cache),
-            removeEmptySegments: () => prefabList.RemoveEmptySegmentsFromPrefab(prefab.Id, cache));
+            removeEmptySegments: () => prefabList.RemoveEmptySegmentsFromPrefab(prefab.Id, keepInPlace, cache));
 
     /// <summary>
     /// Fill a region of a prefab.
@@ -131,10 +137,16 @@ public static class PrefabUtils
     /// If <see langword="true"/>, blocks will be overwritten (if segments get added to the prefab),
     /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, <see langword="false"/> is returned.
     /// </param>
+    /// <param name="keepInPlace">
+    /// Only applies if <paramref name="value"/> <see cref="Voxel.IsEmpty"/> is <see langword="true"/>.
+    /// <para></para>
+    /// If <see langword="true"/>, the prefab will be moved back by shift from <see cref="Prefab.Remove(int3, out PrefabSegment, out int3)"/>,
+    /// if <see langword="false"/>, the prefab may move.
+    /// </param>
     /// <param name="prefabList">A <see cref="PrefabList"/> that <paramref name="prefab"/> is in.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if the fill was successful; otherwise, <see langword="false"/>.</returns>
-    public static bool TryFill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, PrefabList prefabList, BlockInstancesCache? cache)
+    public static bool TryFill(this Prefab prefab, int3 fromVoxel, int3 toVoxel, Voxel value, bool overwriteVoxels, bool overwriteBlocks, bool keepInPlace, PrefabList prefabList, BlockInstancesCache? cache)
         => TryFill(
             prefab,
             fromVoxel,
@@ -143,7 +155,7 @@ public static class PrefabUtils
             overwriteVoxels,
             canAddSegment: segmentPos => prefabList.CanAddSegmentToPrefab(prefab.Id, segmentPos, overwriteBlocks, cache),
             addSegment: segment => prefabList.AddSegmentToPrefab(prefab.Id, segment, overwriteBlocks, cache),
-            removeEmptySegments: () => prefabList.RemoveEmptySegmentsFromPrefab(prefab.Id, cache));
+            removeEmptySegments: () => prefabList.RemoveEmptySegmentsFromPrefab(prefab.Id, keepInPlace, cache));
 
     /// <summary>
     /// Try to fill a region of a prefab.

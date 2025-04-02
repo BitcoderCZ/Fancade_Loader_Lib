@@ -559,14 +559,18 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
     /// </summary>
     /// <param name="id">Id of the prefab.</param>
     /// <param name="posInPrefab">Position of the segment to remove.</param>
+    /// <param name="keepInPlace">
+    /// If <see langword="true"/>, the prefab will be moved back by shift from <see cref="Prefab.Remove(int3, out PrefabSegment, out int3)"/>,
+    /// if <see langword="false"/>, the prefab may move.
+    /// </param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if the segment was removed from the prefab; otherwise <see langword="false"/>.</returns>
-    public bool RemoveSegmentFromPrefab(ushort id, int3 posInPrefab, BlockInstancesCache? cache = null)
+    public bool RemoveSegmentFromPrefab(ushort id, int3 posInPrefab, bool keepInPlace = true, BlockInstancesCache? cache = null)
     {
         var prefab = _prefabs[id];
 
         int segmentIndex = prefab.IndexOf(posInPrefab);
-        if (!prefab.Remove(posInPrefab))
+        if (!prefab.Remove(posInPrefab, out _, out var shift))
         {
             return false;
         }
@@ -584,6 +588,18 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
         }
 
         DecreaseAfter((ushort)(segmentId + 1), 1);
+
+        if (shift != int3.Zero)
+        {
+            if (keepInPlace)
+            {
+                ShiftPrefabRemovedSegment(prefab, posInPrefab, -shift, false, cache);
+            }
+            else
+            {
+                cache?.MovePositions(shift);
+            }
+        }
 
         return true;
     }
@@ -882,6 +898,77 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                                 }
 
                                 prefab.Blocks.SetBlock(pos + offset, id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void ShiftPrefabRemovedSegment(Prefab prefab, int3 removed, int3 shift, bool checkForObstructions, BlockInstancesCache? cache)
+    {
+        Debug.Assert(prefab.Count <= 4 * 4 * 4, "value.Count should be smaller that it's max size.");
+
+        Span<int3> removeOffsets = stackalloc int3[4 * 4 * 4];
+        Span<(int3 Offset, ushort Id)> ids = stackalloc (int3 Offset, ushort Id)[4 * 4 * 4];
+
+        int removeLen = 0;
+        int idsLen = 0;
+
+        if (cache is not null)
+        {
+            foreach (var (segment, segmentId) in prefab.EnumerateWithId())
+            {
+                removeOffsets[removeLen++] = segment.PosInPrefab - shift;
+                ids[idsLen++] = (segment.PosInPrefab, segmentId);
+            }
+        }
+        else
+        {
+            foreach (var (segment, segmentId) in prefab.EnumerateWithId())
+            {
+                removeOffsets[removeLen++] = segment.PosInPrefab - shift;
+                ids[idsLen++] = (segment.PosInPrefab, segmentId);
+            }
+        }
+
+        removeOffsets[removeLen++] = removed;
+
+        removeOffsets = removeOffsets[..removeLen];
+        ids = ids[..idsLen];
+
+        if (cache is not null)
+        {
+            cache.MoveBlock(removeOffsets, ids, checkForObstructions);
+            return;
+        }
+
+        if (checkForObstructions)
+        {
+            ThrowNotImplementedException();
+        }
+
+        foreach (var item in _prefabs.Values)
+        {
+            for (int z = 0; z < item.Blocks.Size.Z; z++)
+            {
+                for (int y = 0; y < item.Blocks.Size.Y; y++)
+                {
+                    for (int x = 0; x < item.Blocks.Size.X; x++)
+                    {
+                        int3 pos = new int3(x, y, z);
+
+                        if (item.Blocks.GetBlockUnchecked(pos) == prefab.Id)
+                        {
+                            foreach (var offset in removeOffsets)
+                            {
+                                item.Blocks.SetBlockUnchecked(pos + offset, 0);
+                            }
+
+                            foreach (var (offset, id) in ids)
+                            {
+                                item.Blocks.SetBlock(pos + shift + offset, id);
                             }
                         }
                     }

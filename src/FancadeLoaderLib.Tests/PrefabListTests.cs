@@ -1,6 +1,7 @@
 ﻿using FancadeLoaderLib.Exceptions;
 using FancadeLoaderLib.Tests.Common;
 using MathUtils.Vectors;
+using System.Diagnostics;
 using TUnit.Assertions.AssertConditions.Throws;
 using static FancadeLoaderLib.Tests.Common.PrefabGenerator;
 
@@ -1035,7 +1036,7 @@ public class PrefabListTests
         var prefab = CreatePrefab(1, 2);
         prefabList.AddPrefab(prefab);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0), cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0), cache: cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         await Assert.That(removed).IsTrue();
 
@@ -1067,7 +1068,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0), cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(1, 0, 0), cache: cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
         await Assert.That(removed).IsTrue();
 
@@ -1109,7 +1110,58 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);
 
-        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(0, 0, 0), cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
+        var instanceCache = cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null;
+
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(0, 0, 0), cache: instanceCache);
+
+        await Assert.That(removed).IsTrue();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab1.Id).IsEqualTo((ushort)1);
+            await Assert.That(prefab2.Id).IsEqualTo((ushort)2);
+
+            await Assert.That(prefab1.Count).IsEqualTo(1);
+            await Assert.That(prefab2.Count).IsEqualTo(2);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)3);
+        }
+
+        if (instanceCache is not null)
+        {
+            await AssertCachePositions(instanceCache, new int3(0, 0, 0));
+        }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task RemoveSegmentFromPrefab_KeepInPlaceFalse_DoesMove(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab1 = CreatePrefab(1, 2);
+        var prefab2 = CreatePrefab(3, 2);
+
+        var blocks = prefab2.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab1);
+        blocks.SetPrefab(new int3(0, 0, 1), prefab2);
+
+        prefabList.AddPrefab(prefab1);
+        prefabList.AddPrefab(prefab2);
+
+        var instanceCache = cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null;
+
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(0, 0, 0), keepInPlace: false, cache: instanceCache);
 
         await Assert.That(removed).IsTrue();
 
@@ -1128,6 +1180,54 @@ public class PrefabListTests
             await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)1);
             await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)2);
             await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)3);
+        }
+
+        if (instanceCache is not null)
+        {
+            await AssertCachePositions(instanceCache, new int3(1, 0, 0));
+        }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task RemoveSegmentFromPrefab_KeepInPlaceFalse_NoShift_DoesNotMove(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab = CreatePrefab(1, [new int3(0, 0, 0), new int3(1, 0, 0), new int3(0, 0, 1)]);
+
+        var blocks = prefab.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab);
+
+        prefabList.AddPrefab(prefab);
+
+        var instanceCache = cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null;
+
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(0, 0, 0), keepInPlace: false, cache: instanceCache);
+
+        await Assert.That(removed).IsTrue();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab.Id).IsEqualTo((ushort)1);
+
+            await Assert.That(prefab.Count).IsEqualTo(2);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)2);
+        }
+
+        if (instanceCache is not null)
+        {
+            await AssertCachePositions(instanceCache, new int3(0, 0, 0));
         }
     }
 
@@ -1257,5 +1357,41 @@ public class PrefabListTests
             await Assert.That(loadedPrefabList.Prefabs).IsEquivalentTo(prefabList.Prefabs, PrefabComparer.Instance);
             await Assert.That(loadedPrefabList.Segments).IsEquivalentTo(prefabList.Segments, PrefabSegmentComparer.Instance);
         }
+    }
+
+    private static async Task AssertCachePositions(BlockInstancesCache cache, params int3[] expected)
+    {
+        if (expected.Length == 0)
+        {
+            return;
+        }
+        else if (cache.IsEmpty)
+        {
+            Assert.Fail($"{nameof(cache)} was empty.");
+        }
+
+        bool foundNonEmpty = false;
+
+        foreach (var item in cache.EnumeratePrefabInstances())
+        {
+            if (!item.Positions.IsEmpty)
+            {
+                if (foundNonEmpty)
+                {
+                    Assert.Fail($"Only 1 prefab in {nameof(cache)} can have blocks.");
+                }
+                else
+                {
+                    foundNonEmpty = true;
+
+                    foreach (var pos in expected)
+                    {
+                        await Assert.That(item.Positions.Contains(pos)).IsTrue();
+                    }
+                }
+            }
+        }
+
+        Debug.Assert(foundNonEmpty);
     }
 }

@@ -26,7 +26,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Blue, false);
 
-        prefab.Fill(new int3(-10, -10, -10), new int3(-1, -1, -1), voxel, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
+        prefab.Fill(new int3(-10, -10, -10), new int3(-1, -1, -1), voxel, true, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
 
         await Assert.That(prefab).IsEqualTo(prefabClone, PrefabComparer.Instance);
     }
@@ -46,7 +46,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Blue, false);
 
-        prefab.Fill(new int3(1, 1, 1), new int3(6, 6, 6), voxel, true, false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
+        prefab.Fill(new int3(1, 1, 1), new int3(6, 6, 6), voxel, true, false, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
 
         using (Assert.Multiple())
         {
@@ -70,7 +70,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Blue, false);
 
-        prefab.Fill(new int3(1, 1, 1), new int3(14, 14, 14), voxel, true, false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
+        prefab.Fill(new int3(1, 1, 1), new int3(14, 14, 14), voxel, true, false, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
 
         using (Assert.Multiple())
         {
@@ -113,7 +113,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Blue, false);
 
-        prefab.Fill(new int3(0, 0, 0), new int3(1, 0, 0), voxel, true, false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
+        prefab.Fill(new int3(0, 0, 0), new int3(1, 0, 0), voxel, true, false, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
 
         using (Assert.Multiple())
         {
@@ -142,7 +142,7 @@ public class PrefabUtilsTests
 
         voxels[1] = voxel1;
 
-        prefab.Fill(new int3(0, 0, 0), new int3(1, 0, 0), voxel2, false, false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
+        prefab.Fill(new int3(0, 0, 0), new int3(1, 0, 0), voxel2, false, false, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
 
         using (Assert.Multiple())
         {
@@ -175,7 +175,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Black, true);
 
-        await Assert.That(() => prefab1.Fill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null)).Throws<BlockObstructedException>();
+        await Assert.That(() => prefab1.Fill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, false, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null)).Throws<BlockObstructedException>();
     }
 
     [Test]
@@ -201,7 +201,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Black, true);
 
-        prefab1.Fill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null);
+        prefab1.Fill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null);
 
         await Assert.That(prefab1.Size).IsEqualTo(new int3(2, 1, 1));
         await Assert.That(prefab2.Id).IsEqualTo((ushort)3);
@@ -224,7 +224,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Blue, false);
 
-        bool filled = prefab.TryFill(new int3(-10, -10, -10), new int3(-1, -1, -1), voxel, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
+        bool filled = prefab.TryFill(new int3(-10, -10, -10), new int3(-1, -1, -1), voxel, true, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
 
         await Assert.That(filled).IsTrue();
 
@@ -254,7 +254,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Black, true);
 
-        bool filled = prefab1.TryFill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, false, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null);
+        bool filled = prefab1.TryFill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, false, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null);
 
         await Assert.That(filled).IsFalse();
     }
@@ -282,7 +282,7 @@ public class PrefabUtilsTests
 
         var voxel = new Voxel(FcColor.Black, true);
 
-        bool filled = prefab1.TryFill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null);
+        bool filled = prefab1.TryFill(new int3(7, 0, 0), new int3(8, 0, 0), voxel, true, true, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab1.Id) : null);
 
         await Assert.That(filled).IsTrue();
 

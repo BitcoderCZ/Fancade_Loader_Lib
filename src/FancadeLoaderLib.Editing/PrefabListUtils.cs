@@ -65,9 +65,13 @@ public static class PrefabListUtils
     /// </summary>
     /// <param name="list">The list to remove the segments from.</param>
     /// <param name="id">Id of the prefab.</param>
+    /// <param name="keepInPlace">
+    /// If <see langword="true"/>, the prefab will be moved back by shift from <see cref="Prefab.Remove(int3, out PrefabSegment, out int3)"/>,
+    /// if <see langword="false"/>, the prefab may move.
+    /// </param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns>How many segments were removed.</returns>
-    public static int RemoveEmptySegmentsFromPrefab(this PrefabList list, ushort id, BlockInstancesCache? cache = null)
+    public static int RemoveEmptySegmentsFromPrefab(this PrefabList list, ushort id, bool keepInPlace = true, BlockInstancesCache? cache = null)
     {
         var prefab = list.GetPrefab(id);
 
@@ -86,7 +90,7 @@ public static class PrefabListUtils
 
         foreach (var pos in toRemove[..removedCount])
         {
-            list.RemoveSegmentFromPrefab(id, pos, cache);
+            list.RemoveSegmentFromPrefab(id, pos, keepInPlace, cache);
         }
 
         return removedCount;

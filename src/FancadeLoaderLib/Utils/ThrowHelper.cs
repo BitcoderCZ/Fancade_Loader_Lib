@@ -58,6 +58,11 @@ internal static class ThrowHelper
 
     [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]
+    public static void ThrowNotImplementedException()
+        => throw new NotImplementedException();
+
+    [DoesNotReturn]
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public static void ThrowNotImplementedException(string message)
         => throw new NotImplementedException(message);
 

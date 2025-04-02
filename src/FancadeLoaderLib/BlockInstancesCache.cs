@@ -2,8 +2,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -12,7 +15,7 @@ namespace FancadeLoaderLib;
 /// </summary>
 public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerable<int3> Position)>
 {
-    private readonly List<(Prefab Prefab, IEnumerable<int3> Position)> _instances = [];
+    private readonly List<(Prefab Prefab, List<int3> Position)> _instances = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BlockInstancesCache"/> class.
@@ -72,13 +75,41 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
     /// <value><see langword="true"/> if no blocks with id <see cref="BLockId"/> were found, when this <see cref="BlockInstancesCache"/> was created; otherwise, <see langword="false"/>.</value>
     public bool IsEmpty { get; private set; }
 
+    /// <summary>
+    /// Enumerates the <see cref="PrefabInstances"/> of the <see cref="BlockInstancesCache"/>.
+    /// </summary>
+    /// <returns>An <see cref="IEnumerable{T}"/> that iterates over the <see cref="PrefabInstances"/> of the <see cref="BlockInstancesCache"/>.</returns>
+    public IEnumerable<PrefabInstances> EnumeratePrefabInstances()
+    {
+        foreach (var (prefab, positions) in _instances)
+        {
+            yield return new PrefabInstances(prefab, positions);
+        }
+    }
+
     /// <inheritdoc/>
     public IEnumerator<(Prefab Prefab, IEnumerable<int3> Position)> GetEnumerator()
-        => _instances.GetEnumerator();
+        => _instances.Select(item => (item.Prefab, (IEnumerable<int3>)item.Position)).GetEnumerator();
 
     /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator()
         => GetEnumerator();
+
+    internal void MovePositions(int3 move)
+    {
+        if (IsEmpty)
+        {
+            return;
+        }
+
+        foreach (var (_, positions) in _instances)
+        {
+            for (int i = 0; i < positions.Count; i++)
+            {
+                positions[i] += move;
+            }
+        }
+    }
 
     internal void RemoveBlock()
     {
@@ -239,5 +270,66 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         }
 
         return true;
+    }
+
+    internal void MoveBlock(ReadOnlySpan<int3> removeOffsets, ReadOnlySpan<(int3 Offset, ushort Id)> ids, bool checkForObstructions)
+    {
+        if (checkForObstructions)
+        {
+            ThrowNotImplementedException();
+        }
+
+        foreach (var (prefab, positions) in _instances)
+        {
+            foreach (var pos in positions)
+            {
+                foreach (var offset in removeOffsets)
+                {
+                    prefab.Blocks.SetBlockUnchecked(pos + offset, 0);
+                }
+
+                foreach (var (offset, id) in ids)
+                {
+                    prefab.Blocks.SetBlock(pos + offset, id);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Represents the instances of a block in a prefab.
+    /// </summary>
+    public readonly struct PrefabInstances
+    {
+        private readonly List<int3> _positions;
+
+        internal PrefabInstances(Prefab prefab, List<int3> positions)
+        {
+            Prefab = prefab;
+            _positions = positions;
+        }
+
+        /// <summary>
+        /// Gets the prefab the instances are in.
+        /// </summary>
+        /// <value>The prefab the instances are in.</value>
+        public Prefab Prefab { get; }
+
+        /// <summary>
+        /// Gets the positions of the instances.
+        /// </summary>
+        /// <value>Posititons of the instances.</value>
+        public ReadOnlySpan<int3> Positions => CollectionsMarshal.AsSpan(_positions);
+
+        /// <summary>
+        /// Deconstructs the <see cref="BlockInstancesCache"/>.
+        /// </summary>
+        /// <param name="prefab">The prefab the instances are in.</param>
+        /// <param name="positions">Posititons of the instances.</param>
+        public void Deconstruct(out Prefab prefab, out ReadOnlySpan<int3> positions)
+        {
+            prefab = Prefab;
+            positions = Positions;
+        }
     }
 }
