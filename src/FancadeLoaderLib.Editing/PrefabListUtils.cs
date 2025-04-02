@@ -80,11 +80,11 @@ public static class PrefabListUtils
         Debug.Assert(prefab.Count <= 4 * 4 * 4, "prefab.Count should be smaller that it's max size.");
         Span<int3> toRemove = stackalloc int3[4 * 4 * 4];
 
-        foreach (var (pos, segment) in prefab)
+        foreach (var segment in prefab.OrderedValues.Reverse())
         {
             if (segment.IsEmpty)
             {
-                toRemove[removedCount++] = pos;
+                toRemove[removedCount++] = segment.PosInPrefab;
             }
         }
 
