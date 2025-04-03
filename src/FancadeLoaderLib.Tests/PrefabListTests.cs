@@ -1142,6 +1142,48 @@ public class PrefabListTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
+    public async Task RemoveSegmentFromPrefab_KeepInPlaceTrue_DoesNotMove(bool cache)
+    {
+        var prefabList = new PrefabList()
+        {
+            IdOffset = 1,
+        };
+
+        var prefab = CreatePrefab(1, 2);
+
+        var blocks = prefab.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab);
+
+        prefabList.AddPrefab(prefab);
+
+        var instanceCache = cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null;
+
+        bool removed = prefabList.RemoveSegmentFromPrefab(1, new int3(0, 0, 0), keepInPlace: true, cache: instanceCache);
+
+        await Assert.That(removed).IsTrue();
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(prefab.Id).IsEqualTo((ushort)1);
+
+            await Assert.That(prefab.Count).IsEqualTo(1);
+        }
+
+        using (Assert.Multiple())
+        {
+            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)0);
+        }
+
+        if (instanceCache is not null)
+        {
+            await AssertCachePositions(instanceCache, new int3(0, 0, 0));
+        }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
     public async Task RemoveSegmentFromPrefab_KeepInPlaceFalse_DoesMove(bool cache)
     {
         var prefabList = new PrefabList()

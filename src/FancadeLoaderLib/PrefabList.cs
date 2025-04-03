@@ -582,7 +582,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
         _segments.RemoveAt(segmentId - IdOffset);
         RemoveIdFromPrefab(id, posInPrefab, cache);
 
-        if (segmentId == SegmentCount + IdOffset - 1)
+        if (segmentId == SegmentCount + IdOffset)
         {
             return true;
         }

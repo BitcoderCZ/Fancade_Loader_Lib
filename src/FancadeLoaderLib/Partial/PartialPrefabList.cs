@@ -486,7 +486,7 @@ public partial class PartialPrefabList : IEnumerable<PartialPrefab>, ICloneable
 
         _segments.RemoveAt(segmentId - IdOffset);
 
-        if (segmentId == SegmentCount + IdOffset - 1)
+        if (segmentId == SegmentCount + IdOffset)
         {
             return true;
         }
