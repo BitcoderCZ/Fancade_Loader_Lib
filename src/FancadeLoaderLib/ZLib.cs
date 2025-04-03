@@ -40,7 +40,7 @@ public static class Zlib
 #pragma warning restore CA2000
 
         using MemoryStream ms = new MemoryStream();
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(1024);
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(1024 * 8);
         try
         {
             int read;
@@ -64,13 +64,30 @@ public static class Zlib
     /// </summary>
     /// <param name="from">The source stream.</param>
     /// <param name="to">The compressed stream.</param>
-    public static void Compress(Stream from, Stream to)
+    /// <param name="compressionLevel">
+    /// Determines how much will the output be compressed.
+    /// <para></para>
+    /// <c>-1</c> for default compression; otherwise, <c>0</c> to <c>9</c>.
+    /// </param>
+    public static void Compress(Stream from, Stream to, int compressionLevel = -1)
     {
         ThrowIfNull(from, nameof(from));
         ThrowIfNull(to, nameof(to));
 
+        if (compressionLevel < -1 || compressionLevel > 9)
+        {
+            ThrowArgumentOutOfRangeException(nameof(compressionLevel), $"{nameof(compressionLevel)} must be between -1 and 9.");
+        }
 #if NET6_0_OR_GREATER
-        using ZLibStream zlib = new ZLibStream(to, CompressionLevel.SmallestSize, true);
+        CompressionLevel level = compressionLevel switch
+        {
+            0 => CompressionLevel.NoCompression,
+            1 or 2 or 3 or 4 => CompressionLevel.Fastest,
+            5 or 6 or 7 or 8 or 9 => CompressionLevel.SmallestSize,
+            _ => CompressionLevel.Optimal,
+        };
+
+        using ZLibStream zlib = new ZLibStream(to, level, true);
 
         from.CopyTo(zlib);
 #else
@@ -78,7 +95,7 @@ public static class Zlib
         ZOutputStream zlib = new ZOutputStream(to, 9);
 #pragma warning restore CA2000
 
-        byte[] buffer = ArrayPool<byte>.Shared.Rent(1024);
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(1024 * 8);
         try
         {
             int read;

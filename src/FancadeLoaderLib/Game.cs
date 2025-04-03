@@ -227,18 +227,23 @@ public class Game : ICloneable
         => new RawGame(Name, Author, Description, RawGame.CurrentNumbStockPrefabs, [.. Prefabs.Prefabs.OrderBy(item => item.Id).SelectMany(item => item.ToRaw(clonePrefabs)).ToList()]);
 
     /// <summary>
-    /// Saves a game to a writer.
+    /// Saves the <see cref="Game"/> to a <see cref="FcBinaryWriter"/>.
     /// </summary>
     /// <param name="writer">The writer to save to.</param>
     public void Save(FcBinaryWriter writer)
         => ToRaw(false).Save(writer);
 
     /// <summary>
-    /// Saves and compresses game to a stream.
+    /// Saves and compresses the <see cref="Game"/> to a stream.
     /// </summary>
     /// <param name="stream">The stream to save to.</param>
-    public void SaveCompressed(Stream stream)
-        => ToRaw(false).SaveCompressed(stream);
+    /// <param name="compressionLevel">
+    /// Determines how much will the output be compressed.
+    /// <para></para>
+    /// <c>-1</c> for default compression; otherwise, <c>0</c> to <c>9</c>.
+    /// </param>
+    public void SaveCompressed(Stream stream, int compressionLevel = -1)
+        => ToRaw(false).SaveCompressed(stream, compressionLevel);
 
     /// <summary>
     /// Creates a copy of this <see cref="Game"/>.

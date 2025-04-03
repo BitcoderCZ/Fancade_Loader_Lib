@@ -177,7 +177,12 @@ public class RawGame
     /// Writes and compresses a <see cref="RawPrefab"/> into a <see cref="Stream"/>.
     /// </summary>
     /// <param name="stream">The <see cref="Stream"/> to write this instance into.</param>
-    public void SaveCompressed(Stream stream)
+    /// <param name="compressionLevel">
+    /// Determines how much will the output be compressed.
+    /// <para></para>
+    /// <c>-1</c> for default compression; otherwise, <c>0</c> to <c>9</c>.
+    /// </param>
+    public void SaveCompressed(Stream stream, int compressionLevel = -1)
     {
         using (MemoryStream writerStream = new MemoryStream())
         using (FcBinaryWriter writer = new FcBinaryWriter(writerStream))
@@ -185,7 +190,7 @@ public class RawGame
             Save(writer);
 
             writerStream.Position = 0;
-            Zlib.Compress(writerStream, stream);
+            Zlib.Compress(writerStream, stream, compressionLevel);
         }
     }
 
