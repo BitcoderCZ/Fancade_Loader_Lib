@@ -14,7 +14,6 @@ namespace FancadeLoaderLib;
 public enum SettingType : byte
 #pragma warning restore CA1028 // Enum Storage should be Int32
 {
-#pragma warning disable CA1720 // Identifier contains type name
     /// <summary>
     /// The type of this setting's value is <see langword="byte"/>.
     /// </summary>
@@ -45,5 +44,4 @@ public enum SettingType : byte
     /// The type of this setting's value is <see langword="string"/>.
     /// </summary>
     String = 6,
-#pragma warning restore CA1720 // Identifier contains type name
 }

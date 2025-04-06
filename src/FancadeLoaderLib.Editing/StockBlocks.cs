@@ -6,7 +6,11 @@ using FancadeLoaderLib.Editing.Utils;
 using FancadeLoaderLib.Partial;
 using MathUtils.Vectors;
 using System;
+using System.Collections.Frozen;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Reflection;
 
 namespace FancadeLoaderLib.Editing;
 
@@ -16,6 +20,8 @@ namespace FancadeLoaderLib.Editing;
 public static class StockBlocks
 {
     private static PartialPrefabList? _prefabList;
+
+    private static FrozenDictionary<ushort, BlockDef>? _blocks;
 
     /// <summary>
     /// Gets a <see cref="PartialPrefabList"/> with all of the stock fancade prefabs.
@@ -35,6 +41,42 @@ public static class StockBlocks
             return _prefabList;
         }
     }
+
+    private static FrozenDictionary<ushort, BlockDef> Blocks
+    {
+        get
+        {
+            if (_blocks is null)
+            {
+                _blocks = typeof(StockBlocks)
+                    .GetNestedTypes(BindingFlags.Public | BindingFlags.Static)
+                    .SelectMany(type => type
+                        .GetFields(BindingFlags.Public | BindingFlags.Static)
+                        .Where(f => f.FieldType == typeof(BlockDef))
+                        .Select(f => (BlockDef)f.GetValue(null)!))
+                    .ToFrozenDictionary(def => def.Prefab.Id);
+            }
+
+            return _blocks;
+        }
+    }
+
+    /// <summary>
+    /// Gets the stock <see cref="BlockDef"/> with the specified id.
+    /// </summary>
+    /// <param name="id">Id of the <see cref="BlockDef"/> to get.</param>
+    /// <returns>The stock <see cref="BlockDef"/>.</returns>
+    public static BlockDef GetBlockDef(ushort id)
+        => Blocks[id];
+
+    /// <summary>
+    /// Gets the stock <see cref="BlockDef"/> with the specified id.
+    /// </summary>
+    /// <param name="id">Id of the <see cref="BlockDef"/> to get.</param>
+    /// <param name="blockDef">The stock <see cref="BlockDef"/> with the specified id.</param>
+    /// <returns><see langword="true"/> if the specified <see cref="BlockDef"/> exists; otherwise, <see langword="false"/>.</returns>
+    public static bool TryGetBlockDef(ushort id, [MaybeNullWhen(false)] out BlockDef blockDef)
+        => Blocks.TryGetValue(id, out blockDef);
 
     /// <summary>
     /// The stock blocks in the game category.
