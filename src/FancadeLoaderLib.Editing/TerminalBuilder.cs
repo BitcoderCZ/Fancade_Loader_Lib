@@ -40,22 +40,22 @@ public readonly struct TerminalBuilder
     /// <summary>
     /// Adds a terminal.
     /// </summary>
-    /// <param name="wireType">Wire type of the terminal.</param>
+    /// <param name="signalType">Signal type of the terminal.</param>
     /// <param name="type">Type of the terminal.</param>
     /// <returns>This instance after the add operation has completed.</returns>
-    public TerminalBuilder Add(WireType wireType, TerminalType type)
-        => Add(wireType, type, null);
+    public TerminalBuilder Add(SignalType signalType, TerminalType type)
+        => Add(signalType, type, null);
 
     /// <summary>
     /// Adds a terminal.
     /// </summary>
-    /// <param name="wireType">Wire type of the terminal.</param>
+    /// <param name="signalType">Signal type of the terminal.</param>
     /// <param name="type">Type of the terminal.</param>
     /// <param name="name">Name of the terminal.</param>
     /// <returns>This instance after the add operation has completed.</returns>
-    public TerminalBuilder Add(WireType wireType, TerminalType type, string? name)
+    public TerminalBuilder Add(SignalType signalType, TerminalType type, string? name)
     {
-        _terminals.Add(new TerminalModel(wireType, type, name));
+        _terminals.Add(new TerminalModel(signalType, type, name));
 
         return this;
     }
@@ -99,18 +99,18 @@ public readonly struct TerminalBuilder
             var terminal = _terminals[i];
 
             terminals[i] = terminal.Type == TerminalType.In
-                ? new TerminalDef(terminal.WireType, terminal.Type, terminal.Name, i, new int3(0, 1, (countIn++ * 8) + 3))
-                : new TerminalDef(terminal.WireType, terminal.Type, terminal.Name, i, new int3(outXPos, 1, (countOut++ * 8) + 3));
+                ? new TerminalDef(terminal.SignalType, terminal.Type, terminal.Name, i, new int3(0, 1, (countIn++ * 8) + 3))
+                : new TerminalDef(terminal.SignalType, terminal.Type, terminal.Name, i, new int3(outXPos, 1, (countOut++ * 8) + 3));
         }
 
         if (blockType == ScriptBlockType.Active)
         {
-            terminals[0] = new TerminalDef(_terminals[0].WireType, _terminals[0].Type, "After", 0, new int3(3, 1, 0));
-            terminals[^1] = new TerminalDef(_terminals[^1].WireType, _terminals[^1].Type, "Before", _terminals.Count - 1, new int3(3, 1, (blockSize.Z * 8) - 2));
+            terminals[0] = new TerminalDef(_terminals[0].SignalType, _terminals[0].Type, "After", 0, new int3(3, 1, 0));
+            terminals[^1] = new TerminalDef(_terminals[^1].SignalType, _terminals[^1].Type, "Before", _terminals.Count - 1, new int3(3, 1, (blockSize.Z * 8) - 2));
         }
 
         return ImmutableCollectionsMarshal.AsImmutableArray(terminals);
     }
 
-    private record struct TerminalModel(WireType WireType, TerminalType Type, string? Name);
+    private record struct TerminalModel(SignalType SignalType, TerminalType Type, string? Name);
 }

@@ -12,9 +12,9 @@ namespace FancadeLoaderLib.Editing;
 public sealed class TerminalDef
 {
     /// <summary>
-    /// The wire type of the terminal.
+    /// The signal type of the terminal.
     /// </summary>
-    public readonly WireType WireType;
+    public readonly SignalType SignalType;
 
     /// <summary>
     /// Type of the terminal.
@@ -39,12 +39,12 @@ public sealed class TerminalDef
     /// <summary>
     /// Initializes a new instance of the <see cref="TerminalDef"/> class.
     /// </summary>
-    /// <param name="wireType">Wire type of the terminal.</param>
+    /// <param name="signalType">Signal type of the terminal.</param>
     /// <param name="type">Type of the terminal.</param>
     /// <param name="index">Index of the terminal.</param>
     /// <param name="position">Position of the terminal.</param>
-    public TerminalDef(WireType wireType, TerminalType type, int index, int3 position)
-        : this(wireType, type, null, index, position)
+    public TerminalDef(SignalType signalType, TerminalType type, int index, int3 position)
+        : this(signalType, type, null, index, position)
     {
         Index = index;
         Position = position;
@@ -53,14 +53,14 @@ public sealed class TerminalDef
     /// <summary>
     /// Initializes a new instance of the <see cref="TerminalDef"/> class.
     /// </summary>
-    /// <param name="wireType">Wire type of the terminal.</param>
+    /// <param name="signalType">Signal type of the terminal.</param>
     /// <param name="type">Type of the terminal.</param>
     /// <param name="name">Name of the terminal.</param>
     /// <param name="index">Index of the terminal.</param>
     /// <param name="position">Position of the terminal.</param>
-    public TerminalDef(WireType wireType, TerminalType type, string? name, int index, int3 position)
+    public TerminalDef(SignalType signalType, TerminalType type, string? name, int index, int3 position)
     {
-        WireType = wireType;
+        SignalType = signalType;
         Type = type;
         Name = name;
         Index = index;

@@ -61,7 +61,7 @@ public sealed class CodeWriter
     /// <param name="name">Name of the variable to place.</param>
     /// <param name="type">Type of the variable to place.</param>
     /// <returns>The out terminal of the variable block.</returns>
-    public ITerminal PlaceVariable(string name, WireType type)
+    public ITerminal PlaceVariable(string name, SignalType type)
     {
         var block = _codePlacer.PlaceBlock(StockBlocks.Variables.GetVariableByType(type));
 
@@ -98,9 +98,9 @@ public sealed class CodeWriter
     {
         ThrowIfNull(value, nameof(value));
 
-        var wireType = WireTypeUtils.FromType(value.GetType());
+        var signalType = SignalTypeUtils.FromType(value.GetType());
 
-        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(wireType));
+        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(signalType));
 
         _codePlacer.SetSetting(block, 0, name);
 
@@ -124,7 +124,7 @@ public sealed class CodeWriter
     {
         ThrowIfNull(terminal, nameof(terminal));
 
-        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminal.WireType));
+        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminal.SignalType));
 
         _codePlacer.Connect(terminal, new BlockTerminal(block, "Value"));
 
@@ -140,7 +140,7 @@ public sealed class CodeWriter
     /// <param name="getTerminalFunc">A method to get the terminal.</param>
     /// <param name="terminalType">Type of the variable.</param>
     /// <returns>The before and after terminals of the set variable block.</returns>
-    public ITerminalStore SetVariable(string name, Func<ITerminal> getTerminalFunc, WireType terminalType)
+    public ITerminalStore SetVariable(string name, Func<ITerminal> getTerminalFunc, SignalType terminalType)
     {
         ThrowIfNull(getTerminalFunc, nameof(getTerminalFunc));
 
@@ -164,7 +164,7 @@ public sealed class CodeWriter
     public ITerminalStore SetListRange<T>(string variableName, ReadOnlySpan<T> values, int startIndex)
         where T : notnull
     {
-        var wireType = WireTypeUtils.FromType(typeof(T));
+        var signalType = SignalTypeUtils.FromType(typeof(T));
 
         TerminalConnector connector = new TerminalConnector(_codePlacer.Connect);
 
@@ -178,19 +178,19 @@ public sealed class CodeWriter
             }
             else
             {
-                Block setBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(wireType));
+                Block setBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(signalType));
 
                 connector.Add(new TerminalStore(setBlock));
 
                 using (ExpressionBlock())
                 {
-                    Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(wireType));
+                    Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(signalType));
 
                     _codePlacer.Connect(TerminalStore.CreateOut(listBlock, listBlock.Type["Element"]), TerminalStore.CreateIn(setBlock, setBlock.Type["Variable"]));
 
                     using (ExpressionBlock())
                     {
-                        lastElementTerminal ??= PlaceVariable(variableName, wireType);
+                        lastElementTerminal ??= PlaceVariable(variableName, signalType);
 
                         _codePlacer.Connect(lastElementTerminal, TerminalStore.CreateIn(listBlock, listBlock.Type["Variable"]));
 
@@ -218,7 +218,7 @@ public sealed class CodeWriter
     public ITerminalStore SetListRange<T>(string variableName, ReadOnlySpan<T> values, string startIndexVariableName)
         where T : notnull
     {
-        var wireType = WireTypeUtils.FromType(typeof(T));
+        var signalType = SignalTypeUtils.FromType(typeof(T));
 
         TerminalConnector connector = new TerminalConnector(_codePlacer.Connect);
 
@@ -226,25 +226,25 @@ public sealed class CodeWriter
 
         for (int i = 0; i < values.Length; i++)
         {
-            Block setBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(wireType));
+            Block setBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(signalType));
 
             connector.Add(new TerminalStore(setBlock));
 
             using (ExpressionBlock())
             {
-                Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(wireType));
+                Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(signalType));
 
                 _codePlacer.Connect(TerminalStore.CreateOut(listBlock, listBlock.Type["Element"]), TerminalStore.CreateIn(setBlock, setBlock.Type["Variable"]));
 
                 using (ExpressionBlock())
                 {
-                    lastElementTerminal ??= PlaceVariable(variableName, wireType);
+                    lastElementTerminal ??= PlaceVariable(variableName, signalType);
 
                     _codePlacer.Connect(lastElementTerminal, TerminalStore.CreateIn(listBlock, listBlock.Type["Variable"]));
 
                     lastElementTerminal = new BlockTerminal(listBlock, "Element");
 
-                    _codePlacer.Connect(i == 0 ? PlaceVariable(startIndexVariableName, WireType.Float) : PlaceLiteral(1f), TerminalStore.CreateIn(listBlock, listBlock.Type["Index"]));
+                    _codePlacer.Connect(i == 0 ? PlaceVariable(startIndexVariableName, SignalType.Float) : PlaceLiteral(1f), TerminalStore.CreateIn(listBlock, listBlock.Type["Index"]));
                 }
 
                 _codePlacer.Connect(PlaceLiteral(values[i]), TerminalStore.CreateIn(setBlock, setBlock.Type["Value"]));
@@ -258,33 +258,33 @@ public sealed class CodeWriter
     /// Breaks a vector or rotation variable.
     /// </summary>
     /// <param name="variableName">Name of the variable.</param>
-    /// <param name="type">Type of the variable, must be <see cref="WireType.Vec3"/>(Ptr) or <see cref="WireType.Rot"/>(Ptr).</param>
+    /// <param name="type">Type of the variable, must be <see cref="SignalType.Vec3"/>(Ptr) or <see cref="SignalType.Rot"/>(Ptr).</param>
     /// <param name="cache">If the break block should be cached.</param>
     /// <returns>The X, Y and Z out terminal.</returns>
-    /// <exception cref="InvalidEnumArgumentException">Thrown when <paramref name="type"/> is not <see cref="WireType.Vec3"/>(Ptr) or <see cref="WireType.Rot"/>(Ptr).</exception>
-    public (ITerminal X, ITerminal Y, ITerminal Z) BreakVector(string variableName, WireType type, bool cache = true)
+    /// <exception cref="InvalidEnumArgumentException">Thrown when <paramref name="type"/> is not <see cref="SignalType.Vec3"/>(Ptr) or <see cref="SignalType.Rot"/>(Ptr).</exception>
+    public (ITerminal X, ITerminal Y, ITerminal Z) BreakVector(string variableName, SignalType type, bool cache = true)
     {
         type = type.ToNotPointer();
 
         switch (type)
         {
-            case WireType.Vec3:
-            case WireType.Rot:
+            case SignalType.Vec3:
+            case SignalType.Rot:
                 break;
             default:
-                throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(WireType));
+                throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(SignalType));
         }
 
         Block? block;
 
         if (cache)
         {
-            BreakBlockCache blockCache = (type == WireType.Vec3 ? _vectorBreakCache : _rotationBreakCache)
+            BreakBlockCache blockCache = (type == SignalType.Vec3 ? _vectorBreakCache : _rotationBreakCache)
                 .AddIfAbsent(variableName, new BreakBlockCache(null, FancadeConstants.MaxWireSplits));
 
             if (!blockCache.TryGet(out block))
             {
-                block = _codePlacer.PlaceBlock(type == WireType.Vec3 ? StockBlocks.Math.Break_Vector : StockBlocks.Math.Break_Rotation);
+                block = _codePlacer.PlaceBlock(type == SignalType.Vec3 ? StockBlocks.Math.Break_Vector : StockBlocks.Math.Break_Rotation);
                 blockCache.SetNewBlock(block);
 
                 using (ExpressionBlock())

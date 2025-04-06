@@ -30,5 +30,5 @@ public sealed class NopTerminal : ITerminal
     public int3? VoxelPosition => new int3(-1, -1, -1);
 
     /// <inheritdoc/>
-    public WireType WireType => WireType.Error;
+    public SignalType SignalType => SignalType.Error;
 }

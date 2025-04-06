@@ -30,5 +30,5 @@ public readonly struct AbsolutePositionTerminal : ITerminal
     public int3? VoxelPosition { get; init; }
 
     /// <inheritdoc/>
-    public WireType WireType { get; init; }
+    public SignalType SignalType { get; init; }
 }

@@ -12,26 +12,26 @@ namespace FancadeLoaderLib.Editing.Scripting.Terminals;
 public interface ITerminal
 {
     /// <summary>
-    /// Gets the position of the block this terminal is on.
+    /// Gets the position of the block the terminal is on.
     /// </summary>
-    /// <value>The position of the block this terminal is on.</value>
+    /// <value>The position of the block the terminal is on.</value>
     int3 BlockPosition { get; }
 
     /// <summary>
-    /// Gets the index of this terminal.
+    /// Gets the index of the terminal.
     /// </summary>
-    /// <value>The index of this terminal.</value>
+    /// <value>The index of the terminal.</value>
     int TerminalIndex { get; }
 
     /// <summary>
-    /// Gets the voxel position of this terminal relative to <see cref="BlockPosition"/>.
+    /// Gets the voxel position of the terminal relative to <see cref="BlockPosition"/>.
     /// </summary>
-    /// <value>The voxel position of this terminal.</value>
+    /// <value>The voxel position of the terminal.</value>
     int3? VoxelPosition { get; }
 
     /// <summary>
-    /// Gets the <see cref="Editing.WireType"/> of this terminal.
+    /// Gets the <see cref="FancadeLoaderLib.SignalType"/> of the terminal.
     /// </summary>
-    /// <value>The <see cref="Editing.WireType"/> of this terminal.</value>
-    WireType WireType { get; }
+    /// <value>The <see cref="FancadeLoaderLib.SignalType"/> of the terminal.</value>
+    SignalType SignalType { get; }
 }
