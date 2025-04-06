@@ -18,6 +18,11 @@ namespace FancadeLoaderLib;
 public struct Connection : IEquatable<Connection>
 {
     /// <summary>
+    /// The value that a <see cref="Connection"/> has when one of it's sides is on a prefab.
+    /// </summary>
+    public const ushort IsFromToOutsideValue = 32769;
+
+    /// <summary>
     /// Position of the first block.
     /// </summary>
     public ushort3 From;
@@ -51,6 +56,18 @@ public struct Connection : IEquatable<Connection>
         FromVoxel = fromVoxel;
         ToVoxel = toVoxel;
     }
+
+    /// <summary>
+    /// Gets a value indicating whether the <see cref="Connection"/> is from outside of the prefab.
+    /// </summary>
+    /// <value><see langword="true"/> if the <see cref="Connection"/> is from outside of the prefab; otherwise, <see langword="false"/>.</value>
+    public readonly bool IsFromOutside => From.X == IsFromToOutsideValue;
+
+    /// <summary>
+    /// Gets a value indicating whether the <see cref="Connection"/> is to outside of the prefab.
+    /// </summary>
+    /// <value><see langword="true"/> if the <see cref="Connection"/> is to outside of the prefab; otherwise, <see langword="false"/>.</value>
+    public readonly bool IsToOutside => To.X == IsFromToOutsideValue;
 
     /// <summary>Returns a value that indicates whether the 2 <see cref="Connection"/>s are equal.</summary>
     /// <param name="left">The first <see cref="Connection"/> to compare.</param>
