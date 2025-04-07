@@ -13,4 +13,7 @@ public readonly struct VariableReference
         VariableId = variableId;
         Index = index;
     }
+
+    public readonly RuntimeValue GetValue(IRuntimeContext context)
+        => context.GetVariableValue(VariableId, Index);
 }

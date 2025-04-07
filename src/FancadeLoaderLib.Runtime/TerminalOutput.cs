@@ -6,27 +6,38 @@ namespace FancadeLoaderLib.Runtime;
 
 public readonly struct TerminalOutput
 {
-    private readonly bool _isReference;
+    public static readonly TerminalOutput Disconnected = default;
+
+    private readonly Flags _flags;
 
     private readonly DataArray _data;
 
     public TerminalOutput(RuntimeValue value)
     {
-        _isReference = false;
+        _flags = Flags.IsConnected;
 
         Write(value);
     }
 
     public TerminalOutput(VariableReference reference)
     {
-        _isReference = true;
+        _flags = Flags.IsReference | Flags.IsConnected;
 
         Write(reference);
     }
 
-    public bool IsReference => _isReference;
+    [Flags]
+    private enum Flags : byte
+    {
+        IsReference = 1 << 0,
+        IsConnected = 1 << 1,
+    }
 
-    public RuntimeValue Value
+    public readonly bool IsReference => (_flags & Flags.IsReference) == Flags.IsReference;
+
+    public readonly bool IsConnected => (_flags & Flags.IsConnected) == Flags.IsConnected;
+
+    public readonly RuntimeValue Value
     {
         get
         {
@@ -39,7 +50,7 @@ public readonly struct TerminalOutput
         }
     }
 
-    public VariableReference Reference
+    public readonly VariableReference Reference
     {
         get
         {
@@ -52,8 +63,8 @@ public readonly struct TerminalOutput
         }
     }
 
-    public RuntimeValue GetValue(IRuntimeContext context)
-        => IsReference ? context.GetVariableValue(Reference.VariableId, Reference.Index) : Value;
+    public readonly RuntimeValue GetValue(IRuntimeContext context)
+        => IsReference ? Reference.GetValue(context) : Value;
 
     private void Write<T>(T value)
         => Unsafe.WriteUnaligned(

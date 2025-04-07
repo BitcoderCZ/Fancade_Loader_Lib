@@ -31,13 +31,13 @@ public readonly struct RuntimeValue
         Write(value);
     }
 
-    public float Float => Read<float>();
+    public readonly float Float => Read<float>();
 
-    public float3 Float3 => Read<float3>();
+    public readonly float3 Float3 => Read<float3>();
 
-    public bool Bool => Read<int>() != 0;
+    public readonly bool Bool => Read<int>() != 0;
 
-    public int Int => Read<int>();
+    public readonly int Int => Read<int>();
 
     private void Write<T>(T value)
         => Unsafe.WriteUnaligned(
@@ -48,7 +48,7 @@ public readonly struct RuntimeValue
 #endif
             value);
 
-    private T Read<T>()
+    private readonly T Read<T>()
         => Unsafe.ReadUnaligned<T>(
 #if NET8_0_OR_GREATER
             ref MemoryMarshal.GetReference((ReadOnlySpan<byte>)_data)

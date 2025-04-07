@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime;
 
@@ -6,6 +7,11 @@ public readonly struct Variable : IEquatable<Variable>
 {
     public Variable(string name, SignalType type)
     {
+        if (type.IsPointer())
+        {
+            ThrowArgumentException($"{nameof(type)} cannot be pointer.", nameof(type));
+        }
+
         Name = name;
         Type = type;
     }

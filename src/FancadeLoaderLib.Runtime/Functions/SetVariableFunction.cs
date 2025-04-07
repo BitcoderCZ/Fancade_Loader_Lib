@@ -1,17 +1,19 @@
 ﻿using FancadeLoaderLib.Runtime.Exceptions;
-using MathUtils.Vectors;
+using System;
+using System.Collections.Generic;
+using System.Text;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime.Functions;
 
-public sealed class InspectFunction : IActiveFunction
+public sealed class SetVariableFunction : IActiveFunction
 {
-    private readonly int3 _blockPosition;
+    private readonly int _variableId;
     private readonly RuntimeTerminal _input;
 
-    public InspectFunction(int3 blockPosition, RuntimeTerminal input)
+    public SetVariableFunction(int variableId, RuntimeTerminal input)
     {
-        _blockPosition = blockPosition;
+        _variableId = variableId;
         _input = input;
     }
 
@@ -22,12 +24,7 @@ public sealed class InspectFunction : IActiveFunction
             ThrowArgumentException($"{nameof(executeNext)}.Length must be at least 1.", nameof(executeNext));
         }
 
-        var output = _input.GetOutput(context);
-
-        if (output.IsConnected)
-        {
-            context.InspectValue(_blockPosition, _input.GetOutput(context).GetValue(context));
-        }
+        context.SetVariableValue(_variableId, 0, _input.GetOutput(context).GetValue(context));
 
         executeNext[0] = "After";
 
