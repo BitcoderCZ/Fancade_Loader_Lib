@@ -66,4 +66,22 @@ public sealed class TerminalDef
         Index = index;
         Position = position;
     }
+
+    /// <summary>
+    /// Gets the default terminal name for a given <see cref="FancadeLoaderLib.SignalType"/>.
+    /// </summary>
+    /// <param name="type">The <see cref="FancadeLoaderLib.SignalType"/>.</param>
+    /// <returns>The default name for <paramref name="type"/>.</returns>
+    public static string GetDefaultName(SignalType type)
+        => type.ToNotPointer() switch
+        {
+            SignalType.Void => "Execute",
+            SignalType.Float => "Number",
+            SignalType.Vec3 => "Vector",
+            SignalType.Rot => "Rotation",
+            SignalType.Bool => "Truth",
+            SignalType.Obj => "Object",
+            SignalType.Con => "Constraint",
+            _ => string.Empty,
+        };
 }
