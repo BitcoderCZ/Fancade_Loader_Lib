@@ -19,23 +19,43 @@ namespace FancadeLoaderLib.Editing;
 /// </summary>
 public static class StockBlocks
 {
-    private static PartialPrefabList? _prefabList;
+    private static PartialPrefabList? _partialPrefabList;
+    private static PrefabList? _prefabList;
 
     private static FrozenDictionary<ushort, BlockDef>? _blocks;
 
     /// <summary>
-    /// Gets a <see cref="PartialPrefabList"/> with all of the stock fancade prefabs.
+    /// Gets a <see cref="Partial.PartialPrefabList"/> with all of the stock fancade prefabs.
     /// </summary>
-    /// <value>A <see cref="PartialPrefabList"/> with all of the stock fancade prefabs.</value>
-    public static PartialPrefabList PrefabList
+    /// <value>A <see cref="Partial.PartialPrefabList"/> with all of the stock fancade prefabs.</value>
+    public static PartialPrefabList PartialPrefabList
+    {
+        get
+        {
+            if (_partialPrefabList is null)
+            {
+                using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcppl");
+                using var reader = new FcBinaryReader(resourceStream);
+                _partialPrefabList = PartialPrefabList.Load(reader);
+            }
+
+            return _partialPrefabList;
+        }
+    }
+
+    /// <summary>
+    /// Gets a <see cref="PrefabList"/> with all of the stock fancade prefabs.
+    /// </summary>
+    /// <value>A <see cref="PrefabList"/> with all of the stock fancade prefabs.</value>
+    public static PrefabList PrefabList
     {
         get
         {
             if (_prefabList is null)
             {
-                using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcppl");
+                using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcpl");
                 using var reader = new FcBinaryReader(resourceStream);
-                _prefabList = PartialPrefabList.Load(reader);
+                _prefabList = PrefabList.Load(reader);
             }
 
             return _prefabList;

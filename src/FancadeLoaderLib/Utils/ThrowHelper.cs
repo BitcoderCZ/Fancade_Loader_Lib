@@ -11,6 +11,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("FancadeLoaderLib.Editing")]
+[assembly: InternalsVisibleTo("FancadeLoaderLib.Runtime")]
 
 namespace FancadeLoaderLib.Utils;
 

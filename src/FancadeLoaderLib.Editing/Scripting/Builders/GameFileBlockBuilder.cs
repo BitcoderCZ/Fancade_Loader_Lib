@@ -124,7 +124,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 
         Block[] blocks = PreBuild(buildPos, false);
 
-        PartialPrefabList stockPrefabs = StockBlocks.PrefabList;
+        PartialPrefabList stockPrefabs = StockBlocks.PartialPrefabList;
 
         Dictionary<ushort, PartialPrefab> prefabCache = [];
 

@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace FancadeLoaderLib.Runtime;
 
-namespace FancadeLoaderLib.Runtime;
-
-internal interface IActiveFunction : IFunction
+public interface IActiveFunction : IFunction
 {
-    void Execute();
+    int Execute(IRuntimeContext context, Span<string> executeNext);
 }

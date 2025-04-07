@@ -1,43 +1,59 @@
-﻿using MathUtils.Vectors;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime;
 
-[StructLayout(LayoutKind.Sequential, Size = 12)]
-public readonly struct RuntimeValue
+public readonly struct TerminalOutput
 {
-    public static readonly RuntimeValue Zero = default;
+    private readonly bool _isReference;
 
     private readonly DataArray _data;
 
-    public RuntimeValue(float value)
+    public TerminalOutput(RuntimeValue value)
     {
+        _isReference = false;
+
         Write(value);
     }
 
-    public RuntimeValue(float3 value)
+    public TerminalOutput(VariableReference reference)
     {
-        Write(value);
+        _isReference = true;
+
+        Write(reference);
     }
 
-    public RuntimeValue(bool value)
+    public bool IsReference => _isReference;
+
+    public RuntimeValue Value
     {
-        Write(value);
+        get
+        {
+            if (IsReference)
+            {
+                ThrowInvalidOperationException("Cannot get the value of a reference, use GetValue instead.");
+            }
+
+            return Read<RuntimeValue>();
+        }
     }
 
-    public RuntimeValue(int value)
+    public VariableReference Reference
     {
-        Write(value);
+        get
+        {
+            if (!IsReference)
+            {
+                ThrowInvalidOperationException("Cannot get the reference of a value.");
+            }
+
+            return Read<VariableReference>();
+        }
     }
 
-    public float Float => Read<float>();
-
-    public float3 Float3 => Read<float3>();
-
-    public bool Bool => Read<int>() != 0;
-
-    public int Int => Read<int>();
+    public RuntimeValue GetValue(IRuntimeContext context)
+        => IsReference ? context.GetVariableValue(Reference.VariableId, Reference.Index) : Value;
 
     private void Write<T>(T value)
         => Unsafe.WriteUnaligned(
