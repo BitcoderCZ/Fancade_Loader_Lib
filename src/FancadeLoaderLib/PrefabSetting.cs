@@ -31,6 +31,8 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     /// </summary>
     /// <remarks>
     /// When apllied to a group, this should point to the block with group pos 0,0,0.
+    /// <para></para>
+    /// When <see cref="Type"/> is a terminal name, specifies it's voxel position.
     /// </remarks>
     public ushort3 Position;
 
@@ -98,14 +100,14 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     /// <param name="right">The second <see cref="PrefabSetting"/> to compare.</param>
     /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator ==(PrefabSetting left, PrefabSetting right)
-        => left.Index == right.Index && left.Position == right.Position && left.Type == right.Type && left.Value.Equals(right.Value);
+        => left.Index == right.Index && left.Position == right.Position && left.Type == right.Type && Equals(left.Value, right.Value);
 
     /// <summary>Returns a value that indicates whether the 2 <see cref="PrefabSetting"/>s are not equal.</summary>
     /// <param name="left">The first <see cref="PrefabSetting"/> to compare.</param>
     /// <param name="right">The second <see cref="PrefabSetting"/> to compare.</param>
     /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are not equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator !=(PrefabSetting left, PrefabSetting right)
-        => left.Index != right.Index || left.Position != right.Position || left.Type != right.Type || !left.Value.Equals(right.Value);
+        => left.Index != right.Index || left.Position != right.Position || left.Type != right.Type || !Equals(left.Value, right.Value);
 
     /// <summary>
     /// Gets if a value is valid for a <see cref="SettingType"/>.
