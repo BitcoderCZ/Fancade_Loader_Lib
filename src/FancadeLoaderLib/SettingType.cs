@@ -2,7 +2,10 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
+using System.ComponentModel;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -135,4 +138,57 @@ public enum SettingType : byte
     /// Specifies the name of an <b>out</b> terminal of type <see cref="SignalType.Con"/>.
     /// </summary>
     ConTerminalOut = 19,
+}
+
+/// <summary>
+/// Utils for <see cref="SettingType"/>.
+/// </summary>
+#pragma warning disable SA1649 // File name should match first type name - it fucking does???
+public static class SettingTypeUtils
+#pragma warning restore SA1649
+{
+    /// <summary>
+    /// Gets the corresponding <see cref="SettingType"/> for a terminal's <see cref="SignalType"/>.
+    /// </summary>
+    /// <param name="type">The terminal's <see cref="SignalType"/>.</param>
+    /// <param name="isInput">
+    /// If <see langword="true"/>, the terminal is input,
+    /// if <see langword="false"/>, the terminal is output.
+    /// </param>
+    /// <returns>The corresponding <see cref="SettingType"/>.</returns>
+    /// <exception cref="InvalidEnumArgumentException">Thrown when <paramref name="type"/> is not a <see cref="SignalType"/>.</exception>
+    public static SettingType FromTerminalSignalType(SignalType type, bool isInput)
+        => type.ToNotPointer() switch
+        {
+            SignalType.Void => SettingType.VoidTerminal,
+            SignalType.Float => isInput ? SettingType.FloatTerminalIn : SettingType.FloatTerminalOut,
+            SignalType.Vec3 => isInput ? SettingType.Vec3TerminalIn : SettingType.Vec3TerminalOut,
+            SignalType.Rot => isInput ? SettingType.RotTerminalIn : SettingType.RotTerminalOut,
+            SignalType.Obj => isInput ? SettingType.ObjTerminalIn : SettingType.ObjTerminalOut,
+            SignalType.Con => isInput ? SettingType.ConTerminalIn : SettingType.ConTerminalOut,
+            _ => throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(SignalType)),
+        };
+
+    /// <summary>
+    /// Gets the corresponding <see cref="SignalType"/> for a <see cref="SettingType"/>.
+    /// </summary>
+    /// <param name="type">The <see cref="SettingType"/>.</param>
+    /// <returns>The <see cref="SignalType"/> and a <see langword="bool"/> indicating whether <paramref name="type"/> represents an input or output terminal, <see langword="false"/> for <see cref="SettingType.VoidTerminal"/>.</returns>
+    /// <exception cref="InvalidEnumArgumentException">Thrown when <paramref name="type"/> is not a <see cref="SettingType"/> or it is not a <see cref="SettingType"/> that specifies a terminal name.</exception>
+    public static (SignalType SignalType, bool IsInput) ToTerminalSignalType(SettingType type)
+        => type switch
+        {
+            SettingType.VoidTerminal => (SignalType.Void, false),
+            SettingType.FloatTerminalIn => (SignalType.Float, true),
+            SettingType.FloatTerminalOut => (SignalType.Float, false),
+            SettingType.Vec3TerminalIn => (SignalType.Vec3, true),
+            SettingType.Vec3TerminalOut => (SignalType.Vec3, false),
+            SettingType.RotTerminalIn => (SignalType.Rot, true),
+            SettingType.RotTerminalOut => (SignalType.Rot, false),
+            SettingType.ObjTerminalIn => (SignalType.Obj, true),
+            SettingType.ObjTerminalOut => (SignalType.Obj, false),
+            SettingType.ConTerminalIn => (SignalType.Con, true),
+            SettingType.ConTerminalOut => (SignalType.Con, false),
+            _ => throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(SettingType)),
+        };
 }
