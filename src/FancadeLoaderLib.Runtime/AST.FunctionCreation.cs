@@ -94,7 +94,7 @@ public sealed partial class AST
                     }
 
                 default:
-                    return null;
+                    throw new NotImplementedException($"Prefab with id {id} is not yet implemented.");
             }
         }
     }

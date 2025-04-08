@@ -1,6 +1,7 @@
 ﻿using MathUtils.Vectors;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime;
 
@@ -10,15 +11,24 @@ public sealed partial class AST
 
     public readonly Dictionary<ushort3, FunctionInstance> Functions;
 
-    public AST(List<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPoints, Dictionary<ushort3, FunctionInstance> functions)
+    public readonly IRuntimeContext RuntimeContext;
+
+    public AST(List<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPoints, Dictionary<ushort3, FunctionInstance> functions, IRuntimeContext runtimeContext)
     {
+        ThrowIfNull(entryPoints, nameof(entryPoints));
+        ThrowIfNull(functions, nameof(functions));
+
         EntryPoints = entryPoints;
         Functions = functions;
+        RuntimeContext = runtimeContext;
     }
 
-    public static AST Parse(PrefabList prefabs, ushort mainPrefabId, IRuntimeContext runtimeCtx)
+    public static AST Parse(PrefabList prefabs, ushort mainPrefabId, IRuntimeContext runtimeContext)
     {
-        var ctx = new ParseContext(prefabs, mainPrefabId, runtimeCtx);
+        ThrowIfNull(prefabs, nameof(prefabs));
+        ThrowIfNull(runtimeContext, nameof(runtimeContext));
+
+        var ctx = new ParseContext(prefabs, mainPrefabId, runtimeContext);
 
         var blocks = ctx.MainPrefab.Blocks;
 
@@ -54,7 +64,7 @@ public sealed partial class AST
             }
         }
 
-        runtimeCtx.Init(variables);
+        runtimeContext.Init(variables);
 
         // order matters for entryPoints
         for (int z = 0; z < blocks.Size.Z; z++)
@@ -73,7 +83,7 @@ public sealed partial class AST
             }
         }
 
-        return new AST(ctx._entryPoints, ctx._functions);
+        return new AST(ctx._entryPoints, ctx._functions, runtimeContext);
     }
 
     private static IEnumerable<Connection> GetConnectionsTo(List<Connection> connections, ushort3 pos)
