@@ -2,16 +2,15 @@
 using FancadeLoaderLib.Runtime.Exceptions;
 using MathUtils.Vectors;
 using System.Diagnostics;
-using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime.Functions;
 
 public sealed class InspectFunction : IActiveFunction
 {
-    private readonly int3 _blockPosition;
+    private readonly ushort3 _blockPosition;
     private readonly RuntimeTerminal _input;
 
-    public InspectFunction(int3 blockPosition, RuntimeTerminal input)
+    public InspectFunction(ushort3 blockPosition, RuntimeTerminal input)
     {
         _blockPosition = blockPosition;
         _input = input;

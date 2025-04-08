@@ -18,24 +18,6 @@ namespace FancadeLoaderLib;
 /// </remarks>
 public struct PrefabSetting : IEquatable<PrefabSetting>
 {
-    /// <summary>
-    /// The index of this setting.
-    /// </summary>
-    /// <remarks>
-    /// Used when a block has multiple settings.
-    /// </remarks>
-    public byte Index;
-
-    /// <summary>
-    /// The position of the block this setting applies to.
-    /// </summary>
-    /// <remarks>
-    /// When apllied to a group, this should point to the block with group pos 0,0,0.
-    /// <para></para>
-    /// When <see cref="Type"/> is a terminal name, specifies it's voxel position.
-    /// </remarks>
-    public ushort3 Position;
-
     private SettingType _type;
     private object _value;
 
@@ -58,6 +40,26 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
         Position = pos;
         _value = value;
     }
+
+    /// <summary>
+    /// Gets or sets the index of the <see cref="PrefabSetting"/>.
+    /// </summary>
+    /// <remarks>
+    /// Used when a block has multiple settings.
+    /// </remarks>
+    /// <value>Index of the <see cref="PrefabSetting"/>.</value>
+    public byte Index { get; set; }
+
+    /// <summary>
+    /// Gets the position of the block this setting applies to.
+    /// </summary>
+    /// <remarks>
+    /// When applied to a prefab larger than 1 segment, points to the segment whose id is equal to <see cref="Prefab.Id"/>.
+    /// <para></para>
+    /// When <see cref="Type"/> is a terminal name, specifies it's voxel position.
+    /// </remarks>
+    /// <value>Position of the block this setting applies to.</value>
+    public readonly ushort3 Position { get; }
 
     /// <summary>
     /// Gets or sets the type of this setting.
@@ -181,13 +183,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
             _ => reader.ReadString(), // string (string value (6) or terminal name (7+))
         };
 
-        return new PrefabSetting()
-        {
-            Index = valueIndex,
-            Type = type,
-            Position = pos,
-            Value = value,
-        };
+        return new PrefabSetting(valueIndex, type, pos, value);
     }
 
     /// <summary>

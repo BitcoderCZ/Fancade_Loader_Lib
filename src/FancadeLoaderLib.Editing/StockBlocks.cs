@@ -56,6 +56,21 @@ public static class StockBlocks
                 using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcpl");
                 using var reader = new FcBinaryReader(resourceStream);
                 _prefabList = PrefabList.Load(reader);
+
+                foreach (var prefab in _prefabList.Prefabs)
+                {
+                    if (TryGetBlockDef(prefab.Id, out var def) && def.Terminals.Length > 0)
+                    {
+                        foreach (var terminal in def.Terminals)
+                        {
+                            prefab.Settings.Add((ushort3)terminal.Position, new PrefabSetting(
+                                0,
+                                SettingTypeUtils.FromTerminalSignalType(terminal.SignalType, terminal.Type == TerminalType.In),
+                                (ushort3)terminal.Position,
+                                terminal.Name ?? TerminalDef.GetDefaultName(terminal.SignalType)));
+                        }
+                    }
+                }
             }
 
             return _prefabList;

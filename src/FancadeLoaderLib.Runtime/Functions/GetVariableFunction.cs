@@ -1,9 +1,6 @@
 ﻿using FancadeLoaderLib.Editing;
 using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace FancadeLoaderLib.Runtime.Functions;
 

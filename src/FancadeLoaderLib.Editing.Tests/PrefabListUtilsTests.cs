@@ -1,11 +1,6 @@
 ﻿using FancadeLoaderLib.Tests.Common;
 using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static FancadeLoaderLib.Tests.Common.PrefabGenerator;
 
 namespace FancadeLoaderLib.Editing.Tests;

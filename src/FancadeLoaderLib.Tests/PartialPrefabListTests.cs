@@ -1,7 +1,6 @@
 ﻿using FancadeLoaderLib.Partial;
 using FancadeLoaderLib.Tests.Common;
 using MathUtils.Vectors;
-using System.Linq;
 using TUnit.Assertions.AssertConditions.Throws;
 using static FancadeLoaderLib.Tests.Common.PartialPrefabGenerator;
 
