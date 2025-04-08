@@ -6,7 +6,7 @@ public interface IRuntimeContext
 {
     void Init(IEnumerable<Variable> variables);
 
-    int GetVariableId(string name);
+    int GetVariableId(Variable variable);
 
     void SetVariableValue(int variableId, int index, RuntimeValue value);
 

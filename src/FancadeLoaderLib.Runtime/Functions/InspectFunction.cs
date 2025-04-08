@@ -1,5 +1,7 @@
-﻿using FancadeLoaderLib.Runtime.Exceptions;
+﻿using FancadeLoaderLib.Editing;
+using FancadeLoaderLib.Runtime.Exceptions;
 using MathUtils.Vectors;
+using System.Diagnostics;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime.Functions;
@@ -15,12 +17,9 @@ public sealed class InspectFunction : IActiveFunction
         _input = input;
     }
 
-    public int Execute(IRuntimeContext context, Span<string> executeNext)
+    public int Execute(byte3 terminalPos, IRuntimeContext context, Span<byte3> executeNext)
     {
-        if (executeNext.Length < 0)
-        {
-            ThrowArgumentException($"{nameof(executeNext)}.Length must be at least 1.", nameof(executeNext));
-        }
+        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be the before terminal.");
 
         var output = _input.GetOutput(context);
 
@@ -29,11 +28,11 @@ public sealed class InspectFunction : IActiveFunction
             context.InspectValue(_blockPosition, _input.GetOutput(context).GetValue(context));
         }
 
-        executeNext[0] = "After";
+        executeNext[0] = TerminalDef.AfterPosition;
 
         return 1;
     }
 
-    public TerminalOutput GetTerminalValue(string name, IRuntimeContext context)
-        => throw new InvalidTerminalException(name);
+    public TerminalOutput GetTerminalValue(byte3 terminalPos, IRuntimeContext context)
+        => throw new InvalidTerminalException(terminalPos);
 }

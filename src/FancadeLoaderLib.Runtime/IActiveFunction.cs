@@ -1,6 +1,8 @@
-﻿namespace FancadeLoaderLib.Runtime;
+﻿using MathUtils.Vectors;
+
+namespace FancadeLoaderLib.Runtime;
 
 public interface IActiveFunction : IFunction
 {
-    int Execute(IRuntimeContext context, Span<string> executeNext);
+    int Execute(byte3 terminalPos, IRuntimeContext context, Span<byte3> executeNext);
 }
