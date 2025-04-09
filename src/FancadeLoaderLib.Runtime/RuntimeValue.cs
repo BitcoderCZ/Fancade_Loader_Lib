@@ -1,10 +1,11 @@
 ﻿using MathUtils.Vectors;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace FancadeLoaderLib.Runtime;
 
-[StructLayout(LayoutKind.Sequential, Size = 12)]
+[StructLayout(LayoutKind.Sequential, Size = 16)]
 public readonly struct RuntimeValue
 {
     public static readonly RuntimeValue Zero = default;
@@ -17,6 +18,11 @@ public readonly struct RuntimeValue
     }
 
     public RuntimeValue(float3 value)
+    {
+        Write(value);
+    }
+
+    public RuntimeValue(Quaternion value)
     {
         Write(value);
     }
@@ -35,10 +41,13 @@ public readonly struct RuntimeValue
 
     public readonly float3 Float3 => Read<float3>();
 
+    public readonly Quaternion Quaternion => Read<Quaternion>();
+
     public readonly bool Bool => Read<int>() != 0;
 
     public readonly int Int => Read<int>();
 
+#pragma warning disable SA1114
     private void Write<T>(T value)
         => Unsafe.WriteUnaligned(
 #if NET8_0_OR_GREATER
@@ -56,16 +65,17 @@ public readonly struct RuntimeValue
             ref Unsafe.AsRef(in _data._element0)
 #endif
             );
+#pragma warning restore SA1114
 
 #if NET8_0_OR_GREATER
-    [InlineArray(12)]
+    [InlineArray(16)]
     private struct DataArray
     {
         private byte _element0;
     }
 #else
 
-    [StructLayout(LayoutKind.Sequential, Size = 12)]
+    [StructLayout(LayoutKind.Sequential, Size = 16)]
     private struct DataArray
     {
 #pragma warning disable IDE0044 // Add readonly modifier
@@ -81,6 +91,10 @@ public readonly struct RuntimeValue
         private byte _element9;
         private byte _element10;
         private byte _element11;
+        private byte _element12;
+        private byte _element13;
+        private byte _element14;
+        private byte _element15;
 #pragma warning restore IDE0044 // Add readonly modifier
     }
 #endif

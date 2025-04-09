@@ -66,6 +66,7 @@ public readonly struct TerminalOutput
     public readonly RuntimeValue GetValue(IRuntimeContext context)
         => IsReference ? Reference.GetValue(context) : Value;
 
+#pragma warning disable SA1114
     private void Write<T>(T value)
         => Unsafe.WriteUnaligned(
 #if NET8_0_OR_GREATER
@@ -83,16 +84,17 @@ public readonly struct TerminalOutput
             ref Unsafe.AsRef(in _data._element0)
 #endif
             );
+#pragma warning restore SA1114
 
 #if NET8_0_OR_GREATER
-    [InlineArray(12)]
+    [InlineArray(16)]
     private struct DataArray
     {
         private byte _element0;
     }
 #else
 
-    [StructLayout(LayoutKind.Sequential, Size = 12)]
+    [StructLayout(LayoutKind.Sequential, Size = 16)]
     private struct DataArray
     {
 #pragma warning disable IDE0044 // Add readonly modifier
@@ -108,6 +110,10 @@ public readonly struct TerminalOutput
         private byte _element9;
         private byte _element10;
         private byte _element11;
+        private byte _element12;
+        private byte _element13;
+        private byte _element14;
+        private byte _element15;
 #pragma warning restore IDE0044 // Add readonly modifier
     }
 #endif

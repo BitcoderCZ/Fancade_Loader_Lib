@@ -2,7 +2,9 @@
 using FancadeLoaderLib.Runtime.Functions.Math;
 using FancadeLoaderLib.Runtime.Functions.Values;
 using FancadeLoaderLib.Runtime.Functions.Variables;
+using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
+using System.Numerics;
 
 namespace FancadeLoaderLib.Runtime;
 
@@ -29,7 +31,7 @@ public sealed partial class AST
 
                 case 42: // rot
                     {
-                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? (float3)value : float3.Zero));
+                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? ((float3)value).ToQuatDeg() : Quaternion.Identity));
                     }
 
                 case 449:
@@ -103,6 +105,8 @@ public sealed partial class AST
                     return new NegateFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                 case 144:
                     return new NotFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 440:
+                    return new InverseFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                 case 92:
                     return new AddNumbersFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
                 case 96:
@@ -115,6 +119,10 @@ public sealed partial class AST
                     return new MultiplyFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
                 case 112:
                     return new ScaleFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 116:
+                    return new RotateFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 120:
+                    return new CombineFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
                 case 124:
                     return new DivideFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
                 case 172:
