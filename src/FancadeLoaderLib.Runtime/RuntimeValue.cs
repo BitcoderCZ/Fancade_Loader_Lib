@@ -47,6 +47,16 @@ public readonly struct RuntimeValue
 
     public readonly int Int => Read<int>();
 
+    public object GetValueOfType(SignalType type)
+        => type.ToNotPointer() switch
+        {
+            SignalType.Float => Float,
+            SignalType.Vec3 => Float3,
+            SignalType.Rot => Quaternion,
+            SignalType.Bool => Bool,
+            _ => throw new ArgumentException($"{nameof(type)} must be {nameof(SignalType.Float)}, {nameof(SignalType.Vec3)}, {nameof(SignalType.Rot)} or {nameof(SignalType.Bool)}.", nameof(type)),
+        };
+
 #pragma warning disable SA1114
     private void Write<T>(T value)
         => Unsafe.WriteUnaligned(
@@ -60,11 +70,10 @@ public readonly struct RuntimeValue
     private readonly T Read<T>()
         => Unsafe.ReadUnaligned<T>(
 #if NET8_0_OR_GREATER
-            ref MemoryMarshal.GetReference((ReadOnlySpan<byte>)_data)
+            ref MemoryMarshal.GetReference((ReadOnlySpan<byte>)_data));
 #else
-            ref Unsafe.AsRef(in _data._element0)
+            ref Unsafe.AsRef(in _data._element0));
 #endif
-            );
 #pragma warning restore SA1114
 
 #if NET8_0_OR_GREATER

@@ -7,13 +7,15 @@ namespace FancadeLoaderLib.Runtime.Functions.Values;
 
 public sealed class InspectFunction : IActiveFunction
 {
-    private readonly ushort3 _blockPosition;
     private readonly RuntimeTerminal _input;
+    private readonly SignalType _type;
+    private readonly ushort3 _blockPosition;
 
-    public InspectFunction(ushort3 blockPosition, RuntimeTerminal input)
+    public InspectFunction(RuntimeTerminal input, SignalType type, ushort3 blockPosition)
     {
-        _blockPosition = blockPosition;
         _input = input;
+        _type = type;
+        _blockPosition = blockPosition;
     }
 
     public int Execute(byte3 terminalPos, IRuntimeContext context, Span<byte3> executeNext)
@@ -24,7 +26,7 @@ public sealed class InspectFunction : IActiveFunction
 
         if (output.IsConnected)
         {
-            context.InspectValue(_blockPosition, _input.GetOutput(context).GetValue(context));
+            context.InspectValue(_input.GetOutput(context), _type, _blockPosition);
         }
 
         executeNext[0] = TerminalDef.AfterPosition;

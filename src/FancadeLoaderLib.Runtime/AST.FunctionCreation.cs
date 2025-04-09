@@ -18,7 +18,7 @@ public sealed partial class AST
             {
                 // ******************** Value ********************
                 case 16 or 20 or 24 or 28 or 32:
-                    return new InspectFunction(pos, ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
+                    return new InspectFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), (SignalType)(((id - 16) / 2) + 2), pos);
                 case 36:
                     {
                         return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Float, out object? value) ? (float)value : 0f), false);

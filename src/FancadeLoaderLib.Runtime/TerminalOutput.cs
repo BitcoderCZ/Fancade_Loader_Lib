@@ -79,11 +79,10 @@ public readonly struct TerminalOutput
     private T Read<T>()
         => Unsafe.ReadUnaligned<T>(
 #if NET8_0_OR_GREATER
-            ref MemoryMarshal.GetReference((ReadOnlySpan<byte>)_data)
+            ref MemoryMarshal.GetReference((ReadOnlySpan<byte>)_data));
 #else
-            ref Unsafe.AsRef(in _data._element0)
+            ref Unsafe.AsRef(in _data._element0));
 #endif
-            );
 #pragma warning restore SA1114
 
 #if NET8_0_OR_GREATER

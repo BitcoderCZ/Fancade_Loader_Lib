@@ -16,5 +16,5 @@ public interface IRuntimeContext
 
     int CloneObject(int id);
 
-    void InspectValue(ushort3 inspectBlockPosition, RuntimeValue value);
+    void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
 }
