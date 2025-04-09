@@ -1,8 +1,10 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime;
@@ -47,7 +49,8 @@ public sealed partial class AST
 
                     if (function is not null)
                     {
-                        _functions.Add(pos, new FunctionInstance(pos, function, [.. GetConnectionsFrom(MainPrefab.Connections, pos)]));
+                        var connections = GetConnectionsFrom(MainPrefab.Connections, pos, stockPrefab);
+                        _functions.Add(pos, new FunctionInstance(pos, function, Unsafe.As<Connection[], ImmutableArray<Connection>>(ref connections)));
 
                         if (function is IActiveFunction && GetConnectedTerminal(pos, TerminalDef.GetBeforePosition(stockPrefab.Size.Z)).Function is null)
                         {
@@ -111,8 +114,7 @@ public sealed partial class AST
                 }
                 else
                 {
-                    // only get input terminals
-                    return new RuntimeTerminal(null, byte3.Zero);
+                    otherPos.Z++;
                 }
 
                 ushort otherId = MainPrefab.Blocks.GetBlockOrDefault(otherPos);
@@ -125,16 +127,20 @@ public sealed partial class AST
                 {
                     if (TryGetOrCreateFunction((ushort3)(otherPos - segment.PosInPrefab), out var otherFunction))
                     {
+#pragma warning disable IDE0046 // Convert to conditional expression
                         if (voxelPos.Z == 0)
                         {
                             return new RuntimeTerminal(otherFunction, new byte3((segment.PosInPrefab.X * 8) + (voxelPos.X % 8), voxelPos.Y, ((segment.PosInPrefab.Z + 1) * 8) - 2));
                         }
-                        else
+                        else if (voxelPos.X == 0)
                         {
-                            Debug.Assert(voxelPos.X == 0, "z pos should be 0.");
-
                             return new RuntimeTerminal(otherFunction, new byte3(((segment.PosInPrefab.X + 1) * 8) - 2, voxelPos.Y, (segment.PosInPrefab.Z * 8) + (voxelPos.Z % 8)));
                         }
+                        else
+                        {
+                            return new RuntimeTerminal(otherFunction, new byte3((segment.PosInPrefab.X * 8) + (voxelPos.X % 8), voxelPos.Y, 0));
+                        }
+#pragma warning restore IDE0046 // Convert to conditional expression
                     }
                 }
 

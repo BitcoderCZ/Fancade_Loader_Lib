@@ -1,4 +1,6 @@
-﻿using MathUtils.Vectors;
+﻿using FancadeLoaderLib.Editing;
+using MathUtils.Vectors;
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using static FancadeLoaderLib.Utils.ThrowHelper;
@@ -12,6 +14,8 @@ public sealed partial class AST
     public readonly Dictionary<ushort3, FunctionInstance> Functions;
 
     public readonly IRuntimeContext RuntimeContext;
+
+    private readonly FrozenDictionary<ushort, (byte3 Pos, bool IsIn)[]> _prefabToTerminals;
 
     public AST(List<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPoints, Dictionary<ushort3, FunctionInstance> functions, IRuntimeContext runtimeContext)
     {
@@ -97,8 +101,10 @@ public sealed partial class AST
         }
     }
 
-    private static IEnumerable<Connection> GetConnectionsFrom(List<Connection> connections, ushort3 pos)
+    private static Connection[] GetConnectionsFrom(List<Connection> connections, ushort3 pos, Prefab prefab)
     {
+        List<Connection> result = [];
+
         for (int i = 0; i < connections.Count; i++)
         {
             if (connections[i].From == pos)
