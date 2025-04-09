@@ -3,7 +3,7 @@ using FancadeLoaderLib.Runtime.Exceptions;
 using MathUtils.Vectors;
 using System.Diagnostics;
 
-namespace FancadeLoaderLib.Runtime.Functions;
+namespace FancadeLoaderLib.Runtime.Functions.Values;
 
 public sealed class InspectFunction : IActiveFunction
 {
@@ -32,6 +32,6 @@ public sealed class InspectFunction : IActiveFunction
         return 1;
     }
 
-    public TerminalOutput GetTerminalValue(byte3 terminalPos, IRuntimeContext context)
+    public TerminalOutput GetTerminalOutput(byte3 terminalPos, IRuntimeContext context)
         => throw new InvalidTerminalException(terminalPos);
 }

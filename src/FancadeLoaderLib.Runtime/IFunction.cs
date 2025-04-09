@@ -4,5 +4,5 @@ namespace FancadeLoaderLib.Runtime;
 
 public interface IFunction
 {
-    TerminalOutput GetTerminalValue(byte3 terminalPos, IRuntimeContext context);
+    TerminalOutput GetTerminalOutput(byte3 terminalPos, IRuntimeContext context);
 }

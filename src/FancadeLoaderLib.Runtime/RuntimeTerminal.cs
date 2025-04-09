@@ -15,5 +15,5 @@ public readonly struct RuntimeTerminal
     public readonly byte3 Position { get; }
 
     public readonly TerminalOutput GetOutput(IRuntimeContext context)
-        => Function is null ? TerminalOutput.Disconnected : Function.GetTerminalValue(Position, context);
+        => Function is null ? TerminalOutput.Disconnected : Function.GetTerminalOutput(Position, context);
 }

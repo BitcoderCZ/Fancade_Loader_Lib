@@ -428,7 +428,7 @@ public static class StockBlocks
         /// <summary>
         /// The Divide block.
         /// </summary>
-        public static readonly BlockDef Divide_Number = new BlockDef("Divide", 124, ScriptBlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(SignalType.Float, TerminalType.Out, "Num1 + Num2").Add(SignalType.Float, TerminalType.In, "Num2").Add(SignalType.Float, TerminalType.In, "Num1"));
+        public static readonly BlockDef Divide_Number = new BlockDef("Divide", 124, ScriptBlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(SignalType.Float, TerminalType.Out, "Num1 / Num2").Add(SignalType.Float, TerminalType.In, "Num2").Add(SignalType.Float, TerminalType.In, "Num1"));
 
         /// <summary>
         /// The Modulo block.

@@ -1,5 +1,7 @@
 ﻿using FancadeLoaderLib.Editing;
-using FancadeLoaderLib.Runtime.Functions;
+using FancadeLoaderLib.Runtime.Functions.Math;
+using FancadeLoaderLib.Runtime.Functions.Values;
+using FancadeLoaderLib.Runtime.Functions.Variables;
 using MathUtils.Vectors;
 
 namespace FancadeLoaderLib.Runtime;
@@ -12,6 +14,7 @@ public sealed partial class AST
         {
             switch (id)
             {
+                // ******************** Value ********************
                 case 16 or 20 or 24 or 28 or 32:
                     return new InspectFunction(pos, ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
                 case 36:
@@ -33,6 +36,8 @@ public sealed partial class AST
                     return new LiteralFunction(new RuntimeValue(true));
                 case 451:
                     return new LiteralFunction(new RuntimeValue(false));
+
+                // ******************** Variable ********************
                 case 46:
                     {
                         return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Float));
@@ -93,6 +98,29 @@ public sealed partial class AST
                         return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
+                // ******************** Math ********************
+                case 90:
+                    return new NegateFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 144:
+                    return new NotFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 92:
+                    return new AddNumbersFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 96:
+                    return new AddVectorsFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 100:
+                    return new SubtractNumbersFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 104:
+                    return new SubtractVectorsFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 108:
+                    return new MultiplyFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 112:
+                    return new ScaleFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 124:
+                    return new DivideFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 172:
+                    return new ModuloFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 457:
+                    return new PowerFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
                 default:
                     throw new NotImplementedException($"Prefab with id {id} is not yet implemented.");
             }

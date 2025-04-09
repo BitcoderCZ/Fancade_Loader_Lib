@@ -2,7 +2,7 @@
 using MathUtils.Vectors;
 using System.Diagnostics;
 
-namespace FancadeLoaderLib.Runtime.Functions;
+namespace FancadeLoaderLib.Runtime.Functions.Values;
 
 public sealed class LiteralFunction : IFunction
 {
@@ -13,7 +13,7 @@ public sealed class LiteralFunction : IFunction
         _value = value;
     }
 
-    public TerminalOutput GetTerminalValue(byte3 terminalPos, IRuntimeContext context)
+    public TerminalOutput GetTerminalOutput(byte3 terminalPos, IRuntimeContext context)
     {
         Debug.Assert(terminalPos == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminalPos)} should be valid.");
         return new TerminalOutput(_value);
