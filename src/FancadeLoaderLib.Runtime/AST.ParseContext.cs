@@ -1,6 +1,7 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
@@ -95,7 +96,50 @@ public sealed partial class AST
                 }
             }
 
-            return new RuntimeTerminal(null, byte3.Zero);
+            return GetImplicitlyConnectedTerminal(pos, voxelPos);
+
+            RuntimeTerminal GetImplicitlyConnectedTerminal(ushort3 pos, byte3 voxelPos)
+            {
+                ushort3 otherPos = pos + (voxelPos / 8);
+                if (voxelPos.Z == 0)
+                {
+                    otherPos.Z--;
+                }
+                else if (voxelPos.X == 0)
+                {
+                    otherPos.X--;
+                }
+                else
+                {
+                    // only get input terminals
+                    return new RuntimeTerminal(null, byte3.Zero);
+                }
+
+                ushort otherId = MainPrefab.Blocks.GetBlockOrDefault(otherPos);
+                if (otherId == 0)
+                {
+                    return new RuntimeTerminal(null, byte3.Zero);
+                }
+
+                if (StockPrefabs.TryGetSegments(otherId, out var segment) || Prefabs.TryGetSegments(otherId, out segment))
+                {
+                    if (TryGetOrCreateFunction((ushort3)(otherPos - segment.PosInPrefab), out var otherFunction))
+                    {
+                        if (voxelPos.Z == 0)
+                        {
+                            return new RuntimeTerminal(otherFunction, new byte3((segment.PosInPrefab.X * 8) + (voxelPos.X % 8), voxelPos.Y, ((segment.PosInPrefab.Z + 1) * 8) - 2));
+                        }
+                        else
+                        {
+                            Debug.Assert(voxelPos.X == 0, "z pos should be 0.");
+
+                            return new RuntimeTerminal(otherFunction, new byte3(((segment.PosInPrefab.X + 1) * 8) - 2, voxelPos.Y, (segment.PosInPrefab.Z * 8) + (voxelPos.Z % 8)));
+                        }
+                    }
+                }
+
+                return new RuntimeTerminal(null, byte3.Zero);
+            }
         }
 
         public bool TryGetSettingOfType(ushort3 pos, int index, SettingType type, [MaybeNullWhen(false)] out object value)

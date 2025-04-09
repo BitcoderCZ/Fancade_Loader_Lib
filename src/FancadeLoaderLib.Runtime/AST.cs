@@ -34,7 +34,7 @@ public sealed partial class AST
 
         HashSet<Variable> variables = [];
 
-        for (int z = 0; z < blocks.Size.Z; z++)
+        for (int z = blocks.Size.Z - 1; z >= 0; z--)
         {
             for (int y = blocks.Size.Y - 1; y >= 0; y--)
             {
@@ -67,7 +67,7 @@ public sealed partial class AST
         runtimeContext.Init(variables);
 
         // order matters for entryPoints
-        for (int z = 0; z < blocks.Size.Z; z++)
+        for (int z = blocks.Size.Z - 1; z >= 0; z--)
         {
             for (int y = blocks.Size.Y - 1; y >= 0; y--)
             {

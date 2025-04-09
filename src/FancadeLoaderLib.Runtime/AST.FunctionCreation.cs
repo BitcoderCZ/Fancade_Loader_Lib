@@ -21,23 +21,23 @@ public sealed partial class AST
                     return new InspectFunction(pos, ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
                 case 36:
                     {
-                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Float, out object? value) ? (float)value : 0f));
+                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Float, out object? value) ? (float)value : 0f), false);
                     }
 
                 case 38: // vec3
                     {
-                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? (float3)value : float3.Zero));
+                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? (float3)value : float3.Zero), true);
                     }
 
                 case 42: // rot
                     {
-                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? ((float3)value).ToQuatDeg() : Quaternion.Identity));
+                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? ((float3)value).ToQuatDeg() : Quaternion.Identity), true);
                     }
 
                 case 449:
-                    return new LiteralFunction(new RuntimeValue(true));
+                    return new LiteralFunction(new RuntimeValue(true), false);
                 case 451:
-                    return new LiteralFunction(new RuntimeValue(false));
+                    return new LiteralFunction(new RuntimeValue(false), false);
 
                 // ******************** Variable ********************
                 case 46:
