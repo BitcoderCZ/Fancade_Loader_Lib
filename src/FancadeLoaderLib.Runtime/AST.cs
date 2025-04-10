@@ -1,6 +1,4 @@
-﻿using FancadeLoaderLib.Editing;
-using MathUtils.Vectors;
-using System.Collections.Frozen;
+﻿using MathUtils.Vectors;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using static FancadeLoaderLib.Utils.ThrowHelper;
@@ -14,8 +12,6 @@ public sealed partial class AST
     public readonly Dictionary<ushort3, FunctionInstance> Functions;
 
     public readonly IRuntimeContext RuntimeContext;
-
-    private readonly FrozenDictionary<ushort, (byte3 Pos, bool IsIn)[]> _prefabToTerminals;
 
     public AST(List<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPoints, Dictionary<ushort3, FunctionInstance> functions, IRuntimeContext runtimeContext)
     {
@@ -101,23 +97,54 @@ public sealed partial class AST
         }
     }
 
-    private static Connection[] GetConnectionsFrom(List<Connection> connections, ushort3 pos, Prefab prefab)
+    private static Connection[] GetConnectionsFrom(ParseContext ctx, List<Connection> connections, ushort3 pos, Prefab prefab)
     {
+        var terminalsInfo = ctx.TerminalInfos[prefab.Id];
+
+        // will only contain a few elements and it is just .Where, so it's fine to loop over it multiple times
+        var outTerminals = terminalsInfo.OutputTerminals;
+
+        int outCount = outTerminals.Count();
+
+        Span<byte3> explicitlyConnectedTerminals = stackalloc byte3[128];
+        int explicitlyConnectedTerminalsLength = 0;
+
         List<Connection> result = [];
 
         for (int i = 0; i < connections.Count; i++)
         {
             if (connections[i].From == pos)
             {
-                yield return connections[i];
+                result.Add(connections[i]);
+                explicitlyConnectedTerminals[explicitlyConnectedTerminalsLength++] = (byte3)connections[i].FromVoxel;
             }
         }
+
+        explicitlyConnectedTerminals = explicitlyConnectedTerminals[..explicitlyConnectedTerminalsLength];
+
+        foreach (var info in outTerminals)
+        {
+            if (explicitlyConnectedTerminals.IndexOf(info.Position) != -1)
+            {
+                continue;
+            }
+
+            // try to get implicit connection (when 2 blocks are right next to each other)
+            if (ctx.TryGetImplicitlyConnectedTerminalPos(pos, info, out var otherBlockPos, out var otherTerminalPos))
+            {
+                result.Add(new Connection(pos, otherBlockPos, info.Position, otherTerminalPos));
+            }
+        }
+
+        return [.. result];
     }
 
     public readonly struct FunctionInstance
     {
         public readonly ushort3 Position;
         public readonly IFunction Function;
+
+        // only for active functions
         public readonly ImmutableArray<Connection> Connections;
 
         public FunctionInstance(ushort3 position, IFunction function, ImmutableArray<Connection> connections)
