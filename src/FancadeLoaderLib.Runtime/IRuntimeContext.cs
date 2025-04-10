@@ -12,9 +12,13 @@ public interface IRuntimeContext
 
     RuntimeValue GetVariableValue(int variableId, int index);
 
+    void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
+
+    void SetRandomSeed(float seed);
+
+    float GetRandomValue(float min, float max);
+
     float3 GetObjectPosition(int id);
 
     int CloneObject(int id);
-
-    void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
 }

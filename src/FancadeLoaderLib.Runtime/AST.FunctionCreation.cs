@@ -129,6 +129,54 @@ public sealed partial class AST
                     return new ModuloFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
                 case 457:
                     return new PowerFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 132:
+                    return new EqualsNumbersFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 136:
+                    return new EqualsVectorsFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 140:
+                    return new EqualsObjectsFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 421:
+                    return new EqualsTruthsFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 146:
+                    return new LogicalAndFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 417:
+                    return new LogicalOrFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 128:
+                    return new LessThanFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 481:
+                    return new GreaterThanFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 168:
+                    return new RandomFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 485:
+                    return new RandomSeedFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
+                case 176:
+                    return new MinFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 180:
+                    return new MaxFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 413:
+                    return new SinFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 453:
+                    return new CosFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 184:
+                    return new RoundFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 186:
+                    return new FloorFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 188:
+                    return new CeilingFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 455:
+                    return new AbsoluteFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 580:
+                    return new LogarithmFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 578:
+                    return new NormalizeFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 570:
+                    return new DotProductFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 574:
+                    return new CrossProductFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 190:
+                    return new DistanceFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 194:
+                    return new LerpFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 3)));
                 default:
                     throw new NotImplementedException($"Prefab with id {id} is not yet implemented.");
             }
