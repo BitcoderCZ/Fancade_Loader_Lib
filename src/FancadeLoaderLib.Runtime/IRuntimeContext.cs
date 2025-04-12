@@ -14,6 +14,8 @@ public interface IRuntimeContext
 
     void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
 
+    long GetCurrentFrame();
+
     void SetRandomSeed(float seed);
 
     float GetRandomValue(float min, float max);

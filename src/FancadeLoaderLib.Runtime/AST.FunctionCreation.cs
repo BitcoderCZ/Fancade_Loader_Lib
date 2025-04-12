@@ -1,4 +1,5 @@
 ﻿using FancadeLoaderLib.Editing;
+using FancadeLoaderLib.Runtime.Functions.Control;
 using FancadeLoaderLib.Runtime.Functions.Math;
 using FancadeLoaderLib.Runtime.Functions.Values;
 using FancadeLoaderLib.Runtime.Functions.Variables;
@@ -99,6 +100,12 @@ public sealed partial class AST
                     {
                         return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
+
+                // ******************** Control ********************
+                case 234:
+                    return new IfFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
+                case 238:
+                    return new PlaySensorFunction();
 
                 // ******************** Math ********************
                 case 90:

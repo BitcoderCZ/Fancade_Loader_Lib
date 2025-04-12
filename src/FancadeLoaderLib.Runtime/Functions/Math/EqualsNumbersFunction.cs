@@ -15,7 +15,8 @@ public sealed class EqualsNumbersFunction : BinaryFunction
     {
         Debug.Assert(terminalPos == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminalPos)} should be valid.");
 
-        // TODO: does fancade do approximate equals?
-        return new TerminalOutput(new RuntimeValue(Input1.GetOutput(context).GetValue(context).Float == Input2.GetOutput(context).GetValue(context).Float));
+        const float MaxDiff = 0.001f;
+
+        return new TerminalOutput(new RuntimeValue(MathF.Abs(Input1.GetOutput(context).GetValue(context).Float - Input2.GetOutput(context).GetValue(context).Float) < MaxDiff));
     }
 }

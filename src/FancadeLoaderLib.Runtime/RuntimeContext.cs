@@ -73,6 +73,8 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
 
+    public abstract long GetCurrentFrame();
+
     public abstract (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
 
     public abstract float2 WorldToScreen(float3 worldPos);

@@ -15,7 +15,10 @@ public sealed class EqualsVectorsFunction : BinaryFunction
     {
         Debug.Assert(terminalPos == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminalPos)} should be valid.");
 
-        // TODO: does fancade do approximate equals?
-        return new TerminalOutput(new RuntimeValue(Input1.GetOutput(context).GetValue(context).Float3 == Input2.GetOutput(context).GetValue(context).Float3));
+        const float MaxDiff = 1.0000001e-06f;
+
+        float distSquared = (Input1.GetOutput(context).GetValue(context).Float3 - Input2.GetOutput(context).GetValue(context).Float3).LengthSquared;
+
+        return new TerminalOutput(new RuntimeValue(distSquared < MaxDiff));
     }
 }
