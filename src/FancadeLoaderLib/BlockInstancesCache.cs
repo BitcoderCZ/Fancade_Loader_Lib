@@ -28,7 +28,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         IsEmpty = true;
 
 #if NET9_0_OR_GREATER
-        Lock instancesLock = new();
+        System.Threading.Lock instancesLock = new();
 #else
         object instancesLock = new();
 #endif

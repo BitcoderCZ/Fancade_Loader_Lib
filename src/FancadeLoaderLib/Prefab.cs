@@ -848,6 +848,18 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         Size = int3.One;
     }
 
+    /// <summary>
+    /// Gets the <see cref="Voxel"/> at the specified position.
+    /// </summary>
+    /// <param name="position">Position of the <see cref="Voxel"/> to get.</param>
+    /// <returns>The <see cref="Voxel"/> at the <paramref name="position"/>, if <paramref name="position"/> is in bounds; otherwise, <see langword="default"/>.</returns>
+    public Voxel GetVoxel(int3 position)
+        => position.X < 0 || position.X >= MaxSize * 8 || position.Y < 0 || position.Y >= MaxSize * 8 || position.Z < 0 || position.Z >= MaxSize * 8
+            ? default
+            : _segments.TryGetValue(position / 8, out var segment) && segment.Voxels is not null
+            ? segment.Voxels[PrefabSegment.IndexVoxels(position % 8)]
+            : default;
+
     /// <inheritdoc/>
     void ICollection<KeyValuePair<int3, PrefabSegment>>.Add(KeyValuePair<int3, PrefabSegment> item)
     {

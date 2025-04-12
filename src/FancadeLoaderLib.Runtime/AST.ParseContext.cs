@@ -2,10 +2,8 @@
 using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
 using System.Collections.Frozen;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime;
@@ -19,7 +17,7 @@ public sealed partial class AST
         public readonly PrefabList Prefabs;
         public readonly Prefab MainPrefab;
 
-        public readonly FrozenDictionary<ushort, TerminalsInfo> TerminalInfos;
+        public readonly FrozenDictionary<ushort, PrefabTerminalInfo> TerminalInfos;
 
         internal readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> _entryPoints = [];
 
@@ -33,68 +31,7 @@ public sealed partial class AST
             MainPrefab = Prefabs.GetPrefab(mainPrefabId);
             _runtimeCtx = runtimeCtx;
 
-            Dictionary<ushort, TerminalsInfo> terminalInfos = new(StockPrefabs.PrefabCount + Prefabs.PrefabCount);
-
-            foreach (var prefab in StockPrefabs.Prefabs.Concat(Prefabs.Prefabs))
-            {
-                int voidCount = 0;
-                ImmutableArray<TerminalInfo>.Builder infoBuilder = ImmutableArray.CreateBuilder<TerminalInfo>(2);
-
-                foreach (var (pos, settings) in prefab.Settings)
-                {
-                    if ((pos.X | pos.Y | pos.Z) > byte.MaxValue)
-                    {
-                        continue;
-                    }
-
-                    foreach (var setting in settings)
-                    {
-                        if (setting.Type < SettingType.VoidTerminal)
-                        {
-                            continue;
-                        }
-
-                        if (setting.Type == SettingType.VoidTerminal)
-                        {
-                            voidCount++;
-                        }
-
-                        var (type, isInput) = SettingTypeUtils.ToTerminalSignalType(setting.Type);
-
-                        // TODO: determine using which voxels are obstructed
-                        TerminalDirection dir;
-                        if (type == SignalType.Void)
-                        {
-                            if (pos.Z == 0)
-                            {
-                                dir = TerminalDirection.NegativeZ;
-                            }
-                            else if (pos.Z % 8 == 6)
-                            {
-                                dir = TerminalDirection.PositiveZ;
-                            }
-                            else if (pos.X == 0)
-                            {
-                                dir = TerminalDirection.NegativeX;
-                            }
-                            else
-                            {
-                                dir = TerminalDirection.PositiveX;
-                            }
-                        }
-                        else
-                        {
-                            dir = isInput ? TerminalDirection.NegativeX : TerminalDirection.PositiveX;
-                        }
-
-                        infoBuilder.Add(new TerminalInfo((byte3)pos, type, dir));
-                    }
-                }
-
-                terminalInfos.Add(prefab.Id, new TerminalsInfo(infoBuilder.DrainToImmutable(), voidCount));
-            }
-
-            TerminalInfos = terminalInfos.ToFrozenDictionary();
+            TerminalInfos = PrefabTerminalInfo.Create(StockPrefabs.Concat(Prefabs));
         }
 
         public bool TryCreateFunction(ushort3 pos, [MaybeNullWhen(false)] out IFunction function)
@@ -119,8 +56,7 @@ public sealed partial class AST
 
                         if (terminalsInfo.VoidTerminalCount > 0)
                         {
-                            var connections = GetConnectionsFrom(this, MainPrefab.Connections, pos, stockPrefab);
-                            _functions.Add(pos, new FunctionInstance(pos, function, Unsafe.As<Connection[], ImmutableArray<Connection>>(ref connections)));
+                            _functions.Add(pos, new FunctionInstance(pos, function, [.. GetConnectionsFrom(MainPrefab.Connections, pos)]));
                         }
                         else
                         {
@@ -174,48 +110,7 @@ public sealed partial class AST
                 }
             }
 
-            var info = TerminalInfos[MainPrefab.Blocks.GetBlockOrDefault(pos)].Terminals.FirstOrDefault(info => info.Position == voxelPos);
-
-            // TODO: fix (default value is a valid value, so this will have to be done another way)
-            return voxelPos == byte3.Zero || info != default ? GetImplicitlyConnectedTerminal(pos, info) : new RuntimeTerminal(null, voxelPos);
-        }
-
-        public bool TryGetImplicitlyConnectedTerminalPos(ushort3 pos, TerminalInfo info, out ushort3 otherBlockPos, out byte3 otherTerminalPos)
-        {
-            ushort3 otherPos = pos + (info.Position / 8) + info.Direction.GetOffset();
-
-            ushort otherId = MainPrefab.Blocks.GetBlockOrDefault(otherPos);
-            if (otherId == 0)
-            {
-                otherBlockPos = default;
-                otherTerminalPos = default;
-                return false;
-            }
-
-            if (StockPrefabs.TryGetSegments(otherId, out var segment) || Prefabs.TryGetSegments(otherId, out segment))
-            {
-                otherBlockPos = (ushort3)(otherPos - segment.PosInPrefab);
-                otherTerminalPos = info.Direction switch
-                {
-                    TerminalDirection.PositiveX => new byte3(0, info.Position.Y, (segment.PosInPrefab.Z * 8) + (info.Position.Z % 8)),
-                    TerminalDirection.PositiveZ => new byte3((segment.PosInPrefab.X * 8) + (info.Position.X % 8), info.Position.Y, 0),
-                    TerminalDirection.NegativeX => new byte3(((segment.PosInPrefab.X + 1) * 8) - 2, info.Position.Y, (segment.PosInPrefab.Z * 8) + (info.Position.Z % 8)),
-                    TerminalDirection.NegativeZ => new byte3((segment.PosInPrefab.X * 8) + (info.Position.X % 8), info.Position.Y, ((segment.PosInPrefab.Z + 1) * 8) - 2),
-                    _ => throw new UnreachableException(),
-                };
-
-                var otherInfos = TerminalInfos[segment.PrefabId];
-
-                byte3 otherTerminalPosLocal = otherTerminalPos;
-                if (otherInfos.Terminals.Any(info => info.Position == otherTerminalPosLocal))
-                {
-                    return true;
-                }
-            }
-
-            otherBlockPos = default;
-            otherTerminalPos = default;
-            return false;
+            return new RuntimeTerminal(null, byte3.Zero);
         }
 
         public bool TryGetSettingOfType(ushort3 pos, int index, SettingType type, [MaybeNullWhen(false)] out object value)
@@ -272,53 +167,6 @@ public sealed partial class AST
             }
 
             return new RuntimeTerminal(null, byte3.Zero);
-        }
-
-        public readonly struct TerminalsInfo
-        {
-            public TerminalsInfo(ImmutableArray<TerminalInfo> terminals, int voidTerminalCount)
-            {
-                Terminals = terminals;
-                VoidTerminalCount = voidTerminalCount;
-            }
-
-            public readonly ImmutableArray<TerminalInfo> Terminals { get; }
-
-            public readonly int VoidTerminalCount { get; }
-
-            public readonly IEnumerable<TerminalInfo> InputTerminals => Terminals.Where(info => info.IsInput);
-
-            public readonly IEnumerable<TerminalInfo> OutputTerminals => Terminals.Where(info => !info.IsInput);
-        }
-
-        public readonly struct TerminalInfo
-        {
-            public TerminalInfo(byte3 position, SignalType type, TerminalDirection direction)
-            {
-                Position = position;
-                Type = type;
-                Direction = direction;
-            }
-
-            public readonly byte3 Position { get; }
-
-            public readonly SignalType Type { get; }
-
-            public readonly TerminalDirection Direction { get; }
-
-            public readonly bool IsInput => Direction is TerminalDirection.NegativeX or TerminalDirection.PositiveZ;
-
-            public static bool operator ==(TerminalInfo left, TerminalInfo right)
-                => left.Position == right.Position && left.Type == right.Type && left.Direction == right.Direction;
-
-            public static bool operator !=(TerminalInfo left, TerminalInfo right)
-                => left.Position != right.Position || left.Type != right.Type || left.Direction != right.Direction;
-
-            public override int GetHashCode()
-                => HashCode.Combine(Position, Type, Direction);
-
-            public override bool Equals(object? obj)
-                => obj is TerminalInfo other && other == this;
         }
     }
 }

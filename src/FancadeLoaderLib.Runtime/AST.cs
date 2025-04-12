@@ -97,46 +97,15 @@ public sealed partial class AST
         }
     }
 
-    private static Connection[] GetConnectionsFrom(ParseContext ctx, List<Connection> connections, ushort3 pos, Prefab prefab)
+    private static IEnumerable<Connection> GetConnectionsFrom(List<Connection> connections, ushort3 pos)
     {
-        var terminalsInfo = ctx.TerminalInfos[prefab.Id];
-
-        // will only contain a few elements and it is just .Where, so it's fine to loop over it multiple times
-        var outTerminals = terminalsInfo.OutputTerminals;
-
-        int outCount = outTerminals.Count();
-
-        Span<byte3> explicitlyConnectedTerminals = stackalloc byte3[128];
-        int explicitlyConnectedTerminalsLength = 0;
-
-        List<Connection> result = [];
-
         for (int i = 0; i < connections.Count; i++)
         {
             if (connections[i].From == pos)
             {
-                result.Add(connections[i]);
-                explicitlyConnectedTerminals[explicitlyConnectedTerminalsLength++] = (byte3)connections[i].FromVoxel;
+                yield return connections[i];
             }
         }
-
-        explicitlyConnectedTerminals = explicitlyConnectedTerminals[..explicitlyConnectedTerminalsLength];
-
-        foreach (var info in outTerminals)
-        {
-            if (explicitlyConnectedTerminals.IndexOf(info.Position) != -1)
-            {
-                continue;
-            }
-
-            // try to get implicit connection (when 2 blocks are right next to each other)
-            if (ctx.TryGetImplicitlyConnectedTerminalPos(pos, info, out var otherBlockPos, out var otherTerminalPos))
-            {
-                result.Add(new Connection(pos, otherBlockPos, info.Position, otherTerminalPos));
-            }
-        }
-
-        return [.. result];
     }
 
     public readonly struct FunctionInstance

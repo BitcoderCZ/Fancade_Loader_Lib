@@ -5,6 +5,7 @@
 using FancadeLoaderLib.Partial;
 using MathUtils.Vectors;
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -94,5 +95,118 @@ public static class PrefabListUtils
         }
 
         return removedCount;
+    }
+
+    /// <summary>
+    /// Adds the connections between blocks that are rigth next to each other.
+    /// </summary>
+    /// <param name="list">The list to operate on.</param>
+    /// <param name="terminalInfos"><see cref="PrefabTerminalInfo"/>s for <paramref name="list"/> <b>AND</b> <see cref="StockBlocks.PrefabList"/>.</param>
+    public static void AddImplicitConnections(this PrefabList list, FrozenDictionary<ushort, PrefabTerminalInfo>? terminalInfos = null)
+    {
+        var stockPrefabs = StockBlocks.PrefabList;
+
+        terminalInfos ??= PrefabTerminalInfo.Create(stockPrefabs.Concat(list));
+
+        HashSet<(ushort3, byte3)> connectionsFrom = [];
+        HashSet<(ushort3, byte3)> connectionsTo = [];
+
+        foreach (var item in list.Prefabs)
+        {
+            if (item.Blocks.Size == int3.Zero)
+            {
+                continue;
+            }
+
+            foreach (var connection in item.Connections)
+            {
+                connectionsFrom.Add((connection.From, (byte3)connection.FromVoxel));
+                connectionsTo.Add((connection.To, (byte3)connection.ToVoxel));
+            }
+
+            var blocks = item.Blocks;
+            for (int z = 0; z < blocks.Size.Z; z++)
+            {
+                for (int y = 0; y < blocks.Size.Y; y++)
+                {
+                    for (int x = 0; x < blocks.Size.X; x++)
+                    {
+                        ushort3 pos = new ushort3(x, y, z);
+                        ushort id = blocks.GetBlockUnchecked(pos);
+
+                        if (id == 0)
+                        {
+                            continue;
+                        }
+
+                        if (!stockPrefabs.TryGetPrefab(id, out var prefab) && !list.TryGetPrefab(id, out prefab))
+                        {
+                            continue;
+                        }
+
+                        if (!terminalInfos.TryGetValue(id, out var infos) || infos.Terminals.IsEmpty)
+                        {
+                            continue;
+                        }
+
+                        foreach (var info in infos.InputTerminals)
+                        {
+                            if (info.IsInput ? connectionsTo.Contains((pos, info.Position)) : connectionsFrom.Contains((pos, info.Position)))
+                            {
+                                continue;
+                            }
+
+                            if (TryGetImplicitlyConnectedTerminalPos(pos, info, blocks, out var otherBlockPos, out var otherTerminalPos))
+                            {
+                                item.Connections.Add(info.IsInput
+                                    ? new Connection(otherBlockPos, pos, otherTerminalPos, info.Position)
+                                    : new Connection(pos, otherBlockPos, info.Position, otherTerminalPos));
+                            }
+                        }
+                    }
+                }
+            }
+
+            connectionsFrom.Clear();
+            connectionsTo.Clear();
+        }
+
+        bool TryGetImplicitlyConnectedTerminalPos(ushort3 pos, TerminalInfo info, BlockData blocks, out ushort3 otherBlockPos, out byte3 otherTerminalPos)
+        {
+            ushort3 otherPos = pos + (info.Position / 8) + info.Direction.GetOffset();
+
+            ushort otherId = blocks.GetBlockOrDefault(otherPos);
+            if (otherId == 0)
+            {
+                otherBlockPos = default;
+                otherTerminalPos = default;
+                return false;
+            }
+
+            if (stockPrefabs.TryGetSegments(otherId, out var segment) || list.TryGetSegments(otherId, out segment))
+            {
+                otherBlockPos = (ushort3)(otherPos - segment.PosInPrefab);
+                otherTerminalPos = info.Direction switch
+                {
+                    TerminalDirection.PositiveX => new byte3(0, info.Position.Y, (segment.PosInPrefab.Z * 8) + (info.Position.Z % 8)),
+                    TerminalDirection.PositiveZ => new byte3((segment.PosInPrefab.X * 8) + (info.Position.X % 8), info.Position.Y, 0),
+                    TerminalDirection.NegativeX => new byte3(((segment.PosInPrefab.X + 1) * 8) - 2, info.Position.Y, (segment.PosInPrefab.Z * 8) + (info.Position.Z % 8)),
+                    TerminalDirection.NegativeZ => new byte3((segment.PosInPrefab.X * 8) + (info.Position.X % 8), info.Position.Y, ((segment.PosInPrefab.Z + 1) * 8) - 2),
+                    _ => throw new UnreachableException(),
+                };
+
+                var otherInfos = terminalInfos[segment.PrefabId];
+
+                byte3 otherTerminalPosLocal = otherTerminalPos;
+                if (otherInfos.Terminals.Any(info => info.Position == otherTerminalPosLocal))
+                {
+                    return true;
+                }
+            }
+
+            otherBlockPos = default;
+            otherTerminalPos = default;
+            return false;
+        }
     }
 }
