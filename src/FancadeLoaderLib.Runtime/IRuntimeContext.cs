@@ -8,9 +8,9 @@ public interface IRuntimeContext
 
     int GetVariableId(Variable variable);
 
-    void SetVariableValue(int variableId, int index, RuntimeValue value);
-
     RuntimeValue GetVariableValue(int variableId, int index);
+
+    void SetVariableValue(int variableId, int index, RuntimeValue value);
 
     void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
 
