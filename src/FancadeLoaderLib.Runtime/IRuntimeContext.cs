@@ -1,4 +1,5 @@
-﻿using MathUtils.Vectors;
+﻿using FancadeLoaderLib.Editing.Scripting.Settings;
+using MathUtils.Vectors;
 
 namespace FancadeLoaderLib.Runtime;
 
@@ -17,6 +18,8 @@ public interface IRuntimeContext
     void SetVariableValue(int variableId, int index, RuntimeValue value);
 
     void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
+
+    bool TryGetTouch(TouchState state, int fingerIndex,  out float2 touchPos);
 
     void SetRandomSeed(float seed);
 

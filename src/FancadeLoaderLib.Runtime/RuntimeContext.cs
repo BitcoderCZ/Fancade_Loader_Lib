@@ -1,4 +1,5 @@
-﻿using MathUtils.Vectors;
+﻿using FancadeLoaderLib.Editing.Scripting.Settings;
+using MathUtils.Vectors;
 using System.Collections.Frozen;
 
 namespace FancadeLoaderLib.Runtime;
@@ -73,6 +74,8 @@ public abstract class RuntimeContext : IRuntimeContext
         => rng.NextSingle(min, max);
 
     public abstract void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
+
+    public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 
     public abstract (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
 

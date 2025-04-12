@@ -1,4 +1,5 @@
 ﻿using FancadeLoaderLib.Editing;
+using FancadeLoaderLib.Editing.Scripting.Settings;
 using FancadeLoaderLib.Runtime.Functions.Control;
 using FancadeLoaderLib.Runtime.Functions.Math;
 using FancadeLoaderLib.Runtime.Functions.Values;
@@ -110,6 +111,10 @@ public sealed partial class AST
                     return new LateUpdateFunction();
                 case 409:
                     return new BoxArtSensorFunction();
+                case 242:
+                    {
+                        return new TouchSensorFunction(ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (TouchState)(byte)state : TouchState.Touching, ctx.TryGetSettingOfType(pos, 1, SettingType.Byte, out object? fingerIndex) ? (byte)fingerIndex : 0);
+                    }
 
                 // ******************** Math ********************
                 case 90:
