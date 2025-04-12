@@ -108,6 +108,8 @@ public sealed partial class AST
                     return new PlaySensorFunction();
                 case 566:
                     return new LateUpdateFunction();
+                case 409:
+                    return new BoxArtSensorFunction();
 
                 // ******************** Math ********************
                 case 90:

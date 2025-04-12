@@ -5,18 +5,23 @@ using System.Diagnostics;
 
 namespace FancadeLoaderLib.Runtime.Functions.Control;
 
-public sealed class LateUpdateFunction : IActiveFunction
+public sealed class BoxArtSensorFunction : IActiveFunction
 {
-    public static readonly byte3 AfterPhysicsPos = TerminalDef.GetOutPosition(0, 2, 2);
+    private static readonly byte3 OnScreenshotPos = TerminalDef.GetOutPosition(0, 2, 2);
 
     public int Execute(byte3 terminalPos, IRuntimeContext context, Span<byte3> executeNext)
     {
         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be the before terminal.");
 
-        // after physics executed by the interpreter
-        executeNext[0] = TerminalDef.AfterPosition;
+        int exeCount = 0;
+        executeNext[exeCount++] = TerminalDef.AfterPosition;
 
-        return 1;
+        if (context.TakingBoxArt)
+        {
+            executeNext[exeCount++] = OnScreenshotPos;
+        }
+
+        return exeCount;
     }
 
     public TerminalOutput GetTerminalOutput(byte3 terminalPos, IRuntimeContext context)

@@ -1,10 +1,7 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Runtime.Exceptions;
 using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace FancadeLoaderLib.Runtime.Functions.Control;
 
@@ -19,7 +16,7 @@ public sealed class PlaySensorFunction : IActiveFunction
         int exeCount = 0;
         executeNext[exeCount++] = TerminalDef.AfterPosition;
 
-        if (context.GetCurrentFrame() == 0)
+        if (context.CurrentFrame == 0)
         {
             executeNext[exeCount++] = OnPlayPos;
         }

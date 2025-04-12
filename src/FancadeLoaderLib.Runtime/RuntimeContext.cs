@@ -1,8 +1,5 @@
 ﻿using MathUtils.Vectors;
-using System;
 using System.Collections.Frozen;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FancadeLoaderLib.Runtime;
 
@@ -12,6 +9,10 @@ public abstract class RuntimeContext : IRuntimeContext
     protected RuntimeValue[][] variables = [];
 
     protected FcRandom rng = new();
+
+    public abstract long CurrentFrame { get; }
+
+    public abstract bool TakingBoxArt { get; }
 
     public void Init(IEnumerable<Variable> variables)
     {
@@ -72,8 +73,6 @@ public abstract class RuntimeContext : IRuntimeContext
         => rng.NextSingle(min, max);
 
     public abstract void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
-
-    public abstract long GetCurrentFrame();
 
     public abstract (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
 

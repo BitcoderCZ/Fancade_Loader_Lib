@@ -4,6 +4,10 @@ namespace FancadeLoaderLib.Runtime;
 
 public interface IRuntimeContext
 {
+    long CurrentFrame { get; }
+
+    bool TakingBoxArt { get; }
+
     void Init(IEnumerable<Variable> variables);
 
     int GetVariableId(Variable variable);
@@ -13,8 +17,6 @@ public interface IRuntimeContext
     void SetVariableValue(int variableId, int index, RuntimeValue value);
 
     void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
-
-    long GetCurrentFrame();
 
     void SetRandomSeed(float seed);
 
