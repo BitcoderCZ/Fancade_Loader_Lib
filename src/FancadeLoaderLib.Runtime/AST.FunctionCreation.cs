@@ -106,6 +106,8 @@ public sealed partial class AST
                     return new IfFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
                 case 238:
                     return new PlaySensorFunction();
+                case 566:
+                    return new LateUpdateFunction();
 
                 // ******************** Math ********************
                 case 90:
