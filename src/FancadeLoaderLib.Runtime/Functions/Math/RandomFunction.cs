@@ -15,6 +15,8 @@ public sealed class RandomFunction : BinaryFunction
     {
         Debug.Assert(terminalPos == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminalPos)} should be valid.");
 
-        return new TerminalOutput(new RuntimeValue(context.GetRandomValue(Input1.GetOutput(context).GetValue(context).Float, Input2.GetOutput(context).GetValue(context).Float)));
+        var maxOut = Input2.GetOutput(context);
+        float max = maxOut.IsConnected ? maxOut.GetValue(context).Float : 1f;
+        return new TerminalOutput(new RuntimeValue(context.GetRandomValue(Input1.GetOutput(context).GetValue(context).Float, max)));
     }
 }

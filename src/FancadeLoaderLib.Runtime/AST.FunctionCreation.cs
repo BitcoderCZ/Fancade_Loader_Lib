@@ -177,6 +177,24 @@ public sealed partial class AST
                     return new DistanceFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
                 case 194:
                     return new LerpFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 3)));
+                case 200:
+                    return new AxisAngleFunciton(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 216:
+                    return new ScreenToWorldFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 477:
+                    return new WorldToScreenFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
+                case 204:
+                    return new LookRotationFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 208:
+                    return new LineVsPlaneFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 4)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 4)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 4)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(3, 4)));
+                case 150:
+                    return new MakeVectorFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 3)));
+                case 156:
+                    return new BreakVectorFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)));
+                case 162:
+                    return new MakeRotationFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 3)));
+                case 442:
+                    return new BreakRotationFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)));
                 default:
                     throw new NotImplementedException($"Prefab with id {id} is not yet implemented.");
             }

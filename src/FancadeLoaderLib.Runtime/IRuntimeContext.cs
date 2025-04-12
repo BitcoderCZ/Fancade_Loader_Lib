@@ -18,6 +18,10 @@ public interface IRuntimeContext
 
     float GetRandomValue(float min, float max);
 
+    (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
+
+    float2 WorldToScreen(float3 worldPos);
+
     float3 GetObjectPosition(int id);
 
     int CloneObject(int id);

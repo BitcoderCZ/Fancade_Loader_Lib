@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
+﻿using System.Diagnostics;
 
 namespace FancadeLoaderLib.Runtime;
 
@@ -25,7 +22,7 @@ public sealed class FcRandom
 
         _state = (_state * 0x41c64e6d) + 0x3039;
 
-        float randomFactor = (float)((uint)_state >> 16 & 0x7fff) * RAND_NORMALIZER;
+        float randomFactor = ((uint)_state >> 16 & 0x7fff) * RAND_NORMALIZER;
 
         Debug.Assert(randomFactor >= 0f && randomFactor <= 1f, $"{nameof(randomFactor)} should be between 0 and 1.");
 
