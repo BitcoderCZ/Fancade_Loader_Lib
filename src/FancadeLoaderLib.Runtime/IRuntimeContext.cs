@@ -21,6 +21,8 @@ public interface IRuntimeContext
 
     bool TryGetTouch(TouchState state, int fingerIndex,  out float2 touchPos);
 
+    bool TryGetSwipe(out float3 direction);
+
     void SetRandomSeed(float seed);
 
     float GetRandomValue(float min, float max);

@@ -116,6 +116,9 @@ public sealed partial class AST
                         return new TouchSensorFunction(ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (TouchState)(byte)state : TouchState.Touching, ctx.TryGetSettingOfType(pos, 1, SettingType.Byte, out object? fingerIndex) ? (byte)fingerIndex : 0);
                     }
 
+                case 248:
+                    return new SwipeSensorFunction();
+
                 // ******************** Math ********************
                 case 90:
                     return new NegateFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));

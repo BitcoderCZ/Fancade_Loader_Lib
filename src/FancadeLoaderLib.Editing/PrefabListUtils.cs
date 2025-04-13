@@ -198,7 +198,7 @@ public static class PrefabListUtils
                 var otherInfos = terminalInfos[segment.PrefabId];
 
                 byte3 otherTerminalPosLocal = otherTerminalPos;
-                if (otherInfos.Terminals.Any(info => info.Position == otherTerminalPosLocal))
+                if (otherInfos.Terminals.Any(item => item.Position == otherTerminalPosLocal && item.Type == info.Type))
                 {
                     return true;
                 }
