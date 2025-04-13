@@ -9,15 +9,7 @@ public interface IRuntimeContext
 
     bool TakingBoxArt { get; }
 
-    void Init(IEnumerable<Variable> variables);
-
-    int GetVariableId(Variable variable);
-
-    RuntimeValue GetVariableValue(int variableId, int index);
-
-    void SetVariableValue(int variableId, int index, RuntimeValue value);
-
-    void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
+    void InspectValue(RuntimeValue value, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
 
     bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 

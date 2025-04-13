@@ -6,68 +6,11 @@ namespace FancadeLoaderLib.Runtime;
 
 public abstract class RuntimeContext : IRuntimeContext
 {
-    protected FrozenDictionary<Variable, int> variableToId = FrozenDictionary<Variable, int>.Empty;
-    protected RuntimeValue[][] variables = [];
-
     protected FcRandom rng = new();
 
     public abstract long CurrentFrame { get; }
 
     public abstract bool TakingBoxArt { get; }
-
-    public virtual void Init(IEnumerable<Variable> variables)
-    {
-        int id = 0;
-
-        variableToId = variables.ToFrozenDictionary(variable => variable, variable => id++);
-
-        this.variables = new RuntimeValue[variableToId.Count][];
-
-        for (int i = 0; i < this.variables.Length; i++)
-        {
-            this.variables[i] = [];
-        }
-
-        rng = new();
-    }
-
-    public virtual int GetVariableId(Variable variable)
-        => variableToId[variable];
-
-    public virtual RuntimeValue GetVariableValue(int variableId, int index)
-    {
-        // TODO: bounds check variableId?
-        var values = variables[variableId];
-
-        return index >= 0 && index < values.Length
-            ? values[index]
-            : RuntimeValue.Zero;
-    }
-
-    public virtual void SetVariableValue(int variableId, int index, RuntimeValue value)
-    {
-        if (index < 0)
-        {
-            return;
-        }
-
-        // TODO: bounds check variableId?
-        ref var values = ref variables[variableId];
-
-        if (index >= values.Length)
-        {
-            int newLen = index == 0 ? 1 : values.Length + 16;
-
-            if (newLen < index + 1)
-            {
-                newLen = index + 1;
-            }
-
-            Array.Resize(ref values, newLen);
-        }
-
-        values[index] = value;
-    }
 
     public virtual void SetRandomSeed(float seed)
         => rng.SetSeed(seed);
@@ -75,7 +18,7 @@ public abstract class RuntimeContext : IRuntimeContext
     public virtual float GetRandomValue(float min, float max)
         => rng.NextSingle(min, max);
 
-    public abstract void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
+    public abstract void InspectValue(RuntimeValue value, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
 
     public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 

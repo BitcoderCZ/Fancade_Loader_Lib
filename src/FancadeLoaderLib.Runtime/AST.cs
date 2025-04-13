@@ -1,4 +1,6 @@
-﻿using MathUtils.Vectors;
+﻿using FancadeLoaderLib.Runtime.Syntax;
+using MathUtils.Vectors;
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using static FancadeLoaderLib.Utils.ThrowHelper;
@@ -7,87 +9,37 @@ namespace FancadeLoaderLib.Runtime;
 
 public sealed partial class AST
 {
+    public readonly ushort PrefabId;
+
     public readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> EntryPoints;
 
-    public readonly Dictionary<ushort3, FunctionInstance> Functions;
+    public readonly Dictionary<ushort3, SyntaxNode> Nodes;
 
-    public readonly IRuntimeContext RuntimeContext;
+    public readonly ImmutableArray<Variable> GlobalVariables;
 
-    public AST(List<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPoints, Dictionary<ushort3, FunctionInstance> functions, IRuntimeContext runtimeContext)
+    public readonly FrozenDictionary<ushort, ImmutableArray<Variable>> Variables;
+
+    public AST(ushort prefabId, List<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPoints, Dictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, FrozenDictionary<ushort, ImmutableArray<Variable>> variables)
     {
         ThrowIfNull(entryPoints, nameof(entryPoints));
-        ThrowIfNull(functions, nameof(functions));
+        ThrowIfNull(nodes, nameof(nodes));
+        ThrowIfNull(globalVariables, nameof(globalVariables));
+        ThrowIfNull(variables, nameof(variables));
 
+        PrefabId = prefabId;
         EntryPoints = entryPoints;
-        Functions = functions;
-        RuntimeContext = runtimeContext;
+        Nodes = nodes;
+        GlobalVariables = globalVariables;
+        Variables = variables;
     }
 
-    public static AST Parse(PrefabList prefabs, ushort mainPrefabId, IRuntimeContext runtimeContext)
+    public static AST Parse(PrefabList prefabs, ushort mainPrefabId)
     {
         ThrowIfNull(prefabs, nameof(prefabs));
-        ThrowIfNull(runtimeContext, nameof(runtimeContext));
 
-        var ctx = new ParseContext(prefabs, mainPrefabId, runtimeContext);
+        var ctx = new GlobalParseContext(prefabs, mainPrefabId);
 
-        var blocks = ctx.MainPrefab.Blocks;
-
-        HashSet<Variable> variables = [];
-
-        for (int z = blocks.Size.Z - 1; z >= 0; z--)
-        {
-            for (int y = blocks.Size.Y - 1; y >= 0; y--)
-            {
-                for (int x = 0; x < blocks.Size.X; x++)
-                {
-                    ushort3 pos = new ushort3(x, y, z);
-
-                    ushort id = blocks.GetBlockUnchecked(pos);
-
-                    if (id is 46 or 48 or 50 or 52 or 54 or 56)
-                    {
-                        // get variable
-                        if (!ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? variableName))
-                        {
-                            variableName = string.Empty;
-                        }
-
-                        variables.Add(new Variable((string)variableName, (SignalType)((id - 46) + 2)));
-                    }
-                    else if (id is 428 or 430 or 432 or 434 or 436 or 438)
-                    {
-                        // set variable
-                        if (!ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? variableName))
-                        {
-                            variableName = string.Empty;
-                        }
-
-                        variables.Add(new Variable((string)variableName, (SignalType)((id - 428) + 2)));
-                    }
-                }
-            }
-        }
-
-        runtimeContext.Init(variables);
-
-        // order matters for entryPoints
-        for (int z = blocks.Size.Z - 1; z >= 0; z--)
-        {
-            for (int y = blocks.Size.Y - 1; y >= 0; y--)
-            {
-                for (int x = 0; x < blocks.Size.X; x++)
-                {
-                    ushort3 pos = new ushort3(x, y, z);
-
-                    if (blocks.GetBlockUnchecked(pos) != 0)
-                    {
-                        ctx.TryCreateFunction(pos, out _);
-                    }
-                }
-            }
-        }
-
-        return new AST(ctx._entryPoints, ctx._functions, runtimeContext);
+        return ctx.Parse();
     }
 
     private static IEnumerable<Connection> GetConnectionsTo(List<Connection> connections, ushort3 pos)

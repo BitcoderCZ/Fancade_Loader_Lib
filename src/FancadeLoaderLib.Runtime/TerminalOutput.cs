@@ -41,8 +41,8 @@ public readonly struct TerminalOutput
 
     public readonly VariableReference Reference => Read<VariableReference>();
 
-    public readonly RuntimeValue GetValue(IRuntimeContext context)
-        => IsReference ? Reference.GetValue(context) : Value;
+    public readonly RuntimeValue GetValue(IVariableAccessor variableAccessor)
+        => IsReference ? Reference.GetValue(variableAccessor) : Value;
 
 #pragma warning disable SA1114
     private void Write<T>(T value)
