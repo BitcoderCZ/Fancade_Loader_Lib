@@ -118,6 +118,10 @@ public sealed partial class AST
 
                 case 248:
                     return new SwipeSensorFunction();
+                case 588:
+                    {
+                        return new ButtonFunction(ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (ButtonType)(byte)state : ButtonType.Direction);
+                    }
 
                 // ******************** Math ********************
                 case 90:

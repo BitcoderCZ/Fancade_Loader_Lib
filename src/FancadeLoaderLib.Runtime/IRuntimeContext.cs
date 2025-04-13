@@ -23,6 +23,8 @@ public interface IRuntimeContext
 
     bool TryGetSwipe(out float3 direction);
 
+    bool GetButtonPressed(ButtonType type);
+
     void SetRandomSeed(float seed);
 
     float GetRandomValue(float min, float max);

@@ -1,4 +1,6 @@
 ﻿using FancadeLoaderLib.Editing;
+using FancadeLoaderLib.Editing.Scripting.Settings;
+using FancadeLoaderLib.Runtime.Exceptions;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
@@ -7,12 +9,16 @@ using System.Text;
 
 namespace FancadeLoaderLib.Runtime.Functions.Control;
 
-public sealed class SwipeSensorFunction : IActiveFunction
+public sealed class ButtonFunction : IActiveFunction
 {
-    private static readonly byte3 SwipedPos = TerminalDef.GetOutPosition(0, 2, 2);
-    private static readonly byte3 DirectionPos = TerminalDef.GetOutPosition(1, 2, 2);
+    private static readonly byte3 ButtonPos = TerminalDef.GetOutPosition(0, 2, 2);
 
-    private float3 _direction;
+    private readonly ButtonType _type;
+
+    public ButtonFunction(ButtonType type)
+    {
+        _type = type;
+    }
 
     public int Execute(byte3 terminalPos, IRuntimeContext context, Span<byte3> executeNext)
     {
@@ -21,19 +27,14 @@ public sealed class SwipeSensorFunction : IActiveFunction
         int exeCount = 0;
         executeNext[exeCount++] = TerminalDef.AfterPosition;
 
-        if (context.TryGetSwipe(out var direction))
+        if (context.GetButtonPressed(_type))
         {
-            _direction = direction;
-            executeNext[exeCount++] = SwipedPos;
+            executeNext[exeCount++] = ButtonPos;
         }
 
         return exeCount;
     }
 
     public TerminalOutput GetTerminalOutput(byte3 terminalPos, IRuntimeContext context)
-    {
-        Debug.Assert(terminalPos == DirectionPos, $"{nameof(terminalPos)} should be valid.");
-
-        return new TerminalOutput(new RuntimeValue(_direction));
-    }
+        => throw new InvalidTerminalException(terminalPos);
 }

@@ -79,6 +79,8 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract bool TryGetSwipe(out float3 direction);
 
+    public abstract bool GetButtonPressed(ButtonType type);
+
     public abstract (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
 
     public abstract float2 WorldToScreen(float3 worldPos);
