@@ -46,18 +46,39 @@ public sealed class Interpreter
             var (blockPos, terminalPos) = item;
             var ins = _ast.Functions[blockPos];
 
-            if (ins.Function is LateUpdateFunction && lateUpdateQueue is not null)
-            {
-                foreach (var connection in ins.Connections)
-                {
-                    if (connection.FromVoxel == LateUpdateFunction.AfterPhysicsPos)
-                    {
-                        lateUpdateQueue.Enqueue((connection.To, (byte3)connection.ToVoxel));
-                    }
-                }
-            }
-
             int nextCount = ((IActiveFunction)ins.Function).Execute(terminalPos, _ast.RuntimeContext, executeNextSpan);
+
+            switch (ins.Function)
+            {
+                case LateUpdateFunction:
+                    if (lateUpdateQueue is not null)
+                    {
+                        foreach (var connection in ins.Connections)
+                        {
+                            if (connection.FromVoxel == LateUpdateFunction.AfterPhysicsPos)
+                            {
+                                lateUpdateQueue.Enqueue((connection.To, (byte3)connection.ToVoxel));
+                            }
+                        }
+                    }
+
+                    break;
+                case LoopFunction loop:
+                    {
+                        while (loop.Step(_ast.RuntimeContext))
+                        {
+                            foreach (var connection in ins.Connections)
+                            {
+                                if (connection.FromVoxel == LoopFunction.DoPos)
+                                {
+                                    Execute((connection.To, (byte3)connection.ToVoxel), lateUpdateQueue);
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+            }
 
             foreach (var nextTerminal in executeNextSpan[..nextCount])
             {

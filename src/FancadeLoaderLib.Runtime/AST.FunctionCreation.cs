@@ -130,6 +130,8 @@ public sealed partial class AST
 
                 case 401:
                     return new CollisionFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 4)));
+                case 560:
+                    return new LoopFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
 
                 // ******************** Math ********************
                 case 90:

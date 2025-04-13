@@ -19,7 +19,7 @@ public interface IRuntimeContext
 
     void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
 
-    bool TryGetTouch(TouchState state, int fingerIndex,  out float2 touchPos);
+    bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 
     bool TryGetSwipe(out float3 direction);
 

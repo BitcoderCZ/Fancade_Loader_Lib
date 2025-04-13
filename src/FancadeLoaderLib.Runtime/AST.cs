@@ -47,18 +47,22 @@ public sealed partial class AST
                     if (id is 46 or 48 or 50 or 52 or 54 or 56)
                     {
                         // get variable
-                        if (ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? variableName))
+                        if (!ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? variableName))
                         {
-                            variables.Add(new Variable((string)variableName, (SignalType)((id - 46) + 2)));
+                            variableName = string.Empty;
                         }
+
+                        variables.Add(new Variable((string)variableName, (SignalType)((id - 46) + 2)));
                     }
                     else if (id is 428 or 430 or 432 or 434 or 436 or 438)
                     {
                         // set variable
-                        if (ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? variableName))
+                        if (!ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? variableName))
                         {
-                            variables.Add(new Variable((string)variableName, (SignalType)((id - 428) + 2)));
+                            variableName = string.Empty;
                         }
+
+                        variables.Add(new Variable((string)variableName, (SignalType)((id - 428) + 2)));
                     }
                 }
             }
