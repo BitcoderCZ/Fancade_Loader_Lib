@@ -27,6 +27,8 @@ public interface IRuntimeContext
 
     float3 GetJoystickDirection(JoystickType type);
 
+    bool TryGetCollision(int firstObject, out int secondObject, out float impulse, out float3 normal);
+
     void SetRandomSeed(float seed);
 
     float GetRandomValue(float min, float max);

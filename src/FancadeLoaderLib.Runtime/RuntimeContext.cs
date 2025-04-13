@@ -83,6 +83,8 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract float3 GetJoystickDirection(JoystickType type);
 
+    public abstract bool TryGetCollision(int firstObject, out int secondObject, out float impulse, out float3 normal);
+
     public abstract (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
 
     public abstract float2 WorldToScreen(float3 worldPos);
