@@ -26,8 +26,23 @@ public readonly struct Variable : IEquatable<Variable>
     public static bool operator !=(Variable left, Variable right)
         => left.Type != right.Type || left.Name != right.Name;
 
+    public static string GetDefaultName(SignalType type)
+        => type.ToNotPointer() switch
+        {
+            SignalType.Float => "Numb",
+            SignalType.Vec3 => "Vec",
+            SignalType.Rot => "Rot",
+            SignalType.Bool => "Tru",
+            SignalType.Obj => "Obj",
+            SignalType.Con => "Con",
+            _ => throw new ArgumentException($"{nameof(type)} must be a valid variable type.", nameof(type)),
+        };
+
     public bool Equals(Variable other)
         => this == other;
+
+    public override string ToString()
+        => $"Name: {Name}, Type: {Type}";
 
     public override int GetHashCode()
         => HashCode.Combine(Name, Type);

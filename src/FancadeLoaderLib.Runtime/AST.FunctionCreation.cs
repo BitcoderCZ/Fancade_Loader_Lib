@@ -234,6 +234,17 @@ public sealed partial class AST
                         return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
+                case 58 or 62 or 66 or 70 or 74 or 78:
+                    return new SetPointerFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+
+                case 82 or 461 or 465 or 469 or 86 or 473:
+                    return new ListFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+
+                case 556:
+                    return new IncreaseNumberFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                case 558:
+                    return new DecreaseNumberFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+
                 default:
                     throw new NotImplementedException($"Prefab with id {id} is not yet implemented.");
             }

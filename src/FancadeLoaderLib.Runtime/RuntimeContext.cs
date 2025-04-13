@@ -15,7 +15,7 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract bool TakingBoxArt { get; }
 
-    public void Init(IEnumerable<Variable> variables)
+    public virtual void Init(IEnumerable<Variable> variables)
     {
         int id = 0;
 
@@ -31,11 +31,12 @@ public abstract class RuntimeContext : IRuntimeContext
         rng = new();
     }
 
-    public int GetVariableId(Variable variable)
+    public virtual int GetVariableId(Variable variable)
         => variableToId[variable];
 
-    public RuntimeValue GetVariableValue(int variableId, int index)
+    public virtual RuntimeValue GetVariableValue(int variableId, int index)
     {
+        // TODO: bounds check variableId?
         var values = variables[variableId];
 
         return index >= 0 && index < values.Length
@@ -43,18 +44,19 @@ public abstract class RuntimeContext : IRuntimeContext
             : RuntimeValue.Zero;
     }
 
-    public void SetVariableValue(int variableId, int index, RuntimeValue value)
+    public virtual void SetVariableValue(int variableId, int index, RuntimeValue value)
     {
         if (index < 0)
         {
             return;
         }
 
+        // TODO: bounds check variableId?
         ref var values = ref variables[variableId];
 
         if (index >= values.Length)
         {
-            int newLen = values.Length + 16;
+            int newLen = index == 0 ? 1 : values.Length + 16;
 
             if (newLen < index + 1)
             {
@@ -67,10 +69,10 @@ public abstract class RuntimeContext : IRuntimeContext
         values[index] = value;
     }
 
-    public void SetRandomSeed(float seed)
+    public virtual void SetRandomSeed(float seed)
         => rng.SetSeed(seed);
 
-    public float GetRandomValue(float min, float max)
+    public virtual float GetRandomValue(float min, float max)
         => rng.NextSingle(min, max);
 
     public abstract void InspectValue(TerminalOutput output, SignalType type, ushort3 inspectBlockPosition);
