@@ -24,7 +24,7 @@ public sealed class BreakVectorFunction : UnaryFunction
            : terminalPos == YPos
            ? new TerminalOutput(new RuntimeValue(vector.Y))
            : terminalPos == ZPos
-           ? new TerminalOutput(new RuntimeValue(vector.Y))
+           ? new TerminalOutput(new RuntimeValue(vector.Z))
            : throw new InvalidTerminalException(terminalPos);
     }
 }
