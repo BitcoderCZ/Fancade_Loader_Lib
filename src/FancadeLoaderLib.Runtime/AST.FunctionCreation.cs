@@ -1,6 +1,7 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Editing.Scripting.Settings;
 using FancadeLoaderLib.Runtime.Functions.Control;
+using FancadeLoaderLib.Runtime.Functions.Game;
 using FancadeLoaderLib.Runtime.Functions.Math;
 using FancadeLoaderLib.Runtime.Functions.Values;
 using FancadeLoaderLib.Runtime.Functions.Variables;
@@ -18,89 +19,9 @@ public sealed partial class AST
         {
             switch (id)
             {
-                // ******************** Value ********************
-                case 16 or 20 or 24 or 28 or 32:
-                    return new InspectFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), (SignalType)(((id - 16) / 2) + 2), pos);
-                case 36:
-                    {
-                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Float, out object? value) ? (float)value : 0f), false);
-                    }
-
-                case 38: // vec3
-                    {
-                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? (float3)value : float3.Zero), true);
-                    }
-
-                case 42: // rot
-                    {
-                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? ((float3)value).ToQuatDeg() : Quaternion.Identity), true);
-                    }
-
-                case 449:
-                    return new LiteralFunction(new RuntimeValue(true), false);
-                case 451:
-                    return new LiteralFunction(new RuntimeValue(false), false);
-
-                // ******************** Variable ********************
-                case 46:
-                    {
-                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Float));
-                    }
-
-                case 48:
-                    {
-                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Vec3));
-                    }
-
-                case 50:
-                    {
-                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Rot));
-                    }
-
-                case 52:
-                    {
-                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Bool));
-                    }
-
-                case 54:
-                    {
-                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Obj));
-                    }
-
-                case 56:
-                    {
-                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con));
-                    }
-
-                case 428:
-                    {
-                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Float), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
-                    }
-
-                case 430:
-                    {
-                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Vec3), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
-                    }
-
-                case 432:
-                    {
-                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Rot), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
-                    }
-
-                case 434:
-                    {
-                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Bool), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
-                    }
-
-                case 436:
-                    {
-                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Obj), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
-                    }
-
-                case 438:
-                    {
-                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
-                    }
+                // ******************** Game ********************
+                case 564:
+                    return new CurrentFrameFunction();
 
                 // ******************** Control ********************
                 case 234:
@@ -228,6 +149,91 @@ public sealed partial class AST
                     return new MakeRotationFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 3)));
                 case 442:
                     return new BreakRotationFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)));
+
+                // ******************** Value ********************
+                case 16 or 20 or 24 or 28 or 32:
+                    return new InspectFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), (SignalType)(((id - 16) / 2) + 2), pos);
+                case 36:
+                    {
+                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Float, out object? value) ? (float)value : 0f), false);
+                    }
+
+                case 38: // vec3
+                    {
+                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? (float3)value : float3.Zero), true);
+                    }
+
+                case 42: // rot
+                    {
+                        return new LiteralFunction(new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? ((float3)value).ToQuatDeg() : Quaternion.Identity), true);
+                    }
+
+                case 449:
+                    return new LiteralFunction(new RuntimeValue(true), false);
+                case 451:
+                    return new LiteralFunction(new RuntimeValue(false), false);
+
+                // ******************** Variables ********************
+                case 46:
+                    {
+                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Float));
+                    }
+
+                case 48:
+                    {
+                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Vec3));
+                    }
+
+                case 50:
+                    {
+                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Rot));
+                    }
+
+                case 52:
+                    {
+                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Bool));
+                    }
+
+                case 54:
+                    {
+                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Obj));
+                    }
+
+                case 56:
+                    {
+                        return new GetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con));
+                    }
+
+                case 428:
+                    {
+                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Float), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                    }
+
+                case 430:
+                    {
+                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Vec3), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                    }
+
+                case 432:
+                    {
+                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Rot), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                    }
+
+                case 434:
+                    {
+                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Bool), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                    }
+
+                case 436:
+                    {
+                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Obj), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                    }
+
+                case 438:
+                    {
+                        return new SetVariableFunction(ctx.GetVariableId(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                    }
+
                 default:
                     throw new NotImplementedException($"Prefab with id {id} is not yet implemented.");
             }

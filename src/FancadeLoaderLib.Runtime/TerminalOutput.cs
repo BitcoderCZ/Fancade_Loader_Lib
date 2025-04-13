@@ -37,31 +37,9 @@ public readonly struct TerminalOutput
 
     public readonly bool IsConnected => (_flags & Flags.IsConnected) == Flags.IsConnected;
 
-    public readonly RuntimeValue Value
-    {
-        get
-        {
-            if (IsReference)
-            {
-                ThrowInvalidOperationException("Cannot get the value of a reference, use GetValue instead.");
-            }
+    public readonly RuntimeValue Value => Read<RuntimeValue>();
 
-            return Read<RuntimeValue>();
-        }
-    }
-
-    public readonly VariableReference Reference
-    {
-        get
-        {
-            if (!IsReference)
-            {
-                ThrowInvalidOperationException("Cannot get the reference of a value.");
-            }
-
-            return Read<VariableReference>();
-        }
-    }
+    public readonly VariableReference Reference => Read<VariableReference>();
 
     public readonly RuntimeValue GetValue(IRuntimeContext context)
         => IsReference ? Reference.GetValue(context) : Value;
