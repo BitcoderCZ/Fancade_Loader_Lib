@@ -122,6 +122,10 @@ public sealed partial class AST
                     {
                         return new ButtonFunction(ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (ButtonType)(byte)state : ButtonType.Direction);
                     }
+                case 592:
+                    {
+                        return new JoystickFunction(ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (JoystickType)(byte)state : JoystickType.XZ);
+                    }
 
                 // ******************** Math ********************
                 case 90:

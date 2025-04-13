@@ -25,6 +25,8 @@ public interface IRuntimeContext
 
     bool GetButtonPressed(ButtonType type);
 
+    float3 GetJoystickDirection(JoystickType type);
+
     void SetRandomSeed(float seed);
 
     float GetRandomValue(float min, float max);
