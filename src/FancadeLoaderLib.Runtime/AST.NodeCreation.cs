@@ -1,5 +1,6 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Runtime.Syntax;
+using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
@@ -18,9 +19,9 @@ public sealed partial class AST
         {
             switch (id)
             {
-                //// **************************************** Game ****************************************
-                //case 564:
-                //    return new CurrentFrameFunction();
+                // **************************************** Game ****************************************
+                case 564:
+                    return new CurrentFrameExpressionSyntax(id, pos);
 
                 //// **************************************** Control ****************************************
                 //case 234:

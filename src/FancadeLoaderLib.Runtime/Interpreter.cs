@@ -1,6 +1,7 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Syntax;
+using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
@@ -142,6 +143,15 @@ public sealed class Interpreter
         // faster than switching on type
         switch (terminal.Node.PrefabId)
         {
+            // **************************************** Game ****************************************
+            case 564:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is CurrentFrameExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CurrentFrameExpressionSyntax)}");
+
+                    return new TerminalOutput(new RuntimeValue((float)_ctx.CurrentFrame));
+                }
+
             // **************************************** Math ****************************************
             case 90 or 144 or 440 or 413 or 453 or 184 or 186 or 188 or 455 or 578:
                 {
