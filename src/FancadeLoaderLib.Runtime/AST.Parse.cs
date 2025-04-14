@@ -92,7 +92,7 @@ public sealed partial class AST
             var ctx = PrefabInfos[MainId].ParseCtx;
             ctx.ParseAll();
 
-            return new(MainId, ctx._entryPoints, ctx._nodes.ToFrozenDictionary(), GlobalVariables, PrefabInfos.ToFrozenDictionary(item => item.Key, item => item.Value.ParseCtx._variables));
+            return new(MainId, [.. ctx._notConnectedVoidInputs], ctx._nodes.ToFrozenDictionary(), GlobalVariables, PrefabInfos.ToFrozenDictionary(item => item.Key, item => item.Value.ParseCtx._variables), [.. ctx._voidInputs]);
         }
     }
 
@@ -100,7 +100,9 @@ public sealed partial class AST
     {
         public readonly Prefab Prefab;
 
-        internal readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> _entryPoints = [];
+        internal readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> _notConnectedVoidInputs = [];
+
+        internal readonly List<OutsideConnection> _voidInputs = [];
 
         internal readonly Dictionary<ushort3, SyntaxNode> _nodes = [];
 
@@ -228,9 +230,23 @@ public sealed partial class AST
                         {
                             foreach (var termPos in statement.InputVoidTerminals)
                             {
-                                if (GetConnectedTerminal(pos, termPos) is null)
+                                bool foundConnection = false;
+                                foreach (var connection in GetConnectionsTo(Prefab.Connections, pos))
                                 {
-                                    _entryPoints.Add((pos, termPos));
+                                    if (connection.ToVoxel == termPos)
+                                    {
+                                        foundConnection = true;
+
+                                        if (connection.IsFromOutside)
+                                        {
+                                            _voidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, pos, termPos));
+                                        }
+                                    }
+                                }
+
+                                if (!foundConnection)
+                                {
+                                    _notConnectedVoidInputs.Add((pos, termPos));
                                 }
                             }
                         }

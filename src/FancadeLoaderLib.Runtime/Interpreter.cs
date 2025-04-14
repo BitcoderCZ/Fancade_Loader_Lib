@@ -55,7 +55,7 @@ public sealed class Interpreter
     {
         Queue<(ushort3 BlockPosition, byte3 TerminalPos)> lateUpdateQueue = new Queue<(ushort3 BlockPosition, byte3 TerminalPos)>();
 
-        foreach (var entryPoint in _ast.EntryPoints)
+        foreach (var entryPoint in _ast.NotConnectedVoidInputs)
         {
             Execute(entryPoint, lateUpdateQueue);
         }

@@ -11,7 +11,9 @@ public sealed partial class AST
 {
     public readonly ushort PrefabId;
 
-    public readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> EntryPoints;
+    public readonly ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> NotConnectedVoidInputs;
+
+    public readonly ImmutableArray<OutsideConnection> VoidInputs;
 
     public readonly FrozenDictionary<ushort3, SyntaxNode> Nodes;
 
@@ -19,18 +21,19 @@ public sealed partial class AST
 
     public readonly FrozenDictionary<ushort, ImmutableArray<Variable>> Variables;
 
-    public AST(ushort prefabId, List<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPoints, FrozenDictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, FrozenDictionary<ushort, ImmutableArray<Variable>> variables)
+    public AST(ushort prefabId, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, FrozenDictionary<ushort, ImmutableArray<Variable>> variables, ImmutableArray<OutsideConnection> voidInputs)
     {
-        ThrowIfNull(entryPoints, nameof(entryPoints));
+        ThrowIfNull(notConnectedVoidInputs, nameof(notConnectedVoidInputs));
         ThrowIfNull(nodes, nameof(nodes));
         ThrowIfNull(globalVariables, nameof(globalVariables));
         ThrowIfNull(variables, nameof(variables));
 
         PrefabId = prefabId;
-        EntryPoints = entryPoints;
+        NotConnectedVoidInputs = notConnectedVoidInputs;
         Nodes = nodes;
         GlobalVariables = globalVariables;
         Variables = variables;
+        VoidInputs = voidInputs;
     }
 
     public static AST Parse(PrefabList prefabs, ushort mainPrefabId)
@@ -64,26 +67,17 @@ public sealed partial class AST
         }
     }
 
-    public readonly struct FunctionInstance
+    public readonly struct OutsideConnection
     {
-        public readonly ushort3 Position;
-        public readonly IFunction Function;
+        public readonly byte3 OutsidePosition;
+        public readonly ushort3 BlockPosition;
+        public readonly byte3 TerminalPosition;
 
-        // only for active functions
-        public readonly ImmutableArray<Connection> Connections;
-
-        public FunctionInstance(ushort3 position, IFunction function, ImmutableArray<Connection> connections)
+        public OutsideConnection(byte3 outsidePosition, ushort3 blockPosition, byte3 terminalPosition)
         {
-#if DEBUG
-            foreach (var connection in connections)
-            {
-                Debug.Assert(connection.From == position, $"{nameof(connection)}.{nameof(Connection.From)} should be equal to {nameof(Position)}.");
-            }
-#endif
-
-            Position = position;
-            Function = function;
-            Connections = connections;
+            OutsidePosition = outsidePosition;
+            BlockPosition = blockPosition;
+            TerminalPosition = terminalPosition;
         }
     }
 }
