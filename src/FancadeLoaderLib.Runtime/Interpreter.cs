@@ -27,7 +27,7 @@ public sealed class Interpreter
     private readonly AST _ast;
     private readonly IRuntimeContext _ctx;
 
-    private readonly VariableAccessor _variableAccessor;
+    private readonly InterpreterVariableAccessor _variableAccessor;
 
     public Interpreter(AST ast, IRuntimeContext ctx)
     {
@@ -37,8 +37,10 @@ public sealed class Interpreter
         _ast = ast;
         _ctx = ctx;
 
-        _variableAccessor = new VariableAccessor(_ast.GlobalVariables.Concat(_ast.Variables[ast.PrefabId]));
+        _variableAccessor = new InterpreterVariableAccessor(_ast.GlobalVariables.Concat(_ast.Variables[ast.PrefabId]));
     }
+
+    public IVariableAccessor VariableAccessor => _variableAccessor;
 
     public Action RunFrame()
     {
@@ -109,6 +111,37 @@ public sealed class Interpreter
                         if (setVar.Value is not null)
                         {
                             _variableAccessor.SetVariableValue(_variableAccessor.GetVariableId(setVar.Variable), 0, GetValue(setVar.Value));
+                        }
+                    }
+
+                    break;
+                case 58 or 62 or 66 or 70 or 74 or 78:
+                    {
+                        var setPointer = (SetPointerStatementSyntax)statement;
+
+                        if (setPointer.Variable is not null && setPointer.Value is not null)
+                        {
+                            var varRef = GetOutput(setPointer.Variable).Reference;
+
+                            _variableAccessor.SetVariableValue(varRef.VariableId, varRef.Index, GetValue(setPointer.Value));
+                        }
+                    }
+
+                    break;
+                case 556 or 558:
+                    {
+                        var incDecNumber = (IncDecNumberStatementSyntax)statement;
+
+                        if (incDecNumber.Variable is not null)
+                        {
+                            var varRef = GetOutput(incDecNumber.Variable).Reference;
+
+                            _variableAccessor.SetVariableValue(varRef.VariableId, varRef.Index, new(_variableAccessor.GetVariableValue(varRef.VariableId, varRef.Index).Float + incDecNumber.PrefabId switch
+                            {
+                                556 => 1f,
+                                558 => -1f,
+                                _ => throw new UnreachableException(),
+                            }));
                         }
                     }
 
@@ -416,17 +449,32 @@ public sealed class Interpreter
                     return new TerminalOutput(new VariableReference(_variableAccessor.GetVariableId(getVar.Variable), 0));
                 }
 
+            case 82 or 461 or 465 or 469 or 86 or 473:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var list = (ListExpressionSyntax)terminal.Node;
+
+                    if (list.Variable is null)
+                    {
+                        return TerminalOutput.Disconnected;
+                    }
+
+                    var varRef = GetOutput(list.Variable).Reference;
+
+                    return new TerminalOutput(new VariableReference(varRef.VariableId, varRef.Index + (int)GetValue(list.Index).Float));
+                }
+
             default:
                 throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not yet implemented.");
         }
     }
 
-    private sealed class VariableAccessor : IVariableAccessor
+    private sealed class InterpreterVariableAccessor : IVariableAccessor
     {
         private readonly FrozenDictionary<Variable, int> _variableToId;
         private readonly VariableManager _variableManager;
 
-        public VariableAccessor(IEnumerable<Variable> variables)
+        public InterpreterVariableAccessor(IEnumerable<Variable> variables)
         {
             int varId = 0;
             _variableToId = variables.ToFrozenDictionary(var => var, _ => varId++);
