@@ -1,5 +1,7 @@
 ﻿using FancadeLoaderLib.Editing;
+using FancadeLoaderLib.Editing.Scripting.Settings;
 using FancadeLoaderLib.Runtime.Syntax;
+using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Values;
@@ -14,7 +16,6 @@ public sealed partial class AST
 {
     private static class NodeCreation
     {
-        // TODO: source generator
         public static SyntaxNode? CreateNode(ushort id, ushort3 pos, ParseContext ctx)
         {
             switch (id)
@@ -23,36 +24,36 @@ public sealed partial class AST
                 case 564:
                     return new CurrentFrameExpressionSyntax(id, pos);
 
-                //// **************************************** Control ****************************************
-                //case 234:
-                //    return new IfFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
-                //case 238:
-                //    return new PlaySensorFunction();
-                //case 566:
-                //    return new LateUpdateFunction();
-                //case 409:
-                //    return new BoxArtSensorFunction();
-                //case 242:
-                //    {
-                //        return new TouchSensorFunction(ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (TouchState)(byte)state : TouchState.Touching, ctx.TryGetSettingOfType(pos, 1, SettingType.Byte, out object? fingerIndex) ? (byte)fingerIndex : 0);
-                //    }
+                // **************************************** Control ****************************************
+                case 234:
+                    return new IfStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
+                case 238:
+                    return new PlaySensorStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos));
+                case 566:
+                    return new LateUpdateStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos));
+                case 409:
+                    return new BoxArtStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos));
+                case 242:
+                    {
+                        return new TouchSensorStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (TouchState)(byte)state : TouchState.Touching, ctx.TryGetSettingOfType(pos, 1, SettingType.Byte, out object? fingerIndex) ? (byte)fingerIndex : 0);
+                    }
 
-                //case 248:
-                //    return new SwipeSensorFunction();
-                //case 588:
-                //    {
-                //        return new ButtonFunction(ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (ButtonType)(byte)state : ButtonType.Direction);
-                //    }
+                case 248:
+                    return new SwipeSensorStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos));
+                case 588:
+                    {
+                        return new ButtonStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (ButtonType)(byte)state : ButtonType.Direction);
+                    }
 
-                //case 592:
-                //    {
-                //        return new JoystickFunction(ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (JoystickType)(byte)state : JoystickType.XZ);
-                //    }
+                case 592:
+                    {
+                        return new JoystickStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (JoystickType)(byte)state : JoystickType.XZ);
+                    }
 
-                //case 401:
-                //    return new CollisionFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 4)));
-                //case 560:
-                //    return new LoopFunction(ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 401:
+                    return new CollisionStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 4)));
+                case 560:
+                    return new LoopStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
 
                 //// **************************************** Math ****************************************
                 case 90 or 144 or 440 or 413 or 453 or 184 or 186 or 188 or 455 or 578:

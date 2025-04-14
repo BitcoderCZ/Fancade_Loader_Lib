@@ -1,6 +1,7 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Syntax;
+using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Values;
@@ -9,6 +10,7 @@ using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
 using System.Collections.Frozen;
 using System.Diagnostics;
+using System.Net;
 using System.Numerics;
 using static FancadeLoaderLib.Runtime.Utils.ThrowHelper;
 using static FancadeLoaderLib.Utils.ThrowHelper;
@@ -24,10 +26,17 @@ public sealed class Interpreter
     private static readonly byte3 PosOut13 = TerminalDef.GetOutPosition(1, 2, 3);
     private static readonly byte3 PosOut23 = TerminalDef.GetOutPosition(2, 2, 3);
 
+    private static readonly byte3 PosOut04 = TerminalDef.GetOutPosition(0, 2, 4);
+    private static readonly byte3 PosOut14 = TerminalDef.GetOutPosition(1, 2, 4);
+    private static readonly byte3 PosOut24 = TerminalDef.GetOutPosition(2, 2, 4);
+    private static readonly byte3 PosOut34 = TerminalDef.GetOutPosition(3, 2, 4);
+
     private readonly AST _ast;
     private readonly IRuntimeContext _ctx;
 
     private readonly InterpreterVariableAccessor _variableAccessor;
+
+    private readonly Dictionary<ushort3, object> _blockData = [];
 
     public Interpreter(AST ast, IRuntimeContext ctx)
     {
@@ -79,9 +88,175 @@ public sealed class Interpreter
             // faster than switching on type
             switch (statement.PrefabId)
             {
+                // **************************************** Control ****************************************
+                case 234:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var ifStatement = (IfStatementSyntax)statement;
+
+                        if (ifStatement.Condition is not null)
+                        {
+                            if (GetValue(ifStatement.Condition).Bool)
+                            {
+                                executeNextSpan[nextCount++] = PosOut02;
+                            }
+                            else
+                            {
+                                executeNextSpan[nextCount++] = PosOut12;
+                            }
+                        }
+                    }
+
+                    break;
+                case 238:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        Debug.Assert(statement is PlaySensorStatementSyntax, $"{nameof(statement)} should be {nameof(PlaySensorStatementSyntax)}");
+
+                        if (_ctx.CurrentFrame == 0)
+                        {
+                            executeNextSpan[nextCount++] = PosOut02;
+                        }
+                    }
+
+                    break;
+                case 566:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        Debug.Assert(statement is LateUpdateStatementSyntax, $"{nameof(statement)} should be {nameof(LateUpdateStatementSyntax)}");
+
+                        if (lateUpdateQueue is not null)
+                        {
+                            foreach (var connection in statement.OutVoidConnections)
+                            {
+                                if (connection.FromVoxel == PosOut02)
+                                {
+                                    lateUpdateQueue.Enqueue((connection.To, (byte3)connection.ToVoxel));
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+                case 409:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        Debug.Assert(statement is BoxArtStatementSyntax, $"{nameof(statement)} should be {nameof(BoxArtStatementSyntax)}");
+
+                        if (_ctx.TakingBoxArt)
+                        {
+                            executeNextSpan[nextCount++] = PosOut02;
+                        }
+                    }
+
+                    break;
+                case 242:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var touchSensor = (TouchSensorStatementSyntax)statement;
+
+                        if (_ctx.TryGetTouch(touchSensor.State, touchSensor.FingerIndex, out var touchPos))
+                        {
+                            _blockData[touchSensor.Position] = touchPos;
+                            executeNextSpan[nextCount++] = PosOut03;
+                        }
+                    }
+
+                    break;
+                case 248:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        Debug.Assert(statement is SwipeSensorStatementSyntax, $"{nameof(statement)} should be {nameof(SwipeSensorStatementSyntax)}");
+
+                        if (_ctx.TryGetSwipe(out var direction))
+                        {
+                            _blockData[statement.Position] = direction;
+                            executeNextSpan[nextCount++] = PosOut02;
+                        }
+                    }
+
+                    break;
+                case 588:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var button = (ButtonStatementSyntax)statement;
+
+                        if (_ctx.GetButtonPressed(button.Type))
+                        {
+                            executeNextSpan[nextCount++] = PosOut02;
+                        }
+                    }
+
+                    break;
+                case 592:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var joystick = (JoystickStatementSyntax)statement;
+
+                        _blockData[joystick.Position] = _ctx.GetJoystickDirection(joystick.Type);
+                    }
+
+                    break;
+                case 401:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var collision = (CollisionStatementSyntax)statement;
+
+                        if (collision.FirstObject is not null && _ctx.TryGetCollision(GetValue(collision.FirstObject).Int, out int secondObject, out float impulse, out float3 normal))
+                        {
+                            _blockData[collision.Position] = (secondObject, impulse, normal);
+                            executeNextSpan[nextCount++] = PosOut04;
+                        }
+                    }
+
+                    break;
+                case 560:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var loop = (LoopStatementSyntax)statement;
+
+                        int start = (int)GetValue(loop.Start).Float;
+                        int stop = (int)MathF.Ceiling(GetValue(loop.Stop).Float);
+
+                        int step = stop.CompareTo(start);
+                        int value = start - step;
+
+                        _blockData[loop.Position] = value;
+
+                        if (step == 0)
+                        {
+                            break;
+                        }
+
+                        while (true)
+                        {
+                            stop = (int)MathF.Ceiling(GetValue(loop.Stop).Float);
+
+                            int nextVal = value + step;
+                            if (step > 0 ? nextVal >= stop : nextVal <= stop)
+                            {
+                                break;
+                            }
+
+                            value = nextVal;
+                            _blockData[loop.Position] = value;
+
+                            foreach (var connection in loop.OutVoidConnections)
+                            {
+                                if (connection.FromVoxel == PosOut02)
+                                {
+                                    Execute((connection.To, (byte3)connection.ToVoxel), lateUpdateQueue);
+                                }
+                            }
+                        }
+                    }
+
+                    break;
+
                 // **************************************** Math ****************************************
                 case 485:
                     {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var randomSeed = (RandomSeedStatementSyntax)statement;
                         if (randomSeed.Seed is not null)
                         {
@@ -94,6 +269,7 @@ public sealed class Interpreter
                 // **************************************** Value ****************************************
                 case 16 or 20 or 24 or 28 or 32:
                     {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var inspect = (InspectStatementSyntax)statement;
                         if (inspect.Input is not null)
                         {
@@ -106,6 +282,7 @@ public sealed class Interpreter
                 // **************************************** Variables ****************************************
                 case 428 or 430 or 432 or 434 or 436 or 438:
                     {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(1), $"{nameof(terminalPos)} should be valid.");
                         var setVar = (SetVaribleStatementSyntax)statement;
 
                         if (setVar.Value is not null)
@@ -117,6 +294,7 @@ public sealed class Interpreter
                     break;
                 case 58 or 62 or 66 or 70 or 74 or 78:
                     {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var setPointer = (SetPointerStatementSyntax)statement;
 
                         if (setPointer.Variable is not null && setPointer.Value is not null)
@@ -130,6 +308,7 @@ public sealed class Interpreter
                     break;
                 case 556 or 558:
                     {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(1), $"{nameof(terminalPos)} should be valid.");
                         var incDecNumber = (IncDecNumberStatementSyntax)statement;
 
                         if (incDecNumber.Variable is not null)
@@ -183,6 +362,87 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Node is CurrentFrameExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CurrentFrameExpressionSyntax)}");
 
                     return new TerminalOutput(new RuntimeValue((float)_ctx.CurrentFrame));
+                }
+
+            // **************************************** Control ****************************************
+            case 242:
+                {
+                    var touchSensor = (TouchSensorStatementSyntax)terminal.Node;
+
+                    var touchPos = (float2)_blockData.GetValueOrDefault(touchSensor.Position, float2.Zero);
+
+                    float val;
+                    if (terminal.Position == PosOut13)
+                    {
+                        val = touchPos.X;
+                    }
+                    else if (terminal.Position == PosOut23)
+                    {
+                        val = touchPos.Y;
+                    }
+                    else
+                    {
+                        throw new InvalidTerminalException(terminal.Position);
+                    }
+
+                    return new TerminalOutput(new RuntimeValue(val));
+                }
+
+            case 248:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var swipeSensor = (SwipeSensorStatementSyntax)terminal.Node;
+
+                    var direction = (float3)_blockData.GetValueOrDefault(swipeSensor.Position, float3.Zero);
+
+                    return new TerminalOutput(new RuntimeValue(direction));
+                }
+
+            case 592:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var joystick = (JoystickStatementSyntax)terminal.Node;
+
+                    var direction = (float3)_blockData.GetValueOrDefault(joystick.Position, float3.Zero);
+
+                    return new TerminalOutput(new RuntimeValue(direction));
+                }
+
+            case 401:
+                {
+                    var collision = (CollisionStatementSyntax)terminal.Node;
+
+                    var (otherObject, impulse, normal) = ((int, float, float3))_blockData.GetValueOrDefault(collision.Position, (0, 0f, float3.Zero));
+
+                    RuntimeValue val;
+                    if (terminal.Position == PosOut14)
+                    {
+                        val = new(otherObject);
+                    }
+                    else if (terminal.Position == PosOut24)
+                    {
+                        val = new(impulse);
+                    }
+                    else if (terminal.Position == PosOut34)
+                    {
+                        val = new(normal);
+                    }
+                    else
+                    {
+                        throw new InvalidTerminalException(terminal.Position);
+                    }
+
+                    return new TerminalOutput(val);
+                }
+
+            case 560:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var loop = (LoopStatementSyntax)terminal.Node;
+
+                    float value = (float)(int)_blockData.GetValueOrDefault(loop.Position, 0);
+
+                    return new TerminalOutput(new RuntimeValue(value));
                 }
 
             // **************************************** Math ****************************************
