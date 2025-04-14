@@ -4,7 +4,6 @@ using FancadeLoaderLib.Runtime.Syntax;
 using MathUtils.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
@@ -93,7 +92,7 @@ public sealed partial class AST
             var ctx = PrefabInfos[MainId].ParseCtx;
             ctx.ParseAll();
 
-            return new(MainId, ctx._entryPoints, ctx._nodes, GlobalVariables, PrefabInfos.ToFrozenDictionary(item => item.Key, item => item.Value.ParseCtx._variables));
+            return new(MainId, ctx._entryPoints, ctx._nodes.ToFrozenDictionary(), GlobalVariables, PrefabInfos.ToFrozenDictionary(item => item.Key, item => item.Value.ParseCtx._variables));
         }
     }
 

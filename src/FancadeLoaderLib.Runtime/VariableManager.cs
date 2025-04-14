@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Frozen;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FancadeLoaderLib.Runtime;
+﻿namespace FancadeLoaderLib.Runtime;
 
 internal readonly struct VariableManager
 {

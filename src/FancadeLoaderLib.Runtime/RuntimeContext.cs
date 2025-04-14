@@ -1,6 +1,5 @@
 ﻿using FancadeLoaderLib.Editing.Scripting.Settings;
 using MathUtils.Vectors;
-using System.Collections.Frozen;
 
 namespace FancadeLoaderLib.Runtime;
 

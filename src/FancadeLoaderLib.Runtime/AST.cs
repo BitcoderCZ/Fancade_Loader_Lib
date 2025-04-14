@@ -13,13 +13,13 @@ public sealed partial class AST
 
     public readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> EntryPoints;
 
-    public readonly Dictionary<ushort3, SyntaxNode> Nodes;
+    public readonly FrozenDictionary<ushort3, SyntaxNode> Nodes;
 
     public readonly ImmutableArray<Variable> GlobalVariables;
 
     public readonly FrozenDictionary<ushort, ImmutableArray<Variable>> Variables;
 
-    public AST(ushort prefabId, List<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPoints, Dictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, FrozenDictionary<ushort, ImmutableArray<Variable>> variables)
+    public AST(ushort prefabId, List<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPoints, FrozenDictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, FrozenDictionary<ushort, ImmutableArray<Variable>> variables)
     {
         ThrowIfNull(entryPoints, nameof(entryPoints));
         ThrowIfNull(nodes, nameof(nodes));
