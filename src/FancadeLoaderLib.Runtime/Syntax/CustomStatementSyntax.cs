@@ -1,20 +1,20 @@
 ﻿using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Text;
 
 namespace FancadeLoaderLib.Runtime.Syntax;
 
 public sealed class CustomStatementSyntax : StatementSyntax
 {
-    public CustomStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, AST ast)
+    public CustomStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, AST ast, ImmutableArray<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)> connectedInputTerminals)
         : base(prefabId, position, outVoidConnections)
     {
         AST = ast;
+        ConnectedInputTerminals = connectedInputTerminals;
     }
 
     public AST AST { get; }
+
+    public ImmutableArray<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)> ConnectedInputTerminals { get; }
 
     public override IEnumerable<byte3> InputVoidTerminals => AST.VoidInputs.Select(con => con.OutsidePosition);
 }

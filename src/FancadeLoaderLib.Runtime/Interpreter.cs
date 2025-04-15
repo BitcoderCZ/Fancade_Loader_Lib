@@ -11,7 +11,6 @@ using MathUtils.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Net;
 using System.Numerics;
 using static FancadeLoaderLib.Runtime.Utils.ThrowHelper;
 using static FancadeLoaderLib.Utils.ThrowHelper;
@@ -47,7 +46,7 @@ public sealed class Interpreter
         List<Environment> environments = [];
         List<ImmutableArray<Variable>> variables = [];
 
-        var mainEnvironment = new Environment(0, ast);
+        var mainEnvironment = new Environment(ast, 0, -1, ushort3.Zero);
         environments.Add(mainEnvironment);
         variables.Add(mainEnvironment.AST.Variables);
 
@@ -55,7 +54,7 @@ public sealed class Interpreter
         {
             if (node is CustomStatementSyntax customStatement)
             {
-                var environment = new Environment(environments.Count, customStatement.AST);
+                var environment = new Environment(customStatement.AST, environments.Count, mainEnvironment.Index, customStatement.Position);
                 environments.Add(environment);
                 variables.Add(environment.AST.Variables);
                 mainEnvironment.BlockData[customStatement.Position] = environment;
@@ -368,12 +367,26 @@ public sealed class Interpreter
 
             foreach (var nextTerminal in executeNextSpan[..nextCount])
             {
-                foreach (var connection in statement.OutVoidConnections)
+                PushAfter(statement, nextTerminal, environment, executeNext);
+            }
+        }
+    }
+
+    private void PushAfter(StatementSyntax statement, byte3 terminalPos, Environment environment, Stack<EntryPoint> stack)
+    {
+        foreach (var connection in statement.OutVoidConnections)
+        {
+            if (connection.FromVoxel == terminalPos)
+            {
+                if (connection.IsToOutside)
                 {
-                    if (connection.FromVoxel == nextTerminal)
-                    {
-                        executeNext.Push(new(environment.Index, connection.To, (byte3)connection.ToVoxel));
-                    }
+                    var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
+
+                    PushAfter((StatementSyntax)outerEnvironment.AST.Nodes[environment.OuterPosition], (byte3)connection.ToVoxel, outerEnvironment, stack);
+                }
+                else
+                {
+                    stack.Push(new(environment.Index, connection.To, (byte3)connection.ToVoxel));
                 }
             }
         }
@@ -398,7 +411,7 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     Debug.Assert(terminal.Node is CurrentFrameExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CurrentFrameExpressionSyntax)}");
 
-                    return new TerminalOutput(new RuntimeValue((float)_ctx.CurrentFrame));
+                    return new TerminalOutput(new RuntimeValue(_ctx.CurrentFrame));
                 }
 
             // **************************************** Control ****************************************
@@ -477,7 +490,7 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var loop = (LoopStatementSyntax)terminal.Node;
 
-                    float value = (float)(int)environment.BlockData.GetValueOrDefault(loop.Position, 0);
+                    float value = (int)environment.BlockData.GetValueOrDefault(loop.Position, 0);
 
                     return new TerminalOutput(new RuntimeValue(value));
                 }
@@ -763,22 +776,40 @@ public sealed class Interpreter
 
             default:
                 {
-                    if (terminal.Node is not CustomStatementSyntax custom)
+                    if (terminal.Node is OuterExpressionSyntax)
+                    {
+                        var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
+
+                        var customStatement = (CustomStatementSyntax)outerEnvironment.AST.Nodes[environment.OuterPosition];
+
+                        foreach (var (termPos, term) in customStatement.ConnectedInputTerminals)
+                        {
+                            if (termPos == terminal.Position)
+                            {
+                                return GetOutput(term, outerEnvironment);
+                            }
+                        }
+
+                        return TerminalOutput.Disconnected;
+                    }
+                    else if (terminal.Node is CustomStatementSyntax custom)
+                    {
+                        var customEnvironment = (Environment)environment.BlockData[custom.Position];
+
+                        foreach (var con in custom.AST.NonVoidOutputs)
+                        {
+                            if (con.OutsidePosition == terminal.Position)
+                            {
+                                return GetOutput(new SyntaxTerminal(custom.AST.Nodes[con.BlockPosition], con.TerminalPosition), customEnvironment);
+                            }
+                        }
+
+                        return TerminalOutput.Disconnected;
+                    }
+                    else
                     {
                         throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
                     }
-
-                    var customEnvironment = (Environment)environment.BlockData[custom.Position];
-
-                    foreach (var con in custom.AST.NonVoidOutputs)
-                    {
-                        if (con.OutsidePosition == terminal.Position)
-                        {
-                            return GetOutput(new SyntaxTerminal(custom.AST.Nodes[con.BlockPosition], con.TerminalPosition), customEnvironment);
-                        }
-                    }
-
-                    return TerminalOutput.Disconnected;
                 }
         }
     }
@@ -841,15 +872,21 @@ public sealed class Interpreter
 
     private sealed class Environment
     {
-        public Environment(int index, AST ast)
+        public Environment(AST ast, int index, int outerEnvironmentIndex, ushort3 outerPosition)
         {
             Index = index;
+            OuterEnvironmentIndex = outerEnvironmentIndex;
             AST = ast;
+            OuterPosition = outerPosition;
         }
+
+        public AST AST { get; }
 
         public int Index { get; }
 
-        public AST AST { get; }
+        public int OuterEnvironmentIndex { get; }
+
+        public ushort3 OuterPosition { get; }
 
         public Dictionary<ushort3, object> BlockData { get; } = [];
     }

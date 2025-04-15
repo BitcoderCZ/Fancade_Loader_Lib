@@ -2,7 +2,6 @@
 using MathUtils.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime;
@@ -14,7 +13,6 @@ public sealed partial class AST
     public readonly ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> NotConnectedVoidInputs;
 
     public readonly ImmutableArray<OutsideConnection> VoidInputs;
-    public readonly ImmutableArray<OutsideConnection> NonVoidInputs;
     public readonly ImmutableArray<OutsideConnection> NonVoidOutputs;
 
     public readonly FrozenDictionary<ushort3, SyntaxNode> Nodes;
@@ -23,7 +21,7 @@ public sealed partial class AST
 
     public readonly ImmutableArray<Variable> Variables;
 
-    public AST(ushort prefabId, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<OutsideConnection> nonVoidInputs, ImmutableArray<OutsideConnection> nonVoidOutputs)
+    public AST(ushort prefabId, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<OutsideConnection> nonVoidOutputs)
     {
         ThrowIfNull(notConnectedVoidInputs, nameof(notConnectedVoidInputs));
         ThrowIfNull(nodes, nameof(nodes));
@@ -36,7 +34,6 @@ public sealed partial class AST
         GlobalVariables = globalVariables;
         Variables = variables;
         VoidInputs = voidInputs;
-        NonVoidInputs = nonVoidInputs;
         NonVoidOutputs = nonVoidOutputs;
     }
 

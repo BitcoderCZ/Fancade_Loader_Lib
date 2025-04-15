@@ -5,7 +5,6 @@ using MathUtils.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime;
 
@@ -104,7 +103,6 @@ public sealed partial class AST
         internal readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> _notConnectedVoidInputs = [];
 
         internal readonly List<OutsideConnection> _voidInputs = [];
-        internal readonly List<OutsideConnection> _nonVoidInputs = [];
         internal readonly List<OutsideConnection> _nonVoidOutputs = [];
 
         internal readonly Dictionary<ushort3, SyntaxNode> _nodes = [];
@@ -206,7 +204,7 @@ public sealed partial class AST
                     ParseAll();
                 }
 
-                return _ast = new AST(Prefab.Id, [.. _notConnectedVoidInputs], _nodes.ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidInputs], [.. _nonVoidOutputs]);
+                return _ast = new AST(Prefab.Id, [.. _notConnectedVoidInputs], _nodes.ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs]);
             }
         }
 
@@ -239,32 +237,7 @@ public sealed partial class AST
 
             foreach (var connection in Prefab.Connections)
             {
-                if (connection.IsFromOutside)
-                {
-                    ushort id = blocks.GetBlockOrDefault(connection.To);
-
-                    if (id != 0)
-                    {
-                        var infos = _globalCtx.PrefabInfos[id].TerminalInfo;
-
-                        bool isVoid = true;
-
-                        foreach (var info in infos.InputTerminals)
-                        {
-                            if (info.Position == connection.ToVoxel)
-                            {
-                                isVoid = info.Type == SignalType.Void;
-                                break;
-                            }
-                        }
-
-                        if (!isVoid)
-                        {
-                            _nonVoidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, connection.To, (byte3)connection.ToVoxel));
-                        }
-                    }
-                }
-                else if (connection.IsToOutside)
+                if (connection.IsToOutside)
                 {
                     ushort id = blocks.GetBlockOrDefault(connection.From);
 
@@ -285,7 +258,7 @@ public sealed partial class AST
 
                         if (!isVoid)
                         {
-                            _nonVoidOutputs.Add(new OutsideConnection((byte3)connection.ToVoxel, connection.To, (byte3)connection.FromVoxel));
+                            _nonVoidOutputs.Add(new OutsideConnection((byte3)connection.ToVoxel, connection.From, (byte3)connection.FromVoxel));
                         }
                     }
                 }
@@ -347,7 +320,19 @@ public sealed partial class AST
             {
                 if (_globalCtx.Prefabs.TryGetPrefab(id, out var prefab) && prefab.Blocks.Size != int3.Zero)
                 {
-                    var customStatement = new CustomStatementSyntax(id, pos, GetOutVoidConnections(pos), _globalCtx.PrefabInfos[id].ParseCtx.AST);
+                    var infos = _globalCtx.PrefabInfos[id].TerminalInfo;
+
+                    var connectedInputTerminals = ImmutableArray.CreateBuilder<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)>(2);
+
+                    foreach (var info in infos.InputTerminals)
+                    {
+                        if (info.Type != SignalType.Void)
+                        {
+                            connectedInputTerminals.Add((info.Position, GetConnectedTerminal(pos, info.Position)));
+                        }
+                    }
+
+                    var customStatement = new CustomStatementSyntax(id, pos, GetOutVoidConnections(pos), _globalCtx.PrefabInfos[id].ParseCtx.AST, connectedInputTerminals.DrainToImmutable());
                     node = customStatement;
 
                     _nodes.Add(pos, node);
@@ -373,6 +358,8 @@ public sealed partial class AST
                             _notConnectedVoidInputs.Add((pos, termPos));
                         }
                     }
+
+                    return true;
                 }
             }
 
@@ -388,8 +375,8 @@ public sealed partial class AST
 
         public SyntaxTerminal? GetTerminal(ushort3 pos, byte3 voxelPos)
             => TryGetOrCreateNode(pos, out var node)
-            ? new SyntaxTerminal(node, voxelPos)
-            : null;
+                    ? new SyntaxTerminal(node, voxelPos)
+                    : null;
 
         public SyntaxTerminal? GetConnectedTerminal(ushort3 pos, byte3 voxelPos)
         {
@@ -397,7 +384,9 @@ public sealed partial class AST
             {
                 if (connection.ToVoxel == voxelPos)
                 {
-                    return GetTerminal(connection.From, (byte3)connection.FromVoxel);
+                    return connection.IsFromOutside
+                        ? new SyntaxTerminal(new OuterExpressionSyntax(Prefab.Id, ushort3.One * Connection.IsFromToOutsideValue), (byte3)connection.FromVoxel)
+                        : GetTerminal(connection.From, (byte3)connection.FromVoxel);
                 }
             }
 
@@ -428,47 +417,62 @@ public sealed partial class AST
 
             foreach (var connection in Prefab.Connections)
             {
-                if (connection.From != pos)
+                if (connection.From != pos || connection.IsFromOutside)
                 {
                     continue;
                 }
-
-                if (connection.IsToOutside)
-                {
-                    ushort fromId = Prefab.Blocks.GetBlockOrDefault(connection.From);
-
-                    var fromInfo =
-
-                    builder.Add(connection);
-                }
-                else if (connection.IsFromOutside)
-                {
-                    continue;
-                }
-
-                ushort id = Prefab.Blocks.GetBlockOrDefault(connection.To);
-
-                if (id == 0)
-                {
-                    continue;
-                }
-
-                var info = _globalCtx.PrefabInfos[id].TerminalInfo;
 
                 bool isVoid = false;
 
-                foreach (var terminal in info.InputTerminals)
+                if (connection.IsToOutside)
                 {
-                    if (terminal.Position == connection.ToVoxel)
+                    ushort id = Prefab.Blocks.GetBlockOrDefault(connection.From);
+
+                    if (id == 0)
                     {
-                        isVoid = terminal.Type == SignalType.Void;
-                        break;
+                        continue;
+                    }
+
+                    var info = _globalCtx.PrefabInfos[id].TerminalInfo;
+
+                    foreach (var terminal in info.OutputTerminals)
+                    {
+                        if (terminal.Position == connection.FromVoxel)
+                        {
+                            isVoid = terminal.Type == SignalType.Void;
+                            break;
+                        }
+                    }
+
+                    if (isVoid)
+                    {
+                        builder.Add(connection);
                     }
                 }
-
-                if (isVoid)
+                else
                 {
-                    builder.Add(connection);
+                    ushort id = Prefab.Blocks.GetBlockOrDefault(connection.To);
+
+                    if (id == 0)
+                    {
+                        continue;
+                    }
+
+                    var info = _globalCtx.PrefabInfos[id].TerminalInfo;
+
+                    foreach (var terminal in info.InputTerminals)
+                    {
+                        if (terminal.Position == connection.ToVoxel)
+                        {
+                            isVoid = terminal.Type == SignalType.Void;
+                            break;
+                        }
+                    }
+
+                    if (isVoid)
+                    {
+                        builder.Add(connection);
+                    }
                 }
             }
 
