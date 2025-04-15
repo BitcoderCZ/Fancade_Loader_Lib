@@ -9,6 +9,7 @@ using FancadeLoaderLib.Runtime.Syntax.Variables;
 using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Net;
 using System.Numerics;
@@ -31,33 +32,51 @@ public sealed class Interpreter
     private static readonly byte3 PosOut24 = TerminalDef.GetOutPosition(2, 2, 4);
     private static readonly byte3 PosOut34 = TerminalDef.GetOutPosition(3, 2, 4);
 
-    private readonly AST _ast;
+    private readonly Environment[] _environments;
     private readonly IRuntimeContext _ctx;
 
     private readonly InterpreterVariableAccessor _variableAccessor;
-
-    private readonly Dictionary<ushort3, object> _blockData = [];
 
     public Interpreter(AST ast, IRuntimeContext ctx)
     {
         ThrowIfNull(ast, nameof(ast));
         ThrowIfNull(ast, nameof(ctx));
 
-        _ast = ast;
         _ctx = ctx;
 
-        _variableAccessor = new InterpreterVariableAccessor(_ast.GlobalVariables.Concat(_ast.Variables[ast.PrefabId]));
+        List<Environment> environments = [];
+        List<ImmutableArray<Variable>> variables = [];
+
+        var mainEnvironment = new Environment(0, ast);
+        environments.Add(mainEnvironment);
+        variables.Add(mainEnvironment.AST.Variables);
+
+        foreach (var node in ast.Nodes.Values)
+        {
+            if (node is CustomStatementSyntax customStatement)
+            {
+                var environment = new Environment(environments.Count, customStatement.AST);
+                environments.Add(environment);
+                variables.Add(environment.AST.Variables);
+                mainEnvironment.BlockData[customStatement.Position] = environment;
+            }
+        }
+
+        _environments = [.. environments];
+
+        _variableAccessor = new InterpreterVariableAccessor(ast.GlobalVariables, variables.Select((vars, index) => (index, (IEnumerable<Variable>)vars)));
     }
 
     public IVariableAccessor VariableAccessor => _variableAccessor;
 
     public Action RunFrame()
     {
-        Queue<(ushort3 BlockPosition, byte3 TerminalPos)> lateUpdateQueue = new Queue<(ushort3 BlockPosition, byte3 TerminalPos)>();
+        var lateUpdateQueue = new Queue<EntryPoint>();
 
-        foreach (var entryPoint in _ast.NotConnectedVoidInputs)
+        // TODO: loop all asts, figure out when NotConnectedVoidInputs are executed for custom scripts
+        foreach (var entryPoint in _environments[0].AST.NotConnectedVoidInputs)
         {
-            Execute(entryPoint, lateUpdateQueue);
+            Execute(new EntryPoint(0, entryPoint.BlockPosition, entryPoint.TerminalPosition), lateUpdateQueue);
         }
 
         return () =>
@@ -69,18 +88,19 @@ public sealed class Interpreter
         };
     }
 
-    private void Execute((ushort3 BlockPosition, byte3 TerminalPos) entryPoint, Queue<(ushort3 BlockPosition, byte3 TerminalPos)>? lateUpdateQueue)
+    private void Execute(EntryPoint entryPoint, Queue<EntryPoint>? lateUpdateQueue)
     {
         Span<byte3> executeNextSpan = stackalloc byte3[16];
 
-        Stack<(ushort3 BlockPosition, byte3 TerminalPos)> executeNext = new();
+        Stack<EntryPoint> executeNext = new();
 
         executeNext.Push(entryPoint);
 
         while (executeNext.TryPop(out var item))
         {
-            var (blockPos, terminalPos) = item;
-            var statement = (StatementSyntax)_ast.Nodes[blockPos];
+            var (environmentIndex, blockPos, terminalPos) = item;
+            var environment = _environments[environmentIndex];
+            var statement = (StatementSyntax)environment.AST.Nodes[blockPos];
 
             int nextCount = 0;
             executeNextSpan[nextCount++] = TerminalDef.AfterPosition;
@@ -96,7 +116,7 @@ public sealed class Interpreter
 
                         if (ifStatement.Condition is not null)
                         {
-                            if (GetValue(ifStatement.Condition).Bool)
+                            if (GetValue(ifStatement.Condition, environment).Bool)
                             {
                                 executeNextSpan[nextCount++] = PosOut02;
                             }
@@ -131,7 +151,7 @@ public sealed class Interpreter
                             {
                                 if (connection.FromVoxel == PosOut02)
                                 {
-                                    lateUpdateQueue.Enqueue((connection.To, (byte3)connection.ToVoxel));
+                                    lateUpdateQueue.Enqueue(new(environmentIndex, connection.To, (byte3)connection.ToVoxel));
                                 }
                             }
                         }
@@ -157,7 +177,7 @@ public sealed class Interpreter
 
                         if (_ctx.TryGetTouch(touchSensor.State, touchSensor.FingerIndex, out var touchPos))
                         {
-                            _blockData[touchSensor.Position] = touchPos;
+                            environment.BlockData[touchSensor.Position] = touchPos;
                             executeNextSpan[nextCount++] = PosOut03;
                         }
                     }
@@ -170,7 +190,7 @@ public sealed class Interpreter
 
                         if (_ctx.TryGetSwipe(out var direction))
                         {
-                            _blockData[statement.Position] = direction;
+                            environment.BlockData[statement.Position] = direction;
                             executeNextSpan[nextCount++] = PosOut02;
                         }
                     }
@@ -193,7 +213,7 @@ public sealed class Interpreter
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var joystick = (JoystickStatementSyntax)statement;
 
-                        _blockData[joystick.Position] = _ctx.GetJoystickDirection(joystick.Type);
+                        environment.BlockData[joystick.Position] = _ctx.GetJoystickDirection(joystick.Type);
                     }
 
                     break;
@@ -202,9 +222,9 @@ public sealed class Interpreter
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var collision = (CollisionStatementSyntax)statement;
 
-                        if (collision.FirstObject is not null && _ctx.TryGetCollision(GetValue(collision.FirstObject).Int, out int secondObject, out float impulse, out float3 normal))
+                        if (collision.FirstObject is not null && _ctx.TryGetCollision(GetValue(collision.FirstObject, environment).Int, out int secondObject, out float impulse, out float3 normal))
                         {
-                            _blockData[collision.Position] = (secondObject, impulse, normal);
+                            environment.BlockData[collision.Position] = (secondObject, impulse, normal);
                             executeNextSpan[nextCount++] = PosOut04;
                         }
                     }
@@ -215,13 +235,13 @@ public sealed class Interpreter
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var loop = (LoopStatementSyntax)statement;
 
-                        int start = (int)GetValue(loop.Start).Float;
-                        int stop = (int)MathF.Ceiling(GetValue(loop.Stop).Float);
+                        int start = (int)GetValue(loop.Start, environment).Float;
+                        int stop = (int)MathF.Ceiling(GetValue(loop.Stop, environment).Float);
 
                         int step = stop.CompareTo(start);
                         int value = start - step;
 
-                        _blockData[loop.Position] = value;
+                        environment.BlockData[loop.Position] = value;
 
                         if (step == 0)
                         {
@@ -230,7 +250,7 @@ public sealed class Interpreter
 
                         while (true)
                         {
-                            stop = (int)MathF.Ceiling(GetValue(loop.Stop).Float);
+                            stop = (int)MathF.Ceiling(GetValue(loop.Stop, environment).Float);
 
                             int nextVal = value + step;
                             if (step > 0 ? nextVal >= stop : nextVal <= stop)
@@ -239,13 +259,13 @@ public sealed class Interpreter
                             }
 
                             value = nextVal;
-                            _blockData[loop.Position] = value;
+                            environment.BlockData[loop.Position] = value;
 
                             foreach (var connection in loop.OutVoidConnections)
                             {
                                 if (connection.FromVoxel == PosOut02)
                                 {
-                                    Execute((connection.To, (byte3)connection.ToVoxel), lateUpdateQueue);
+                                    Execute(new(environment.Index, connection.To, (byte3)connection.ToVoxel), lateUpdateQueue);
                                 }
                             }
                         }
@@ -260,7 +280,7 @@ public sealed class Interpreter
                         var randomSeed = (RandomSeedStatementSyntax)statement;
                         if (randomSeed.Seed is not null)
                         {
-                            _ctx.SetRandomSeed(GetValue(randomSeed.Seed).Float);
+                            _ctx.SetRandomSeed(GetValue(randomSeed.Seed, environment).Float);
                         }
                     }
 
@@ -273,7 +293,7 @@ public sealed class Interpreter
                         var inspect = (InspectStatementSyntax)statement;
                         if (inspect.Input is not null)
                         {
-                            _ctx.InspectValue(GetValue(inspect.Input), inspect.Type, _ast.PrefabId, inspect.Position);
+                            _ctx.InspectValue(GetValue(inspect.Input, environment), inspect.Type, environment.AST.PrefabId, inspect.Position);
                         }
                     }
 
@@ -287,7 +307,7 @@ public sealed class Interpreter
 
                         if (setVar.Value is not null)
                         {
-                            _variableAccessor.SetVariableValue(_variableAccessor.GetVariableId(setVar.Variable), 0, GetValue(setVar.Value));
+                            _variableAccessor.SetVariableValue(_variableAccessor.GetVariableId(environment, setVar.Variable), 0, GetValue(setVar.Value, environment));
                         }
                     }
 
@@ -299,9 +319,9 @@ public sealed class Interpreter
 
                         if (setPointer.Variable is not null && setPointer.Value is not null)
                         {
-                            var varRef = GetOutput(setPointer.Variable).Reference;
+                            var varRef = GetOutput(setPointer.Variable, environment).Reference;
 
-                            _variableAccessor.SetVariableValue(varRef.VariableId, varRef.Index, GetValue(setPointer.Value));
+                            _variableAccessor.SetVariableValue(varRef.VariableId, varRef.Index, GetValue(setPointer.Value, environment));
                         }
                     }
 
@@ -313,7 +333,7 @@ public sealed class Interpreter
 
                         if (incDecNumber.Variable is not null)
                         {
-                            var varRef = GetOutput(incDecNumber.Variable).Reference;
+                            var varRef = GetOutput(incDecNumber.Variable, environment).Reference;
 
                             _variableAccessor.SetVariableValue(varRef.VariableId, varRef.Index, new(_variableAccessor.GetVariableValue(varRef.VariableId, varRef.Index).Float + incDecNumber.PrefabId switch
                             {
@@ -326,7 +346,24 @@ public sealed class Interpreter
 
                     break;
                 default:
-                    throw new NotImplementedException($"Prefab with id {statement.PrefabId} is not yet implemented.");
+                    {
+                        if (statement is not CustomStatementSyntax custom)
+                        {
+                            throw new NotImplementedException($"Prefab with id {statement.PrefabId} is not implemented.");
+                        }
+
+                        var customEnvironment = (Environment)environment.BlockData[custom.Position];
+
+                        foreach (var con in custom.AST.VoidInputs)
+                        {
+                            if (con.OutsidePosition == terminalPos)
+                            {
+                                Execute(new EntryPoint(customEnvironment.Index, con.BlockPosition, con.TerminalPosition), lateUpdateQueue);
+                            }
+                        }
+                    }
+
+                    break;
             }
 
             foreach (var nextTerminal in executeNextSpan[..nextCount])
@@ -335,17 +372,17 @@ public sealed class Interpreter
                 {
                     if (connection.FromVoxel == nextTerminal)
                     {
-                        executeNext.Push((connection.To, (byte3)connection.ToVoxel));
+                        executeNext.Push(new(environment.Index, connection.To, (byte3)connection.ToVoxel));
                     }
                 }
             }
         }
     }
 
-    private RuntimeValue GetValue(SyntaxTerminal? terminal)
-        => GetOutput(terminal).GetValue(_variableAccessor);
+    private RuntimeValue GetValue(SyntaxTerminal? terminal, Environment environment)
+        => GetOutput(terminal, environment).GetValue(_variableAccessor);
 
-    private TerminalOutput GetOutput(SyntaxTerminal? terminal)
+    private TerminalOutput GetOutput(SyntaxTerminal? terminal, Environment environment)
     {
         if (terminal is null)
         {
@@ -369,7 +406,7 @@ public sealed class Interpreter
                 {
                     var touchSensor = (TouchSensorStatementSyntax)terminal.Node;
 
-                    var touchPos = (float2)_blockData.GetValueOrDefault(touchSensor.Position, float2.Zero);
+                    var touchPos = (float2)environment.BlockData.GetValueOrDefault(touchSensor.Position, float2.Zero);
 
                     float val;
                     if (terminal.Position == PosOut13)
@@ -393,7 +430,7 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var swipeSensor = (SwipeSensorStatementSyntax)terminal.Node;
 
-                    var direction = (float3)_blockData.GetValueOrDefault(swipeSensor.Position, float3.Zero);
+                    var direction = (float3)environment.BlockData.GetValueOrDefault(swipeSensor.Position, float3.Zero);
 
                     return new TerminalOutput(new RuntimeValue(direction));
                 }
@@ -403,7 +440,7 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var joystick = (JoystickStatementSyntax)terminal.Node;
 
-                    var direction = (float3)_blockData.GetValueOrDefault(joystick.Position, float3.Zero);
+                    var direction = (float3)environment.BlockData.GetValueOrDefault(joystick.Position, float3.Zero);
 
                     return new TerminalOutput(new RuntimeValue(direction));
                 }
@@ -412,7 +449,7 @@ public sealed class Interpreter
                 {
                     var collision = (CollisionStatementSyntax)terminal.Node;
 
-                    var (otherObject, impulse, normal) = ((int, float, float3))_blockData.GetValueOrDefault(collision.Position, (0, 0f, float3.Zero));
+                    var (otherObject, impulse, normal) = ((int, float, float3))environment.BlockData.GetValueOrDefault(collision.Position, (0, 0f, float3.Zero));
 
                     RuntimeValue val;
                     if (terminal.Position == PosOut14)
@@ -440,7 +477,7 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var loop = (LoopStatementSyntax)terminal.Node;
 
-                    float value = (float)(int)_blockData.GetValueOrDefault(loop.Position, 0);
+                    float value = (float)(int)environment.BlockData.GetValueOrDefault(loop.Position, 0);
 
                     return new TerminalOutput(new RuntimeValue(value));
                 }
@@ -450,7 +487,7 @@ public sealed class Interpreter
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var unary = (UnaryExpressionSyntax)terminal.Node;
-                    var input = GetValue(unary.Input);
+                    var input = GetValue(unary.Input, environment);
                     RuntimeValue value;
 
                     value = terminal.Node.PrefabId switch
@@ -475,18 +512,18 @@ public sealed class Interpreter
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var binary = (BinaryExpressionSyntax)terminal.Node;
-                    var input1 = GetValue(binary.Input1);
+                    var input1 = GetValue(binary.Input1, environment);
 
                     // optimize by not getting the second value when not needed
                     switch (terminal.Node.PrefabId)
                     {
                         case 146:
-                            return new TerminalOutput(new RuntimeValue(input1.Bool && GetValue(binary.Input2).Bool));
+                            return new TerminalOutput(new RuntimeValue(input1.Bool && GetValue(binary.Input2, environment).Bool));
                         case 417:
-                            return new TerminalOutput(new RuntimeValue(input1.Bool || GetValue(binary.Input2).Bool));
+                            return new TerminalOutput(new RuntimeValue(input1.Bool || GetValue(binary.Input2, environment).Bool));
                     }
 
-                    var input2 = GetValue(binary.Input2);
+                    var input2 = GetValue(binary.Input2, environment);
                     RuntimeValue value;
 
                     const float EqualsNumbersMaxDiff = 0.001f;
@@ -531,14 +568,14 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var lerp = (LerpExpressionSyntax)terminal.Node;
 
-                    return new TerminalOutput(new RuntimeValue(Quaternion.Lerp(GetValue(lerp.From).Quaternion, GetValue(lerp.To).Quaternion, GetValue(lerp.Amount).Float)));
+                    return new TerminalOutput(new RuntimeValue(Quaternion.Lerp(GetValue(lerp.From, environment).Quaternion, GetValue(lerp.To, environment).Quaternion, GetValue(lerp.Amount, environment).Float)));
                 }
 
             case 216:
                 {
                     var screenToWorld = (ScreenToWorldExpressionSyntax)terminal.Node;
 
-                    var (near, far) = _ctx.ScreenToWorld(new float2(GetValue(screenToWorld.ScreenX).Float, GetValue(screenToWorld.ScreenY).Float));
+                    var (near, far) = _ctx.ScreenToWorld(new float2(GetValue(screenToWorld.ScreenX, environment).Float, GetValue(screenToWorld.ScreenY, environment).Float));
 
                     float3 val = default;
                     if (terminal.Position == PosOut02)
@@ -561,7 +598,7 @@ public sealed class Interpreter
                 {
                     var worldToScreen = (WorldToScreenExpressionSyntax)terminal.Node;
 
-                    var screenPos = _ctx.WorldToScreen(GetValue(worldToScreen.WorldPos).Float3);
+                    var screenPos = _ctx.WorldToScreen(GetValue(worldToScreen.WorldPos, environment).Float3);
 
                     float val = default;
                     if (terminal.Position == PosOut02)
@@ -585,10 +622,10 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 4), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var lineVsPlane = (LineVsPlaneExpressionSyntax)terminal.Node;
 
-                    Vector3 lineFrom = GetValue(lineVsPlane.LineFrom).Float3.ToNumerics();
-                    Vector3 lineTo = GetValue(lineVsPlane.LineTo).Float3.ToNumerics();
-                    Vector3 planePoint = GetValue(lineVsPlane.PlanePoint).Float3.ToNumerics();
-                    Vector3 planeNormal = GetValue(lineVsPlane.PlaneNormal).Float3.ToNumerics();
+                    Vector3 lineFrom = GetValue(lineVsPlane.LineFrom, environment).Float3.ToNumerics();
+                    Vector3 lineTo = GetValue(lineVsPlane.LineTo, environment).Float3.ToNumerics();
+                    Vector3 planePoint = GetValue(lineVsPlane.PlanePoint, environment).Float3.ToNumerics();
+                    Vector3 planeNormal = GetValue(lineVsPlane.PlaneNormal, environment).Float3.ToNumerics();
 
                     float t = Vector3.Dot(planePoint - lineFrom, planeNormal) / Vector3.Dot(lineTo - lineFrom, planeNormal);
                     return new TerminalOutput(new RuntimeValue((lineFrom + (t * (lineTo - lineFrom))).ToFloat3()));
@@ -599,9 +636,9 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var makeVecRot = (MakeVecRotExpressionSyntax)terminal.Node;
 
-                    float x = GetValue(makeVecRot.X).Float;
-                    float y = GetValue(makeVecRot.Y).Float;
-                    float z = GetValue(makeVecRot.Z).Float;
+                    float x = GetValue(makeVecRot.X, environment).Float;
+                    float y = GetValue(makeVecRot.Y, environment).Float;
+                    float z = GetValue(makeVecRot.Z, environment).Float;
 
                     return new TerminalOutput(makeVecRot.PrefabId switch
                     {
@@ -615,7 +652,7 @@ public sealed class Interpreter
                 {
                     var breakVecRot = (BreakVecRotExpressionnSyntax)terminal.Node;
 
-                    var vecRot = GetValue(breakVecRot.VecRot);
+                    var vecRot = GetValue(breakVecRot.VecRot, environment);
 
                     float val;
                     switch (breakVecRot.PrefabId)
@@ -706,7 +743,7 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var getVar = (GetVariableExpressionSyntax)terminal.Node;
 
-                    return new TerminalOutput(new VariableReference(_variableAccessor.GetVariableId(getVar.Variable), 0));
+                    return new TerminalOutput(new VariableReference(_variableAccessor.GetVariableId(environment, getVar.Variable), 0));
                 }
 
             case 82 or 461 or 465 or 469 or 86 or 473:
@@ -719,35 +756,101 @@ public sealed class Interpreter
                         return TerminalOutput.Disconnected;
                     }
 
-                    var varRef = GetOutput(list.Variable).Reference;
+                    var varRef = GetOutput(list.Variable, environment).Reference;
 
-                    return new TerminalOutput(new VariableReference(varRef.VariableId, varRef.Index + (int)GetValue(list.Index).Float));
+                    return new TerminalOutput(new VariableReference(varRef.VariableId, varRef.Index + (int)GetValue(list.Index, environment).Float));
                 }
 
             default:
-                throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not yet implemented.");
+                {
+                    if (terminal.Node is not CustomStatementSyntax custom)
+                    {
+                        throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                    }
+
+                    var customEnvironment = (Environment)environment.BlockData[custom.Position];
+
+                    foreach (var con in custom.AST.NonVoidOutputs)
+                    {
+                        if (con.OutsidePosition == terminal.Position)
+                        {
+                            return GetOutput(new SyntaxTerminal(custom.AST.Nodes[con.BlockPosition], con.TerminalPosition), customEnvironment);
+                        }
+                    }
+
+                    return TerminalOutput.Disconnected;
+                }
+        }
+    }
+
+    private readonly struct EntryPoint
+    {
+        public readonly int EnvironmentIndex;
+        public readonly ushort3 BlockPos;
+        public readonly byte3 TerminalPos;
+
+        public EntryPoint(int environmentIndex, ushort3 blockPos, byte3 terminalPos)
+        {
+            EnvironmentIndex = environmentIndex;
+            BlockPos = blockPos;
+            TerminalPos = terminalPos;
+        }
+
+        public void Deconstruct(out int environmentIndex, out ushort3 blockPos, out byte3 terminalPos)
+        {
+            environmentIndex = EnvironmentIndex;
+            blockPos = BlockPos;
+            terminalPos = TerminalPos;
         }
     }
 
     private sealed class InterpreterVariableAccessor : IVariableAccessor
     {
-        private readonly FrozenDictionary<Variable, int> _variableToId;
+        private readonly FrozenDictionary<Variable, int> _globalVariableToId;
+        private readonly FrozenDictionary<(int, Variable), int> _variableToId;
         private readonly VariableManager _variableManager;
 
-        public InterpreterVariableAccessor(IEnumerable<Variable> variables)
+        public InterpreterVariableAccessor(IEnumerable<Variable> globalVariables, IEnumerable<(int EnvironmentIndex, IEnumerable<Variable> Variables)> variables)
         {
             int varId = 0;
-            _variableToId = variables.ToFrozenDictionary(var => var, _ => varId++);
-            _variableManager = new VariableManager(_variableToId.Count);
+            _globalVariableToId = globalVariables.ToFrozenDictionary(var => var, _ => varId++);
+            Dictionary<(int, Variable), int> variableToId = [];
+
+            foreach (var (environmentIndex, environmentVariables) in variables)
+            {
+                foreach (var variable in environmentVariables)
+                {
+                    variableToId.Add((environmentIndex, variable), varId++);
+                }
+            }
+
+            _variableToId = variableToId.ToFrozenDictionary();
+
+            _variableManager = new VariableManager(_globalVariableToId.Count + _variableToId.Count);
         }
 
-        public int GetVariableId(Variable variable)
-            => _variableToId[variable];
+        public int GetVariableId(Environment environment, Variable variable)
+            => variable.IsGlobal ? _globalVariableToId[variable] : _variableToId[(environment.Index, variable)];
 
         public RuntimeValue GetVariableValue(int variableId, int index)
             => _variableManager.GetVariableValue(variableId, index);
 
         public void SetVariableValue(int variableId, int index, RuntimeValue value)
             => _variableManager.SetVariableValue(variableId, index, value);
+    }
+
+    private sealed class Environment
+    {
+        public Environment(int index, AST ast)
+        {
+            Index = index;
+            AST = ast;
+        }
+
+        public int Index { get; }
+
+        public AST AST { get; }
+
+        public Dictionary<ushort3, object> BlockData { get; } = [];
     }
 }

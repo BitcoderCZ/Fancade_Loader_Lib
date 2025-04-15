@@ -90,9 +90,10 @@ public sealed partial class AST
         public AST Parse()
         {
             var ctx = PrefabInfos[MainId].ParseCtx;
+
             ctx.ParseAll();
 
-            return new(MainId, [.. ctx._notConnectedVoidInputs], ctx._nodes.ToFrozenDictionary(), GlobalVariables, PrefabInfos.ToFrozenDictionary(item => item.Key, item => item.Value.ParseCtx._variables), [.. ctx._voidInputs]);
+            return ctx.AST;
         }
     }
 
@@ -103,6 +104,8 @@ public sealed partial class AST
         internal readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> _notConnectedVoidInputs = [];
 
         internal readonly List<OutsideConnection> _voidInputs = [];
+        internal readonly List<OutsideConnection> _nonVoidInputs = [];
+        internal readonly List<OutsideConnection> _nonVoidOutputs = [];
 
         internal readonly Dictionary<ushort3, SyntaxNode> _nodes = [];
 
@@ -111,6 +114,10 @@ public sealed partial class AST
         private readonly GlobalParseContext _globalCtx;
 
         private readonly bool _isDummy;
+
+        private bool _parsed;
+
+        private AST? _ast;
 
         public ParseContext(GlobalParseContext globalCtx, Prefab prefab, bool isDummy)
         {
@@ -185,8 +192,33 @@ public sealed partial class AST
             }
         }
 
+        public AST AST
+        {
+            get
+            {
+                if (_ast is not null)
+                {
+                    return _ast;
+                }
+
+                if (!_parsed && !_isDummy)
+                {
+                    ParseAll();
+                }
+
+                return _ast = new AST(Prefab.Id, [.. _notConnectedVoidInputs], _nodes.ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidInputs], [.. _nonVoidOutputs]);
+            }
+        }
+
+        public bool Parsed => _parsed;
+
         public void ParseAll()
         {
+            if (_parsed || _isDummy)
+            {
+                return;
+            }
+
             var blocks = Prefab.Blocks;
 
             for (int z = blocks.Size.Z - 1; z >= 0; z--)
@@ -204,6 +236,62 @@ public sealed partial class AST
                     }
                 }
             }
+
+            foreach (var connection in Prefab.Connections)
+            {
+                if (connection.IsFromOutside)
+                {
+                    ushort id = blocks.GetBlockOrDefault(connection.To);
+
+                    if (id != 0)
+                    {
+                        var infos = _globalCtx.PrefabInfos[id].TerminalInfo;
+
+                        bool isVoid = true;
+
+                        foreach (var info in infos.InputTerminals)
+                        {
+                            if (info.Position == connection.ToVoxel)
+                            {
+                                isVoid = info.Type == SignalType.Void;
+                                break;
+                            }
+                        }
+
+                        if (!isVoid)
+                        {
+                            _nonVoidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, connection.To, (byte3)connection.ToVoxel));
+                        }
+                    }
+                }
+                else if (connection.IsToOutside)
+                {
+                    ushort id = blocks.GetBlockOrDefault(connection.From);
+
+                    if (id != 0)
+                    {
+                        var infos = _globalCtx.PrefabInfos[id].TerminalInfo;
+
+                        bool isVoid = true;
+
+                        foreach (var info in infos.OutputTerminals)
+                        {
+                            if (info.Position == connection.FromVoxel)
+                            {
+                                isVoid = info.Type == SignalType.Void;
+                                break;
+                            }
+                        }
+
+                        if (!isVoid)
+                        {
+                            _nonVoidOutputs.Add(new OutsideConnection((byte3)connection.ToVoxel, connection.To, (byte3)connection.FromVoxel));
+                        }
+                    }
+                }
+            }
+
+            _parsed = true;
         }
 
         public bool TryCreateNode(ushort3 pos, [MaybeNullWhen(false)] out SyntaxNode node)
@@ -259,7 +347,32 @@ public sealed partial class AST
             {
                 if (_globalCtx.Prefabs.TryGetPrefab(id, out var prefab) && prefab.Blocks.Size != int3.Zero)
                 {
-                    ThrowNotImplementedException("Custom script blocks have not yet been implemented.");
+                    var customStatement = new CustomStatementSyntax(id, pos, GetOutVoidConnections(pos), _globalCtx.PrefabInfos[id].ParseCtx.AST);
+                    node = customStatement;
+
+                    _nodes.Add(pos, node);
+
+                    foreach (var termPos in customStatement.InputVoidTerminals)
+                    {
+                        bool foundConnection = false;
+                        foreach (var connection in GetConnectionsTo(Prefab.Connections, pos))
+                        {
+                            if (connection.ToVoxel == termPos)
+                            {
+                                foundConnection = true;
+
+                                if (connection.IsFromOutside)
+                                {
+                                    _voidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, pos, termPos));
+                                }
+                            }
+                        }
+
+                        if (!foundConnection)
+                        {
+                            _notConnectedVoidInputs.Add((pos, termPos));
+                        }
+                    }
                 }
             }
 
@@ -316,6 +429,19 @@ public sealed partial class AST
             foreach (var connection in Prefab.Connections)
             {
                 if (connection.From != pos)
+                {
+                    continue;
+                }
+
+                if (connection.IsToOutside)
+                {
+                    ushort fromId = Prefab.Blocks.GetBlockOrDefault(connection.From);
+
+                    var fromInfo =
+
+                    builder.Add(connection);
+                }
+                else if (connection.IsFromOutside)
                 {
                     continue;
                 }

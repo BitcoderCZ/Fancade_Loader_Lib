@@ -20,6 +20,8 @@ public readonly struct Variable : IEquatable<Variable>
 
     public readonly SignalType Type { get; }
 
+    public bool IsGlobal => Name.StartsWith('$') || Name.StartsWith('!');
+
     public static bool operator ==(Variable left, Variable right)
         => left.Type == right.Type && left.Name == right.Name;
 
