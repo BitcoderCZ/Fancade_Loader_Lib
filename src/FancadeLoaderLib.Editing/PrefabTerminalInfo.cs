@@ -1,4 +1,5 @@
-﻿using MathUtils.Vectors;
+﻿using FancadeLoaderLib.Raw;
+using MathUtils.Vectors;
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
@@ -72,9 +73,18 @@ public readonly struct PrefabTerminalInfo
                 var (type, isInput) = SettingTypeUtils.ToTerminalSignalType(setting.Type);
 
                 TerminalDirection dir = prefab.GetTerminalDirection((byte3)pos);
-                if (type == SignalType.Void && dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX)
+
+                // isInput always true for terminals of custom prefabs for... reasons???
+                if (prefab.Id >= RawGame.CurrentNumbStockPrefabs)
                 {
-                    isInput = true;
+                    isInput = dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX; 
+                }
+                else
+                {
+                    if (type == SignalType.Void && dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX)
+                    {
+                        isInput = true;
+                    }
                 }
 
                 infoBuilder.Add(new TerminalInfo((byte3)pos, type, dir, isInput));
