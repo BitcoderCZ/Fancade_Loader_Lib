@@ -59,7 +59,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     /// When <see cref="Type"/> is a terminal name, specifies it's voxel position.
     /// </remarks>
     /// <value>Position of the block this setting applies to.</value>
-    public readonly ushort3 Position { get; }
+    public readonly ushort3 Position { get; init; }
 
     /// <summary>
     /// Gets or sets the type of this setting.
