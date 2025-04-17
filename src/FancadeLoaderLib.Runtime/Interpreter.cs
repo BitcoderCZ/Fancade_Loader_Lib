@@ -8,10 +8,12 @@ using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
+using System;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Numerics;
+using static FancadeLoaderLib.Editing.StockBlocks;
 using static FancadeLoaderLib.Runtime.Utils.ThrowHelper;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
@@ -37,6 +39,11 @@ public sealed class Interpreter
     private readonly InterpreterVariableAccessor _variableAccessor;
 
     public Interpreter(AST ast, IRuntimeContext ctx)
+        : this(ast, ctx, 4)
+    {
+    }
+
+    public Interpreter(AST ast, IRuntimeContext ctx, int maxDepth)
     {
         ThrowIfNull(ast, nameof(ast));
         ThrowIfNull(ast, nameof(ctx));
@@ -50,16 +57,7 @@ public sealed class Interpreter
         environments.Add(mainEnvironment);
         variables.Add(mainEnvironment.AST.Variables);
 
-        foreach (var node in ast.Nodes.Values)
-        {
-            if (node is CustomStatementSyntax customStatement)
-            {
-                var environment = new Environment(customStatement.AST, environments.Count, mainEnvironment.Index, customStatement.Position);
-                environments.Add(environment);
-                variables.Add(environment.AST.Variables);
-                mainEnvironment.BlockData[customStatement.Position] = environment;
-            }
-        }
+        InitEnvironments(mainEnvironment, environments, variables, maxDepth);
 
         _environments = [.. environments];
 
@@ -72,10 +70,12 @@ public sealed class Interpreter
     {
         var lateUpdateQueue = new Queue<EntryPoint>();
 
-        // TODO: loop all asts, figure out when NotConnectedVoidInputs are executed for custom scripts
-        foreach (var entryPoint in _environments[0].AST.NotConnectedVoidInputs)
+        foreach (var environment in _environments)
         {
-            Execute(new EntryPoint(0, entryPoint.BlockPosition, entryPoint.TerminalPosition), lateUpdateQueue);
+            foreach (var entryPoint in environment.AST.NotConnectedVoidInputs)
+            {
+                Execute(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), lateUpdateQueue);
+            }
         }
 
         return () =>
@@ -85,6 +85,27 @@ public sealed class Interpreter
                 Execute(entryPoint, null);
             }
         };
+    }
+
+    private static void InitEnvironments(Environment outer, List<Environment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
+    {
+        if (depth > maxDepth)
+        {
+            throw new EnvironmentDepthLimitReachedException();
+        }
+
+        foreach (var node in outer.AST.Nodes.Values)
+        {
+            if (node is CustomStatementSyntax customStatement)
+            {
+                var environment = new Environment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
+                environments.Add(environment);
+                variables.Add(environment.AST.Variables);
+                outer.BlockData[customStatement.Position] = environment;
+
+                InitEnvironments(environment, environments, variables, maxDepth, depth + 1);
+            }
+        }
     }
 
     private void Execute(EntryPoint entryPoint, Queue<EntryPoint>? lateUpdateQueue)
