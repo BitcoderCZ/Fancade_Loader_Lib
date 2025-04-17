@@ -136,12 +136,17 @@ public class Game : ICloneable
     /// <summary>
     /// Converts a <see cref="RawGame"/> into <see cref="Game"/>.
     /// </summary>
+    /// <remarks>
+    /// Calls <see cref="RawGame.FixPrefabOrder()"/> on <paramref name="game"/>.
+    /// </remarks>
     /// <param name="game">The <see cref="RawGame"/> to create this <see cref="Game"/> from.</param>
     /// <param name="clonePrefabs">If the prefabs should be copied, if <see langword="true"/>, <paramref name="game"/> shouldn't be used anymore.</param>
     /// <returns>A new instance of the <see cref="Game"/> class from a <see cref="RawGame"/>.</returns>
     public static Game FromRaw(RawGame game, bool clonePrefabs = true)
     {
         ThrowIfNull(game, nameof(game));
+
+        game.FixPrefabOrder();
 
         var prefabs = new PrefabList();
 

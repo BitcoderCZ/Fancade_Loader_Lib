@@ -1,9 +1,4 @@
 ﻿using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TUnit.Assertions.AssertConditions.Throws;
 using Array3D = FancadeLoaderLib.Array3D<ushort>;
 

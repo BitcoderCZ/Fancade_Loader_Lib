@@ -3,7 +3,6 @@ using FancadeLoaderLib.Exceptions;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing;
