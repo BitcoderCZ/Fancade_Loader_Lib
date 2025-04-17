@@ -260,7 +260,7 @@ public class RawGame
 
             if (fix)
             {
-                FixPrefabOrder(prefabs[startIndex..i], idsMap, mainMoveMap);
+                FixPrefabOrder(prefabs[startIndex..i], (ushort)(startIndex + IdOffset), idsMap, mainMoveMap);
             }
 
             i--;
@@ -344,24 +344,17 @@ public class RawGame
     public override string ToString()
         => $"{{Name: {Name}, Author: {Author}, Description: {Description}}}";
 
-    private void FixPrefabOrder(Span<RawPrefab> prefabs, Dictionary<ushort, ushort> idsMap, Dictionary<ushort, int3> mainMoveMap)
+    private void FixPrefabOrder(Span<RawPrefab> prefabs, ushort groupId, Dictionary<ushort, ushort> idsMap, Dictionary<ushort, int3> mainMoveMap)
     {
         Debug.Assert(prefabs.Length > 1, $"{nameof(prefabs)} should be a group.");
         Debug.Assert(prefabs.Length < Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize, $"{nameof(prefabs)}.Length should be less than max size.");
 
-        ushort groupId = prefabs[0].GroupId;
-
         Span<byte3> originalPositions = stackalloc byte3[prefabs.Length];
 
-        int mainIndex = -1;
         for (int i = 0; i < prefabs.Length; i++)
         {
             originalPositions[i] = prefabs[i].PosInGroup;
-
-            if (prefabs[i].HasMainInfo)
-            {
-                mainIndex = i;
-            }
+            prefabs[i].GroupId = groupId;
         }
 
         prefabs.Sort((a, b) => PositionComparer.Instance.Compare(a.PosInGroup, b.PosInGroup));
@@ -377,12 +370,8 @@ public class RawGame
             }
         }
 
-        List<(ushort From, ushort To)>? idsMapList = null;
-
         if (wasOutOfOrder)
         {
-            idsMapList = [];
-
             Span<byte3> newPositions = stackalloc byte3[prefabs.Length];
 
             for (int i = 0; i < prefabs.Length; i++)
@@ -397,7 +386,7 @@ public class RawGame
 
                 if (newIndex != i)
                 {
-                    idsMapList.Add(((ushort)(groupId + i), (ushort)(groupId + newIndex)));
+                    idsMap.Add((ushort)(groupId + i), (ushort)(groupId + newIndex));
                 }
             }
         }
@@ -406,23 +395,6 @@ public class RawGame
         {
             if (prefabs[i].HasMainInfo)
             {
-                groupId = (ushort)(groupId - mainIndex);
-
-                foreach (var item in prefabs)
-                {
-                    item.GroupId = groupId;
-                }
-
-                if (idsMapList is not null)
-                {
-                    for (int j = 0; j < idsMapList.Count; j++)
-                    {
-                        var (from, to) = idsMapList[j];
-
-                        idsMapList[j] = ((ushort)(from - mainIndex), (ushort)(to - mainIndex));
-                    }
-                }
-
                 mainMoveMap.Add((ushort)(groupId + i), -(int3)prefabs[i].PosInGroup);
 
                 var prefab = prefabs[i];
@@ -447,14 +419,6 @@ public class RawGame
                 prefab.Connections = null;
 
                 break;
-            }
-        }
-
-        if (idsMapList is not null)
-        {
-            foreach (var (from, to) in idsMapList)
-            {
-                idsMap.Add(from, to);
             }
         }
     }
