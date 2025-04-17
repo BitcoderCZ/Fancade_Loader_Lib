@@ -302,7 +302,7 @@ public class RawGame
                                         {
                                             var setting = prefab.Settings[i];
 
-                                            if (setting.Position == pos)
+                                            if (setting.Position == pos && setting.Type < SettingType.VoidTerminal)
                                             {
                                                 prefab.Settings[i] = setting with { Position = (ushort3)(setting.Position + move) };
                                             }
