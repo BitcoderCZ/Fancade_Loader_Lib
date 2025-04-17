@@ -1,27 +1,37 @@
-﻿namespace FancadeLoaderLib.Runtime;
+﻿using System;
+
+namespace FancadeLoaderLib.Runtime;
 
 internal readonly struct VariableManager
 {
-    private readonly RuntimeValue[][] _variables = [];
+    private readonly (RuntimeValue[] Values, int Length)[] _variables = [];
 
     public VariableManager(int count)
     {
-        _variables = new RuntimeValue[count][];
+        _variables = new (RuntimeValue[], int)[count];
 
         for (int i = 0; i < _variables.Length; i++)
         {
-            _variables[i] = [];
+            _variables[i] = ([], 0);
         }
     }
 
     public RuntimeValue GetVariableValue(int variableIndex, int index)
     {
         // TODO: bounds check variableId?
-        var values = _variables[variableIndex];
+        var values = _variables[variableIndex].Values;
 
         return index >= 0 && index < values.Length
             ? values[index]
             : RuntimeValue.Zero;
+    }
+
+    public Span<RuntimeValue> GetVariableValues(int variableIndex)
+    {
+        // TODO: bounds check variableId?
+        var item = _variables[variableIndex];
+
+        return item.Values.AsSpan(0, item.Length);
     }
 
     public void SetVariableValue(int variableIndex, int index, RuntimeValue value)
@@ -32,20 +42,25 @@ internal readonly struct VariableManager
         }
 
         // TODO: bounds check variableId?
-        ref var values = ref _variables[variableIndex];
+        ref var item = ref _variables[variableIndex];
 
-        if (index >= values.Length)
+        if (index >= item.Values.Length)
         {
-            int newLen = index == 0 ? 1 : values.Length + 16;
+            int newLen = index == 0 ? 1 : item.Values.Length + 16;
 
             if (newLen < index + 1)
             {
                 newLen = index + 1;
             }
 
-            Array.Resize(ref values, newLen);
+            Array.Resize(ref item.Values, newLen);
         }
 
-        values[index] = value;
+        if (index >= item.Length)
+        {
+            item.Length = index + 1;
+        }
+
+        item.Values[index] = value;
     }
 }

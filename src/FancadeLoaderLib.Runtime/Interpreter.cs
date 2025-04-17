@@ -82,6 +82,8 @@ public sealed class Interpreter
 
     public IVariableAccessor VariableAccessor => _variableAccessor;
 
+    public IEnumerable<(Variable Variable, int VariableId)> GlobalVariables => _variableAccessor.GlobalVariables.Select(item => (item.Key, item.Value));
+
     public Action RunFrame()
     {
         if (_timeoutWatch is not null)
@@ -117,6 +119,9 @@ public sealed class Interpreter
             }
         };
     }
+
+    public Variable GetVariable(int variableId)
+        => _variableAccessor.GetVariable(variableId).Variable;
 
     private static void InitEnvironments(Environment outer, List<Environment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
     {
@@ -911,6 +916,8 @@ if (_timeout != Timeout.InfiniteTimeSpan)
     {
         private readonly FrozenDictionary<Variable, int> _globalVariableToId;
         private readonly FrozenDictionary<(int, Variable), int> _variableToId;
+        private readonly (int, Variable)[] _variables;
+
         private readonly VariableManager _variableManager;
 
         public InterpreterVariableAccessor(IEnumerable<Variable> globalVariables, IEnumerable<(int EnvironmentIndex, IEnumerable<Variable> Variables)> variables)
@@ -929,11 +936,22 @@ if (_timeout != Timeout.InfiniteTimeSpan)
 
             _variableToId = variableToId.ToFrozenDictionary();
 
+            _variables =
+            [
+                .. _globalVariableToId.OrderBy(item => item.Value).Select(item => (-1, item.Key)),
+                .. _variableToId.OrderBy(item => item.Value).Select(item => item.Key),
+            ];
+
             _variableManager = new VariableManager(_globalVariableToId.Count + _variableToId.Count);
         }
 
+        public IEnumerable<KeyValuePair<Variable, int>> GlobalVariables => _globalVariableToId;
+
         public int GetVariableId(Environment environment, Variable variable)
             => variable.IsGlobal ? _globalVariableToId[variable] : _variableToId[(environment.Index, variable)];
+
+        public (int EnvironmentIndex, Variable Variable) GetVariable(int variableId)
+            => _variables[variableId];
 
         public RuntimeValue GetVariableValue(int variableId, int index)
             => _variableManager.GetVariableValue(variableId, index);
