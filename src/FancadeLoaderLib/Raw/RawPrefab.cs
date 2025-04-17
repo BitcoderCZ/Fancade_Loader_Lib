@@ -15,6 +15,11 @@ namespace FancadeLoaderLib.Raw;
 /// </summary>
 public class RawPrefab
 {
+    /// <summary>
+    /// The default name of a prefab.
+    /// </summary>
+    public static readonly string DefaultName = "New Block";
+
     #region Header
 
     /// <summary>
@@ -230,6 +235,8 @@ public class RawPrefab
         Connections = connections;
     }
 
+    internal bool HasMainInfo => NonDefaultName || HasBlocks || HasSettings || HasConnections;
+
     /// <summary>
     /// Loads a <see cref="RawPrefab"/> from a <see cref="FcBinaryReader"/>.
     /// </summary>
@@ -262,7 +269,7 @@ public class RawPrefab
             typeByte = reader.ReadUInt8();
         }
 
-        string name = "New Block";
+        string name = DefaultName;
         if (nonDefaultName)
         {
             name = reader.ReadString();

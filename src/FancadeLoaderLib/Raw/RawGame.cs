@@ -2,9 +2,13 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Utils;
+using MathUtils.Vectors;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Raw;
@@ -217,9 +221,241 @@ public class RawGame
     }
 
     /// <summary>
+    /// "Fixes" the order of prefabs in groups.
+    /// </summary>
+    /// <remarks>
+    /// May change the execution order.
+    /// </remarks>
+    public void FixPrefabOrder()
+    {
+        PositionComparer comparer = PositionComparer.Instance;
+
+        var prefabs = CollectionsMarshal.AsSpan(Prefabs);
+
+        Dictionary<ushort, ushort> idsMap = [];
+        Dictionary<ushort, int3> mainMoveMap = [];
+
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            if (!prefabs[i].IsInGroup)
+            {
+                continue;
+            }
+
+            int startIndex = i;
+            ushort groupId = prefabs[i].GroupId;
+
+            bool fix = false;
+
+            i++;
+            while (i < prefabs.Length && prefabs[i].GroupId == groupId)
+            {
+                if (prefabs[i].HasMainInfo || comparer.Compare(prefabs[i - 1].PosInGroup, prefabs[i].PosInGroup) >= 0)
+                {
+                    fix = true;
+                }
+
+                i++;
+            }
+
+            if (fix)
+            {
+                FixPrefabOrder(prefabs[startIndex..i], idsMap, mainMoveMap);
+            }
+
+            i--;
+        }
+
+        if (idsMap.Count == 0 && mainMoveMap.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var prefab in prefabs)
+        {
+            var blocks = prefab.Blocks;
+
+            if (blocks is not null)
+            {
+                for (int z = 0; z < blocks.Size.Z; z++)
+                {
+                    for (int y = 0; y < blocks.Size.Y; y++)
+                    {
+                        for (int x = 0; x < blocks.Size.X; x++)
+                        {
+                            int3 pos = new int3(x, y, z);
+                            ushort id = blocks.GetUnchecked(pos);
+
+                            if (id != 0)
+                            {
+                                if (idsMap.TryGetValue(id, out ushort newId))
+                                {
+                                    blocks.SetUnchecked(pos, newId);
+                                    id = newId;
+                                }
+
+                                if (mainMoveMap.TryGetValue(id, out int3 move))
+                                {
+                                    if (prefab.Settings is not null)
+                                    {
+                                        for (int i = 0; i < prefab.Settings.Count; i++)
+                                        {
+                                            var setting = prefab.Settings[i];
+
+                                            if (setting.Position == pos)
+                                            {
+                                                prefab.Settings[i] = setting with { Position = (ushort3)(setting.Position + move) };
+                                            }
+                                        }
+                                    }
+
+                                    if (prefab.Connections is not null)
+                                    {
+                                        for (int i = 0; i < prefab.Connections.Count; i++)
+                                        {
+                                            var connection = prefab.Connections[i];
+
+                                            if (!connection.IsFromOutside && connection.From == pos)
+                                            {
+                                                connection.From = (ushort3)(connection.From + move);
+                                                prefab.Connections[i] = connection;
+                                            }
+
+                                            if (!connection.IsToOutside && connection.To == pos)
+                                            {
+                                                connection.To = (ushort3)(connection.To + move);
+                                                prefab.Connections[i] = connection;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Returns the string representation of the current instance.
     /// </summary>
     /// <returns>The string representation of the current instance.</returns>
     public override string ToString()
         => $"{{Name: {Name}, Author: {Author}, Description: {Description}}}";
+
+    private void FixPrefabOrder(Span<RawPrefab> prefabs, Dictionary<ushort, ushort> idsMap, Dictionary<ushort, int3> mainMoveMap)
+    {
+        Debug.Assert(prefabs.Length > 1, $"{nameof(prefabs)} should be a group.");
+        Debug.Assert(prefabs.Length < Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize, $"{nameof(prefabs)}.Length should be less than max size.");
+
+        ushort groupId = prefabs[0].GroupId;
+
+        Span<byte3> originalPositions = stackalloc byte3[prefabs.Length];
+
+        int mainIndex = -1;
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            originalPositions[i] = prefabs[i].PosInGroup;
+
+            if (prefabs[i].HasMainInfo)
+            {
+                mainIndex = i;
+            }
+        }
+
+        prefabs.Sort((a, b) => PositionComparer.Instance.Compare(a.PosInGroup, b.PosInGroup));
+
+        bool wasOutOfOrder = false;
+
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            if (originalPositions[i] != prefabs[i].PosInGroup)
+            {
+                wasOutOfOrder = true;
+                break;
+            }
+        }
+
+        List<(ushort From, ushort To)>? idsMapList = null;
+
+        if (wasOutOfOrder)
+        {
+            idsMapList = [];
+
+            Span<byte3> newPositions = stackalloc byte3[prefabs.Length];
+
+            for (int i = 0; i < prefabs.Length; i++)
+            {
+                newPositions[i] = prefabs[i].PosInGroup;
+            }
+
+            for (int i = 0; i < prefabs.Length; i++)
+            {
+                int newIndex = newPositions.IndexOf(originalPositions[i]);
+                Debug.Assert(newIndex != -1, $"All positions in {nameof(originalPositions)} should be in {nameof(newPositions)}.");
+
+                if (newIndex != i)
+                {
+                    idsMapList.Add(((ushort)(groupId + i), (ushort)(groupId + newIndex)));
+                }
+            }
+        }
+
+        for (int i = 1; i < prefabs.Length; i++)
+        {
+            if (prefabs[i].HasMainInfo)
+            {
+                groupId = (ushort)(groupId - mainIndex);
+
+                foreach (var item in prefabs)
+                {
+                    item.GroupId = groupId;
+                }
+
+                if (idsMapList is not null)
+                {
+                    for (int j = 0; j < idsMapList.Count; j++)
+                    {
+                        var (from, to) = idsMapList[j];
+
+                        idsMapList[j] = ((ushort)(from - mainIndex), (ushort)(to - mainIndex));
+                    }
+                }
+
+                mainMoveMap.Add((ushort)(groupId + i), -(int3)prefabs[i].PosInGroup);
+
+                var prefab = prefabs[i];
+                var mainPrefab = prefabs[0];
+
+                mainPrefab.NonDefaultName = prefab.NonDefaultName;
+                mainPrefab.Name = prefab.Name;
+                mainPrefab.HasBlocks = prefab.HasBlocks;
+                mainPrefab.Blocks = prefab.Blocks;
+                mainPrefab.HasSettings = prefab.HasSettings;
+                mainPrefab.Settings = prefab.Settings;
+                mainPrefab.HasConnections = prefab.HasConnections;
+                mainPrefab.Connections = prefab.Connections;
+
+                prefab.NonDefaultName = false;
+                prefab.Name = RawPrefab.DefaultName;
+                prefab.HasBlocks = false;
+                prefab.Blocks = null;
+                prefab.HasSettings = false;
+                prefab.Settings = null;
+                prefab.HasConnections = false;
+                prefab.Connections = null;
+
+                break;
+            }
+        }
+
+        if (idsMapList is not null)
+        {
+            foreach (var (from, to) in idsMapList)
+            {
+                idsMap.Add(from, to);
+            }
+        }
+    }
 }
