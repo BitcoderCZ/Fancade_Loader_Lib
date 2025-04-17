@@ -9,7 +9,7 @@ public interface IRuntimeContext
 
     bool TakingBoxArt { get; }
 
-    void InspectValue(RuntimeValue value, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
+    void InspectValue(TerminalOutput output, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
 
     bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 

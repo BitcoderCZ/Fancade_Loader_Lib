@@ -17,7 +17,7 @@ public abstract class RuntimeContext : IRuntimeContext
     public virtual float GetRandomValue(float min, float max)
         => rng.NextSingle(min, max);
 
-    public abstract void InspectValue(RuntimeValue value, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
+    public abstract void InspectValue(TerminalOutput output, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
 
     public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 

@@ -13,6 +13,7 @@ using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using static FancadeLoaderLib.Editing.StockBlocks;
 using static FancadeLoaderLib.Runtime.Utils.ThrowHelper;
 using static FancadeLoaderLib.Utils.ThrowHelper;
@@ -38,12 +39,20 @@ public sealed class Interpreter
 
     private readonly InterpreterVariableAccessor _variableAccessor;
 
+    private readonly TimeSpan _timeout;
+    private readonly Stopwatch? _timeoutWatch;
+
     public Interpreter(AST ast, IRuntimeContext ctx)
-        : this(ast, ctx, 4)
+        : this(ast, ctx, TimeSpan.FromSeconds(3))
     {
     }
 
-    public Interpreter(AST ast, IRuntimeContext ctx, int maxDepth)
+    public Interpreter(AST ast, IRuntimeContext ctx, TimeSpan timeout)
+        : this(ast, ctx, timeout, 4)
+    {
+    }
+
+    public Interpreter(AST ast, IRuntimeContext ctx, TimeSpan timeout, int maxDepth)
     {
         ThrowIfNull(ast, nameof(ast));
         ThrowIfNull(ast, nameof(ctx));
@@ -62,12 +71,29 @@ public sealed class Interpreter
         _environments = [.. environments];
 
         _variableAccessor = new InterpreterVariableAccessor(ast.GlobalVariables, variables.Select((vars, index) => (index, (IEnumerable<Variable>)vars)));
+
+        _timeout = timeout;
+
+        if (_timeout != Timeout.InfiniteTimeSpan)
+        {
+            _timeoutWatch = new Stopwatch();
+        }
     }
 
     public IVariableAccessor VariableAccessor => _variableAccessor;
 
     public Action RunFrame()
     {
+        if (_timeoutWatch is not null)
+        {
+            if (_timeoutWatch.IsRunning)
+            {
+                throw new InvalidOperationException("This method cannot be called concurrently.");
+            }
+
+            _timeoutWatch.Start();
+        }
+
         var lateUpdateQueue = new Queue<EntryPoint>();
 
         foreach (var environment in _environments)
@@ -83,6 +109,11 @@ public sealed class Interpreter
             while (lateUpdateQueue.TryDequeue(out var entryPoint))
             {
                 Execute(entryPoint, null);
+            }
+
+            if (_timeoutWatch is not null)
+            {
+                _timeoutWatch.Reset();
             }
         };
     }
@@ -118,6 +149,8 @@ public sealed class Interpreter
 
         while (executeNext.TryPop(out var item))
         {
+            ThrowIfTimeout();
+
             var (environmentIndex, blockPos, terminalPos) = item;
             var environment = _environments[environmentIndex];
             var statement = (StatementSyntax)environment.AST.Nodes[blockPos];
@@ -270,6 +303,8 @@ public sealed class Interpreter
 
                         while (true)
                         {
+                            ThrowIfTimeout();
+
                             stop = (int)MathF.Ceiling(GetValue(loop.Stop, environment).Float);
 
                             int nextVal = value + step;
@@ -313,7 +348,7 @@ public sealed class Interpreter
                         var inspect = (InspectStatementSyntax)statement;
                         if (inspect.Input is not null)
                         {
-                            _ctx.InspectValue(GetValue(inspect.Input, environment), inspect.Type, environment.AST.PrefabId, inspect.Position);
+                            _ctx.InspectValue(GetOutput(inspect.Input, environment), inspect.Type, environment.AST.PrefabId, inspect.Position);
                         }
                     }
 
@@ -422,6 +457,8 @@ public sealed class Interpreter
         {
             return TerminalOutput.Disconnected;
         }
+
+        ThrowIfTimeout();
 
         // faster than switching on type
         switch (terminal.Node.PrefabId)
@@ -832,6 +869,20 @@ public sealed class Interpreter
                         throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
                     }
                 }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ThrowIfTimeout()
+    {
+if (_timeout != Timeout.InfiniteTimeSpan)
+        {
+            Debug.Assert(_timeoutWatch is not null, $"{nameof(_timeoutWatch)} should not be null when {nameof(_timeout)} is not infinite.");
+
+            if (_timeoutWatch.Elapsed > _timeout)
+            {
+                ThrowTimeoutException();
+            }
         }
     }
 

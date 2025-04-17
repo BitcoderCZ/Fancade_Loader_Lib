@@ -16,4 +16,9 @@ internal static class ThrowHelper
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static void ThrowInvalidTerminalException(byte3 terminalPosition)
         => throw new InvalidTerminalException(terminalPosition);
+
+    [DoesNotReturn]
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static void ThrowTimeoutException()
+        => throw new TimeoutException();
 }
