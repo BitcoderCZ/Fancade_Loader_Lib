@@ -4,6 +4,7 @@ using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
+using FancadeLoaderLib.Runtime.Syntax.Objects;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using FancadeLoaderLib.Runtime.Utils;
@@ -53,6 +54,22 @@ public sealed partial class AST
                     {
                         return new MenuItemStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? name) ? (string)name : string.Empty, ctx.TryGetSettingOfType(pos, 1, SettingType.Byte, out object? maxItems) ? new MaxBuyCount((byte)maxItems) : MaxBuyCount.OnOff, ctx.TryGetSettingOfType(pos, 2, SettingType.Byte, out object? priceIncrease) ? (PriceIncrease)(byte)priceIncrease : PriceIncrease.Fixed10);
                     }
+
+                // **************************************** Objects ****************************************
+                case 278:
+                    return new GetPositionExpressionSyntax(id, pos, ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
+                case 282:
+                    return new SetPositionStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 3)));
+                case 228:
+                    return new RaycastExpressionSyntax(id, pos, ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)));
+                case 489:
+                    return new GetSizeExpressionSyntax(id, pos, ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
+                case 306:
+                    return new SetVisibleStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 316:
+                    return new CreateObjectStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
+                case 320:
+                    return new CreateObjectStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
 
                 // **************************************** Control ****************************************
                 case 234:

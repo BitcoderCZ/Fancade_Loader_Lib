@@ -4,6 +4,7 @@ using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
+using FancadeLoaderLib.Runtime.Syntax.Objects;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using FancadeLoaderLib.Runtime.Utils;
@@ -216,6 +217,56 @@ public sealed class Interpreter
                         var menuItem = (MenuItemStatementSyntax)statement;
 
                         _ctx.MenuItem(menuItem.Variable is null ? null : GetOutput(menuItem.Variable, environment).Reference, GetValue(menuItem.Picture, environment).Int, menuItem.Name, menuItem.MaxBuyCount, menuItem.PriceIncrease);
+                    }
+
+                    break;
+
+                // **************************************** Objects ****************************************
+                case 282:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var setPosition = (SetPositionStatementSyntax)statement;
+
+                        if (setPosition.ObjectTerminal is not null)
+                        {
+                            _ctx.SetPosition(GetValue(setPosition.ObjectTerminal, environment).Int, setPosition.PositionTerminal is null ? null : GetValue(setPosition.PositionTerminal, environment).Float3, setPosition.RotationTerminal is null ? null : GetValue(setPosition.RotationTerminal, environment).Quaternion);
+                        }
+                    }
+
+                    break;
+                case 306:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var setVisible = (SetVisibleStatementSyntax)statement;
+
+                        if (setVisible.Object is not null)
+                        {
+                            _ctx.SetVisible(GetValue(setVisible.Object, environment).Int, GetValue(setVisible.Visible, environment).Bool);
+                        }
+                    }
+
+                    break;
+                case 316:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var createObject = (CreateObjectStatementSyntax)statement;
+
+                        if (createObject.Original is not null)
+                        {
+                            environment.BlockData[createObject.Position] = _ctx.CreateObject(GetValue(createObject.Original, environment).Int);
+                        }
+                    }
+
+                    break;
+                case 320:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var destroyObject = (DestroyObjectStatementSyntax)statement;
+
+                        if (destroyObject.Object is not null)
+                        {
+                            _ctx.DestroyObject(GetValue(destroyObject.Object, environment).Int);
+                        }
                     }
 
                     break;
@@ -560,6 +611,120 @@ public sealed class Interpreter
                     Debug.Assert(terminal.Node is CurrentFrameExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CurrentFrameExpressionSyntax)}");
 
                     return new TerminalOutput(new RuntimeValue(_ctx.CurrentFrame));
+                }
+
+            // **************************************** Objects ****************************************
+            case 278:
+                {
+                    var getPosition = (GetPositionExpressionSyntax)terminal.Node;
+
+                    RuntimeValue val;
+                    if (getPosition.Object is null)
+                    {
+                        if (terminal.Position == PosOut02)
+                        {
+                            val = new(float3.Zero);
+                        }
+                        else if (terminal.Position == PosOut12)
+                        {
+                            val = new(Quaternion.Identity);
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+                    else
+                    {
+                        var (position, rotation) = _ctx.GetObjectPosition(GetValue(getPosition.Object, environment).Int);
+
+                        if (terminal.Position == PosOut02)
+                        {
+                            val = new(position);
+                        }
+                        else if (terminal.Position == PosOut12)
+                        {
+                            val = new(rotation);
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+
+                    return new TerminalOutput(val);
+                }
+
+            case 228:
+                {
+                    var raycast = (RaycastExpressionSyntax)terminal.Node;
+
+                    var (hit, hitPos, hitObjId) = _ctx.Raycast(GetValue(raycast.From, environment).Float3, GetValue(raycast.To, environment).Float3);
+
+                    RuntimeValue val;
+                    if (terminal.Position == PosOut03)
+                    {
+                        val = new RuntimeValue(hit);
+                    }
+                    else if (terminal.Position == PosOut13)
+                    {
+                        val = new RuntimeValue(hitPos);
+                    }
+                    else if (terminal.Position == PosOut23)
+                    {
+                        val = new RuntimeValue(hitObjId);
+                    }
+                    else
+                    {
+                        throw new InvalidTerminalException(terminal.Position);
+                    }
+
+                    return new TerminalOutput(val);
+                }
+
+            case 489:
+                {
+                    var getSize = (GetSizeExpressionSyntax)terminal.Node;
+
+                    float3 val;
+                    if (getSize.Object is null)
+                    {
+                        if (terminal.Position == PosOut02 || terminal.Position == PosOut12)
+                        {
+                            val = float3.Zero;
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+                    else
+                    {
+                        var (min, max) = _ctx.GetSize(GetValue(getSize.Object, environment).Int);
+
+                        if (terminal.Position == PosOut02)
+                        {
+                            val = min;
+                        }
+                        else if (terminal.Position == PosOut12)
+                        {
+                            val = max;
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+
+                    return new TerminalOutput(new RuntimeValue(val));
+                }
+
+            case 316:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var createObject = (CreateObjectStatementSyntax)terminal.Node;
+
+                    return new TerminalOutput(new RuntimeValue((int)environment.BlockData.GetValueOrDefault(createObject.Position, 0)));
                 }
 
             // **************************************** Control ****************************************

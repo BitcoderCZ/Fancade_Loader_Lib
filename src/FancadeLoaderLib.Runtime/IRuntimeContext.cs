@@ -30,9 +30,19 @@ public interface IRuntimeContext
     // **************************************** Objects ****************************************
     int GetObjectId(int3 position, byte3 voxelPosition);
 
-    float3 GetObjectPosition(int id);
+    (float3 Position, Quaternion Rotation) GetObjectPosition(int objectId);
 
-    int CloneObject(int id);
+    void SetPosition(int objectId, float3? position, Quaternion? rotation);
+
+    (bool Hit, float3 HitPos, int HitObjId) Raycast(float3 from, float3 to);
+
+    (float3 Min, float3 Max) GetSize(int objectId);
+
+    void SetVisible(int objectId, bool visible);
+
+    int CreateObject(int original);
+
+    void DestroyObject(int objectId);
 
     // **************************************** Control ****************************************
     bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);

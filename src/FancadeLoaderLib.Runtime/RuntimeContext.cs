@@ -38,9 +38,19 @@ public abstract class RuntimeContext : IRuntimeContext
     // **************************************** Objects ****************************************
     public abstract int GetObjectId(int3 position, byte3 voxelPosition);
 
-    public abstract float3 GetObjectPosition(int id);
+    public abstract (float3 Position, Quaternion Rotation) GetObjectPosition(int objectId);
 
-    public abstract int CloneObject(int id);
+    public abstract void SetPosition(int objectId, float3? position, Quaternion? rotation);
+
+    public abstract (bool Hit, float3 HitPos, int HitObjId) Raycast(float3 from, float3 to);
+
+    public abstract (float3 Min, float3 Max) GetSize(int objectId);
+
+    public abstract void SetVisible(int objectId, bool visible);
+
+    public abstract int CreateObject(int original);
+
+    public abstract void DestroyObject(int objectId);
 
     // **************************************** Control ****************************************
     public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
