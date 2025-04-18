@@ -44,6 +44,13 @@ public interface IRuntimeContext
 
     void DestroyObject(int objectId);
 
+    // **************************************** Sound ****************************************
+    float PlaySound(float volume, float pitch, FcSound sound);
+
+    void StopSound(float channel);
+
+    void AdjustVolumePitch(float channel, float volume, float pitch);
+
     // **************************************** Control ****************************************
     bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 

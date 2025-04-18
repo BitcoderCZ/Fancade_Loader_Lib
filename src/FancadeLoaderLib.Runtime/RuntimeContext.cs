@@ -52,6 +52,13 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract void DestroyObject(int objectId);
 
+    // **************************************** Sound ****************************************
+    public abstract float PlaySound(float volume, float pitch, FcSound sound);
+
+    public abstract void StopSound(float channel);
+
+    public abstract void AdjustVolumePitch(float channel, float volume, float pitch);
+
     // **************************************** Control ****************************************
     public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 

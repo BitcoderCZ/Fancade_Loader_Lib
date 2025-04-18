@@ -5,6 +5,7 @@ using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Objects;
+using FancadeLoaderLib.Runtime.Syntax.Sound;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using FancadeLoaderLib.Runtime.Utils;
@@ -112,10 +113,7 @@ public sealed class Interpreter
                 Execute(entryPoint, null);
             }
 
-            if (_timeoutWatch is not null)
-            {
-                _timeoutWatch.Reset();
-            }
+            _timeoutWatch?.Reset();
         };
     }
 
@@ -266,6 +264,45 @@ public sealed class Interpreter
                         if (destroyObject.Object is not null)
                         {
                             _ctx.DestroyObject(GetValue(destroyObject.Object, environment).Int);
+                        }
+                    }
+
+                    break;
+
+                // **************************************** Sound ****************************************
+                case 264:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var playSound = (PlaySoundStatementSyntax)statement;
+
+                        // TODO: figure out if the defaults are correct
+                        float volume = playSound.Volume is null ? 1f : GetValue(playSound.Volume, environment).Float;
+                        float pitch = playSound.Pitch is null ? 1f : GetValue(playSound.Pitch, environment).Float;
+
+                        environment.BlockData[playSound.Position] = _ctx.PlaySound(volume, pitch, playSound.Sound);
+                    }
+
+                    break;
+                case 397:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var stopSound = (StopSoundStatementSyntax)statement;
+
+                        if (stopSound.Channel is not null)
+                        {
+                            _ctx.StopSound(GetValue(stopSound.Channel, environment).Float);
+                        }
+                    }
+
+                    break;
+                case 391:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var volumePitch = (VolumePitchStatementSyntax)statement;
+
+                        if (volumePitch.Channel is not null)
+                        {
+                            _ctx.AdjustVolumePitch(GetValue(volumePitch.Channel, environment).Float, GetValue(volumePitch.Volume, environment).Float, GetValue(volumePitch.Pitch, environment).Float);
                         }
                     }
 
@@ -725,6 +762,15 @@ public sealed class Interpreter
                     var createObject = (CreateObjectStatementSyntax)terminal.Node;
 
                     return new TerminalOutput(new RuntimeValue((int)environment.BlockData.GetValueOrDefault(createObject.Position, 0)));
+                }
+
+            // **************************************** Sound ****************************************
+            case 264:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var playSound = (PlaySoundStatementSyntax)terminal.Node;
+
+                    return new TerminalOutput(new RuntimeValue((float)environment.BlockData.GetValueOrDefault(playSound.Position, -1f)));
                 }
 
             // **************************************** Control ****************************************
