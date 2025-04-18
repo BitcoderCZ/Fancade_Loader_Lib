@@ -1,4 +1,6 @@
-﻿namespace FancadeLoaderLib.Runtime;
+﻿using System.Numerics;
+
+namespace FancadeLoaderLib.Runtime;
 
 internal readonly struct VariableManager
 {
@@ -51,7 +53,12 @@ internal readonly struct VariableManager
                 newLen = index + 1;
             }
 
+            int oldLength = item.Values.Length;
+
             Array.Resize(ref item.Values, newLen);
+
+            // make sure that if this variable is of type rotation the values are valid, only the last float is set to 1, so doesn't affect any other type
+            Array.Fill(item.Values, new RuntimeValue(Quaternion.Identity), oldLength, newLen - oldLength);
         }
 
         if (index >= item.Length)
