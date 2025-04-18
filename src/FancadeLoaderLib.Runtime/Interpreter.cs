@@ -20,7 +20,7 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime;
 
-public sealed class Interpreter
+public sealed class Interpreter : IAstRunner
 {
     private static readonly byte3 PosOut02 = TerminalDef.GetOutPosition(0, 2, 2);
     private static readonly byte3 PosOut12 = TerminalDef.GetOutPosition(1, 2, 2);
@@ -495,7 +495,9 @@ public sealed class Interpreter
                         var inspect = (InspectStatementSyntax)statement;
                         if (inspect.Input is not null)
                         {
-                            _ctx.InspectValue(GetOutput(inspect.Input, environment), inspect.Type, environment.AST.PrefabId, inspect.Position);
+                            var output = GetOutput(inspect.Input, environment);
+
+                            _ctx.InspectValue(output.GetValue(_variableAccessor), inspect.Type, output.IsReference ? GetVariable(output.Reference.VariableId).Name : null, environment.AST.PrefabId, inspect.Position);
                         }
                     }
 

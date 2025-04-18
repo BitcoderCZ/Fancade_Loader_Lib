@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>13</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FancadeLoaderLib.Editing\FancadeLoaderLib.Editing.csproj" />
+    <ProjectReference Include="..\FancadeLoaderLib.Runtime\FancadeLoaderLib.Runtime.csproj" />
+    <ProjectReference Include="..\FancadeLoaderLib\FancadeLoaderLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MathUtils">
+      <HintPath>..\MathUtils.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

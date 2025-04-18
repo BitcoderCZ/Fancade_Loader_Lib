@@ -76,5 +76,5 @@ public abstract class RuntimeContext : IRuntimeContext
     public abstract float2 WorldToScreen(float3 worldPos);
 
     // **************************************** Values ****************************************
-    public abstract void InspectValue(TerminalOutput output, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
+    public abstract void InspectValue(RuntimeValue value, SignalType type, string? variableName, ushort prefabId, ushort3 inspectBlockPosition);
 }
