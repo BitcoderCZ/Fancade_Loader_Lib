@@ -1,11 +1,16 @@
 ﻿using FancadeLoaderLib.Editing.Scripting.Settings;
 using MathUtils.Vectors;
+using System.Numerics;
 
 namespace FancadeLoaderLib.Runtime;
 
 public abstract class RuntimeContext : IRuntimeContext
 {
     protected FcRandom rng = new();
+
+    public abstract float2 ScreenSize { get; }
+
+    public abstract float3 Accelerometer { get; }
 
     public abstract long CurrentFrame { get; }
 
@@ -17,8 +22,27 @@ public abstract class RuntimeContext : IRuntimeContext
     public virtual float GetRandomValue(float min, float max)
         => rng.NextSingle(min, max);
 
-    public abstract void InspectValue(TerminalOutput output, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
+    // **************************************** Game ****************************************
+    public abstract void Win(int delay);
 
+    public abstract void Lose(int delay);
+
+    public abstract void SetScore(float? score, float? coins, Ranking ranking);
+
+    public abstract void SetCamera(float3? position, Quaternion? rotation, float? range, bool perspective);
+
+    public abstract void SetLight(float3? position, Quaternion? rotation);
+
+    public abstract void MenuItem(VariableReference? variable, int picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
+
+    // **************************************** Objects ****************************************
+    public abstract int GetObjectId(int3 position, byte3 voxelPosition);
+
+    public abstract float3 GetObjectPosition(int id);
+
+    public abstract int CloneObject(int id);
+
+    // **************************************** Control ****************************************
     public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 
     public abstract bool TryGetSwipe(out float3 direction);
@@ -29,11 +53,11 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract bool TryGetCollision(int firstObject, out int secondObject, out float impulse, out float3 normal);
 
+    // **************************************** Math ****************************************
     public abstract (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
 
     public abstract float2 WorldToScreen(float3 worldPos);
 
-    public abstract int CloneObject(int id);
-
-    public abstract float3 GetObjectPosition(int id);
+    // **************************************** Values ****************************************
+    public abstract void InspectValue(TerminalOutput output, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
 }

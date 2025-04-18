@@ -21,8 +21,38 @@ public sealed partial class AST
             switch (id)
             {
                 // **************************************** Game ****************************************
+                case 252:
+                    {
+                        return new WinStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? delay) ? (byte)delay : 0);
+                    }
+
+                case 256:
+                    {
+                        return new LoseStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? delay) ? (byte)delay : 0);
+                    }
+
+                case 260:
+                    {
+                        return new SetScoreStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? delay) ? (Ranking)(byte)delay : Ranking.MostPoints);
+                    }
+
+                case 268:
+                    {
+                        return new SetCameraStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 3)), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? delay) && (byte)delay != 0);
+                    }
+
+                case 274:
+                    return new SetLightStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)));
+                case 220:
+                    return new ScreenSizeExpressionSyntax(id, pos);
+                case 224:
+                    return new AccelerometerExpressionSyntax(id, pos);
                 case 564:
                     return new CurrentFrameExpressionSyntax(id, pos);
+                case 584:
+                    {
+                        return new MenuItemStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? name) ? (string)name : string.Empty, ctx.TryGetSettingOfType(pos, 1, SettingType.Byte, out object? maxItems) ? new MaxBuyCount((byte)maxItems) : MaxBuyCount.OnOff, ctx.TryGetSettingOfType(pos, 2, SettingType.Byte, out object? priceIncrease) ? (PriceIncrease)(byte)priceIncrease : PriceIncrease.Fixed10);
+                    }
 
                 // **************************************** Control ****************************************
                 case 234:

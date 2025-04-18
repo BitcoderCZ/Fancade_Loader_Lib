@@ -8,13 +8,11 @@ using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
-using System;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using static FancadeLoaderLib.Editing.StockBlocks;
 using static FancadeLoaderLib.Runtime.Utils.ThrowHelper;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
@@ -166,6 +164,62 @@ public sealed class Interpreter
             // faster than switching on type
             switch (statement.PrefabId)
             {
+                // **************************************** Game ****************************************
+                case 252:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var win = (WinStatementSyntax)statement;
+
+                        _ctx.Win(win.Delay);
+                    }
+
+                    break;
+                case 256:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var lose = (LoseStatementSyntax)statement;
+
+                        _ctx.Lose(lose.Delay);
+                    }
+
+                    break;
+                case 260:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var setScore = (SetScoreStatementSyntax)statement;
+
+                        _ctx.SetScore(setScore.Score is null ? null : GetValue(setScore.Score, environment).Float, setScore.Coins is null ? null : GetValue(setScore.Coins, environment).Float, setScore.Ranking);
+                    }
+
+                    break;
+                case 268:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var setCamera = (SetCameraStatementSyntax)statement;
+
+                        _ctx.SetCamera(setCamera.PositionTerminal is null ? null : GetValue(setCamera.PositionTerminal, environment).Float3, setCamera.RotationTerminal is null ? null : GetValue(setCamera.RotationTerminal, environment).Quaternion, setCamera.RangeTerminal is null ? null : GetValue(setCamera.RangeTerminal, environment).Float, setCamera.Perspective);
+                    }
+
+                    break;
+                case 274:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var setLight = (SetLightStatementSyntax)statement;
+
+                        _ctx.SetLight(setLight.PositionTerminal is null ? null : GetValue(setLight.PositionTerminal, environment).Float3, setLight.RotationTerminal is null ? null : GetValue(setLight.RotationTerminal, environment).Quaternion);
+                    }
+
+                    break;
+                case 584:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var menuItem = (MenuItemStatementSyntax)statement;
+
+                        _ctx.MenuItem(menuItem.Variable is null ? null : GetOutput(menuItem.Variable, environment).Reference, GetValue(menuItem.Picture, environment).Int, menuItem.Name, menuItem.MaxBuyCount, menuItem.PriceIncrease);
+                    }
+
+                    break;
+
                 // **************************************** Control ****************************************
                 case 234:
                     {
@@ -469,6 +523,37 @@ public sealed class Interpreter
         switch (terminal.Node.PrefabId)
         {
             // **************************************** Game ****************************************
+            case 220:
+                {
+                    Debug.Assert(terminal.Node is ScreenSizeExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(ScreenSizeExpressionSyntax)}");
+
+                    var size = _ctx.ScreenSize;
+
+                    float val;
+                    if (terminal.Position == PosOut02)
+                    {
+                        val = size.X;
+                    }
+                    else if (terminal.Position == PosOut12)
+                    {
+                        val = size.Y;
+                    }
+                    else
+                    {
+                        throw new InvalidTerminalException(terminal.Position);
+                    }
+
+                    return new TerminalOutput(new RuntimeValue(val));
+                }
+
+            case 224:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is AccelerometerExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(AccelerometerExpressionSyntax)}");
+
+                    return new TerminalOutput(new RuntimeValue(_ctx.Accelerometer));
+                }
+
             case 564:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
@@ -839,39 +924,47 @@ public sealed class Interpreter
 
             default:
                 {
-                    if (terminal.Node is OuterExpressionSyntax)
+                    switch (terminal.Node)
                     {
-                        var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
-
-                        var customStatement = (CustomStatementSyntax)outerEnvironment.AST.Nodes[environment.OuterPosition];
-
-                        foreach (var (termPos, term) in customStatement.ConnectedInputTerminals)
-                        {
-                            if (termPos == terminal.Position)
+                        case OuterExpressionSyntax:
                             {
-                                return GetOutput(term, outerEnvironment);
+                                var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
+
+                                var customStatement = (CustomStatementSyntax)outerEnvironment.AST.Nodes[environment.OuterPosition];
+
+                                foreach (var (termPos, term) in customStatement.ConnectedInputTerminals)
+                                {
+                                    if (termPos == terminal.Position)
+                                    {
+                                        return GetOutput(term, outerEnvironment);
+                                    }
+                                }
+
+                                return TerminalOutput.Disconnected;
                             }
-                        }
 
-                        return TerminalOutput.Disconnected;
-                    }
-                    else if (terminal.Node is CustomStatementSyntax custom)
-                    {
-                        var customEnvironment = (Environment)environment.BlockData[custom.Position];
-
-                        foreach (var con in custom.AST.NonVoidOutputs)
-                        {
-                            if (con.OutsidePosition == terminal.Position)
+                        case CustomStatementSyntax custom:
                             {
-                                return GetOutput(new SyntaxTerminal(custom.AST.Nodes[con.BlockPosition], con.TerminalPosition), customEnvironment);
-                            }
-                        }
+                                var customEnvironment = (Environment)environment.BlockData[custom.Position];
 
-                        return TerminalOutput.Disconnected;
-                    }
-                    else
-                    {
-                        throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                                foreach (var con in custom.AST.NonVoidOutputs)
+                                {
+                                    if (con.OutsidePosition == terminal.Position)
+                                    {
+                                        return GetOutput(new SyntaxTerminal(custom.AST.Nodes[con.BlockPosition], con.TerminalPosition), customEnvironment);
+                                    }
+                                }
+
+                                return TerminalOutput.Disconnected;
+                            }
+
+                        case ObjectExpressionSyntax:
+                            {
+                                return new TerminalOutput(new RuntimeValue(_ctx.GetObjectId(terminal.Node.Position, terminal.Position)));
+                            }
+
+                        default:
+                            throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
                     }
                 }
         }
@@ -880,7 +973,7 @@ public sealed class Interpreter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ThrowIfTimeout()
     {
-if (_timeout != Timeout.InfiniteTimeSpan)
+        if (_timeout != Timeout.InfiniteTimeSpan)
         {
             Debug.Assert(_timeoutWatch is not null, $"{nameof(_timeoutWatch)} should not be null when {nameof(_timeout)} is not infinite.");
 

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FancadeLoaderLib.Runtime.Exceptions;
+﻿namespace FancadeLoaderLib.Runtime.Exceptions;
 
 public abstract class FancadeException : Exception
 {

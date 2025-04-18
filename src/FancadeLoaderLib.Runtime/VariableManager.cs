@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace FancadeLoaderLib.Runtime;
+﻿namespace FancadeLoaderLib.Runtime;
 
 internal readonly struct VariableManager
 {

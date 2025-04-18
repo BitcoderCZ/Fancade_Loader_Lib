@@ -275,7 +275,7 @@ public sealed partial class AST
                 return false;
             }
 
-            ushort id = Prefab.Blocks.GetBlockUnchecked(pos);
+            ushort id = Prefab.Blocks.GetBlockOrDefault(pos);
 
             if (id != 0 && id < RawGame.CurrentNumbStockPrefabs)
             {
@@ -375,8 +375,8 @@ public sealed partial class AST
 
         public SyntaxTerminal? GetTerminal(ushort3 pos, byte3 voxelPos)
             => TryGetOrCreateNode(pos, out var node)
-                    ? new SyntaxTerminal(node, voxelPos)
-                    : null;
+            ? new SyntaxTerminal(node, voxelPos)
+            : null;
 
         public SyntaxTerminal? GetConnectedTerminal(ushort3 pos, byte3 voxelPos)
         {
@@ -384,9 +384,26 @@ public sealed partial class AST
             {
                 if (connection.ToVoxel == voxelPos)
                 {
-                    return connection.IsFromOutside
-                        ? new SyntaxTerminal(new OuterExpressionSyntax(Prefab.Id, ushort3.One * Connection.IsFromToOutsideValue), (byte3)connection.FromVoxel)
-                        : GetTerminal(connection.From, (byte3)connection.FromVoxel);
+                    if (connection.IsFromOutside)
+                    {
+                        return (SyntaxTerminal?)new SyntaxTerminal(new OuterExpressionSyntax(Prefab.Id, ushort3.One * Connection.IsFromToOutsideValue), (byte3)connection.FromVoxel);
+                    }
+                    else
+                    {
+                        var terminal = GetTerminal(connection.From, (byte3)connection.FromVoxel);
+
+                        if (terminal is null)
+                        {
+                            ushort id = Prefab.Blocks.GetBlockOrDefault(connection.From);
+
+                            if (id != 0)
+                            {
+                                terminal = new SyntaxTerminal(new ObjectExpressionSyntax(id, connection.From), (byte3)connection.FromVoxel);
+                            }
+                        }
+
+                        return terminal;
+                    }
                 }
             }
 

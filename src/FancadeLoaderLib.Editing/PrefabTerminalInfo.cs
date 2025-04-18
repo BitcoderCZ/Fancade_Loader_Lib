@@ -77,7 +77,7 @@ public readonly struct PrefabTerminalInfo
                 // isInput always true for terminals of custom prefabs for... reasons???
                 if (prefab.Id >= RawGame.CurrentNumbStockPrefabs)
                 {
-                    isInput = dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX; 
+                    isInput = dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX;
                 }
                 else
                 {

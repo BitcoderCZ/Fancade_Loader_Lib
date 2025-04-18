@@ -1,16 +1,40 @@
 ﻿using FancadeLoaderLib.Editing.Scripting.Settings;
 using MathUtils.Vectors;
+using System.Numerics;
 
 namespace FancadeLoaderLib.Runtime;
 
 public interface IRuntimeContext
 {
+    float2 ScreenSize { get; }
+
+    float3 Accelerometer { get; }
+
     long CurrentFrame { get; }
 
     bool TakingBoxArt { get; }
 
-    void InspectValue(TerminalOutput output, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
+    // **************************************** Game ****************************************
+    void Win(int delay);
 
+    void Lose(int delay);
+
+    void SetScore(float? score, float? coins, Ranking ranking);
+
+    void SetCamera(float3? position, Quaternion? rotation, float? range, bool perspective);
+
+    void SetLight(float3? position, Quaternion? rotation);
+
+    void MenuItem(VariableReference? variable, int picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
+
+    // **************************************** Objects ****************************************
+    int GetObjectId(int3 position, byte3 voxelPosition);
+
+    float3 GetObjectPosition(int id);
+
+    int CloneObject(int id);
+
+    // **************************************** Control ****************************************
     bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 
     bool TryGetSwipe(out float3 direction);
@@ -21,6 +45,7 @@ public interface IRuntimeContext
 
     bool TryGetCollision(int firstObject, out int secondObject, out float impulse, out float3 normal);
 
+    // **************************************** Math ****************************************
     void SetRandomSeed(float seed);
 
     float GetRandomValue(float min, float max);
@@ -29,7 +54,6 @@ public interface IRuntimeContext
 
     float2 WorldToScreen(float3 worldPos);
 
-    float3 GetObjectPosition(int id);
-
-    int CloneObject(int id);
+    // **************************************** Values ****************************************
+    void InspectValue(TerminalOutput output, SignalType type, ushort prefabId, ushort3 inspectBlockPosition);
 }
