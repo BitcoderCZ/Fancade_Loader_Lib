@@ -42,7 +42,7 @@ public sealed class AstCompiler
         return compiler.WriteAll();
     }
 
-    public static Action? Run(string code, IRuntimeContext ctx)
+    public static IAstRunner? Compile(string code, IRuntimeContext ctx)
     {
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp13));
 
@@ -94,11 +94,7 @@ public sealed class AstCompiler
                 // create instance of the desired class and call the desired function
                 Type type = assembly.GetType("FancadeLoaderLib.Runtime.Compiled.Generated.CompiledAST")!;
                 object obj = Activator.CreateInstance(type, [ctx])!;
-                return (Action)type.InvokeMember("RunAll",
-                    BindingFlags.Default | BindingFlags.InvokeMethod,
-                    null,
-                    obj,
-                    [])!;
+                return (IAstRunner)obj;
             }
         }
     }
@@ -115,7 +111,7 @@ public sealed class AstCompiler
 
             """);
 
-        using (_writer.CurlyIndent("public sealed class CompiledAST"))
+        using (_writer.CurlyIndent("public sealed class CompiledAST : IAstRunner"))
         {
             _writer.WriteLine("""
                 private readonly IRuntimeContext _ctx;
@@ -138,7 +134,7 @@ public sealed class AstCompiler
                     """);
             }
 
-            using (_writer.CurlyIndent("public Action RunAll()"))
+            using (_writer.CurlyIndent("public Action RunFrame()"))
             {
                 WriteEntryPoint(_ast.NotConnectedVoidInputs.First());
 
