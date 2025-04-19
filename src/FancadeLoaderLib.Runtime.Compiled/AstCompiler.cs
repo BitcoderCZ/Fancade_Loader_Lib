@@ -7,6 +7,8 @@ using MathUtils.Vectors;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
+using Microsoft.Extensions.ObjectPool;
+using System;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
 using System.Globalization;
@@ -24,6 +26,8 @@ public sealed class AstCompiler
     private readonly IndentedTextWriter _writer;
 
     private readonly Dictionary<Variable, string> _varToName = [];
+
+    private readonly ObjectPool<IndentedTextWriter> _writerPool = new DefaultObjectPoolProvider().Create(new IndentedTextWriterPoolPolicy());
 
     public AstCompiler(AST ast)
     {
@@ -138,6 +142,7 @@ public sealed class AstCompiler
             {
                 WriteEntryPoint(_ast.NotConnectedVoidInputs.First());
 
+                _writer.WriteLine();
                 _writer.WriteLine("""
                     return () => { };
                     """);
@@ -192,6 +197,33 @@ public sealed class AstCompiler
 
                         _items[index] = value;
                     }
+                }
+
+                public readonly struct Ref
+                {
+                    private readonly FcList<T>? _list;
+                    private readonly int _index;
+
+                    public Ref(FcList<T>? list, int index)
+                    {
+                        _list = list;
+                        _index = index;
+                    }
+
+                    public T Value
+                    {
+                        get => _list is null ? DefaultValue : _list[_index];
+                        set
+                        {
+                            if (_list is not null)
+                            {
+                                _list[_index] = value;
+                            }
+                        }
+                    }
+
+                    public Ref Add(int value)
+                        => new Ref(_list, _index + value);
                 }
             }
             """);
@@ -249,7 +281,7 @@ public sealed class AstCompiler
                         var info = WriteExpression(inspect.Input, false, writer);
 
                         writer.WriteLine($"""
-                            ), SignalType.{Enum.GetName(typeof(SignalType), info.Type)}, "{(info.Variable is null ? string.Empty : info.Variable.Value.Name)}", {_ast.PrefabId}, new ushort3({pos.X}, {pos.Y}, {pos.Z}));
+                            ), SignalType.{Enum.GetName(typeof(SignalType), info.Type)}, "{(info.VariableName is null ? string.Empty : info.VariableName)}", {_ast.PrefabId}, new ushort3({pos.X}, {pos.Y}, {pos.Z}));
                             """);
                     }
                 }
@@ -275,12 +307,297 @@ public sealed class AstCompiler
                 }
 
                 break;
+            case 58 or 62 or 66 or 70 or 74 or 78:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var setPointer = (SetPointerStatementSyntax)statement;
+
+                    if (setPointer.Variable is not null && setPointer.Value is not null)
+                    {
+                        if (!TryWriteDirrectRef(setPointer.Variable, writer))
+                        {
+                            WriteExpression(setPointer.Variable, true, writer);
+
+                            writer.Write("""
+                            .Value
+                            """);
+                        }
+
+                        writer.Write(" = ");
+
+                        WriteExpression(setPointer.Value, false, writer);
+
+                        writer.WriteLine(';');
+                    }
+                }
+
+                break;
+            case 556 or 558:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(1), $"{nameof(terminalPos)} should be valid.");
+                    var incDecNumber = (IncDecNumberStatementSyntax)statement;
+
+                    if (incDecNumber.Variable is not null)
+                    {
+                        if (!TryWriteDirrectRef(incDecNumber.Variable, writer))
+                        {
+                            WriteExpression(incDecNumber.Variable, true, writer);
+
+                            writer.Write(".Value");
+                        }
+
+                        writer.WriteLine(incDecNumber.PrefabId switch
+                        {
+                            556 => "++;",
+                            558 => "--;",
+                            _ => throw new UnreachableException(),
+                        });
+                    }
+                }
+
+                break;
             default:
                 throw new NotImplementedException($"Prefab with id {statement.PrefabId} is not implemented.");
         }
 
         return statement;
     }
+
+    /*private ExpressionInfo WriteExpression(SyntaxTerminal terminal, SignalType type, IndentedTextWriter writer)
+    {
+        var poolWriter = _writerPool.Get();
+
+        try
+        {
+            var info = WriteExpression(terminal, type.IsPointer(), poolWriter);
+
+            var infoType = info.PtrType;
+            if (infoType == type)
+            {
+                writer.Write(poolWriter.InnerWriter.ToString());
+
+                return info;
+            }
+
+            switch (infoType.ToNotPointer())
+            {
+                case SignalType.Float:
+                    switch (type.ToNotPointer())
+                    {
+                        case SignalType.Float:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Vec3:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Rot:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Bool:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Obj or SignalType.Con:
+                            {
+
+                            }
+
+                            break;
+                        default:
+                            throw new UnreachableException();
+                    }
+
+                    break;
+                case SignalType.Vec3:
+                    switch (type.ToNotPointer())
+                    {
+                        case SignalType.Float:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Vec3:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Rot:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Bool:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Obj or SignalType.Con:
+                            {
+
+                            }
+
+                            break;
+                        default:
+                            throw new UnreachableException();
+                    }
+
+                    break;
+                case SignalType.Rot:
+                    switch (type.ToNotPointer())
+                    {
+                        case SignalType.Float:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Vec3:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Rot:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Bool:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Obj or SignalType.Con:
+                            {
+
+                            }
+
+                            break;
+                        default:
+                            throw new UnreachableException();
+                    }
+
+                    break;
+                case SignalType.Bool:
+                    switch (type.ToNotPointer())
+                    {
+                        case SignalType.Float:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Vec3:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Rot:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Bool:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Obj or SignalType.Con:
+                            {
+
+                            }
+
+                            break;
+                        default:
+                            throw new UnreachableException();
+                    }
+
+                    break;
+                case SignalType.Obj or SignalType.Con:
+                    switch (type.ToNotPointer())
+                    {
+                        case SignalType.Float:
+                            {
+                                writer.Write("(float)");
+                            }
+
+                            break;
+                        case SignalType.Vec3:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Rot:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Bool:
+                            {
+
+                            }
+
+                            break;
+                        case SignalType.Obj or SignalType.Con:
+                            break; // both types are int
+                        default:
+                            throw new UnreachableException();
+                    }
+
+                    break;
+                default:
+                    throw new UnreachableException();
+            }
+
+            writer.Write(poolWriter.InnerWriter.ToString());
+
+            if (type.IsPointer() && !infoType.IsPointer())
+            {
+                // TODO
+                throw new Exception();
+            }
+            else if (!type.IsPointer() && infoType.IsPointer())
+            {
+                writer.Write(".Value");
+            }
+
+            if (type.IsPointer())
+            {
+                Debug.Assert(info.VariableName is not null);
+                return new ExpressionInfo(new Variable(info.VariableName, type));
+            }
+            else
+            {
+                return new ExpressionInfo(type);
+            }
+        }
+        finally
+        {
+            _writerPool.Return(poolWriter);
+        }
+    }*/
 
     private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, IndentedTextWriter writer)
     {
@@ -290,6 +607,7 @@ public sealed class AstCompiler
             case 36 or 38 or 42 or 449 or 451:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, terminal.Node.PrefabId is 38 or 42 ? 2 : 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
                     var literal = (LiteralExpressionSyntax)terminal.Node;
 
                     switch (terminal.Node.PrefabId)
@@ -317,24 +635,157 @@ public sealed class AstCompiler
             case 46 or 48 or 50 or 52 or 54 or 56:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    var getVar = (GetVariableExpressionSyntax)terminal.Node;
+                    var getVariable = (GetVariableExpressionSyntax)terminal.Node;
 
                     if (asReference)
                     {
-                        throw new NotImplementedException();
+                        writer.Write($"""
+                            new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type)}>.Ref({GetVariableName(getVariable.Variable)}, 0)
+                            """);
                     }
                     else
                     {
                         writer.Write($"""
-                            {GetVariableName(getVar.Variable)}[0]
+                            {GetVariableName(getVariable.Variable)}[0]
                             """);
                     }
 
-                    return new ExpressionInfo(getVar.Variable);
+                    return new ExpressionInfo(getVariable.Variable);
+                }
+
+            case 82 or 461 or 465 or 469 or 86 or 473:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var list = (ListExpressionSyntax)terminal.Node;
+
+                    var type = terminal.Node.PrefabId switch
+                    {
+                        82 => SignalType.Float,
+                        461 => SignalType.Vec3,
+                        465 => SignalType.Rot,
+                        469 => SignalType.Bool,
+                        86 => SignalType.Obj,
+                        473 => SignalType.Con,
+                        _ => throw new UnreachableException(),
+                    };
+
+                    if (list.Variable is null)
+                    {
+                        if (asReference)
+                        {
+                            writer.Write($"""
+                                new FcList<{SignalTypeToCSharpName(type)}>.Ref(null, 0)
+                                """);
+                        }
+                        else
+                        {
+                            writer.Write(SignalTypeToDefaultValue(type));
+                        }
+
+                        return new ExpressionInfo(type);
+                    }
+
+                    if (list.Index is null)
+                    {
+                        return WriteExpression(list.Variable, asReference, writer);
+                    }
+                    else if (list.Variable.Node is GetVariableExpressionSyntax getVariable)
+                    {
+                        if (asReference)
+                        {
+                            writer.Write($"""
+                                new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type)}>.Ref({GetVariableName(getVariable.Variable)}, (int)
+                                """);
+
+                            WriteExpression(list.Index, false, writer);
+
+                            writer.Write(')');
+                        }
+                        else
+                        {
+                            writer.Write($"""
+                                {GetVariableName(getVariable.Variable)}[(int)
+                                """);
+
+                            WriteExpression(list.Index, false, writer);
+
+                            writer.Write(']');
+                        }
+
+                        return new ExpressionInfo(getVariable.Variable);
+                    }
+
+                    var varInfo = WriteExpression(list.Variable, true, writer);
+
+                    writer.Write("""
+                            .Add((int)
+                            """);
+
+                    WriteExpression(list.Index, false, writer);
+
+                    writer.Write(")");
+
+                    if (!asReference)
+                    {
+                        writer.Write(".Value");
+                    }
+
+                    return varInfo;
                 }
 
             default:
                 throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+        }
+    }
+
+    private bool TryWriteDirrectRef(SyntaxTerminal terminal, IndentedTextWriter writer)
+    {
+        switch (terminal.Node.PrefabId)
+        {
+            case 46 or 48 or 50 or 52 or 54 or 56:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var getVariable = (GetVariableExpressionSyntax)terminal.Node;
+
+                    writer.Write($"""
+                            {GetVariableName(getVariable.Variable)}[0]
+                            """);
+
+                    return true;
+                }
+
+            case 82 or 461 or 465 or 469 or 86 or 473:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var list = (ListExpressionSyntax)terminal.Node;
+
+                    if (list.Variable is null)
+                    {
+                        return false;
+                    }
+
+                    if (list.Index is null)
+                    {
+                        return TryWriteDirrectRef(list.Variable, writer);
+                    }
+                    else if (list.Variable.Node is GetVariableExpressionSyntax getVariable)
+                    {
+                        writer.Write($"""
+                            {GetVariableName(getVariable.Variable)}[(int)
+                            """);
+
+                        WriteExpression(list.Index, false, writer);
+
+                        writer.Write(']');
+
+                        return true;
+                    }
+
+                    return false;
+                }
+
+            default:
+                return false;
         }
     }
 
@@ -385,7 +836,7 @@ public sealed class AstCompiler
         return name;
     }
 
-    private string SignalTypeToCSharpName(SignalType type)
+    private static string SignalTypeToCSharpName(SignalType type)
         => type.ToNotPointer() switch
         {
             SignalType.Float => "float",
@@ -397,24 +848,52 @@ public sealed class AstCompiler
             _ => throw new UnreachableException(),
         };
 
+    private static string SignalTypeToDefaultValue(SignalType type)
+        => type.ToNotPointer() switch
+        {
+            SignalType.Float => "0f",
+            SignalType.Vec3 => "float3.Zero",
+            SignalType.Rot => "Quaternion.Identity",
+            SignalType.Bool => "false",
+            SignalType.Obj => "0",
+            SignalType.Con => "0",
+            _ => throw new UnreachableException(),
+        };
+
     private static string ToString(float value)
         => value.ToString("G9", CultureInfo.InvariantCulture);
 
     private readonly struct ExpressionInfo
     {
         public readonly SignalType Type;
-        public readonly Variable? Variable;
+        public readonly string? VariableName;
 
         public ExpressionInfo(SignalType type)
         {
-            Type = type;
-            Variable = null;
+            Type = type.ToNotPointer();
         }
 
         public ExpressionInfo(Variable variable)
         {
-            Type = variable.Type;
-            Variable = variable;
+            Type = variable.Type.ToNotPointer();
+            VariableName = variable.Name;
+        }
+
+        public bool IsPointer => VariableName is not null;
+
+        public SignalType PtrType => IsPointer ? Type.ToPointer() : Type;
+    }
+
+    private class IndentedTextWriterPoolPolicy : PooledObjectPolicy<IndentedTextWriter>
+    {
+        public override IndentedTextWriter Create()
+            => new IndentedTextWriter(new StringWriter());
+
+        public override bool Return(IndentedTextWriter obj)
+        {
+            ((StringWriter)obj.InnerWriter).GetStringBuilder().Clear();
+
+            return true;
         }
     }
 }
