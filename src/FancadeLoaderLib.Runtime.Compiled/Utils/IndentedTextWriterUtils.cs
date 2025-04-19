@@ -4,7 +4,7 @@ namespace FancadeLoaderLib.Runtime.Compiled.Utils;
 
 internal static class IndentedTextWriterUtils
 {
-    public static IDisposable CurlyIndent(this IndentedTextWriter writer, string? openingLine = null)
+    public static IDisposable CurlyIndent(this IndentedTextWriter writer, string? openingLine = null, bool newLine = true)
     {
         if (openingLine is not null)
         {
@@ -19,7 +19,11 @@ internal static class IndentedTextWriterUtils
         {
             writer.Indent--;
             writer.WriteLine('}');
-            writer.WriteLine();
+
+            if (newLine)
+            {
+                writer.WriteLine();
+            }
         });
     }
 

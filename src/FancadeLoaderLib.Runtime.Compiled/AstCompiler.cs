@@ -1,6 +1,7 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Runtime.Compiled.Utils;
 using FancadeLoaderLib.Runtime.Syntax;
+using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using MathUtils.Vectors;
@@ -140,7 +141,7 @@ public sealed class AstCompiler
 
             using (_writer.CurlyIndent("public Action RunFrame()"))
             {
-                WriteEntryPoint(_ast.NotConnectedVoidInputs.First());
+                WriteEntryPoint(_ast.NotConnectedVoidInputs.First(), _writer);
 
                 _writer.WriteLine();
                 _writer.WriteLine("""
@@ -231,7 +232,7 @@ public sealed class AstCompiler
         return _writerBuilder.ToString()!;
     }
 
-    private void WriteEntryPoint((ushort3 Pos, byte3 TerminalPos) entryPoint)
+    private void WriteEntryPoint((ushort3 Pos, byte3 TerminalPos) entryPoint, IndentedTextWriter writer)
     {
         Stack<(ushort3, byte3)> stack = [];
 
@@ -260,6 +261,24 @@ public sealed class AstCompiler
         }
     }
 
+    private void WriteConnected(StatementSyntax statement, byte3 terminalPos, IndentedTextWriter writer)
+    {
+        foreach (var connection in statement.OutVoidConnections)
+        {
+            if (connection.FromVoxel == terminalPos)
+            {
+                if (connection.IsToOutside)
+                {
+                    throw new NotImplementedException();
+                }
+                else
+                {
+                    WriteEntryPoint((connection.To, (byte3)connection.ToVoxel), writer);
+                }
+            }
+        }
+    }
+
     private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, IndentedTextWriter writer)
     {
         var statement = (StatementSyntax)_ast.Nodes[pos];
@@ -267,6 +286,38 @@ public sealed class AstCompiler
         // faster than switching on type
         switch (statement.PrefabId)
         {
+            // **************************************** Control ****************************************
+            case 234:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var ifStatement = (IfStatementSyntax)statement;
+
+                    if (ifStatement.Condition is not null)
+                    {
+                        writer.Write("""
+                            if (
+                            """);
+
+                        WriteExpression(ifStatement.Condition, false, writer);
+
+                        writer.WriteLine(')');
+
+                        using (writer.CurlyIndent(newLine: false))
+                        {
+                            WriteConnected(ifStatement, TerminalDef.GetOutPosition(0, 2, 2), writer);
+                        }
+
+                        writer.WriteLine("else");
+
+                        using (writer.CurlyIndent())
+                        {
+                            WriteConnected(ifStatement, TerminalDef.GetOutPosition(1, 2, 2), writer);
+                        }
+                    }
+                }
+
+                break;
+
             // **************************************** Value ****************************************
             case 16 or 20 or 24 or 28 or 32:
                 {
@@ -601,6 +652,7 @@ public sealed class AstCompiler
 
     private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, IndentedTextWriter writer)
     {
+        // faster than switching on type
         switch (terminal.Node.PrefabId)
         {
             // **************************************** Value ****************************************
