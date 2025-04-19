@@ -34,7 +34,7 @@ public sealed class AstCompiler
 
     private readonly ObjectPool<IndentedTextWriter> _writerPool = new DefaultObjectPoolProvider().Create(new IndentedTextWriterPoolPolicy());
 
-    private readonly Queue<EntryPoint> _nodesToWrite = [];
+    private readonly Queue<(EntryPoint EntryPoint, SignalType Type)> _nodesToWrite = [];
     private readonly HashSet<EntryPoint> _writtenNodes = [];
 
     public AstCompiler(AST ast)
@@ -148,7 +148,7 @@ public sealed class AstCompiler
             foreach (var (environmentIndex, variable) in _environments[0].AST.GlobalVariables.Select(var => (-1, var)).Concat(_variables))
             {
                 _writer.WriteLine($"""
-                    private readonly FcList<{SignalTypeToCSharpName(variable.Type)}> {GetVariableName(environmentIndex, variable)} = new();
+                    private readonly FcList<{SignalTypeToCSharpName(variable.Type.ToNotPointer())}> {GetVariableName(environmentIndex, variable)} = new();
                     """);
             }
 
@@ -179,14 +179,27 @@ public sealed class AstCompiler
 
             while (_nodesToWrite.TryDequeue(out var item))
             {
-                if (!_writtenNodes.Add(item))
+                var (entryPoint, type) = item;
+
+                if (!_writtenNodes.Add(entryPoint))
                 {
                     continue;
                 }
 
-                using (_writer.CurlyIndent($"private void {GetEntryPointMethodName(item)}()"))
+                using (_writer.CurlyIndent($"private {SignalTypeToCSharpName(type)} {GetEntryPointMethodName(entryPoint)}()"))
                 {
-                    WriteEntryPoint(item, true, _writer);
+                    if (type == SignalType.Void)
+                    {
+                        WriteEntryPoint(entryPoint, true, _writer);
+                    } else
+                    {
+                        _writer.Write("return ");
+
+                        var env = _environments[entryPoint.EnvironmentIndex];
+                        WriteExpression(new SyntaxTerminal(env.AST.Nodes[entryPoint.BlockPos], entryPoint.TerminalPos), type.IsPointer(), env, true, _writer);
+
+                        _writer.WriteLine(';');
+                    }
                 }
             }
         }
@@ -365,7 +378,7 @@ public sealed class AstCompiler
             {
                 var entryPoint = new EntryPoint(environment.Index, pos, terminalPos);
                 writer.WriteLine($"{GetEntryPointMethodName(entryPoint)}();");
-                _nodesToWrite.Enqueue(entryPoint);
+                _nodesToWrite.Enqueue((entryPoint, SignalType.Void));
                 return statement;
             }
         }
@@ -738,7 +751,32 @@ public sealed class AstCompiler
     }*/
 
     private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, Environment environment, IndentedTextWriter writer)
+        => WriteExpression(terminal, asReference, environment, false, writer);
+
+    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, Environment environment, bool direct, IndentedTextWriter writer)
     {
+        if (!direct)
+        {
+            int conFromCount = 0;
+
+            foreach (var con in environment.AST.ConnectionsFrom[terminal.Node.Position])
+            {
+                if (con.FromVoxel == terminal.Position)
+                {
+                    conFromCount++;
+                }
+            }
+
+            if (conFromCount > 1)
+            {
+                var entryPoint = new EntryPoint(environment.Index, terminal.Node.Position, terminal.Position);
+                writer.Write($"{GetEntryPointMethodName(entryPoint)}()");
+                ExpressionInfo info = GetExpressionInfo(terminal, asReference);
+                _nodesToWrite.Enqueue((entryPoint, info.PtrType));
+                return info;
+            }
+        }
+
         // faster than switching on type
         switch (terminal.Node.PrefabId)
         {
@@ -779,7 +817,7 @@ public sealed class AstCompiler
                     if (asReference)
                     {
                         writer.Write($"""
-                            new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type)}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, 0)
+                            new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type.ToNotPointer())}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, 0)
                             """);
                     }
                     else
@@ -833,7 +871,7 @@ public sealed class AstCompiler
                         if (asReference)
                         {
                             writer.Write($"""
-                                new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type)}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, (int)
+                                new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type.ToNotPointer())}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, (int)
                                 """);
 
                             WriteExpression(list.Index, false, environment, writer);
@@ -868,6 +906,77 @@ public sealed class AstCompiler
                     {
                         writer.Write(".Value");
                     }
+
+                    return varInfo;
+                }
+
+            default:
+                throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+        }
+    }
+
+    private static ExpressionInfo GetExpressionInfo(SyntaxTerminal terminal, bool asReference)
+    {
+        // faster than switching on type
+        switch (terminal.Node.PrefabId)
+        {
+            // **************************************** Value ****************************************
+            case 36 or 38 or 42 or 449 or 451:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, terminal.Node.PrefabId is 38 or 42 ? 2 : 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is LiteralExpressionSyntax);
+                    Debug.Assert(!asReference);
+
+                    return terminal.Node.PrefabId switch
+                    {
+                        36 => new ExpressionInfo(SignalType.Float),
+                        38 => new ExpressionInfo(SignalType.Vec3),
+                        42 => new ExpressionInfo(SignalType.Rot),
+                        449 or 451 => new ExpressionInfo(SignalType.Bool),
+                        _ => throw new UnreachableException(),
+                    };
+                }
+
+            // **************************************** Variables ****************************************
+            case 46 or 48 or 50 or 52 or 54 or 56:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var getVariable = (GetVariableExpressionSyntax)terminal.Node;
+
+                    return new ExpressionInfo(getVariable.Variable);
+                }
+
+            case 82 or 461 or 465 or 469 or 86 or 473:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var list = (ListExpressionSyntax)terminal.Node;
+
+                    var type = terminal.Node.PrefabId switch
+                    {
+                        82 => SignalType.Float,
+                        461 => SignalType.Vec3,
+                        465 => SignalType.Rot,
+                        469 => SignalType.Bool,
+                        86 => SignalType.Obj,
+                        473 => SignalType.Con,
+                        _ => throw new UnreachableException(),
+                    };
+
+                    if (list.Variable is null)
+                    {
+                        return new ExpressionInfo(type);
+                    }
+
+                    if (list.Index is null)
+                    {
+                        return GetExpressionInfo(list.Variable, asReference);
+                    }
+                    else if (list.Variable.Node is GetVariableExpressionSyntax getVariable)
+                    {
+                        return new ExpressionInfo(getVariable.Variable);
+                    }
+
+                    var varInfo = GetExpressionInfo(list.Variable, true);
 
                     return varInfo;
                 }
@@ -991,12 +1100,19 @@ public sealed class AstCompiler
     private static string SignalTypeToCSharpName(SignalType type)
         => type.ToNotPointer() switch
         {
+            SignalType.Void => "void",
             SignalType.Float => "float",
-            SignalType.Vec3 => nameof(float3),
-            SignalType.Rot => nameof(Quaternion),
+            SignalType.FloatPtr => "FcList<float>.Ref",
+            SignalType.Vec3 => "float3",
+            SignalType.Vec3Ptr => "FcList<float3>.Ref",
+            SignalType.Rot => "Quaternion",
+            SignalType.RotPtr => "FcList<Quaternion>.Ref",
             SignalType.Bool => "bool",
+            SignalType.BoolPtr => "FcList<bool>.Ref",
             SignalType.Obj => "int",
+            SignalType.ObjPtr => "FcList<int>.Ref",
             SignalType.Con => "int",
+            SignalType.ConPtr => "FcList<int>.Ref",
             _ => throw new UnreachableException(),
         };
 
