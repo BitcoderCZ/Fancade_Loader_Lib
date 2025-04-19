@@ -2,7 +2,7 @@
 
 namespace FancadeLoaderLib.Runtime.Utils;
 
-public sealed class QuaternionUtils
+public static class QuaternionUtils
 {
     public static Quaternion AxisAngle(Vector3 axis, float angle)
     {

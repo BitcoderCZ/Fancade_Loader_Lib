@@ -3,6 +3,7 @@ using FancadeLoaderLib.Runtime.Compiled.Utils;
 using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
+using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using MathUtils.Vectors;
@@ -148,7 +149,7 @@ public sealed class AstCompiler
             foreach (var (environmentIndex, variable) in _environments[0].AST.GlobalVariables.Select(var => (-1, var)).Concat(_variables))
             {
                 _writer.WriteLine($"""
-                    private readonly FcList<{SignalTypeToCSharpName(variable.Type.ToNotPointer())}> {GetVariableName(environmentIndex, variable)} = new();
+                    private readonly FcList<{GetCSharpName(variable.Type.ToNotPointer())}> {GetVariableName(environmentIndex, variable)} = new();
                     """);
             }
 
@@ -186,12 +187,13 @@ public sealed class AstCompiler
                     continue;
                 }
 
-                using (_writer.CurlyIndent($"private {SignalTypeToCSharpName(type)} {GetEntryPointMethodName(entryPoint)}()"))
+                using (_writer.CurlyIndent($"private {GetCSharpName(type)} {GetEntryPointMethodName(entryPoint)}()"))
                 {
                     if (type == SignalType.Void)
                     {
                         WriteEntryPoint(entryPoint, true, _writer);
-                    } else
+                    }
+                    else
                     {
                         _writer.Write("return ");
 
@@ -281,6 +283,114 @@ public sealed class AstCompiler
                         => new Ref(_list, _index + value);
                 }
             }
+
+            internal static class VectorUtils
+            {
+                private const float DegToRad = MathF.PI / 180f;
+
+                public static Vector3 ToNumerics(this float3 value)
+                    => new Vector3(value.X, value.Y, value.Z);
+
+                public static float3 ToFloat3(this Vector3 value)
+                    => new float3(value.X, value.Y, value.Z);
+
+                public static Quaternion ToQuatDeg(this float3 value)
+                    => Quaternion.CreateFromYawPitchRoll(value.Y * DegToRad, value.X * DegToRad, value.Z * DegToRad);
+
+                public static float3 LineVsPlane(Vector3 lineFrom, Vector3 lineTo, Vector3 planePoint, Vector3 planeNormal)
+                {
+                    float t = Vector3.Dot(planePoint - lineFrom, planeNormal) / Vector3.Dot(lineTo - lineFrom, planeNormal);
+                    return (lineFrom + (t * (lineTo - lineFrom))).ToFloat3();
+                }
+            }
+
+            internal static class QuaternionUtils
+            {
+                public static Quaternion AxisAngle(Vector3 axis, float angle)
+                {
+                    angle = angle * (MathF.PI / 180f);
+
+            #if NET6_0_OR_GREATER
+                    var (sin, cos) = MathF.SinCos(angle * 0.5f);
+            #else
+                    float sin = MathF.Sin(angle * 0.5f);
+                    float cos = MathF.Cos(angle * 0.5f);
+            #endif
+
+                    return Quaternion.Normalize(new Quaternion(axis.X * sin, axis.Y * sin, axis.Z * sin, cos));
+                }
+
+                public static Quaternion LookRotation(Vector3 forward, Vector3 up)
+                {
+                    if (forward == Vector3.Zero)
+                    {
+                        return Quaternion.Identity;
+                    }
+
+                    forward = Vector3.Normalize(forward);
+                    up = Vector3.Normalize(up);
+
+                    Vector3 right = Vector3.Cross(up, forward);
+                    if (right == Vector3.Zero)
+                    {
+                        right = Vector3.UnitX;
+                    }
+                    else
+                    {
+                        right = Vector3.Normalize(right);
+                    }
+
+                    up = Vector3.Cross(forward, right);
+
+            #pragma warning disable SA1117 // Parameters should be on same line or separate lines
+                    Matrix4x4 rotationMatrix = new Matrix4x4(
+                        right.X, right.Y, right.Z, 0,
+                        up.X, up.Y, up.Z, 0,
+                        forward.X, forward.Y, forward.Z, 0,
+                        0, 0, 0, 1);
+            #pragma warning restore SA1117 // Parameters should be on same line or separate lines
+
+                    return Quaternion.CreateFromRotationMatrix(rotationMatrix);
+                }
+
+                public static float GetEulerX(this Quaternion rot)
+                {
+                    float pitchSin = 2.0f * ((rot.W * rot.Y) - (rot.Z * rot.X));
+
+                    if (pitchSin > 1.0f)
+                    {
+                        return 90f;
+                    }
+                    else if (pitchSin < -1.0f)
+                    {
+                        return -90f;
+                    }
+                    else
+                    {
+                        return MathF.Asin(pitchSin) * (180f / MathF.PI);
+                    }
+                }
+
+                public static float GetEulerY(this Quaternion rot)
+                {
+                    float xx = rot.X * rot.X;
+                    float yy = rot.Y * rot.Y;
+                    float zz = rot.Z * rot.Z;
+                    float ww = rot.W * rot.W;
+
+                    return MathF.Atan2(2.0f * ((rot.Y * rot.Z) + (rot.W * rot.X)), ww + xx - yy - zz) * (180f / MathF.PI);
+                }
+            
+                public static float GetEulerZ(this Quaternion rot)
+                {
+                    float xx = rot.X * rot.X;
+                    float yy = rot.Y * rot.Y;
+                    float zz = rot.Z * rot.Z;
+                    float ww = rot.W * rot.W;
+
+                    return MathF.Atan2(2.0f * ((rot.X * rot.Y) + (rot.W * rot.Z)), ww - xx - yy + zz) * (180f / MathF.PI);
+                }
+            }
             """);
 
         return _writerBuilder.ToString()!;
@@ -318,6 +428,26 @@ public sealed class AstCompiler
             var (environmentIndex, pos, terminalPos) = item;
 
             var environment = _environments[environmentIndex];
+
+            if (!direct)
+            {
+                int conToCount = 0;
+
+                foreach (var con in environment.AST.ConnectionsTo[pos])
+                {
+                    if (con.ToVoxel == terminalPos)
+                    {
+                        conToCount++;
+                    }
+                }
+
+                if (conToCount > 1)
+                {
+                    writer.WriteLine($"{GetEntryPointMethodName(item)}();");
+                    _nodesToWrite.Enqueue((item, SignalType.Void));
+                    return;
+                }
+            }
 
             var statement = WriteStatement(pos, terminalPos, environment, direct, writer);
 
@@ -361,27 +491,6 @@ public sealed class AstCompiler
     private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, Environment environment, bool direct, IndentedTextWriter writer)
     {
         var statement = (StatementSyntax)environment.AST.Nodes[pos];
-
-        if (!direct)
-        {
-            int conToCount = 0;
-
-            foreach (var con in environment.AST.ConnectionsTo[pos])
-            {
-                if (con.ToVoxel == terminalPos)
-                {
-                    conToCount++;
-                }
-            }
-
-            if (conToCount > 1)
-            {
-                var entryPoint = new EntryPoint(environment.Index, pos, terminalPos);
-                writer.WriteLine($"{GetEntryPointMethodName(entryPoint)}();");
-                _nodesToWrite.Enqueue((entryPoint, SignalType.Void));
-                return statement;
-            }
-        }
 
         // faster than switching on type
         switch (statement.PrefabId)
@@ -780,6 +889,485 @@ public sealed class AstCompiler
         // faster than switching on type
         switch (terminal.Node.PrefabId)
         {
+            // **************************************** Math ****************************************
+            case 90 or 144 or 440 or 413 or 453 or 184 or 186 or 188 or 455 or 578:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var unary = (UnaryExpressionSyntax)terminal.Node;
+
+                    SignalType outType;
+                    switch (terminal.Node.PrefabId)
+                    {
+                        case 90:
+                            outType = SignalType.Float;
+                            writer.Write('-');
+                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+
+                            break;
+                        case 144:
+                            outType = SignalType.Bool;
+                            writer.Write('!');
+                            WriteExpression(unary.Input, SignalType.Bool, environment, writer);
+
+                            break;
+                        case 440:
+                            outType = SignalType.Rot;
+                            writer.Write("Quaternion.Inverse(");
+                            WriteExpression(unary.Input, SignalType.Rot, environment, writer);
+                            writer.Write(')');
+
+                            break;
+                        case 413:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Sin(");
+                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            writer.Write(')');
+
+                            break;
+                        case 453:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Cos(");
+                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            writer.Write(')');
+
+                            break;
+                        case 184:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Round(");
+                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            writer.Write(')');
+
+                            break;
+                        case 186:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Floor(");
+                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            writer.Write(')');
+
+                            break;
+                        case 188:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Ceiling(");
+                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            writer.Write(')');
+
+                            break;
+                        case 455:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Abs(");
+                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            writer.Write(')');
+
+                            break;
+                        case 578:
+                            outType = SignalType.Vec3;
+                            WriteExpression(unary.Input, SignalType.Vec3, environment, writer);
+                            writer.Write(".Normalized()");
+
+                            break;
+                        default:
+                            throw new UnreachableException();
+                    }
+
+                    return new ExpressionInfo(outType);
+                }
+
+            case 92 or 96 or 100 or 104 or 108 or 112 or 116 or 120 or 124 or 172 or 457 or 132 or 136 or 140 or 421 or 146 or 417 or 128 or 481 or 168 or 176 or 180 or 580 or 570 or 574 or 190 or 200 or 204:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var binary = (BinaryExpressionSyntax)terminal.Node;
+
+                    const float EqualsNumbersMaxDiff = 0.001f;
+                    const float EqualsVectorsMaxDiff = 1.0000001e-06f;
+
+                    writer.Write('(');
+
+                    SignalType outType;
+
+                    switch (terminal.Node.PrefabId)
+                    {
+                        case 146:
+                            outType = SignalType.Bool;
+                            WriteExpression(binary.Input1, SignalType.Bool, environment, writer);
+                            writer.Write(" && ");
+                            WriteExpression(binary.Input2, SignalType.Bool, environment, writer);
+                            break;
+                        case 417:
+                            outType = SignalType.Bool;
+                            WriteExpression(binary.Input1, SignalType.Bool, environment, writer);
+                            writer.Write(" || ");
+                            WriteExpression(binary.Input2, SignalType.Bool, environment, writer);
+                            break;
+                        case 92:
+                            outType = SignalType.Float;
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(" + ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            break;
+                        case 96:
+                            outType = SignalType.Vec3;
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(" + ");
+                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            break;
+                        case 100:
+                            outType = SignalType.Float;
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(" - ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            break;
+                        case 104:
+                            outType = SignalType.Vec3;
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(" - ");
+                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            break;
+                        case 108:
+                            outType = SignalType.Float;
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(" * ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            break;
+                        case 112:
+                            outType = SignalType.Vec3;
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(" * ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            break;
+                        case 116:
+                            outType = SignalType.Vec3;
+                            writer.Write("Vector3.Transform(");
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(".ToNumerics(), ");
+                            WriteExpression(binary.Input2, SignalType.Rot, environment, writer);
+                            writer.Write(").ToFloat3()");
+                            break;
+                        case 120:
+                            outType = SignalType.Rot;
+                            WriteExpression(binary.Input1, SignalType.Rot, environment, writer);
+                            writer.Write(" * ");
+                            WriteExpression(binary.Input2, SignalType.Rot, environment, writer);
+                            break;
+                        case 124:
+                            outType = SignalType.Float;
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(" / ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            break;
+                        case 172:
+                            outType = SignalType.Float;
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(" % ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            break;
+                        case 457:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Pow(");
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            writer.Write(')');
+                            break;
+                        case 132:
+                            // equals numbers
+                            outType = SignalType.Bool;
+                            writer.Write("MathF.Abs(");
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(" - ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            writer.Write($") < {EqualsNumbersMaxDiff}");
+                            break;
+                        case 136:
+                            // equals vectors
+                            outType = SignalType.Bool;
+                            writer.Write('(');
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(" - ");
+                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            writer.Write($").LengthSquared < {EqualsVectorsMaxDiff}");
+                            break;
+                        case 140:
+                            // equals objects
+                            outType = SignalType.Bool;
+                            WriteExpression(binary.Input1, SignalType.Obj, environment, writer);
+                            writer.Write(" == ");
+                            WriteExpression(binary.Input2, SignalType.Obj, environment, writer);
+                            break;
+                        case 421:
+                            // equals bools
+                            outType = SignalType.Bool;
+                            WriteExpression(binary.Input1, SignalType.Bool, environment, writer);
+                            writer.Write(" == ");
+                            WriteExpression(binary.Input2, SignalType.Bool, environment, writer);
+                            break;
+                        case 128:
+                            outType = SignalType.Bool;
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(" < ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            break;
+                        case 481:
+                            outType = SignalType.Bool;
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(" > ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            break;
+                        case 168:
+                            outType = SignalType.Float;
+                            writer.Write("_ctx.GetRandomValue(");
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            writer.Write(')');
+                            break;
+                        case 176:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Min(");
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            writer.Write(')');
+                            break;
+                        case 180:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Max(");
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            writer.Write(')');
+                            break;
+                        case 580:
+                            outType = SignalType.Float;
+                            writer.Write("MathF.Log(");
+                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            writer.Write(')');
+                            break;
+                        case 570:
+                            outType = SignalType.Float;
+                            writer.Write("float3.Dot(");
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            writer.Write(')');
+                            break;
+                        case 574:
+                            outType = SignalType.Vec3;
+                            writer.Write("float3.Cross(");
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            writer.Write(')');
+                            break;
+                        case 190:
+                            outType = SignalType.Vec3;
+                            writer.Write('(');
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(" - ");
+                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            writer.Write(").Length");
+                            break;
+                        case 200:
+                            outType = SignalType.Rot;
+                            writer.Write("QuaternionUtils.AxisAngle(");
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(".ToNumerics(), ");
+                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            writer.Write(')');
+                            break;
+                        case 204:
+                            outType = SignalType.Rot;
+                            writer.Write("QuaternionUtils.LookRotation(");
+                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            writer.Write(".ToNumerics(), ");
+                            if (binary.Input2 is null)
+                            {
+                                writer.Write("Vector3.UnitY");
+                            }
+                            else
+                            {
+                                WriteExpression(binary.Input2, false, environment, writer);
+                                writer.Write(".ToNumerics()");
+                            }
+
+                            writer.Write(')');
+                            break;
+                        default:
+                            throw new UnreachableException();
+                    }
+
+                    writer.Write(')');
+
+                    return new ExpressionInfo(outType);
+                }
+
+            case 194:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var lerp = (LerpExpressionSyntax)terminal.Node;
+
+                    writer.Write("Quaternion.Lerp(");
+                    WriteExpression(lerp.From, SignalType.Rot, environment, writer);
+                    writer.Write(", ");
+                    WriteExpression(lerp.To, SignalType.Rot, environment, writer);
+                    writer.Write(", ");
+                    WriteExpression(lerp.Amount, SignalType.Float, environment, writer);
+                    writer.Write(')');
+                    return new ExpressionInfo(SignalType.Rot);
+                }
+
+            case 216:
+                {
+                    var screenToWorld = (ScreenToWorldExpressionSyntax)terminal.Node;
+
+                    writer.Write("_ctx.ScreenToWorld(new float2(");
+                    WriteExpression(screenToWorld.ScreenX, SignalType.Float, environment, writer);
+                    writer.Write(", ");
+                    WriteExpression(screenToWorld.ScreenY, SignalType.Float, environment, writer);
+                    writer.Write(')');
+
+                    if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
+                    {
+                        writer.Write(".WorldNear");
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                    {
+                        writer.Write(".WorldFar");
+                    }
+                    else
+                    {
+                        throw new InvalidTerminalException(terminal.Position);
+                    }
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 477:
+                {
+                    var worldToScreen = (WorldToScreenExpressionSyntax)terminal.Node;
+
+                    writer.Write("_ctx.WorldToScreen(");
+                    WriteExpression(worldToScreen.WorldPos, SignalType.Vec3, environment, writer);
+                    writer.Write(')');
+
+                    if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
+                    {
+                        writer.Write(".X");
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                    {
+                        writer.Write(".Y");
+                    }
+                    else
+                    {
+                        throw new InvalidTerminalException(terminal.Position);
+                    }
+
+                    return new ExpressionInfo(SignalType.Float);
+                }
+
+            case 208:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 4), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var lineVsPlane = (LineVsPlaneExpressionSyntax)terminal.Node;
+
+                    writer.Write("VectorUtils.LineVsPlane(");
+                    WriteExpression(lineVsPlane.LineFrom, SignalType.Vec3, environment, writer);
+                    writer.Write(".ToNumerics(), ");
+                    WriteExpression(lineVsPlane.LineTo, SignalType.Vec3, environment, writer);
+                    writer.Write(".ToNumerics(), ");
+                    WriteExpression(lineVsPlane.PlanePoint, SignalType.Vec3, environment, writer);
+                    writer.Write(".ToNumerics(), ");
+                    WriteExpression(lineVsPlane.PlaneNormal, SignalType.Vec3, environment, writer);
+                    writer.Write(')');
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 150 or 162:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var makeVecRot = (MakeVecRotExpressionSyntax)terminal.Node;
+
+                    switch (makeVecRot.PrefabId)
+                    {
+                        case 150:
+                            writer.Write("new float3(");
+                            WriteExpression(makeVecRot.X, SignalType.Float, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(makeVecRot.Y, SignalType.Float, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(makeVecRot.Z, SignalType.Float, environment, writer);
+                            writer.Write(')');
+                            return new ExpressionInfo(SignalType.Vec3);
+                        case 162:
+                            writer.Write("Quaternion.CreateFromYawPitchRoll(");
+                            WriteExpression(makeVecRot.Y, SignalType.Float, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(makeVecRot.X, SignalType.Float, environment, writer);
+                            writer.Write(", ");
+                            WriteExpression(makeVecRot.Z, SignalType.Float, environment, writer);
+                            writer.Write(')');
+                            return new ExpressionInfo(SignalType.Rot);
+                        default:
+                            throw new UnreachableException();
+                    }
+                }
+
+            case 156 or 442:
+                {
+                    var breakVecRot = (BreakVecRotExpressionnSyntax)terminal.Node;
+
+                    switch (breakVecRot.PrefabId)
+                    {
+                        case 156:
+                            WriteExpression(breakVecRot.VecRot, SignalType.Vec3, environment, writer);
+                            if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 3))
+                            {
+                                writer.Write(".X");
+                            }
+                            else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 3))
+                            {
+                                writer.Write(".Y");
+                            }
+                            else if (terminal.Position == TerminalDef.GetOutPosition(2, 2, 3))
+                            {
+                                writer.Write(".Z");
+                            }
+                            else
+                            {
+                                throw new InvalidTerminalException(terminal.Position);
+                            }
+
+                            break;
+                        case 442:
+                            WriteExpression(breakVecRot.VecRot, SignalType.Rot, environment, writer);
+                            if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 3))
+                            {
+                                writer.Write(".GetEulerX()");
+                            }
+                            else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 3))
+                            {
+                                writer.Write(".GetEulerY()");
+                            }
+                            else if (terminal.Position == TerminalDef.GetOutPosition(2, 2, 3))
+                            {
+                                writer.Write(".GetEulerZ()");
+                            }
+                            else
+                            {
+                                throw new InvalidTerminalException(terminal.Position);
+                            }
+
+                            break;
+                        default:
+                            throw new UnreachableException();
+                    }
+
+                    return new ExpressionInfo(SignalType.Float);
+                }
+
             // **************************************** Value ****************************************
             case 36 or 38 or 42 or 449 or 451:
                 {
@@ -817,7 +1405,7 @@ public sealed class AstCompiler
                     if (asReference)
                     {
                         writer.Write($"""
-                            new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type.ToNotPointer())}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, 0)
+                            new FcList<{GetCSharpName(getVariable.Variable.Type.ToNotPointer())}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, 0)
                             """);
                     }
                     else
@@ -851,12 +1439,12 @@ public sealed class AstCompiler
                         if (asReference)
                         {
                             writer.Write($"""
-                                new FcList<{SignalTypeToCSharpName(type)}>.Ref(null, 0)
+                                new FcList<{GetCSharpName(type)}>.Ref(null, 0)
                                 """);
                         }
                         else
                         {
-                            writer.Write(SignalTypeToDefaultValue(type));
+                            writer.Write(GetDefaultValue(type));
                         }
 
                         return new ExpressionInfo(type);
@@ -871,7 +1459,7 @@ public sealed class AstCompiler
                         if (asReference)
                         {
                             writer.Write($"""
-                                new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type.ToNotPointer())}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, (int)
+                                new FcList<{GetCSharpName(getVariable.Variable.Type.ToNotPointer())}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, (int)
                                 """);
 
                             WriteExpression(list.Index, false, environment, writer);
@@ -915,11 +1503,135 @@ public sealed class AstCompiler
         }
     }
 
+    private ExpressionInfo WriteExpression(SyntaxTerminal? terminal, SignalType type, Environment environment, IndentedTextWriter writer)
+    {
+        if (terminal is null)
+        {
+            writer.Write(GetDefaultValue(type));
+
+            return new ExpressionInfo(type);
+        }
+
+        return WriteExpression(terminal, type.IsPointer(), environment, writer);
+    }
+
     private static ExpressionInfo GetExpressionInfo(SyntaxTerminal terminal, bool asReference)
     {
         // faster than switching on type
         switch (terminal.Node.PrefabId)
-        {
+        {  // **************************************** Math ****************************************
+            case 90 or 144 or 440 or 413 or 453 or 184 or 186 or 188 or 455 or 578:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is UnaryExpressionSyntax);
+
+                    var outType = terminal.Node.PrefabId switch
+                    {
+                        90 => SignalType.Float,
+                        144 => SignalType.Bool,
+                        440 => SignalType.Rot,
+                        413 => SignalType.Float,
+                        453 => SignalType.Float,
+                        184 => SignalType.Float,
+                        186 => SignalType.Float,
+                        188 => SignalType.Float,
+                        455 => SignalType.Float,
+                        578 => SignalType.Vec3,
+                        _ => throw new UnreachableException(),
+                    };
+                    return new ExpressionInfo(outType);
+                }
+
+            case 92 or 96 or 100 or 104 or 108 or 112 or 116 or 120 or 124 or 172 or 457 or 132 or 136 or 140 or 421 or 146 or 417 or 128 or 481 or 168 or 176 or 180 or 580 or 570 or 574 or 190 or 200 or 204:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is BinaryExpressionSyntax);
+
+                    var outType = terminal.Node.PrefabId switch
+                    {
+                        146 => SignalType.Bool,
+                        417 => SignalType.Bool,
+                        92 => SignalType.Float,
+                        96 => SignalType.Vec3,
+                        100 => SignalType.Float,
+                        104 => SignalType.Vec3,
+                        108 => SignalType.Float,
+                        112 => SignalType.Vec3,
+                        116 => SignalType.Vec3,
+                        120 => SignalType.Rot,
+                        124 => SignalType.Float,
+                        172 => SignalType.Float,
+                        457 => SignalType.Float,
+                        132 => SignalType.Bool,
+                        136 => SignalType.Bool,
+                        140 => SignalType.Bool,
+                        421 => SignalType.Bool,
+                        128 => SignalType.Bool,
+                        481 => SignalType.Bool,
+                        168 => SignalType.Float,
+                        176 => SignalType.Float,
+                        180 => SignalType.Float,
+                        580 => SignalType.Float,
+                        570 => SignalType.Float,
+                        574 => SignalType.Vec3,
+                        190 => SignalType.Vec3,
+                        200 => SignalType.Rot,
+                        204 => SignalType.Rot,
+                        _ => throw new UnreachableException(),
+                    };
+                    return new ExpressionInfo(outType);
+                }
+
+            case 194:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is LerpExpressionSyntax);
+
+                    return new ExpressionInfo(SignalType.Rot);
+                }
+
+            case 216:
+                {
+                    Debug.Assert(terminal.Node is ScreenToWorldExpressionSyntax);
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 477:
+                {
+                    Debug.Assert(terminal.Node is WorldToScreenExpressionSyntax);
+
+                    return new ExpressionInfo(SignalType.Float);
+                }
+
+            case 208:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 4), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is LineVsPlaneExpressionSyntax);
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 150 or 162:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var makeVecRot = (MakeVecRotExpressionSyntax)terminal.Node;
+
+                    return makeVecRot.PrefabId switch
+                    {
+                        150 => new ExpressionInfo(SignalType.Vec3),
+                        162 => new ExpressionInfo(SignalType.Rot),
+                        _ => throw new UnreachableException(),
+                    };
+                }
+
+            case 156 or 442:
+                {
+                    Debug.Assert(terminal.Node is BreakVecRotExpressionnSyntax);
+
+                    return new ExpressionInfo(SignalType.Float);
+                }
+
             // **************************************** Value ****************************************
             case 36 or 38 or 42 or 449 or 451:
                 {
@@ -1097,7 +1809,7 @@ public sealed class AstCompiler
         return name;
     }
 
-    private static string SignalTypeToCSharpName(SignalType type)
+    private static string GetCSharpName(SignalType type)
         => type.ToNotPointer() switch
         {
             SignalType.Void => "void",
@@ -1116,7 +1828,7 @@ public sealed class AstCompiler
             _ => throw new UnreachableException(),
         };
 
-    private static string SignalTypeToDefaultValue(SignalType type)
+    private static string GetDefaultValue(SignalType type)
         => type.ToNotPointer() switch
         {
             SignalType.Float => "0f",
