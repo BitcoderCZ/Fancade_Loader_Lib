@@ -1,5 +1,6 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Runtime.Compiled.Utils;
+using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Values;
@@ -11,6 +12,7 @@ using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Extensions.ObjectPool;
 using System;
 using System.CodeDom.Compiler;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
@@ -22,17 +24,37 @@ namespace FancadeLoaderLib.Runtime.Compiled;
 
 public sealed class AstCompiler
 {
-    private readonly AST _ast;
+    private readonly Environment[] _environments;
     private readonly StringBuilder _writerBuilder;
     private readonly IndentedTextWriter _writer;
 
-    private readonly Dictionary<Variable, string> _varToName = [];
+    private readonly Dictionary<(int, Variable), string> _varToName = [];
+
+    private readonly ImmutableArray<(int, Variable)> _variables;
 
     private readonly ObjectPool<IndentedTextWriter> _writerPool = new DefaultObjectPoolProvider().Create(new IndentedTextWriterPoolPolicy());
 
+    private readonly Queue<EntryPoint> _nodesToWrite = [];
+    private readonly HashSet<EntryPoint> _writtenNodes = [];
+
     public AstCompiler(AST ast)
+        : this(ast, 4)
     {
-        _ast = ast;
+    }
+
+    public AstCompiler(AST ast, int maxDepth)
+    {
+        List<Environment> environments = [];
+        List<ImmutableArray<Variable>> variables = [];
+
+        var mainEnvironment = new Environment(ast, 0, -1, ushort3.Zero);
+        environments.Add(mainEnvironment);
+        variables.Add(mainEnvironment.AST.Variables);
+
+        InitEnvironments(mainEnvironment, environments, variables, maxDepth);
+
+        _environments = [.. environments];
+        _variables = [.. variables.SelectMany(arr => arr.Select((var, index) => (index, var)))];
 
         _writerBuilder = new StringBuilder();
         _writer = new IndentedTextWriter(new StringWriter(_writerBuilder));
@@ -123,10 +145,10 @@ public sealed class AstCompiler
 
                 """);
 
-            foreach (var variable in _ast.GlobalVariables.Concat(_ast.Variables))
+            foreach (var (environmentIndex, variable) in _environments[0].AST.GlobalVariables.Select(var => (-1, var)).Concat(_variables))
             {
                 _writer.WriteLine($"""
-                    private readonly FcList<{SignalTypeToCSharpName(variable.Type)}> {GetVariableName(variable)} = new();
+                    private readonly FcList<{SignalTypeToCSharpName(variable.Type)}> {GetVariableName(environmentIndex, variable)} = new();
                     """);
             }
 
@@ -141,12 +163,31 @@ public sealed class AstCompiler
 
             using (_writer.CurlyIndent("public Action RunFrame()"))
             {
-                WriteEntryPoint(_ast.NotConnectedVoidInputs.First(), _writer);
+                foreach (var environment in _environments)
+                {
+                    foreach (var entryPoint in environment.AST.NotConnectedVoidInputs)
+                    {
+                        WriteEntryPoint(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false, _writer);
+                    }
+                }
 
                 _writer.WriteLine();
                 _writer.WriteLine("""
                     return () => { };
                     """);
+            }
+
+            while (_nodesToWrite.TryDequeue(out var item))
+            {
+                if (!_writtenNodes.Add(item))
+                {
+                    continue;
+                }
+
+                using (_writer.CurlyIndent($"private void {GetEntryPointMethodName(item)}()"))
+                {
+                    WriteEntryPoint(item, true, _writer);
+                }
             }
         }
 
@@ -232,17 +273,40 @@ public sealed class AstCompiler
         return _writerBuilder.ToString()!;
     }
 
-    private void WriteEntryPoint((ushort3 Pos, byte3 TerminalPos) entryPoint, IndentedTextWriter writer)
+    private static void InitEnvironments(Environment outer, List<Environment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
     {
-        Stack<(ushort3, byte3)> stack = [];
+        if (depth > maxDepth)
+        {
+            throw new EnvironmentDepthLimitReachedException();
+        }
+
+        foreach (var node in outer.AST.Nodes.Values)
+        {
+            if (node is CustomStatementSyntax customStatement)
+            {
+                var environment = new Environment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
+                environments.Add(environment);
+                variables.Add(environment.AST.Variables);
+                outer.BlockData[customStatement.Position] = environment;
+
+                InitEnvironments(environment, environments, variables, maxDepth, depth + 1);
+            }
+        }
+    }
+
+    private void WriteEntryPoint(EntryPoint entryPoint, bool direct, IndentedTextWriter writer)
+    {
+        Stack<EntryPoint> stack = [];
 
         stack.Push(entryPoint);
 
         while (stack.TryPop(out var item))
         {
-            var (pos, terminalPos) = item;
+            var (environmentIndex, pos, terminalPos) = item;
 
-            var statement = WriteStatement(pos, terminalPos, _writer);
+            var environment = _environments[environmentIndex];
+
+            var statement = WriteStatement(pos, terminalPos, environment, direct, writer);
 
             foreach (var connection in statement.OutVoidConnections)
             {
@@ -254,14 +318,16 @@ public sealed class AstCompiler
                     }
                     else
                     {
-                        stack.Push(new(connection.To, (byte3)connection.ToVoxel));
+                        stack.Push(new(environmentIndex, connection.To, (byte3)connection.ToVoxel));
                     }
                 }
             }
+
+            direct = false;
         }
     }
 
-    private void WriteConnected(StatementSyntax statement, byte3 terminalPos, IndentedTextWriter writer)
+    private void WriteConnected(StatementSyntax statement, byte3 terminalPos, Environment environment, IndentedTextWriter writer)
     {
         foreach (var connection in statement.OutVoidConnections)
         {
@@ -273,15 +339,36 @@ public sealed class AstCompiler
                 }
                 else
                 {
-                    WriteEntryPoint((connection.To, (byte3)connection.ToVoxel), writer);
+                    WriteEntryPoint(new(environment.Index, connection.To, (byte3)connection.ToVoxel), false, writer);
                 }
             }
         }
     }
 
-    private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, IndentedTextWriter writer)
+    private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, Environment environment, bool direct, IndentedTextWriter writer)
     {
-        var statement = (StatementSyntax)_ast.Nodes[pos];
+        var statement = (StatementSyntax)environment.AST.Nodes[pos];
+
+        if (!direct)
+        {
+            int conToCount = 0;
+
+            foreach (var con in environment.AST.ConnectionsTo[pos])
+            {
+                if (con.ToVoxel == terminalPos)
+                {
+                    conToCount++;
+                }
+            }
+
+            if (conToCount > 1)
+            {
+                var entryPoint = new EntryPoint(environment.Index, pos, terminalPos);
+                writer.WriteLine($"{GetEntryPointMethodName(entryPoint)}();");
+                _nodesToWrite.Enqueue(entryPoint);
+                return statement;
+            }
+        }
 
         // faster than switching on type
         switch (statement.PrefabId)
@@ -298,20 +385,20 @@ public sealed class AstCompiler
                             if (
                             """);
 
-                        WriteExpression(ifStatement.Condition, false, writer);
+                        WriteExpression(ifStatement.Condition, false, environment, writer);
 
                         writer.WriteLine(')');
 
                         using (writer.CurlyIndent(newLine: false))
                         {
-                            WriteConnected(ifStatement, TerminalDef.GetOutPosition(0, 2, 2), writer);
+                            WriteConnected(ifStatement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                         }
 
                         writer.WriteLine("else");
 
                         using (writer.CurlyIndent())
                         {
-                            WriteConnected(ifStatement, TerminalDef.GetOutPosition(1, 2, 2), writer);
+                            WriteConnected(ifStatement, TerminalDef.GetOutPosition(1, 2, 2), environment, writer);
                         }
                     }
                 }
@@ -329,10 +416,10 @@ public sealed class AstCompiler
                             _ctx.InspectValue(new RuntimeValue(
                             """);
 
-                        var info = WriteExpression(inspect.Input, false, writer);
+                        var info = WriteExpression(inspect.Input, false, environment, writer);
 
                         writer.WriteLine($"""
-                            ), SignalType.{Enum.GetName(typeof(SignalType), info.Type)}, "{(info.VariableName is null ? string.Empty : info.VariableName)}", {_ast.PrefabId}, new ushort3({pos.X}, {pos.Y}, {pos.Z}));
+                            ), SignalType.{Enum.GetName(typeof(SignalType), info.Type)}, "{(info.VariableName is null ? string.Empty : info.VariableName)}", {environment.AST.PrefabId}, new ushort3({pos.X}, {pos.Y}, {pos.Z}));
                             """);
                     }
                 }
@@ -348,10 +435,10 @@ public sealed class AstCompiler
                     if (setVar.Value is not null)
                     {
                         writer.Write($"""
-                            {GetVariableName(setVar.Variable)}[0] = 
+                            {GetVariableName(environment.Index, setVar.Variable)}[0] = 
                             """);
 
-                        WriteExpression(setVar.Value, false, writer);
+                        WriteExpression(setVar.Value, false, environment, writer);
 
                         writer.WriteLine(";");
                     }
@@ -365,9 +452,9 @@ public sealed class AstCompiler
 
                     if (setPointer.Variable is not null && setPointer.Value is not null)
                     {
-                        if (!TryWriteDirrectRef(setPointer.Variable, writer))
+                        if (!TryWriteDirrectRef(setPointer.Variable, environment, writer))
                         {
-                            WriteExpression(setPointer.Variable, true, writer);
+                            WriteExpression(setPointer.Variable, true, environment, writer);
 
                             writer.Write("""
                             .Value
@@ -376,7 +463,7 @@ public sealed class AstCompiler
 
                         writer.Write(" = ");
 
-                        WriteExpression(setPointer.Value, false, writer);
+                        WriteExpression(setPointer.Value, false, environment, writer);
 
                         writer.WriteLine(';');
                     }
@@ -390,9 +477,9 @@ public sealed class AstCompiler
 
                     if (incDecNumber.Variable is not null)
                     {
-                        if (!TryWriteDirrectRef(incDecNumber.Variable, writer))
+                        if (!TryWriteDirrectRef(incDecNumber.Variable, environment, writer))
                         {
-                            WriteExpression(incDecNumber.Variable, true, writer);
+                            WriteExpression(incDecNumber.Variable, true, environment, writer);
 
                             writer.Write(".Value");
                         }
@@ -650,7 +737,7 @@ public sealed class AstCompiler
         }
     }*/
 
-    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, Environment environment, IndentedTextWriter writer)
     {
         // faster than switching on type
         switch (terminal.Node.PrefabId)
@@ -692,13 +779,13 @@ public sealed class AstCompiler
                     if (asReference)
                     {
                         writer.Write($"""
-                            new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type)}>.Ref({GetVariableName(getVariable.Variable)}, 0)
+                            new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type)}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, 0)
                             """);
                     }
                     else
                     {
                         writer.Write($"""
-                            {GetVariableName(getVariable.Variable)}[0]
+                            {GetVariableName(environment.Index, getVariable.Variable)}[0]
                             """);
                     }
 
@@ -739,27 +826,27 @@ public sealed class AstCompiler
 
                     if (list.Index is null)
                     {
-                        return WriteExpression(list.Variable, asReference, writer);
+                        return WriteExpression(list.Variable, asReference, environment, writer);
                     }
                     else if (list.Variable.Node is GetVariableExpressionSyntax getVariable)
                     {
                         if (asReference)
                         {
                             writer.Write($"""
-                                new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type)}>.Ref({GetVariableName(getVariable.Variable)}, (int)
+                                new FcList<{SignalTypeToCSharpName(getVariable.Variable.Type)}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, (int)
                                 """);
 
-                            WriteExpression(list.Index, false, writer);
+                            WriteExpression(list.Index, false, environment, writer);
 
                             writer.Write(')');
                         }
                         else
                         {
                             writer.Write($"""
-                                {GetVariableName(getVariable.Variable)}[(int)
+                                {GetVariableName(environment.Index, getVariable.Variable)}[(int)
                                 """);
 
-                            WriteExpression(list.Index, false, writer);
+                            WriteExpression(list.Index, false, environment, writer);
 
                             writer.Write(']');
                         }
@@ -767,13 +854,13 @@ public sealed class AstCompiler
                         return new ExpressionInfo(getVariable.Variable);
                     }
 
-                    var varInfo = WriteExpression(list.Variable, true, writer);
+                    var varInfo = WriteExpression(list.Variable, true, environment, writer);
 
                     writer.Write("""
                             .Add((int)
                             """);
 
-                    WriteExpression(list.Index, false, writer);
+                    WriteExpression(list.Index, false, environment, writer);
 
                     writer.Write(")");
 
@@ -790,7 +877,7 @@ public sealed class AstCompiler
         }
     }
 
-    private bool TryWriteDirrectRef(SyntaxTerminal terminal, IndentedTextWriter writer)
+    private bool TryWriteDirrectRef(SyntaxTerminal terminal, Environment environment, IndentedTextWriter writer)
     {
         switch (terminal.Node.PrefabId)
         {
@@ -800,7 +887,7 @@ public sealed class AstCompiler
                     var getVariable = (GetVariableExpressionSyntax)terminal.Node;
 
                     writer.Write($"""
-                            {GetVariableName(getVariable.Variable)}[0]
+                            {GetVariableName(environment.Index, getVariable.Variable)}[0]
                             """);
 
                     return true;
@@ -818,15 +905,15 @@ public sealed class AstCompiler
 
                     if (list.Index is null)
                     {
-                        return TryWriteDirrectRef(list.Variable, writer);
+                        return TryWriteDirrectRef(list.Variable, environment, writer);
                     }
                     else if (list.Variable.Node is GetVariableExpressionSyntax getVariable)
                     {
                         writer.Write($"""
-                            {GetVariableName(getVariable.Variable)}[(int)
+                            {GetVariableName(environment.Index, getVariable.Variable)}[(int)
                             """);
 
-                        WriteExpression(list.Index, false, writer);
+                        WriteExpression(list.Index, false, environment, writer);
 
                         writer.Write(']');
 
@@ -841,15 +928,17 @@ public sealed class AstCompiler
         }
     }
 
-    private string GetVariableName(Variable variable)
+    private string GetVariableName(int environmentIndex, Variable variable)
     {
-        if (_varToName.TryGetValue(variable, out string? name))
+        if (_varToName.TryGetValue((environmentIndex, variable), out string? name))
         {
             return name;
         }
 
-        name = string.Create(variable.Name.Length + 2 + (variable.IsGlobal ? 1 : 0), variable, (span, variable) =>
+        name = string.Create(variable.Name.Length + 2 + (variable.IsGlobal ? 1 : 0) + (environmentIndex == -1 ? 0 : IntLength(environmentIndex) + 1), (environmentIndex, variable), (span, item) =>
         {
+            var (environmentIndex, variable) = item;
+
             ReadOnlySpan<char> varName = variable.Name;
 
             if (variable.Name.StartsWith('$'))
@@ -880,10 +969,21 @@ public sealed class AstCompiler
             span[1] = '_';
             span = span[2..];
 
+            if (environmentIndex != -1)
+            {
+                bool written = environmentIndex.TryFormat(span, out int numbWritten);
+
+                Debug.Assert(written);
+
+                span[numbWritten] = '_';
+
+                span = span[(numbWritten + 1)..];
+            }
+
             varName.CopyTo(span);
         });
 
-        _varToName[variable] = name;
+        _varToName[(environmentIndex, variable)] = name;
 
         return name;
     }
@@ -915,6 +1015,17 @@ public sealed class AstCompiler
     private static string ToString(float value)
         => value.ToString("G9", CultureInfo.InvariantCulture);
 
+    private static string GetEntryPointMethodName(EntryPoint entryPoint)
+        => $"Run{entryPoint.EnvironmentIndex}_{entryPoint.BlockPos.X}_{entryPoint.BlockPos.Y}_{entryPoint.BlockPos.Z}__{entryPoint.TerminalPos.X}_{entryPoint.TerminalPos.Y}_{entryPoint.TerminalPos.Z}";
+
+    public static int IntLength(int i)
+        => i switch
+        {
+            < 0 => (int)Math.Floor(Math.Log10(-i)) + 2,
+            0 => 1,
+            _ => (int)Math.Floor(Math.Log10(i)) + 1,
+        };
+
     private readonly struct ExpressionInfo
     {
         public readonly SignalType Type;
@@ -934,6 +1045,48 @@ public sealed class AstCompiler
         public bool IsPointer => VariableName is not null;
 
         public SignalType PtrType => IsPointer ? Type.ToPointer() : Type;
+    }
+
+    private readonly struct EntryPoint
+    {
+        public readonly int EnvironmentIndex;
+        public readonly ushort3 BlockPos;
+        public readonly byte3 TerminalPos;
+
+        public EntryPoint(int environmentIndex, ushort3 blockPos, byte3 terminalPos)
+        {
+            EnvironmentIndex = environmentIndex;
+            BlockPos = blockPos;
+            TerminalPos = terminalPos;
+        }
+
+        public void Deconstruct(out int environmentIndex, out ushort3 blockPos, out byte3 terminalPos)
+        {
+            environmentIndex = EnvironmentIndex;
+            blockPos = BlockPos;
+            terminalPos = TerminalPos;
+        }
+    }
+
+    private sealed class Environment
+    {
+        public Environment(AST ast, int index, int outerEnvironmentIndex, ushort3 outerPosition)
+        {
+            Index = index;
+            OuterEnvironmentIndex = outerEnvironmentIndex;
+            AST = ast;
+            OuterPosition = outerPosition;
+        }
+
+        public AST AST { get; }
+
+        public int Index { get; }
+
+        public int OuterEnvironmentIndex { get; }
+
+        public ushort3 OuterPosition { get; }
+
+        public Dictionary<ushort3, object> BlockData { get; } = [];
     }
 
     private class IndentedTextWriterPoolPolicy : PooledObjectPolicy<IndentedTextWriter>

@@ -1,4 +1,5 @@
-﻿using FancadeLoaderLib.Editing;
+﻿using FancadeLoaderLib.Collections;
+using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Raw;
 using FancadeLoaderLib.Runtime.Syntax;
 using MathUtils.Vectors;
@@ -204,7 +205,16 @@ public sealed partial class AST
                     ParseAll();
                 }
 
-                return _ast = new AST(Prefab.Id, [.. _notConnectedVoidInputs], _nodes.ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs]);
+                MultiValueDictionary<ushort3, Connection> connectionsFrom = [];
+                MultiValueDictionary<ushort3, Connection> connectionsTo = [];
+
+                foreach (var connection in Prefab.Connections)
+                {
+                    connectionsFrom.Add(connection.From, connection);
+                    connectionsTo.Add(connection.To, connection);
+                }
+
+                return _ast = new AST(Prefab.Id, [.. _notConnectedVoidInputs], _nodes.ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs], connectionsFrom.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()), connectionsTo.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()));
             }
         }
 

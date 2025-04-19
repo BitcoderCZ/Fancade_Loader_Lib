@@ -21,7 +21,11 @@ public sealed partial class AST
 
     public readonly ImmutableArray<Variable> Variables;
 
-    public AST(ushort prefabId, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<OutsideConnection> nonVoidOutputs)
+    public readonly FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsFrom;
+
+    public readonly FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsTo;
+
+    public AST(ushort prefabId, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<OutsideConnection> nonVoidOutputs, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsTo)
     {
         ThrowIfNull(notConnectedVoidInputs, nameof(notConnectedVoidInputs));
         ThrowIfNull(nodes, nameof(nodes));
@@ -35,6 +39,8 @@ public sealed partial class AST
         Variables = variables;
         VoidInputs = voidInputs;
         NonVoidOutputs = nonVoidOutputs;
+        ConnectionsFrom = connectionsFrom;
+        ConnectionsTo = connectionsTo;
     }
 
     public static AST Parse(PrefabList prefabs, ushort mainPrefabId)
