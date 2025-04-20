@@ -2,6 +2,7 @@
 using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Raw;
 using FancadeLoaderLib.Runtime.Syntax;
+using FancadeLoaderLib.Utils;
 using MathUtils.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
@@ -502,6 +503,8 @@ public sealed partial class AST
                     }
                 }
             }
+
+            builder.Sort((a, b) => PositionComparer.Instance.Compare(a.To, b.To));
 
             return builder.DrainToImmutable();
         }

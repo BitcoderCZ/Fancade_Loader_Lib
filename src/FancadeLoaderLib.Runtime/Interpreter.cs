@@ -82,7 +82,7 @@ public sealed class Interpreter : IAstRunner
 
     public IVariableAccessor VariableAccessor => _variableAccessor;
 
-    public IEnumerable<(Variable Variable, int VariableId)> GlobalVariables => _variableAccessor.GlobalVariables.Select(item => (item.Key, item.Value));
+    public IEnumerable<Variable> GlobalVariables => _variableAccessor.GlobalVariables.Select(item => item.Key);
 
     public Action RunFrame()
     {
@@ -117,8 +117,15 @@ public sealed class Interpreter : IAstRunner
         };
     }
 
-    public Variable GetVariable(int variableId)
-        => _variableAccessor.GetVariable(variableId).Variable;
+    public Span<RuntimeValue> GetGlobalVariableValue(Variable variable)
+    {
+        if (!variable.IsGlobal)
+        {
+            ThrowArgumentException($"{nameof(variable)} must be global.", nameof(variable));
+        }
+
+        return _variableAccessor.GetVariableValues(_variableAccessor.GetVariableId(_environments[0], variable));
+    }
 
     private static void InitEnvironments(Environment outer, List<Environment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
     {
@@ -497,7 +504,7 @@ public sealed class Interpreter : IAstRunner
                         {
                             var output = GetOutput(inspect.Input, environment);
 
-                            _ctx.InspectValue(output.GetValue(_variableAccessor), inspect.Type, output.IsReference ? GetVariable(output.Reference.VariableId).Name : null, environment.AST.PrefabId, inspect.Position);
+                            _ctx.InspectValue(output.GetValue(_variableAccessor), inspect.Type, output.IsReference ? _variableAccessor.GetVariable(output.Reference.VariableId).Variable.Name : null, environment.AST.PrefabId, inspect.Position);
                         }
                     }
 
@@ -1264,6 +1271,9 @@ public sealed class Interpreter : IAstRunner
 
         public void SetVariableValue(int variableId, int index, RuntimeValue value)
             => _variableManager.SetVariableValue(variableId, index, value);
+
+        public Span<RuntimeValue> GetVariableValues(int variableId)
+            => _variableManager.GetVariableValues(variableId);
     }
 
     private sealed class Environment
