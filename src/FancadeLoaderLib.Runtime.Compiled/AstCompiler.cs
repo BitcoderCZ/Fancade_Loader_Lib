@@ -712,7 +712,7 @@ public sealed partial class AstCompiler
                         var info = WriteExpression(inspect.Input, false, environment, writer);
 
                         writer.WriteLine($"""
-                            ), SignalType.{Enum.GetName(typeof(SignalType), info.Type)}, "{(info.VariableName is null ? string.Empty : info.VariableName)}", {environment.AST.PrefabId}, new ushort3({pos.X}, {pos.Y}, {pos.Z}));
+                            ), SignalType.{Enum.GetName(typeof(SignalType), info.Type)}, {(info.VariableName is null ? "null" : $"\"{info.VariableName}\"")}, {environment.AST.PrefabId}, new ushort3({pos.X}, {pos.Y}, {pos.Z}));
                             """);
                     }
                 }
