@@ -389,6 +389,23 @@ public sealed partial class AstCompiler
                 }
             }
 
+            internal static class NumberUtils
+            {
+                public static float FcMod(float a, float b)
+                {
+                    float res = a % b;
+
+                    if (res >= 0f)
+                    {
+                        return res;
+                    }
+                    else
+                    {
+                        return b + res;
+                    }
+                }
+            }
+
             internal static class VectorUtils
             {
                 private const float DegToRad = MathF.PI / 180f;
@@ -1235,9 +1252,11 @@ public sealed partial class AstCompiler
                             break;
                         case 172:
                             outType = SignalType.Float;
+                            writer.Write("NumberUtils.FcMod(");
                             WriteExpression(binary.Input1, SignalType.Float, environment, writer);
-                            writer.Write(" % ");
+                            writer.Write(", ");
                             WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            writer.Write(')');
                             break;
                         case 457:
                             outType = SignalType.Float;

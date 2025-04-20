@@ -921,7 +921,7 @@ public sealed class Interpreter : IAstRunner
                         116 => new(Vector3.Transform(input1.Float3.ToNumerics(), input2.Quaternion).ToFloat3()),
                         120 => new(input1.Quaternion * input2.Quaternion),
                         124 => new(input1.Float / input2.Float),
-                        172 => new(input1.Float % input2.Float),
+                        172 => new(FcMod(input1.Float, input2.Float)),
                         457 => new(MathF.Pow(input1.Float, input2.Float)),
                         132 => new(MathF.Abs(input1.Float - input2.Float) < EqualsNumbersMaxDiff),
                         136 => new((input1.Float3 - input2.Float3).LengthSquared < EqualsVectorsMaxDiff),
@@ -942,6 +942,13 @@ public sealed class Interpreter : IAstRunner
                     };
 
                     return new TerminalOutput(value);
+
+                    float FcMod(float a, float b)
+                    {
+                        float res = a % b;
+
+                        return res >= 0f ? res : b + res;
+                    }
                 }
 
             case 194:
