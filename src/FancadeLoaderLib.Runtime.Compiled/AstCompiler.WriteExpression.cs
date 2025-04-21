@@ -1,4 +1,5 @@
 ﻿using FancadeLoaderLib.Editing;
+using FancadeLoaderLib.Runtime.Compiled.Utils;
 using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
@@ -45,7 +46,7 @@ public partial class AstCompiler
             if (conFromCount > 1)
             {
                 var entryPoint = new EntryPoint(environment.Index, terminal.Node.Position, terminal.Position);
-                writer.Write($"{GetEntryPointMethodName(entryPoint, asReference)}()");
+                writer.WriteInv($"{GetEntryPointMethodName(entryPoint, asReference)}()");
                 ExpressionInfo info = GetExpressionInfo(terminal, asReference);
                 _nodesToWrite.Enqueue((entryPoint, asReference ? info.PtrType : info.Type));
                 return info;
@@ -105,7 +106,7 @@ public partial class AstCompiler
 
                     _stateStoreVariables.Add((valueVarName, "int", null));
 
-                    writer.Write($"(float){valueVarName}");
+                    writer.WriteInv($"(float){valueVarName}");
 
                     return new ExpressionInfo(SignalType.Float);
                 }
@@ -298,7 +299,7 @@ public partial class AstCompiler
                             WriteExpression(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" - ");
                             WriteExpression(binary.Input2, SignalType.Float, environment, writer);
-                            writer.Write($") < {EqualsNumbersMaxDiff}");
+                            writer.WriteInv($") < {EqualsNumbersMaxDiff}");
                             break;
                         case 136:
                             // equals vectors
@@ -307,7 +308,7 @@ public partial class AstCompiler
                             WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" - ");
                             WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
-                            writer.Write($").LengthSquared < {EqualsVectorsMaxDiff}");
+                            writer.WriteInv($").LengthSquared < {EqualsVectorsMaxDiff}");
                             break;
                         case 140:
                             // equals objects
@@ -601,15 +602,15 @@ public partial class AstCompiler
                     switch (terminal.Node.PrefabId)
                     {
                         case 36:
-                            writer.Write($"{ToString(literal.Value.Float)}f");
+                            writer.WriteInv($"{ToString(literal.Value.Float)}f");
                             return new ExpressionInfo(SignalType.Float);
                         case 38:
                             var vec = literal.Value.Float3;
-                            writer.Write($"new float3({ToString(vec.X)}f, {ToString(vec.Y)}f, {ToString(vec.Z)}f)");
+                            writer.WriteInv($"new float3({ToString(vec.X)}f, {ToString(vec.Y)}f, {ToString(vec.Z)}f)");
                             return new ExpressionInfo(SignalType.Vec3);
                         case 42:
                             var rot = literal.Value.Quaternion;
-                            writer.Write($"new Quaternion({ToString(rot.X)}f, {ToString(rot.Y)}f, {ToString(rot.Z)}f, {ToString(rot.W)}f)");
+                            writer.WriteInv($"new Quaternion({ToString(rot.X)}f, {ToString(rot.Y)}f, {ToString(rot.Z)}f, {ToString(rot.W)}f)");
                             return new ExpressionInfo(SignalType.Rot);
                         case 449 or 451:
                             writer.Write(literal.Value.Bool ? "true" : "false");
@@ -627,13 +628,13 @@ public partial class AstCompiler
 
                     if (asReference)
                     {
-                        writer.Write($"""
+                        writer.WriteInv($"""
                             new FcList<{GetCSharpName(getVariable.Variable.Type.ToNotPointer())}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, 0)
                             """);
                     }
                     else
                     {
-                        writer.Write($"""
+                        writer.WriteInv($"""
                             {GetVariableName(environment.Index, getVariable.Variable)}[0]
                             """);
                     }
@@ -661,7 +662,7 @@ public partial class AstCompiler
                     {
                         if (asReference)
                         {
-                            writer.Write($"""
+                            writer.WriteInv($"""
                                 new FcList<{GetCSharpName(type)}>.Ref(null, 0)
                                 """);
                         }
@@ -681,7 +682,7 @@ public partial class AstCompiler
                     {
                         if (asReference)
                         {
-                            writer.Write($"""
+                            writer.WriteInv($"""
                                 new FcList<{GetCSharpName(getVariable.Variable.Type.ToNotPointer())}>.Ref({GetVariableName(environment.Index, getVariable.Variable)}, (int)
                                 """);
 
@@ -691,7 +692,7 @@ public partial class AstCompiler
                         }
                         else
                         {
-                            writer.Write($"""
+                            writer.WriteInv($"""
                                 {GetVariableName(environment.Index, getVariable.Variable)}[(int)
                                 """);
 

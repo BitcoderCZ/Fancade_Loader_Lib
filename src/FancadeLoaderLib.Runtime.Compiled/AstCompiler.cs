@@ -89,6 +89,7 @@ public sealed partial class AstCompiler
             MetadataReference.CreateFromFile(typeof(int3).Assembly.Location),
             MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Numerics.Vectors.dll")),
             MetadataReference.CreateFromFile(typeof(SignalType).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(Ranking).Assembly.Location),
         ];
 
         CSharpCompilation compilation = CSharpCompilation.Create(
@@ -137,7 +138,7 @@ public sealed partial class AstCompiler
     private string WriteAll()
     {
         _writer.WriteLine("""
-            using FancadeLoaderLib.Editing.Scripting.Settings
+            using FancadeLoaderLib.Editing.Scripting.Settings;
             using FancadeLoaderLib.Runtime;
             using MathUtils.Vectors;
             using System;
@@ -157,7 +158,7 @@ public sealed partial class AstCompiler
 
             foreach (var (environmentIndex, variable) in _environments[0].AST.GlobalVariables.Select(var => (-1, var)).Concat(_variables))
             {
-                _writer.WriteLine($"""
+                _writer.WriteLineInv($"""
                     private readonly FcList<{GetCSharpName(variable.Type.ToNotPointer())}> {GetVariableName(environmentIndex, variable)} = new();
                     """);
             }
@@ -170,8 +171,8 @@ public sealed partial class AstCompiler
             _writer.Indent++;
             foreach (var variable in _environments[0].AST.GlobalVariables)
             {
-                _writer.WriteLine($"""
-                    new Variable("{variable.Name}", SignalType.{Enum.GetName(typeof(SignalType), variable.Type)}),
+                _writer.WriteLineInv($"""
+                    new Variable("{variable.Name}", SignalType.{variable.Type}),
                     """);
             }
 
@@ -210,7 +211,7 @@ public sealed partial class AstCompiler
                 {
                     foreach (var grouping in _environments[0].AST.GlobalVariables.GroupBy(variable => variable.Name))
                     {
-                        _writer.WriteLine($"""
+                        _writer.WriteLineInv($"""
                             case "{grouping.Key}":
                             """);
 
@@ -219,12 +220,12 @@ public sealed partial class AstCompiler
                         {
                             foreach (var variable in grouping)
                             {
-                                _writer.WriteLine($"""
-                            case SignalType.{Enum.GetName(typeof(SignalType), variable.Type)}:
+                                _writer.WriteLineInv($"""
+                            case SignalType.{variable.Type}:
                             """);
 
                                 _writer.Indent++;
-                                _writer.WriteLine($"return {GetVariableName(-1, variable)}.AsSpan();");
+                                _writer.WriteLineInv($"return {GetVariableName(-1, variable)}.AsSpan();");
                                 _writer.Indent--;
                             }
                         }
@@ -266,7 +267,7 @@ public sealed partial class AstCompiler
 
             foreach (var (varName, type, defaultValue) in _stateStoreVariables)
             {
-                _writer.WriteLine($"private {type} {varName}{(defaultValue is null ? string.Empty : $"= {defaultValue}")};");
+                _writer.WriteLineInv($"private {type} {varName}{(defaultValue is null ? string.Empty : $"= {defaultValue}")};");
             }
         }
 
@@ -567,7 +568,7 @@ public sealed partial class AstCompiler
 
                 if (conToCount > 1)
                 {
-                    writer.WriteLine($"{GetEntryPointMethodName(item, false)}();");
+                    writer.WriteLineInv($"{GetEntryPointMethodName(item, false)}();");
                     _nodesToWrite.Enqueue((item, SignalType.Void));
                     continue;
                 }
@@ -625,7 +626,7 @@ public sealed partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var win = (WinStatementSyntax)statement;
 
-                    writer.WriteLine($"_ctx.Win({win.Delay})");
+                    writer.WriteLineInv($"_ctx.Win({win.Delay});");
                 }
 
                 break;
@@ -634,7 +635,7 @@ public sealed partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var lose = (LoseStatementSyntax)statement;
 
-                    writer.WriteLine($"_ctx.Lose({lose.Delay})");
+                    writer.WriteLineInv($"_ctx.Lose({lose.Delay});");
                 }
 
                 break;
@@ -663,7 +664,7 @@ public sealed partial class AstCompiler
                         WriteExpression(setScore.Coins, false, environment, writer);
                     }
 
-                    writer.WriteLine($", Ranking.{Enum.GetName(typeof(Ranking), setScore.Ranking)});");
+                    writer.WriteLineInv($", Ranking.{Enum.GetName(typeof(Ranking), setScore.Ranking)});");
                 }
 
                 break;
@@ -702,7 +703,7 @@ public sealed partial class AstCompiler
                         WriteExpression(setCamera.RangeTerminal, false, environment, writer);
                     }
 
-                    writer.WriteLine($", {(setCamera.Perspective ? "true" : "false")});");
+                    writer.WriteLineInv($", {(setCamera.Perspective ? "true" : "false")});");
                 }
 
                 break;
@@ -731,7 +732,7 @@ public sealed partial class AstCompiler
                         WriteExpression(setLight.RotationTerminal, false, environment, writer);
                     }
 
-                    writer.WriteLine(')');
+                    writer.WriteLine(");");
                 }
 
                 break;
@@ -752,9 +753,10 @@ public sealed partial class AstCompiler
 
                     writer.Write(", ");
                     WriteExpression(menuItem.Picture, SignalType.Obj, environment, writer);
-                    writer.WriteLine($"""
-                        , "{menuItem.Name}", new MaxBuyCount({menuItem.MaxBuyCount.Value}), PriceIncrease.{Enum.GetName(typeof(PriceIncrease), menuItem.PriceIncrease)});
+                    writer.WriteLineInv($"""
+                        , "{menuItem.Name}", new MaxBuyCount({menuItem.MaxBuyCount.Value}), PriceIncrease.{menuItem.PriceIncrease});
                         """);
+
                 }
 
                 break;
@@ -803,18 +805,18 @@ public sealed partial class AstCompiler
 
                     _stateStoreVariables.Add((valueVarName, "int", null));
 
-                    writer.Write($"int {startVarName} = (int)");
+                    writer.WriteInv($"int {startVarName} = (int)");
                     WriteExpression(loop.Start, SignalType.Float, environment, writer);
                     writer.WriteLine(';');
 
-                    writer.Write($"int {stepVarName} = (int)MathF.Ceiling(");
+                    writer.WriteInv($"int {stepVarName} = (int)MathF.Ceiling(");
 
                     WriteExpression(loop.Stop, SignalType.Float, environment, writer);
 
-                    writer.WriteLine($").CompareTo({startVarName});");
+                    writer.WriteLineInv($").CompareTo({startVarName});");
 
-                    writer.WriteLine($"int {localValueVarName} = {startVarName} - {stepVarName};");
-                    writer.WriteLine($"{valueVarName} = {localValueVarName};");
+                    writer.WriteLineInv($"int {localValueVarName} = {startVarName} - {stepVarName};");
+                    writer.WriteLineInv($"{valueVarName} = {localValueVarName};");
 
                     using (writer.CurlyIndent($"if ({stepVarName} != 0)"))
                     {
@@ -824,14 +826,14 @@ public sealed partial class AstCompiler
                             WriteExpression(loop.Stop, SignalType.Float, environment, writer);
                             writer.WriteLine(");");
 
-                            writer.WriteLine($"int nextVal = {localValueVarName} + {stepVarName};");
+                            writer.WriteLineInv($"int nextVal = {localValueVarName} + {stepVarName};");
 
                             using (writer.CurlyIndent($"if ({stepVarName} > 0 ? nextVal >= stop : nextVal <= stop)"))
                             {
                                 writer.WriteLine("break;");
                             }
 
-                            writer.WriteLine($"{valueVarName} = {localValueVarName} = nextVal;");
+                            writer.WriteLineInv($"{valueVarName} = {localValueVarName} = nextVal;");
 
                             WriteConnected(loop, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                         }
@@ -853,8 +855,8 @@ public sealed partial class AstCompiler
 
                         var info = WriteExpression(inspect.Input, false, environment, writer);
 
-                        writer.WriteLine($"""
-                            ), SignalType.{Enum.GetName(typeof(SignalType), info.Type)}, {(info.VariableName is null ? "null" : $"\"{info.VariableName}\"")}, {environment.AST.PrefabId}, new ushort3({pos.X}, {pos.Y}, {pos.Z}));
+                        writer.WriteLineInv($"""
+                            ), SignalType.{info.Type}, {(info.VariableName is null ? "null" : $"\"{info.VariableName}\"")}, {environment.AST.PrefabId}, new ushort3({pos.X}, {pos.Y}, {pos.Z}));
                             """);
                     }
                 }
@@ -869,7 +871,7 @@ public sealed partial class AstCompiler
 
                     if (setVar.Value is not null)
                     {
-                        writer.Write($"""
+                        writer.WriteInv($"""
                             {GetVariableName(environment.Index, setVar.Variable)}[0] = 
                             """);
 
@@ -945,7 +947,7 @@ public sealed partial class AstCompiler
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var getVariable = (GetVariableExpressionSyntax)terminal.Node;
 
-                    writer.Write($"""
+                    writer.WriteInv($"""
                             {GetVariableName(environment.Index, getVariable.Variable)}[0]
                             """);
 
@@ -968,7 +970,7 @@ public sealed partial class AstCompiler
                     }
                     else if (list.Variable.Node is GetVariableExpressionSyntax getVariable)
                     {
-                        writer.Write($"""
+                        writer.WriteInv($"""
                             {GetVariableName(environment.Index, getVariable.Variable)}[(int)
                             """);
 
