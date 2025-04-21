@@ -134,7 +134,7 @@ public sealed class Interpreter : IAstRunner
             throw new EnvironmentDepthLimitReachedException();
         }
 
-        foreach (var node in outer.AST.Nodes.Values)
+        foreach (var node in outer.AST.Statements.Values)
         {
             if (node is CustomStatementSyntax customStatement)
             {
@@ -162,7 +162,7 @@ public sealed class Interpreter : IAstRunner
 
             var (environmentIndex, blockPos, terminalPos) = item;
             var environment = _environments[environmentIndex];
-            var statement = (StatementSyntax)environment.AST.Nodes[blockPos];
+            var statement = (StatementSyntax)environment.AST.Statements[blockPos];
 
             int nextCount = 0;
             executeNextSpan[nextCount++] = TerminalDef.AfterPosition;
@@ -596,7 +596,7 @@ public sealed class Interpreter : IAstRunner
                 {
                     var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
 
-                    PushAfter((StatementSyntax)outerEnvironment.AST.Nodes[environment.OuterPosition], (byte3)connection.ToVoxel, outerEnvironment, stack);
+                    PushAfter((StatementSyntax)outerEnvironment.AST.Statements[environment.OuterPosition], (byte3)connection.ToVoxel, outerEnvironment, stack);
                 }
                 else
                 {
@@ -1159,7 +1159,7 @@ public sealed class Interpreter : IAstRunner
                             {
                                 var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
 
-                                var customStatement = (CustomStatementSyntax)outerEnvironment.AST.Nodes[environment.OuterPosition];
+                                var customStatement = (CustomStatementSyntax)outerEnvironment.AST.Statements[environment.OuterPosition];
 
                                 foreach (var (termPos, term) in customStatement.ConnectedInputTerminals)
                                 {
@@ -1180,7 +1180,7 @@ public sealed class Interpreter : IAstRunner
                                 {
                                     if (con.OutsidePosition == terminal.Position)
                                     {
-                                        return GetOutput(new SyntaxTerminal(custom.AST.Nodes[con.BlockPosition], con.TerminalPosition), customEnvironment);
+                                        return GetOutput(new SyntaxTerminal(custom.AST.Statements[con.BlockPosition], con.TerminalPosition), customEnvironment);
                                     }
                                 }
 

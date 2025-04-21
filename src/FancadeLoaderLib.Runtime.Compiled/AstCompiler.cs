@@ -34,7 +34,7 @@ public sealed partial class AstCompiler
 
     private readonly ObjectPool<IndentedTextWriter> _writerPool = new DefaultObjectPoolProvider().Create(new IndentedTextWriterPoolPolicy());
 
-    private readonly Queue<(EntryPoint EntryPoint, SignalType Type)> _nodesToWrite = [];
+    private readonly Queue<(SyntaxTerminal Terminal, int EnvironmentIndex, SignalType Type)> _nodesToWrite = [];
     private readonly HashSet<(EntryPoint EntryPoint, bool IsPtr)> _writtenNodes = [];
 
     private readonly HashSet<(string Name, string Type, string? DefaultValue)> _stateStoreVariables = [];
@@ -240,7 +240,9 @@ public sealed partial class AstCompiler
 
             while (_nodesToWrite.TryDequeue(out var item))
             {
-                var (entryPoint, type) = item;
+                var (terminal, environmentIndex, type) = item;
+
+                var entryPoint = new EntryPoint(environmentIndex, terminal.Node.Position, terminal.Position);
 
                 if (!_writtenNodes.Add((entryPoint, type.IsPointer())))
                 {
@@ -257,8 +259,8 @@ public sealed partial class AstCompiler
                     {
                         _writer.Write("return ");
 
-                        var env = _environments[entryPoint.EnvironmentIndex];
-                        WriteExpression(new SyntaxTerminal(env.AST.Nodes[entryPoint.BlockPos], entryPoint.TerminalPos), type.IsPointer(), env, true, _writer);
+                        var env = _environments[environmentIndex];
+                        WriteExpression(terminal, type.IsPointer(), env, true, _writer);
 
                         _writer.WriteLine(';');
                     }
@@ -528,7 +530,7 @@ public sealed partial class AstCompiler
             throw new EnvironmentDepthLimitReachedException();
         }
 
-        foreach (var node in outer.AST.Nodes.Values)
+        foreach (var node in outer.AST.Statements.Values)
         {
             if (node is CustomStatementSyntax customStatement)
             {
@@ -569,7 +571,7 @@ public sealed partial class AstCompiler
                 if (conToCount > 1)
                 {
                     writer.WriteLineInv($"{GetEntryPointMethodName(item, false)}();");
-                    _nodesToWrite.Enqueue((item, SignalType.Void));
+                    _nodesToWrite.Enqueue((new SyntaxTerminal(environment.AST.Statements[pos], terminalPos), environmentIndex, SignalType.Void));
                     continue;
                 }
             }
@@ -617,7 +619,7 @@ public sealed partial class AstCompiler
 
     private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, Environment environment, IndentedTextWriter writer)
     {
-        var statement = (StatementSyntax)environment.AST.Nodes[pos];
+        var statement = (StatementSyntax)environment.AST.Statements[pos];
 
         // faster than switching on type
         switch (statement.PrefabId)

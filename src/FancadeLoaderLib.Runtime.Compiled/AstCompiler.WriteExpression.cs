@@ -48,7 +48,7 @@ public partial class AstCompiler
                 var entryPoint = new EntryPoint(environment.Index, terminal.Node.Position, terminal.Position);
                 writer.WriteInv($"{GetEntryPointMethodName(entryPoint, asReference)}()");
                 ExpressionInfo info = GetExpressionInfo(terminal, asReference);
-                _nodesToWrite.Enqueue((entryPoint, asReference ? info.PtrType : info.Type));
+                _nodesToWrite.Enqueue((terminal, environment.Index, asReference ? info.PtrType : info.Type));
                 return info;
             }
         }

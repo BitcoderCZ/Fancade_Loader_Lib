@@ -15,7 +15,7 @@ public sealed partial class AST
     public readonly ImmutableArray<OutsideConnection> VoidInputs;
     public readonly ImmutableArray<OutsideConnection> NonVoidOutputs;
 
-    public readonly FrozenDictionary<ushort3, SyntaxNode> Nodes;
+    public readonly FrozenDictionary<ushort3, StatementSyntax> Statements;
 
     public readonly ImmutableArray<Variable> GlobalVariables;
 
@@ -25,16 +25,16 @@ public sealed partial class AST
 
     public readonly FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsTo;
 
-    public AST(ushort prefabId, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, SyntaxNode> nodes, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<OutsideConnection> nonVoidOutputs, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsTo)
+    public AST(ushort prefabId, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, StatementSyntax> statements, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<OutsideConnection> nonVoidOutputs, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsTo)
     {
         ThrowIfNull(notConnectedVoidInputs, nameof(notConnectedVoidInputs));
-        ThrowIfNull(nodes, nameof(nodes));
+        ThrowIfNull(statements, nameof(statements));
         ThrowIfNull(globalVariables, nameof(globalVariables));
         ThrowIfNull(variables, nameof(variables));
 
         PrefabId = prefabId;
         NotConnectedVoidInputs = notConnectedVoidInputs;
-        Nodes = nodes;
+        Statements = statements;
         GlobalVariables = globalVariables;
         Variables = variables;
         VoidInputs = voidInputs;
