@@ -1,6 +1,7 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
+using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
@@ -8,13 +9,37 @@ using System.Diagnostics;
 
 namespace FancadeLoaderLib.Runtime.Compiled;
 
-public sealed partial class AstCompiler
+public partial class AstCompiler
 {
     private static ExpressionInfo GetExpressionInfo(SyntaxTerminal terminal, bool asReference)
     {
         // faster than switching on type
         switch (terminal.Node.PrefabId)
         {
+            // **************************************** Game ****************************************
+            case 220:
+                {
+                    Debug.Assert(terminal.Node is ScreenSizeExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(ScreenSizeExpressionSyntax)}");
+
+                    return new ExpressionInfo(SignalType.Float);
+                }
+
+            case 224:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is AccelerometerExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(AccelerometerExpressionSyntax)}");
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 564:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is CurrentFrameExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CurrentFrameExpressionSyntax)}");
+
+                    return new ExpressionInfo(SignalType.Float);
+                }
+
             // **************************************** Control ****************************************
             case 560:
                 {
