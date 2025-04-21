@@ -1,4 +1,5 @@
 ﻿using FancadeLoaderLib.Editing;
+using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
@@ -41,6 +42,43 @@ public partial class AstCompiler
                 }
 
             // **************************************** Control ****************************************
+            case 242:
+                {
+                    Debug.Assert(terminal.Node is TouchSensorStatementSyntax);
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 3) || terminal.Position == TerminalDef.GetOutPosition(2, 2, 3));
+
+                    return new ExpressionInfo(SignalType.Float);
+                }
+
+            case 248:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is SwipeSensorStatementSyntax);
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 592:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is JoystickStatementSyntax);
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 401:
+                {
+                    Debug.Assert(terminal.Node is CollisionStatementSyntax);
+
+                    return terminal.Position == TerminalDef.GetOutPosition(1, 2, 4)
+                        ? new ExpressionInfo(SignalType.Obj)
+                        : terminal.Position == TerminalDef.GetOutPosition(2, 2, 4)
+                        ? new ExpressionInfo(SignalType.Float)
+                        : terminal.Position == TerminalDef.GetOutPosition(3, 2, 4)
+                        ? new ExpressionInfo(SignalType.Vec3)
+                        : throw new InvalidTerminalException(terminal.Position);
+                }
+
             case 560:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");

@@ -98,6 +98,73 @@ public partial class AstCompiler
                 }
 
             // **************************************** Control ****************************************
+            case 242:
+                {
+                    var touchSensor = (TouchSensorStatementSyntax)terminal.Node;
+
+                    writer.Write(GetStateStoreVarName(environment.Index, touchSensor.Position, "touch_pos"));
+
+                    if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 3))
+                    {
+                        writer.Write(".X");
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(2, 2, 3))
+                    {
+                        writer.Write(".Y");
+                    }
+                    else
+                    {
+                        throw new InvalidTerminalException(terminal.Position);
+                    }
+
+                    return new ExpressionInfo(SignalType.Float);
+                }
+
+            case 248:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var swipeSensor = (SwipeSensorStatementSyntax)terminal.Node;
+
+                    writer.Write(GetStateStoreVarName(environment.Index, swipeSensor.Position, "swipe_direction"));
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 592:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var joystick = (JoystickStatementSyntax)terminal.Node;
+
+                    writer.Write(GetStateStoreVarName(environment.Index, joystick.Position, "joystick_direction"));
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 401:
+                {
+                    var collision = (CollisionStatementSyntax)terminal.Node;
+
+                    if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 4))
+                    {
+                        writer.Write(GetStateStoreVarName(environment.Index, collision.Position, "collision_second_object"));
+                        return new ExpressionInfo(SignalType.Obj);
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(2, 2, 4))
+                    {
+                        writer.Write(GetStateStoreVarName(environment.Index, collision.Position, "collision_impulse"));
+                        return new ExpressionInfo(SignalType.Float);
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(3, 2, 4))
+                    {
+                        writer.Write(GetStateStoreVarName(environment.Index, collision.Position, "collision_normal"));
+                        return new ExpressionInfo(SignalType.Vec3);
+                    }
+                    else
+                    {
+                        throw new InvalidTerminalException(terminal.Position);
+                    }
+                }
+
             case 560:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");

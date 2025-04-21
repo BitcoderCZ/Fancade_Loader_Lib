@@ -58,6 +58,24 @@ internal static class IndentedTextWriterUtils
         => writer.WriteLine(FormattableString.Invariant(value));
 #endif
 
+    public static void WriteLineAll(this IndentedTextWriter writer, string value)
+    {
+        var valueSpan = value.AsSpan();
+
+        var enumerator = new MemoryUtils.SpanSplitEnumerator<char>(valueSpan, '\n').GetEnumerator();
+        while (enumerator.MoveNext())
+        {
+            var line = valueSpan[enumerator.Current];
+
+            if (!line.IsEmpty && line[^1] == '\r')
+            {
+                line = line[..^1];
+            }
+
+            writer.WriteLine(line);
+        }
+    }
+
 #if NET6_0_OR_GREATER
     [InterpolatedStringHandler]
     public ref struct InvariantInterpolatedStringHandler

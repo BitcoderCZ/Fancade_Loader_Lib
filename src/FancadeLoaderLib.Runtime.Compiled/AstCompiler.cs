@@ -151,9 +151,11 @@ public sealed partial class AstCompiler
 
         using (_writer.CurlyIndent("public sealed class CompiledAST : IAstRunner"))
         {
-            _writer.WriteLine("""
+            _writer.WriteLineAll("""
                 private readonly IRuntimeContext _ctx;
 
+                private Queue<Action>? lateUpdateQueue = new();
+                
                 """);
 
             foreach (var (environmentIndex, variable) in _environments[0].AST.GlobalVariables.Select(var => (-1, var)).Concat(_variables))
@@ -200,8 +202,19 @@ public sealed partial class AstCompiler
                 }
 
                 _writer.WriteLine();
-                _writer.WriteLine("""
-                    return () => { };
+                _writer.WriteLineAll("""
+                    return () =>
+                    { 
+                        var queue = lateUpdateQueue;
+                        lateUpdateQueue = null;
+
+                        while (queue.TryDequeue(out var lateUpdate))
+                        {
+                            lateUpdate();
+                        }
+
+                        lateUpdateQueue = queue;
+                    };
                     """);
             }
 
@@ -530,9 +543,9 @@ public sealed partial class AstCompiler
             throw new EnvironmentDepthLimitReachedException();
         }
 
-        foreach (var node in outer.AST.Statements.Values)
+        foreach (var statement in outer.AST.Statements.Values)
         {
-            if (node is CustomStatementSyntax customStatement)
+            if (statement is CustomStatementSyntax customStatement)
             {
                 var environment = new Environment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
                 environments.Add(environment);
@@ -560,11 +573,14 @@ public sealed partial class AstCompiler
             {
                 int conToCount = 0;
 
-                foreach (var con in environment.AST.ConnectionsTo[pos])
+                if (environment.AST.ConnectionsTo.TryGetValue(pos, out var connectionsTo))
                 {
-                    if (con.ToVoxel == terminalPos)
+                    foreach (var con in connectionsTo)
                     {
-                        conToCount++;
+                        if (con.ToVoxel == terminalPos)
+                        {
+                            conToCount++;
+                        }
                     }
                 }
 
@@ -576,13 +592,13 @@ public sealed partial class AstCompiler
                 }
             }
 
-            var statement = WriteStatement(pos, terminalPos, environment, writer);
+            var statement = WriteStatement(pos, terminalPos, environment, out byte3 executeNext, writer);
 
             for (int i = statement.OutVoidConnections.Length - 1; i >= 0; i--)
             {
                 var connection = statement.OutVoidConnections[i];
 
-                if (connection.FromVoxel == TerminalDef.AfterPosition)
+                if (connection.FromVoxel == executeNext)
                 {
                     if (connection.IsToOutside)
                     {
@@ -617,9 +633,11 @@ public sealed partial class AstCompiler
         }
     }
 
-    private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, Environment environment, IndentedTextWriter writer)
+    private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, Environment environment, out byte3 executeNext, IndentedTextWriter writer)
     {
-        var statement = (StatementSyntax)environment.AST.Statements[pos];
+        var statement = environment.AST.Statements[pos];
+
+        executeNext = TerminalDef.AfterPosition;
 
         // faster than switching on type
         switch (statement.PrefabId)
@@ -773,9 +791,7 @@ public sealed partial class AstCompiler
 
                     if (ifStatement.Condition is not null)
                     {
-                        writer.Write("""
-                            if (
-                            """);
+                        writer.Write("if (");
 
                         WriteExpression(ifStatement.Condition, false, environment, writer);
 
@@ -791,6 +807,155 @@ public sealed partial class AstCompiler
                         using (writer.CurlyIndent())
                         {
                             WriteConnected(ifStatement, TerminalDef.GetOutPosition(1, 2, 2), environment, writer);
+                        }
+                    }
+                }
+
+                break;
+            case 238:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    Debug.Assert(statement is PlaySensorStatementSyntax, $"{nameof(statement)} should be {nameof(PlaySensorStatementSyntax)}");
+
+                    using (writer.CurlyIndent("if (_ctx.CurrentFrame == 0)"))
+                    {
+                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                    }
+                }
+
+                break;
+            case 566:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    Debug.Assert(statement is LateUpdateStatementSyntax, $"{nameof(statement)} should be {nameof(LateUpdateStatementSyntax)}");
+
+                    using (writer.CurlyIndent("if (lateUpdateQueue is not null)"))
+                    {
+                        foreach (var connection in statement.OutVoidConnections)
+                        {
+                            if (connection.FromVoxel == TerminalDef.GetOutPosition(0, 2, 2))
+                            {
+                                if (connection.IsToOutside)
+                                {
+                                    throw new NotImplementedException();
+                                }
+                                else
+                                {
+                                    writer.WriteLine("""
+                                        lateUpdateQueue.Enqueue(() =>
+                                        """);
+                                    writer.WriteLine('{');
+                                    writer.Indent++;
+                                    WriteEntryPoint(new(environment.Index, connection.To, (byte3)connection.ToVoxel), false, writer);
+                                    writer.Indent--;
+                                    writer.WriteLine("});");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                break;
+            case 409:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    Debug.Assert(statement is BoxArtStatementSyntax, $"{nameof(statement)} should be {nameof(BoxArtStatementSyntax)}");
+
+                    using (writer.CurlyIndent("if (_ctx.TakingBoxArt)"))
+                    {
+                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                    }
+                }
+
+                break;
+            case 242:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var touchSensor = (TouchSensorStatementSyntax)statement;
+
+                    string touchPosVarName = GetStateStoreVarName(environment.Index, touchSensor.Position, "touch_pos");
+                    _stateStoreVariables.Add((touchPosVarName, nameof(float2), null));
+
+                    using (writer.CurlyIndent($"if (_ctx.TryGetTouch({nameof(TouchState)}.{touchSensor.State}, {touchSensor.FingerIndex}, out var touchPos{_localVarCounter}))"))
+                    {
+                        writer.WriteLineInv($"{touchPosVarName} = touchPos{_localVarCounter};");
+
+                        _localVarCounter++;
+
+                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 3), environment, writer);
+                    }
+                }
+
+                break;
+            case 248:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var swipeSensor = (SwipeSensorStatementSyntax)statement;
+
+                    string directionVarName = GetStateStoreVarName(environment.Index, swipeSensor.Position, "swipe_direction");
+                    _stateStoreVariables.Add((directionVarName, nameof(float3), null));
+
+                    using (writer.CurlyIndent($"if (_ctx.TryGetSwipe(out var direction{_localVarCounter}))"))
+                    {
+                        writer.WriteLineInv($"{directionVarName} = direction{_localVarCounter};");
+
+                        _localVarCounter++;
+
+                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                    }
+                }
+
+                break;
+            case 588:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var button = (ButtonStatementSyntax)statement;
+
+                    using (writer.CurlyIndent($"if (_ctx.GetButtonPressed({nameof(ButtonType)}.{button.Type}))"))
+                    {
+                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                    }
+                }
+
+                break;
+            case 592:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var joystick = (JoystickStatementSyntax)statement;
+
+                    string directionVarName = GetStateStoreVarName(environment.Index, joystick.Position, "joystick_direction");
+                    _stateStoreVariables.Add((directionVarName, nameof(float3), null));
+
+                    writer.WriteLineInv($"{directionVarName} = _ctx.GetJoystickDirection({nameof(JoystickType)}.{joystick.Type});");
+                }
+
+                break;
+            case 401:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var collision = (CollisionStatementSyntax)statement;
+
+                    if (collision.FirstObject is not null)
+                    {
+                        string secondObjectVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_second_object");
+                        string impulseVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_impulse");
+                        string normalVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_normal");
+                        _stateStoreVariables.Add((secondObjectVarName, "int", null));
+                        _stateStoreVariables.Add((impulseVarName, "float", null));
+                        _stateStoreVariables.Add((normalVarName, nameof(float3), null));
+
+                        writer.Write("_ctx.TryGetCollision(");
+                        WriteExpression(collision.FirstObject, false, environment, writer);
+
+                        using (writer.CurlyIndent($", out int secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out float3 normal{_localVarCounter})"))
+                        {
+                            writer.WriteLineInv($"{secondObjectVarName} = secondObject{_localVarCounter};");
+                            writer.WriteLineInv($"{impulseVarName} = impulse{_localVarCounter};");
+                            writer.WriteLineInv($"{normalVarName} = normal{_localVarCounter};");
+
+                            _localVarCounter++;
+
+                            WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 4), environment, writer);
                         }
                     }
                 }
@@ -1128,27 +1293,6 @@ public sealed partial class AstCompiler
         public bool IsPointer => VariableName is not null;
 
         public SignalType PtrType => IsPointer ? Type.ToPointer() : Type;
-    }
-
-    private readonly struct EntryPoint
-    {
-        public readonly int EnvironmentIndex;
-        public readonly ushort3 BlockPos;
-        public readonly byte3 TerminalPos;
-
-        public EntryPoint(int environmentIndex, ushort3 blockPos, byte3 terminalPos)
-        {
-            EnvironmentIndex = environmentIndex;
-            BlockPos = blockPos;
-            TerminalPos = terminalPos;
-        }
-
-        public void Deconstruct(out int environmentIndex, out ushort3 blockPos, out byte3 terminalPos)
-        {
-            environmentIndex = EnvironmentIndex;
-            blockPos = BlockPos;
-            terminalPos = TerminalPos;
-        }
     }
 
     private sealed class Environment
