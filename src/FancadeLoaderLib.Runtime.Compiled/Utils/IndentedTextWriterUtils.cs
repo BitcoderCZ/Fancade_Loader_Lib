@@ -85,16 +85,16 @@ internal static class IndentedTextWriterUtils
 
         public void AppendFormatted<T>(T value, int alignment)
             => _handler.AppendFormatted(value, alignment);
-            
+
         public void AppendFormatted<T>(T value, int alignment, string? format)
             => _handler.AppendFormatted(value, alignment, format);
-            
+
         public void AppendFormatted(scoped ReadOnlySpan<char> value)
             => _handler.AppendFormatted(value);
 
         public void AppendFormatted(scoped ReadOnlySpan<char> value, int alignment = 0, string? format = null)
             => _handler.AppendFormatted(value, alignment, format);
-            
+
         public void AppendFormatted(string? value)
             => _handler.AppendFormatted(value);
 
@@ -106,7 +106,7 @@ internal static class IndentedTextWriterUtils
 
         public string ToStringAndClear()
             => _handler.ToStringAndClear();
-            
+
         public override string ToString()
             => _handler.ToString();
     }

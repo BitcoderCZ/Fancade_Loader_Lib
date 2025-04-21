@@ -576,8 +576,10 @@ public sealed partial class AstCompiler
 
             var statement = WriteStatement(pos, terminalPos, environment, writer);
 
-            foreach (var connection in statement.OutVoidConnections)
+            for (int i = statement.OutVoidConnections.Length - 1; i >= 0; i--)
             {
+                var connection = statement.OutVoidConnections[i];
+
                 if (connection.FromVoxel == TerminalDef.AfterPosition)
                 {
                     if (connection.IsToOutside)

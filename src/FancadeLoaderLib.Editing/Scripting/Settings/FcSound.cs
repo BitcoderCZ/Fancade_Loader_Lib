@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FancadeLoaderLib.Editing.Scripting.Settings;
+﻿namespace FancadeLoaderLib.Editing.Scripting.Settings;
 
 /// <summary>
 /// Represents a fancade sound, used by play sound.

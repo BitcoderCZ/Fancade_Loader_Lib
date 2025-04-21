@@ -586,8 +586,10 @@ public sealed class Interpreter : IAstRunner
 
     private void PushAfter(StatementSyntax statement, byte3 terminalPos, Environment environment, Stack<EntryPoint> stack)
     {
-        foreach (var connection in statement.OutVoidConnections)
+        for (int i = statement.OutVoidConnections.Length - 1; i >= 0; i--)
         {
+            var connection = statement.OutVoidConnections[i];
+
             if (connection.FromVoxel == terminalPos)
             {
                 if (connection.IsToOutside)
