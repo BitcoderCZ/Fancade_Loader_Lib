@@ -30,7 +30,7 @@ public partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var win = (WinStatementSyntax)statement;
 
-                    writer.WriteLineInv($"_ctx.Win({win.Delay});");
+                    writer.WriteLineInv($"_ctx.{nameof(IRuntimeContext.Win)}({win.Delay});");
                 }
 
                 break;
@@ -39,7 +39,7 @@ public partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var lose = (LoseStatementSyntax)statement;
 
-                    writer.WriteLineInv($"_ctx.Lose({lose.Delay});");
+                    writer.WriteLineInv($"_ctx.{nameof(IRuntimeContext.Lose)}({lose.Delay});");
                 }
 
                 break;
@@ -48,7 +48,7 @@ public partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var setScore = (SetScoreStatementSyntax)statement;
 
-                    writer.Write("_ctx.SetScore(");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetScore)}(");
                     if (setScore.Score is null)
                     {
                         writer.Write("null");
@@ -77,7 +77,7 @@ public partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
                     var setCamera = (SetCameraStatementSyntax)statement;
 
-                    writer.Write("_ctx.SetCamera(");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetCamera)}(");
                     if (setCamera.PositionTerminal is null)
                     {
                         writer.Write("null");
@@ -116,7 +116,7 @@ public partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var setLight = (SetLightStatementSyntax)statement;
 
-                    writer.Write("_ctx.SetLight(");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetLight)}(");
                     if (setLight.PositionTerminal is null)
                     {
                         writer.Write("null");
@@ -145,7 +145,7 @@ public partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var menuItem = (MenuItemStatementSyntax)statement;
 
-                    writer.Write("_ctx.MenuItem(");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.MenuItem)}(");
                     if (menuItem.Variable is null)
                     {
                         writer.Write("null");
@@ -173,7 +173,7 @@ public partial class AstCompiler
 
                     if (setPosition.ObjectTerminal is not null)
                     {
-                        writer.Write("_ctx.SetPosition(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetPosition)}(");
 
                         WriteExpression(setPosition.ObjectTerminal, false, environment, writer);
 
@@ -211,7 +211,7 @@ public partial class AstCompiler
 
                     if (setVisible.Object is not null)
                     {
-                        writer.Write("_ctx.SetPosition(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetPosition)}(");
 
                         WriteExpression(setVisible.Object, false, environment, writer);
 
@@ -234,7 +234,7 @@ public partial class AstCompiler
                         string objectVarName = GetStateStoreVarName(environment.Index, createObject.Position, "create_object_object");
                         _stateStoreVariables.Add((objectVarName, "int", null));
 
-                        writer.WriteInv($"{objectVarName} = _ctx.CreateObject(");
+                        writer.WriteInv($"{objectVarName} = _ctx.{nameof(IRuntimeContext.CreateObject)}(");
 
                         WriteExpression(createObject.Original, false, environment, writer);
 
@@ -250,7 +250,7 @@ public partial class AstCompiler
 
                     if (destroyObject.Object is not null)
                     {
-                        writer.Write("_ctx.DestroyObject(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.DestroyObject)}(");
 
                         WriteExpression(destroyObject.Object, false, environment, writer);
 
@@ -294,7 +294,7 @@ public partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     Debug.Assert(statement is PlaySensorStatementSyntax, $"{nameof(statement)} should be {nameof(PlaySensorStatementSyntax)}");
 
-                    using (writer.CurlyIndent("if (_ctx.CurrentFrame == 0)"))
+                    using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.CurrentFrame)} == 0)"))
                     {
                         WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                     }
@@ -338,7 +338,7 @@ public partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     Debug.Assert(statement is BoxArtStatementSyntax, $"{nameof(statement)} should be {nameof(BoxArtStatementSyntax)}");
 
-                    using (writer.CurlyIndent("if (_ctx.TakingBoxArt)"))
+                    using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.TakingBoxArt)})"))
                     {
                         WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                     }
@@ -353,7 +353,7 @@ public partial class AstCompiler
                     string touchPosVarName = GetStateStoreVarName(environment.Index, touchSensor.Position, "touch_pos");
                     _stateStoreVariables.Add((touchPosVarName, nameof(float2), null));
 
-                    using (writer.CurlyIndent($"if (_ctx.TryGetTouch({nameof(TouchState)}.{touchSensor.State}, {touchSensor.FingerIndex}, out var touchPos{_localVarCounter}))"))
+                    using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.TryGetTouch)}({nameof(TouchState)}.{touchSensor.State}, {touchSensor.FingerIndex}, out var touchPos{_localVarCounter}))"))
                     {
                         writer.WriteLineInv($"{touchPosVarName} = touchPos{_localVarCounter};");
 
@@ -372,7 +372,7 @@ public partial class AstCompiler
                     string directionVarName = GetStateStoreVarName(environment.Index, swipeSensor.Position, "swipe_direction");
                     _stateStoreVariables.Add((directionVarName, nameof(float3), null));
 
-                    using (writer.CurlyIndent($"if (_ctx.TryGetSwipe(out var direction{_localVarCounter}))"))
+                    using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.TryGetSwipe)}(out var direction{_localVarCounter}))"))
                     {
                         writer.WriteLineInv($"{directionVarName} = direction{_localVarCounter};");
 
@@ -388,7 +388,7 @@ public partial class AstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var button = (ButtonStatementSyntax)statement;
 
-                    using (writer.CurlyIndent($"if (_ctx.GetButtonPressed({nameof(ButtonType)}.{button.Type}))"))
+                    using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.GetButtonPressed)}({nameof(ButtonType)}.{button.Type}))"))
                     {
                         WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                     }
@@ -403,7 +403,7 @@ public partial class AstCompiler
                     string directionVarName = GetStateStoreVarName(environment.Index, joystick.Position, "joystick_direction");
                     _stateStoreVariables.Add((directionVarName, nameof(float3), null));
 
-                    writer.WriteLineInv($"{directionVarName} = _ctx.GetJoystickDirection({nameof(JoystickType)}.{joystick.Type});");
+                    writer.WriteLineInv($"{directionVarName} = _ctx.{nameof(IRuntimeContext.GetJoystickDirection)}({nameof(JoystickType)}.{joystick.Type});");
                 }
 
                 break;
@@ -421,7 +421,7 @@ public partial class AstCompiler
                         _stateStoreVariables.Add((impulseVarName, "float", null));
                         _stateStoreVariables.Add((normalVarName, nameof(float3), null));
 
-                        writer.Write("_ctx.TryGetCollision(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.TryGetCollision)}(");
                         WriteExpression(collision.FirstObject, false, environment, writer);
 
                         using (writer.CurlyIndent($", out int secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out float3 normal{_localVarCounter})"))
@@ -495,9 +495,7 @@ public partial class AstCompiler
                     var inspect = (InspectStatementSyntax)statement;
                     if (inspect.Input is not null)
                     {
-                        writer.Write("""
-                            _ctx.InspectValue(new RuntimeValue(
-                            """);
+                        writer.Write($"_ctx.{nameof(IRuntimeContext.InspectValue)}(new RuntimeValue(");
 
                         var info = WriteExpression(inspect.Input, false, environment, writer);
 

@@ -63,7 +63,7 @@ public partial class AstCompiler
                     Debug.Assert(terminal.Node is ScreenSizeExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(ScreenSizeExpressionSyntax)}");
                     Debug.Assert(!asReference);
 
-                    writer.Write("_ctx.ScreenSize");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.ScreenSize)}");
 
                     if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
                     {
@@ -87,7 +87,7 @@ public partial class AstCompiler
                     Debug.Assert(terminal.Node is AccelerometerExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(AccelerometerExpressionSyntax)}");
                     Debug.Assert(!asReference);
 
-                    writer.Write("_ctx.Accelerometer");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.Accelerometer)}");
                     return new ExpressionInfo(SignalType.Vec3);
                 }
             case 564:
@@ -96,7 +96,7 @@ public partial class AstCompiler
                     Debug.Assert(terminal.Node is CurrentFrameExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CurrentFrameExpressionSyntax)}");
                     Debug.Assert(!asReference);
 
-                    writer.Write("(float)_ctx.CurrentFrame");
+                    writer.WriteInv($"(float)_ctx.{nameof(IRuntimeContext.CurrentFrame)}");
 
                     return new ExpressionInfo(SignalType.Float);
                 }
@@ -126,7 +126,7 @@ public partial class AstCompiler
                     }
                     else
                     {
-                        writer.Write("_ctx.GetObjectPosition(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(");
 
                         WriteExpression(getPosition.Object, false, environment, writer);
 
@@ -154,7 +154,7 @@ public partial class AstCompiler
                     Debug.Assert(!asReference);
                     var raycast = (RaycastExpressionSyntax)terminal.Node;
 
-                    writer.Write("_ctx.Raycast(");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.Raycast)}(");
                     WriteExpressionOrDefault(raycast.From, SignalType.Vec3, environment, writer);
                     writer.Write(", ");
                     WriteExpressionOrDefault(raycast.To, SignalType.Vec3, environment, writer);
@@ -200,7 +200,7 @@ public partial class AstCompiler
                     }
                     else
                     {
-                        writer.Write("_ctx.GetSize(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(");
                         WriteExpression(getSize.Object, false, environment, writer);
                         writer.Write(')');
 
@@ -558,7 +558,7 @@ public partial class AstCompiler
                             break;
                         case 168:
                             outType = SignalType.Float;
-                            writer.Write("_ctx.GetRandomValue(");
+                            writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetRandomValue)}(");
                             WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(", ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
@@ -667,7 +667,7 @@ public partial class AstCompiler
                     Debug.Assert(!asReference);
                     var screenToWorld = (ScreenToWorldExpressionSyntax)terminal.Node;
 
-                    writer.Write("_ctx.ScreenToWorld(new float2(");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.ScreenToWorld)}(new float2(");
                     WriteExpressionOrDefault(screenToWorld.ScreenX, SignalType.Float, environment, writer);
                     writer.Write(", ");
                     WriteExpressionOrDefault(screenToWorld.ScreenY, SignalType.Float, environment, writer);
@@ -694,7 +694,7 @@ public partial class AstCompiler
                     Debug.Assert(!asReference);
                     var worldToScreen = (WorldToScreenExpressionSyntax)terminal.Node;
 
-                    writer.Write("_ctx.WorldToScreen(");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.WorldToScreen)}(");
                     WriteExpressionOrDefault(worldToScreen.WorldPos, SignalType.Vec3, environment, writer);
                     writer.Write(')');
 
@@ -998,7 +998,7 @@ public partial class AstCompiler
 
                         case ObjectExpressionSyntax:
                             {
-                                writer.WriteInv($"_ctx.GetObjectId(terminal.Node.Position, terminal.Position)");
+                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectId)}(new ushort3({terminal.Node.Position.X}, {terminal.Node.Position.Y}, {terminal.Node.Position.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z}))");
                                 return new ExpressionInfo(SignalType.Obj);
                             }
 
