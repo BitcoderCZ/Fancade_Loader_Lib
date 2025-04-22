@@ -50,25 +50,9 @@ public partial class AstCompiler
                     var setScore = (SetScoreStatementSyntax)statement;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetScore)}(");
-                    if (setScore.Score is null)
-                    {
-                        writer.Write("null");
-                    }
-                    else
-                    {
-                        WriteExpression(setScore.Score, false, environment, writer);
-                    }
-
+                    WriteExpressionOrNull(setScore.Score, SignalType.Float, environment, writer);
                     writer.Write(", ");
-                    if (setScore.Coins is null)
-                    {
-                        writer.Write("null");
-                    }
-                    else
-                    {
-                        WriteExpression(setScore.Coins, false, environment, writer);
-                    }
-
+                    WriteExpressionOrNull(setScore.Coins, SignalType.Float, environment, writer);
                     writer.WriteLineInv($", Ranking.{Enum.GetName(typeof(Ranking), setScore.Ranking)});");
                 }
 
@@ -79,35 +63,11 @@ public partial class AstCompiler
                     var setCamera = (SetCameraStatementSyntax)statement;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetCamera)}(");
-                    if (setCamera.PositionTerminal is null)
-                    {
-                        writer.Write("null");
-                    }
-                    else
-                    {
-                        WriteExpression(setCamera.PositionTerminal, false, environment, writer);
-                    }
-
+                    WriteExpressionOrNull(setCamera.PositionTerminal, SignalType.Vec3Ptr, environment, writer);
                     writer.Write(", ");
-                    if (setCamera.RotationTerminal is null)
-                    {
-                        writer.Write("null");
-                    }
-                    else
-                    {
-                        WriteExpression(setCamera.RotationTerminal, false, environment, writer);
-                    }
-
+                    WriteExpressionOrNull(setCamera.RotationTerminal, SignalType.Rot, environment, writer);
                     writer.Write(", ");
-                    if (setCamera.RangeTerminal is null)
-                    {
-                        writer.Write("null");
-                    }
-                    else
-                    {
-                        WriteExpression(setCamera.RangeTerminal, false, environment, writer);
-                    }
-
+                    WriteExpressionOrNull(setCamera.RangeTerminal, SignalType.Float, environment, writer);
                     writer.WriteLineInv($", {(setCamera.Perspective ? "true" : "false")});");
                 }
 
@@ -118,25 +78,9 @@ public partial class AstCompiler
                     var setLight = (SetLightStatementSyntax)statement;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetLight)}(");
-                    if (setLight.PositionTerminal is null)
-                    {
-                        writer.Write("null");
-                    }
-                    else
-                    {
-                        WriteExpression(setLight.PositionTerminal, false, environment, writer);
-                    }
-
+                    WriteExpressionOrNull(setLight.PositionTerminal, SignalType.Vec3, environment, writer);
                     writer.Write(", ");
-                    if (setLight.RotationTerminal is null)
-                    {
-                        writer.Write("null");
-                    }
-                    else
-                    {
-                        WriteExpression(setLight.RotationTerminal, false, environment, writer);
-                    }
-
+                    WriteExpressionOrNull(setLight.RotationTerminal, SignalType.Rot, environment, writer);
                     writer.WriteLine(");");
                 }
 
@@ -147,15 +91,7 @@ public partial class AstCompiler
                     var menuItem = (MenuItemStatementSyntax)statement;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.MenuItem)}(");
-                    if (menuItem.Variable is null)
-                    {
-                        writer.Write("null");
-                    }
-                    else
-                    {
-                        WriteExpression(menuItem.Variable, true, environment, writer);
-                    }
-
+                    WriteExpressionOrNull(menuItem.Variable, SignalType.FloatPtr, environment, writer);
                     writer.Write(", ");
                     WriteExpressionOrDefault(menuItem.Picture, SignalType.Obj, environment, writer);
                     writer.WriteLineInv($"""
@@ -175,31 +111,11 @@ public partial class AstCompiler
                     if (setPosition.ObjectTerminal is not null)
                     {
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetPosition)}(");
-
                         WriteExpression(setPosition.ObjectTerminal, false, environment, writer);
-
                         writer.Write(", ");
-
-                        if (setPosition.PositionTerminal is null)
-                        {
-                            writer.Write("null");
-                        }
-                        else
-                        {
-                            WriteExpression(setPosition.PositionTerminal, false, environment, writer);
-                        }
-
+                        WriteExpressionOrNull(setPosition.PositionTerminal, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-
-                        if (setPosition.RotationTerminal is null)
-                        {
-                            writer.Write("null");
-                        }
-                        else
-                        {
-                            WriteExpression(setPosition.RotationTerminal, false, environment, writer);
-                        }
-
+                        WriteExpressionOrNull(setPosition.RotationTerminal, SignalType.Rot, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -321,27 +237,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AdjustVolumePitch)}(");
                         WriteExpression(volumePitch.Channel, false, environment, writer);
                         writer.Write(", ");
-
-                        if (volumePitch.Volume is null)
-                        {
-                            writer.Write("null");
-                        }
-                        else
-                        {
-                            WriteExpression(volumePitch.Volume, false, environment, writer);
-                        }
-
+                        WriteExpressionOrNull(volumePitch.Volume, SignalType.Float, environment, writer);
                         writer.Write(", ");
-
-                        if (volumePitch.Pitch is null)
-                        {
-                            writer.Write("null");
-                        }
-                        else
-                        {
-                            WriteExpression(volumePitch.Pitch, false, environment, writer);
-                        }
-
+                        WriteExpressionOrNull(volumePitch.Pitch, SignalType.Float, environment, writer);
                         writer.WriteLine(");");
                     }
                 }

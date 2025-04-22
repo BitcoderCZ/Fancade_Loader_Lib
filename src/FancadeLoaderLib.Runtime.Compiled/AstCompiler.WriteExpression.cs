@@ -28,6 +28,18 @@ public partial class AstCompiler
         return WriteExpression(terminal, type.IsPointer(), environment, writer);
     }
 
+    private ExpressionInfo WriteExpressionOrNull(SyntaxTerminal? terminal, SignalType type, Environment environment, IndentedTextWriter writer)
+    {
+        if (terminal is null)
+        {
+            writer.Write("null");
+
+            return new ExpressionInfo(type);
+        }
+
+        return WriteExpression(terminal, type.IsPointer(), environment, writer);
+    }
+
     private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, Environment environment, IndentedTextWriter writer)
         => WriteExpression(terminal, asReference, environment, false, writer);
 
