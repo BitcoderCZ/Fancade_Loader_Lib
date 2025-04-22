@@ -61,6 +61,7 @@ public partial class AstCompiler
             case 220:
                 {
                     Debug.Assert(terminal.Node is ScreenSizeExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(ScreenSizeExpressionSyntax)}");
+                    Debug.Assert(!asReference);
 
                     writer.Write("_ctx.ScreenSize");
 
@@ -84,6 +85,7 @@ public partial class AstCompiler
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     Debug.Assert(terminal.Node is AccelerometerExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(AccelerometerExpressionSyntax)}");
+                    Debug.Assert(!asReference);
 
                     writer.Write("_ctx.Accelerometer");
                     return new ExpressionInfo(SignalType.Vec3);
@@ -92,6 +94,7 @@ public partial class AstCompiler
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     Debug.Assert(terminal.Node is CurrentFrameExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CurrentFrameExpressionSyntax)}");
+                    Debug.Assert(!asReference);
 
                     writer.Write("(float)_ctx.CurrentFrame");
 
@@ -101,6 +104,7 @@ public partial class AstCompiler
             // **************************************** Objects ****************************************
             case 278:
                 {
+                    Debug.Assert(!asReference);
                     var getPosition = (GetPositionExpressionSyntax)terminal.Node;
 
                     if (getPosition.Object is null)
@@ -147,6 +151,7 @@ public partial class AstCompiler
 
             case 228:
                 {
+                    Debug.Assert(!asReference);
                     var raycast = (RaycastExpressionSyntax)terminal.Node;
 
                     writer.Write("_ctx.Raycast(");
@@ -241,6 +246,7 @@ public partial class AstCompiler
             // **************************************** Control ****************************************
             case 242:
                 {
+                    Debug.Assert(!asReference);
                     var touchSensor = (TouchSensorStatementSyntax)terminal.Node;
 
                     writer.Write(GetStateStoreVarName(environment.Index, touchSensor.Position, "touch_pos"));
@@ -264,6 +270,7 @@ public partial class AstCompiler
             case 248:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
                     var swipeSensor = (SwipeSensorStatementSyntax)terminal.Node;
 
                     writer.Write(GetStateStoreVarName(environment.Index, swipeSensor.Position, "swipe_direction"));
@@ -274,6 +281,7 @@ public partial class AstCompiler
             case 592:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
                     var joystick = (JoystickStatementSyntax)terminal.Node;
 
                     writer.Write(GetStateStoreVarName(environment.Index, joystick.Position, "joystick_direction"));
@@ -283,6 +291,7 @@ public partial class AstCompiler
 
             case 401:
                 {
+                    Debug.Assert(!asReference);
                     var collision = (CollisionStatementSyntax)terminal.Node;
 
                     if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 4))
@@ -309,6 +318,7 @@ public partial class AstCompiler
             case 560:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
                     var loop = (LoopStatementSyntax)terminal.Node;
                     string valueVarName = GetStateStoreVarName(environment.Index, loop.Position, "loop_value");
 
@@ -323,6 +333,7 @@ public partial class AstCompiler
             case 90 or 144 or 440 or 413 or 453 or 184 or 186 or 188 or 455 or 578:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
                     var unary = (UnaryExpressionSyntax)terminal.Node;
 
                     SignalType outType;
@@ -405,6 +416,7 @@ public partial class AstCompiler
             case 92 or 96 or 100 or 104 or 108 or 112 or 116 or 120 or 124 or 172 or 457 or 132 or 136 or 140 or 421 or 146 or 417 or 128 or 481 or 168 or 176 or 180 or 580 or 570 or 574 or 190 or 200 or 204:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
                     var binary = (BinaryExpressionSyntax)terminal.Node;
 
                     const float EqualsNumbersMaxDiff = 0.001f;
@@ -637,6 +649,7 @@ public partial class AstCompiler
             case 194:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
                     var lerp = (LerpExpressionSyntax)terminal.Node;
 
                     writer.Write("Quaternion.Lerp(");
@@ -651,6 +664,7 @@ public partial class AstCompiler
 
             case 216:
                 {
+                    Debug.Assert(!asReference);
                     var screenToWorld = (ScreenToWorldExpressionSyntax)terminal.Node;
 
                     writer.Write("_ctx.ScreenToWorld(new float2(");
@@ -677,6 +691,7 @@ public partial class AstCompiler
 
             case 477:
                 {
+                    Debug.Assert(!asReference);
                     var worldToScreen = (WorldToScreenExpressionSyntax)terminal.Node;
 
                     writer.Write("_ctx.WorldToScreen(");
@@ -702,6 +717,7 @@ public partial class AstCompiler
             case 208:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 4), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
                     var lineVsPlane = (LineVsPlaneExpressionSyntax)terminal.Node;
 
                     writer.Write("VectorUtils.LineVsPlane(");
@@ -720,6 +736,7 @@ public partial class AstCompiler
             case 150 or 162:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
                     var makeVecRot = (MakeVecRotExpressionSyntax)terminal.Node;
 
                     switch (makeVecRot.PrefabId)
@@ -749,6 +766,7 @@ public partial class AstCompiler
 
             case 156 or 442:
                 {
+                    Debug.Assert(!asReference);
                     var breakVecRot = (BreakVecRotExpressionnSyntax)terminal.Node;
 
                     switch (breakVecRot.PrefabId)
