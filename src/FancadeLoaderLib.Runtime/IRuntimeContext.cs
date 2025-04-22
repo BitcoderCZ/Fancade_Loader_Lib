@@ -49,7 +49,7 @@ public interface IRuntimeContext
 
     void StopSound(float channel);
 
-    void AdjustVolumePitch(float channel, float volume, float pitch);
+    void AdjustVolumePitch(float channel, float? volume, float? pitch);
 
     // **************************************** Control ****************************************
     bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);

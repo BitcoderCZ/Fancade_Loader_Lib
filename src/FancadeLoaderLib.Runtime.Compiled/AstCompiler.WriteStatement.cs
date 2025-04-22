@@ -5,6 +5,7 @@ using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Objects;
+using FancadeLoaderLib.Runtime.Syntax.Sound;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using MathUtils.Vectors;
@@ -253,6 +254,93 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.DestroyObject)}(");
 
                         WriteExpression(destroyObject.Object, false, environment, writer);
+
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+
+            // **************************************** Sound ****************************************
+            case 264:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var playSound = (PlaySoundStatementSyntax)statement;
+
+                    string soundVaName = GetStateStoreVarName(environment.Index, playSound.Position, "play_sound_sound");
+                    _stateStoreVariables.Add((soundVaName, "float", "-1f"));
+
+                    writer.WriteInv($"{soundVaName} = _ctx.{nameof(IRuntimeContext.PlaySound)}(");
+
+                    // TODO: figure out if the defaults are correct
+                    if (playSound.Volume is null)
+                    {
+                        writer.Write("1f");
+                    }
+                    else
+                    {
+                        WriteExpression(playSound.Volume, false, environment, writer);
+                    }
+
+                    writer.Write(", ");
+
+                    if (playSound.Pitch is null)
+                    {
+                        writer.Write("1f");
+                    }
+                    else
+                    {
+                        WriteExpression(playSound.Pitch, false, environment, writer);
+                    }
+
+                    writer.WriteLineInv($", {nameof(FcSound)}.{playSound.Sound});");
+                }
+
+                break;
+            case 397:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var stopSound = (StopSoundStatementSyntax)statement;
+
+                    if (stopSound.Channel is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.StopSound)}(");
+                        WriteExpression(stopSound.Channel, false, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 391:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var volumePitch = (VolumePitchStatementSyntax)statement;
+
+                    if (volumePitch.Channel is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AdjustVolumePitch)}(");
+                        WriteExpression(volumePitch.Channel, false, environment, writer);
+                        writer.Write(", ");
+
+                        if (volumePitch.Volume is null)
+                        {
+                            writer.Write("null");
+                        }
+                        else
+                        {
+                            WriteExpression(volumePitch.Volume, false, environment, writer);
+                        }
+
+                        writer.Write(", ");
+
+                        if (volumePitch.Pitch is null)
+                        {
+                            writer.Write("null");
+                        }
+                        else
+                        {
+                            WriteExpression(volumePitch.Pitch, false, environment, writer);
+                        }
 
                         writer.WriteLine(");");
                     }

@@ -6,6 +6,7 @@ using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Objects;
+using FancadeLoaderLib.Runtime.Syntax.Sound;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using System.CodeDom.Compiler;
@@ -241,6 +242,16 @@ public partial class AstCompiler
 
                         return new ExpressionInfo(SignalType.Obj);
                     }
+                }
+
+            // **************************************** Sound ****************************************
+            case 264:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var playSound = (PlaySoundStatementSyntax)terminal.Node;
+
+                    writer.Write(GetStateStoreVarName(environment.Index, playSound.Position, "play_sound_sound"));
+                    return new ExpressionInfo(SignalType.Float);
                 }
 
             // **************************************** Control ****************************************

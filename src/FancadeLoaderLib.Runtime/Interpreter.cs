@@ -309,7 +309,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (volumePitch.Channel is not null)
                         {
-                            _ctx.AdjustVolumePitch(GetValue(volumePitch.Channel, environment).Float, GetValue(volumePitch.Volume, environment).Float, GetValue(volumePitch.Pitch, environment).Float);
+                            _ctx.AdjustVolumePitch(GetValue(volumePitch.Channel, environment).Float, volumePitch.Volume is null ? null : GetValue(volumePitch.Volume, environment).Float, volumePitch.Pitch is null ? null : GetValue(volumePitch.Pitch, environment).Float);
                         }
                     }
 

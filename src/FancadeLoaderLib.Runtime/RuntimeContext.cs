@@ -57,7 +57,7 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract void StopSound(float channel);
 
-    public abstract void AdjustVolumePitch(float channel, float volume, float pitch);
+    public abstract void AdjustVolumePitch(float channel, float? volume, float? pitch);
 
     // **************************************** Control ****************************************
     public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
