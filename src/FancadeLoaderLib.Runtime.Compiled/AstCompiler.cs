@@ -5,6 +5,7 @@ using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
+using FancadeLoaderLib.Runtime.Syntax.Objects;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using MathUtils.Vectors;
@@ -15,7 +16,6 @@ using Microsoft.Extensions.ObjectPool;
 using System.CodeDom.Compiler;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -262,7 +262,7 @@ public sealed partial class AstCompiler
                     continue;
                 }
 
-                using (_writer.CurlyIndent($"private {GetCSharpName(type)} {GetEntryPointMethodName(entryPoint, type.IsPointer())}()"))
+                using (_writer.CurlyIndent($"private {GetCSharpName(type)} {GetEntryPointMethodName(entryPoint, type != SignalType.Void && type.IsPointer())}()"))
                 {
                     if (type == SignalType.Void)
                     {
@@ -559,11 +559,11 @@ public sealed partial class AstCompiler
 
     private void WriteEntryPoint(EntryPoint entryPoint, bool direct, IndentedTextWriter writer)
     {
-        Stack<EntryPoint> stack = [];
+        Queue<EntryPoint> queue = [];
 
-        stack.Push(entryPoint);
+        queue.Enqueue(entryPoint);
 
-        while (stack.TryPop(out var item))
+        while (queue.TryDequeue(out var item))
         {
             var (environmentIndex, pos, terminalPos) = item;
 
@@ -594,28 +594,16 @@ public sealed partial class AstCompiler
 
             var statement = WriteStatement(pos, terminalPos, environment, out byte3 executeNext, writer);
 
-            for (int i = statement.OutVoidConnections.Length - 1; i >= 0; i--)
-            {
-                var connection = statement.OutVoidConnections[i];
-
-                if (connection.FromVoxel == executeNext)
-                {
-                    if (connection.IsToOutside)
-                    {
-                        throw new NotImplementedException();
-                    }
-                    else
-                    {
-                        stack.Push(new(environmentIndex, connection.To, (byte3)connection.ToVoxel));
-                    }
-                }
-            }
+            VisitConnected(statement, executeNext, environment, queue.Enqueue);
 
             direct = false;
         }
     }
 
     private void WriteConnected(StatementSyntax statement, byte3 terminalPos, Environment environment, IndentedTextWriter writer)
+        => VisitConnected(statement, terminalPos, environment, entryPont => WriteEntryPoint(entryPont, false, writer));
+
+    private void VisitConnected(StatementSyntax statement, byte3 terminalPos, Environment environment, Action<EntryPoint> action)
     {
         foreach (var connection in statement.OutVoidConnections)
         {
@@ -623,11 +611,13 @@ public sealed partial class AstCompiler
             {
                 if (connection.IsToOutside)
                 {
-                    throw new NotImplementedException();
+                    var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
+
+                    VisitConnected(outerEnvironment.AST.Statements[environment.OuterPosition], (byte3)connection.ToVoxel, outerEnvironment, action);
                 }
                 else
                 {
-                    WriteEntryPoint(new(environment.Index, connection.To, (byte3)connection.ToVoxel), false, writer);
+                    action(new(environment.Index, connection.To, (byte3)connection.ToVoxel));
                 }
             }
         }
@@ -774,11 +764,106 @@ public sealed partial class AstCompiler
                     }
 
                     writer.Write(", ");
-                    WriteExpression(menuItem.Picture, SignalType.Obj, environment, writer);
+                    WriteExpressionOrDefault(menuItem.Picture, SignalType.Obj, environment, writer);
                     writer.WriteLineInv($"""
                         , "{menuItem.Name}", new MaxBuyCount({menuItem.MaxBuyCount.Value}), PriceIncrease.{menuItem.PriceIncrease});
                         """);
 
+                }
+
+                break;
+
+            // **************************************** Objects ****************************************
+            case 282:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var setPosition = (SetPositionStatementSyntax)statement;
+
+                    if (setPosition.ObjectTerminal is not null)
+                    {
+                        writer.Write("_ctx.SetPosition(");
+
+                        WriteExpression(setPosition.ObjectTerminal, false, environment, writer);
+
+                        writer.Write(", ");
+
+                        if (setPosition.PositionTerminal is null)
+                        {
+                            writer.Write("null");
+                        }
+                        else
+                        {
+                            WriteExpression(setPosition.PositionTerminal, false, environment, writer);
+                        }
+
+                        writer.Write(", ");
+
+                        if (setPosition.RotationTerminal is null)
+                        {
+                            writer.Write("null");
+                        }
+                        else
+                        {
+                            WriteExpression(setPosition.RotationTerminal, false, environment, writer);
+                        }
+
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 306:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var setVisible = (SetVisibleStatementSyntax)statement;
+
+                    if (setVisible.Object is not null)
+                    {
+                        writer.Write("_ctx.SetPosition(");
+
+                        WriteExpression(setVisible.Object, false, environment, writer);
+
+                        writer.Write(", ");
+
+                        WriteExpressionOrDefault(setVisible.Visible, SignalType.Bool, environment, writer);
+
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 316:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var createObject = (CreateObjectStatementSyntax)statement;
+
+                    if (createObject.Original is not null)
+                    {
+                        string objectVarName = GetStateStoreVarName(environment.Index, createObject.Position, "create_object_object");
+                        _stateStoreVariables.Add((objectVarName, "int", null));
+
+                        writer.WriteInv($"{objectVarName} = _ctx.CreateObject(");
+
+                        WriteExpression(createObject.Original, false, environment, writer);
+
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 320:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var destroyObject = (DestroyObjectStatementSyntax)statement;
+
+                    if (destroyObject.Object is not null)
+                    {
+                        writer.Write("_ctx.DestroyObject(");
+
+                        WriteExpression(destroyObject.Object, false, environment, writer);
+
+                        writer.WriteLine(");");
+                    }
                 }
 
                 break;
@@ -975,12 +1060,12 @@ public sealed partial class AstCompiler
                     _stateStoreVariables.Add((valueVarName, "int", null));
 
                     writer.WriteInv($"int {startVarName} = (int)");
-                    WriteExpression(loop.Start, SignalType.Float, environment, writer);
+                    WriteExpressionOrDefault(loop.Start, SignalType.Float, environment, writer);
                     writer.WriteLine(';');
 
                     writer.WriteInv($"int {stepVarName} = (int)MathF.Ceiling(");
 
-                    WriteExpression(loop.Stop, SignalType.Float, environment, writer);
+                    WriteExpressionOrDefault(loop.Stop, SignalType.Float, environment, writer);
 
                     writer.WriteLineInv($").CompareTo({startVarName});");
 
@@ -992,7 +1077,7 @@ public sealed partial class AstCompiler
                         using (writer.CurlyIndent("while (true)"))
                         {
                             writer.Write("int stop = (int)MathF.Ceiling(");
-                            WriteExpression(loop.Stop, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(loop.Stop, SignalType.Float, environment, writer);
                             writer.WriteLine(");");
 
                             writer.WriteLineInv($"int nextVal = {localValueVarName} + {stepVarName};");
@@ -1101,7 +1186,24 @@ public sealed partial class AstCompiler
 
                 break;
             default:
-                throw new NotImplementedException($"Prefab with id {statement.PrefabId} is not implemented.");
+                {
+                    if (statement is not CustomStatementSyntax custom)
+                    {
+                        throw new NotImplementedException($"Prefab with id {statement.PrefabId} is not implemented.");
+                    }
+
+                    var customEnvironment = (Environment)environment.BlockData[custom.Position];
+
+                    foreach (var con in custom.AST.VoidInputs)
+                    {
+                        if (con.OutsidePosition == terminalPos)
+                        {
+                            WriteEntryPoint(new EntryPoint(customEnvironment.Index, con.BlockPosition, con.TerminalPosition), false, writer);
+                        }
+                    }
+                }
+
+                break;
         }
 
         return statement;
@@ -1249,19 +1351,20 @@ public sealed partial class AstCompiler
         };
 
     private static string GetDefaultValue(SignalType type)
-        => type.ToNotPointer() switch
+        => type switch
         {
             SignalType.Float => "0f",
+            SignalType.FloatPtr => "new FcList<float>.Ref(null, 0)",
             SignalType.Vec3 => "float3.Zero",
+            SignalType.Vec3Ptr => "new FcList<float3>.Ref(null, 0)",
             SignalType.Rot => "Quaternion.Identity",
+            SignalType.RotPtr => "new FcList<Quaternion>.Ref(null, 0)",
             SignalType.Bool => "false",
-            SignalType.Obj => "0",
-            SignalType.Con => "0",
+            SignalType.BoolPtr => "new FcList<bool>.Ref(null, 0)",
+            SignalType.Obj or SignalType.Con => "0",
+            SignalType.ObjPtr or SignalType.ConPtr => "new FcList<int>.Ref(null, 0)",
             _ => throw new UnreachableException(),
         };
-
-    private static string ToString(float value)
-        => value.ToString("G9", CultureInfo.InvariantCulture);
 
     private static string GetEntryPointMethodName(EntryPoint entryPoint, bool ptr)
         => $"Run{entryPoint.EnvironmentIndex}{(ptr ? "_ptr" : string.Empty)}_{entryPoint.BlockPos.X}_{entryPoint.BlockPos.Y}_{entryPoint.BlockPos.Z}__{entryPoint.TerminalPos.X}_{entryPoint.TerminalPos.Y}_{entryPoint.TerminalPos.Z}";

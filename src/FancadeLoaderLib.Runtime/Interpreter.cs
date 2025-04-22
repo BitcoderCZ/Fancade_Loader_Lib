@@ -162,7 +162,7 @@ public sealed class Interpreter : IAstRunner
 
             var (environmentIndex, blockPos, terminalPos) = item;
             var environment = _environments[environmentIndex];
-            var statement = (StatementSyntax)environment.AST.Statements[blockPos];
+            var statement = environment.AST.Statements[blockPos];
 
             int nextCount = 0;
             executeNextSpan[nextCount++] = TerminalDef.AfterPosition;
@@ -596,7 +596,7 @@ public sealed class Interpreter : IAstRunner
                 {
                     var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
 
-                    PushAfter((StatementSyntax)outerEnvironment.AST.Statements[environment.OuterPosition], (byte3)connection.ToVoxel, outerEnvironment, stack);
+                    PushAfter(outerEnvironment.AST.Statements[environment.OuterPosition], (byte3)connection.ToVoxel, outerEnvironment, stack);
                 }
                 else
                 {
@@ -1176,11 +1176,11 @@ public sealed class Interpreter : IAstRunner
                             {
                                 var customEnvironment = (Environment)environment.BlockData[custom.Position];
 
-                                foreach (var con in custom.AST.NonVoidOutputs)
+                                foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
                                 {
                                     if (con.OutsidePosition == terminal.Position)
                                     {
-                                        return GetOutput(new SyntaxTerminal(custom.AST.Statements[con.BlockPosition], con.TerminalPosition), customEnvironment);
+                                        return GetOutput(conTerm, customEnvironment);
                                     }
                                 }
 

@@ -4,6 +4,7 @@ using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
+using FancadeLoaderLib.Runtime.Syntax.Objects;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using System.Diagnostics;
@@ -12,7 +13,7 @@ namespace FancadeLoaderLib.Runtime.Compiled;
 
 public partial class AstCompiler
 {
-    private static ExpressionInfo GetExpressionInfo(SyntaxTerminal terminal, bool asReference)
+    private ExpressionInfo GetExpressionInfo(SyntaxTerminal terminal, bool asReference, Environment environment)
     {
         // faster than switching on type
         switch (terminal.Node.PrefabId)
@@ -39,6 +40,48 @@ public partial class AstCompiler
                     Debug.Assert(terminal.Node is CurrentFrameExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CurrentFrameExpressionSyntax)}");
 
                     return new ExpressionInfo(SignalType.Float);
+                }
+
+            // **************************************** Objects ****************************************
+            case 278:
+                {
+                    Debug.Assert(terminal.Node is GetPositionExpressionSyntax);
+
+                    return terminal.Position == TerminalDef.GetOutPosition(0, 2, 2)
+                        ? new ExpressionInfo(SignalType.Float)
+                        : terminal.Position == TerminalDef.GetOutPosition(1, 2, 2)
+                        ? new ExpressionInfo(SignalType.Rot)
+                        : throw new InvalidTerminalException(terminal.Position);
+                }
+
+            case 228:
+                {
+                    Debug.Assert(terminal.Node is RaycastExpressionSyntax);
+
+                    return terminal.Position == TerminalDef.GetOutPosition(0, 2, 3)
+                        ? new ExpressionInfo(SignalType.Bool)
+                        : terminal.Position == TerminalDef.GetOutPosition(1, 2, 3)
+                        ? new ExpressionInfo(SignalType.Vec3)
+                        : terminal.Position == TerminalDef.GetOutPosition(2, 2, 3)
+                        ? new ExpressionInfo(SignalType.Obj)
+                        : throw new InvalidTerminalException(terminal.Position);
+                }
+
+            case 489:
+                {
+                    Debug.Assert(terminal.Node is GetSizeExpressionSyntax);
+
+                    return terminal.Position == TerminalDef.GetOutPosition(0, 2, 2) || terminal.Position == TerminalDef.GetOutPosition(1, 2, 2)
+                        ? new ExpressionInfo(SignalType.Float)
+                        : throw new InvalidTerminalException(terminal.Position);
+                }
+
+            case 316:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is CreateObjectStatementSyntax);
+
+                    return new ExpressionInfo(SignalType.Obj);
                 }
 
             // **************************************** Control ****************************************
@@ -249,20 +292,77 @@ public partial class AstCompiler
 
                     if (list.Index is null)
                     {
-                        return GetExpressionInfo(list.Variable, asReference);
+                        return GetExpressionInfo(list.Variable, asReference, environment);
                     }
                     else if (list.Variable.Node is GetVariableExpressionSyntax getVariable)
                     {
                         return new ExpressionInfo(getVariable.Variable);
                     }
 
-                    var varInfo = GetExpressionInfo(list.Variable, true);
+                    var varInfo = GetExpressionInfo(list.Variable, true, environment);
 
                     return varInfo;
                 }
 
             default:
-                throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                {
+                    switch (terminal.Node)
+                    {
+                        case OuterExpressionSyntax:
+                            {
+                                var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
+
+                                var customStatement = (CustomStatementSyntax)outerEnvironment.AST.Statements[environment.OuterPosition];
+
+                                foreach (var (termPos, term) in customStatement.ConnectedInputTerminals)
+                                {
+                                    if (termPos == terminal.Position && term is not null)
+                                    {
+                                        return GetExpressionInfo(term, asReference, outerEnvironment);
+                                    }
+                                }
+
+                                foreach (var info in outerEnvironment.AST.TerminalInfo.InputTerminals)
+                                {
+                                    if (info.Position == terminal.Position)
+                                    {
+                                        return new ExpressionInfo(info.Type);
+                                    }
+                                }
+
+                                return new ExpressionInfo(SignalType.Error);
+                            }
+
+                        case CustomStatementSyntax custom:
+                            {
+                                var customEnvironment = (Environment)environment.BlockData[custom.Position];
+
+                                foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
+                                {
+                                    if (con.OutsidePosition == terminal.Position && conTerm is not null)
+                                    {
+                                        return GetExpressionInfo(conTerm, asReference, customEnvironment);
+                                    }
+                                }
+
+                                foreach (var info in customEnvironment.AST.TerminalInfo.OutputTerminals)
+                                {
+                                    if (info.Position == terminal.Position)
+                                    {
+                                        return new ExpressionInfo(info.Type);
+                                    }
+                                }
+
+                                return new ExpressionInfo(SignalType.Error);
+                            }
+
+                        case ObjectExpressionSyntax:
+                            return new ExpressionInfo(SignalType.Obj);
+
+                        default:
+                            throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                    }
+                }
         }
     }
 }

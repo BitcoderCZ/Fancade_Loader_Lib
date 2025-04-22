@@ -1,4 +1,5 @@
-﻿using FancadeLoaderLib.Runtime.Syntax;
+﻿using FancadeLoaderLib.Editing;
+using FancadeLoaderLib.Runtime.Syntax;
 using MathUtils.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
@@ -10,10 +11,12 @@ public sealed partial class AST
 {
     public readonly ushort PrefabId;
 
+    public readonly PrefabTerminalInfo TerminalInfo;
+
     public readonly ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> NotConnectedVoidInputs;
 
     public readonly ImmutableArray<OutsideConnection> VoidInputs;
-    public readonly ImmutableArray<OutsideConnection> NonVoidOutputs;
+    public readonly ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> NonVoidOutputs;
 
     public readonly FrozenDictionary<ushort3, StatementSyntax> Statements;
 
@@ -25,7 +28,7 @@ public sealed partial class AST
 
     public readonly FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsTo;
 
-    public AST(ushort prefabId, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, StatementSyntax> statements, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<OutsideConnection> nonVoidOutputs, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsTo)
+    public AST(ushort prefabId, PrefabTerminalInfo terminalInfo, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, StatementSyntax> statements, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> nonVoidOutputs, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsTo)
     {
         ThrowIfNull(notConnectedVoidInputs, nameof(notConnectedVoidInputs));
         ThrowIfNull(statements, nameof(statements));
@@ -33,6 +36,7 @@ public sealed partial class AST
         ThrowIfNull(variables, nameof(variables));
 
         PrefabId = prefabId;
+        TerminalInfo = terminalInfo;
         NotConnectedVoidInputs = notConnectedVoidInputs;
         Statements = statements;
         GlobalVariables = globalVariables;

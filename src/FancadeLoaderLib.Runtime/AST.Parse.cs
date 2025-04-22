@@ -105,7 +105,7 @@ public sealed partial class AST
         internal readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> _notConnectedVoidInputs = [];
 
         internal readonly List<OutsideConnection> _voidInputs = [];
-        internal readonly List<OutsideConnection> _nonVoidOutputs = [];
+        internal readonly List<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> _nonVoidOutputs = [];
 
         internal readonly Dictionary<ushort3, SyntaxNode> _nodes = [];
 
@@ -215,7 +215,7 @@ public sealed partial class AST
                     connectionsTo.Add(connection.To, connection);
                 }
 
-                return _ast = new AST(Prefab.Id, [.. _notConnectedVoidInputs], _nodes.Where(item => item.Value is StatementSyntax).Select(item => new KeyValuePair<ushort3, StatementSyntax>(item.Key, (StatementSyntax)item.Value)).ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs], connectionsFrom.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()), connectionsTo.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()));
+                return _ast = new AST(Prefab.Id, _globalCtx.PrefabInfos[Prefab.Id].TerminalInfo, [.. _notConnectedVoidInputs], _nodes.Where(item => item.Value is StatementSyntax).Select(item => new KeyValuePair<ushort3, StatementSyntax>(item.Key, (StatementSyntax)item.Value)).ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs], connectionsFrom.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()), connectionsTo.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()));
             }
         }
 
@@ -269,7 +269,7 @@ public sealed partial class AST
 
                         if (!isVoid)
                         {
-                            _nonVoidOutputs.Add(new OutsideConnection((byte3)connection.ToVoxel, connection.From, (byte3)connection.FromVoxel));
+                            _nonVoidOutputs.Add((new OutsideConnection((byte3)connection.ToVoxel, connection.From, (byte3)connection.FromVoxel), GetTerminal(connection.From, (byte3)connection.FromVoxel)));
                         }
                     }
                 }

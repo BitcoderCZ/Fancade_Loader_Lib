@@ -5,6 +5,7 @@ using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
+using FancadeLoaderLib.Runtime.Syntax.Objects;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using System.CodeDom.Compiler;
@@ -14,7 +15,7 @@ namespace FancadeLoaderLib.Runtime.Compiled;
 
 public partial class AstCompiler
 {
-    private ExpressionInfo WriteExpression(SyntaxTerminal? terminal, SignalType type, Environment environment, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, SignalType type, Environment environment, IndentedTextWriter writer)
     {
         if (terminal is null)
         {
@@ -47,7 +48,7 @@ public partial class AstCompiler
             {
                 var entryPoint = new EntryPoint(environment.Index, terminal.Node.Position, terminal.Position);
                 writer.WriteInv($"{GetEntryPointMethodName(entryPoint, asReference)}()");
-                ExpressionInfo info = GetExpressionInfo(terminal, asReference);
+                ExpressionInfo info = GetExpressionInfo(terminal, asReference, environment);
                 _nodesToWrite.Enqueue((terminal, environment.Index, asReference ? info.PtrType : info.Type));
                 return info;
             }
@@ -95,6 +96,146 @@ public partial class AstCompiler
                     writer.Write("(float)_ctx.CurrentFrame");
 
                     return new ExpressionInfo(SignalType.Float);
+                }
+
+            // **************************************** Objects ****************************************
+            case 278:
+                {
+                    var getPosition = (GetPositionExpressionSyntax)terminal.Node;
+
+                    if (getPosition.Object is null)
+                    {
+                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
+                        {
+                            writer.Write(GetDefaultValue(SignalType.Float));
+                            return new ExpressionInfo(SignalType.Float);
+                        }
+                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                        {
+                            writer.Write(GetDefaultValue(SignalType.Rot));
+                            return new ExpressionInfo(SignalType.Rot);
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+                    else
+                    {
+                        writer.Write("_ctx.GetObjectPosition(");
+
+                        WriteExpression(getPosition.Object, false, environment, writer);
+
+                        writer.Write(')');
+
+                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
+                        {
+                            writer.Write(".Position");
+                            return new ExpressionInfo(SignalType.Float);
+                        }
+                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                        {
+                            writer.Write(".Rotation");
+                            return new ExpressionInfo(SignalType.Rot);
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+                }
+
+            case 228:
+                {
+                    var raycast = (RaycastExpressionSyntax)terminal.Node;
+
+                    writer.Write("_ctx.Raycast(");
+                    WriteExpressionOrDefault(raycast.From, SignalType.Vec3, environment, writer);
+                    writer.Write(", ");
+                    WriteExpressionOrDefault(raycast.To, SignalType.Vec3, environment, writer);
+                    writer.Write(')');
+
+                    if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 3))
+                    {
+                        writer.Write(".Hit");
+                        return new ExpressionInfo(SignalType.Bool);
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 3))
+                    {
+                        writer.Write(".HitPos");
+                        return new ExpressionInfo(SignalType.Vec3);
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(2, 2, 3))
+                    {
+                        writer.Write(".HitObjId");
+                        return new ExpressionInfo(SignalType.Obj);
+                    }
+                    else
+                    {
+                        throw new InvalidTerminalException(terminal.Position);
+                    }
+                }
+
+            case 489:
+                {
+                    Debug.Assert(!asReference);
+                    var getSize = (GetSizeExpressionSyntax)terminal.Node;
+
+                    if (getSize.Object is null)
+                    {
+                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2) || terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                        {
+                            writer.Write(GetDefaultValue(SignalType.Float));
+                            return new ExpressionInfo(SignalType.Float);
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+                    else
+                    {
+                        writer.Write("_ctx.GetSize(");
+                        WriteExpression(getSize.Object, false, environment, writer);
+                        writer.Write(')');
+
+                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
+                        {
+                            writer.Write(".Min");
+                            return new ExpressionInfo(SignalType.Float);
+                        }
+                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                        {
+                            writer.Write(".Max");
+                            return new ExpressionInfo(SignalType.Float);
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+                }
+
+            case 316:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(!asReference);
+                    var createObject = (CreateObjectStatementSyntax)terminal.Node;
+
+                    if (createObject.Original is null)
+                    {
+                        writer.Write(GetDefaultValue(SignalType.Obj));
+
+                        return new ExpressionInfo(SignalType.Obj);
+                    }
+                    else
+                    {
+                        string objectVarName = GetStateStoreVarName(environment.Index, createObject.Position, "create_object_object");
+
+                        writer.Write(objectVarName);
+
+                        return new ExpressionInfo(SignalType.Obj);
+                    }
                 }
 
             // **************************************** Control ****************************************
@@ -190,67 +331,67 @@ public partial class AstCompiler
                         case 90:
                             outType = SignalType.Float;
                             writer.Write('-');
-                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
 
                             break;
                         case 144:
                             outType = SignalType.Bool;
                             writer.Write('!');
-                            WriteExpression(unary.Input, SignalType.Bool, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Bool, environment, writer);
 
                             break;
                         case 440:
                             outType = SignalType.Rot;
                             writer.Write("Quaternion.Inverse(");
-                            WriteExpression(unary.Input, SignalType.Rot, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Rot, environment, writer);
                             writer.Write(')');
 
                             break;
                         case 413:
                             outType = SignalType.Float;
                             writer.Write("MathF.Sin(");
-                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
                             writer.Write(')');
 
                             break;
                         case 453:
                             outType = SignalType.Float;
                             writer.Write("MathF.Cos(");
-                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
                             writer.Write(')');
 
                             break;
                         case 184:
                             outType = SignalType.Float;
                             writer.Write("MathF.Round(");
-                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
                             writer.Write(')');
 
                             break;
                         case 186:
                             outType = SignalType.Float;
                             writer.Write("MathF.Floor(");
-                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
                             writer.Write(')');
 
                             break;
                         case 188:
                             outType = SignalType.Float;
                             writer.Write("MathF.Ceiling(");
-                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
                             writer.Write(')');
 
                             break;
                         case 455:
                             outType = SignalType.Float;
                             writer.Write("MathF.Abs(");
-                            WriteExpression(unary.Input, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
                             writer.Write(')');
 
                             break;
                         case 578:
                             outType = SignalType.Vec3;
-                            WriteExpression(unary.Input, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(unary.Input, SignalType.Vec3, environment, writer);
                             writer.Write(".Normalized()");
 
                             break;
@@ -277,200 +418,200 @@ public partial class AstCompiler
                     {
                         case 146:
                             outType = SignalType.Bool;
-                            WriteExpression(binary.Input1, SignalType.Bool, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Bool, environment, writer);
                             writer.Write(" && ");
-                            WriteExpression(binary.Input2, SignalType.Bool, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Bool, environment, writer);
                             break;
                         case 417:
                             outType = SignalType.Bool;
-                            WriteExpression(binary.Input1, SignalType.Bool, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Bool, environment, writer);
                             writer.Write(" || ");
-                            WriteExpression(binary.Input2, SignalType.Bool, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Bool, environment, writer);
                             break;
                         case 92:
                             outType = SignalType.Float;
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" + ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             break;
                         case 96:
                             outType = SignalType.Vec3;
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" + ");
-                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
                             break;
                         case 100:
                             outType = SignalType.Float;
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" - ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             break;
                         case 104:
                             outType = SignalType.Vec3;
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" - ");
-                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
                             break;
                         case 108:
                             outType = SignalType.Float;
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" * ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             break;
                         case 112:
                             outType = SignalType.Vec3;
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" * ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             break;
                         case 116:
                             outType = SignalType.Vec3;
                             writer.Write("Vector3.Transform(");
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(".ToNumerics(), ");
-                            WriteExpression(binary.Input2, SignalType.Rot, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Rot, environment, writer);
                             writer.Write(").ToFloat3()");
                             break;
                         case 120:
                             outType = SignalType.Rot;
-                            WriteExpression(binary.Input1, SignalType.Rot, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Rot, environment, writer);
                             writer.Write(" * ");
-                            WriteExpression(binary.Input2, SignalType.Rot, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Rot, environment, writer);
                             break;
                         case 124:
                             outType = SignalType.Float;
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" / ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             break;
                         case 172:
                             outType = SignalType.Float;
                             writer.Write("NumberUtils.FcMod(");
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             writer.Write(')');
                             break;
                         case 457:
                             outType = SignalType.Float;
                             writer.Write("MathF.Pow(");
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             writer.Write(')');
                             break;
                         case 132:
                             // equals numbers
                             outType = SignalType.Bool;
                             writer.Write("MathF.Abs(");
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" - ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             writer.WriteInv($") < {EqualsNumbersMaxDiff}");
                             break;
                         case 136:
                             // equals vectors
                             outType = SignalType.Bool;
                             writer.Write('(');
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" - ");
-                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
                             writer.WriteInv($").LengthSquared < {EqualsVectorsMaxDiff}");
                             break;
                         case 140:
                             // equals objects
                             outType = SignalType.Bool;
-                            WriteExpression(binary.Input1, SignalType.Obj, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Obj, environment, writer);
                             writer.Write(" == ");
-                            WriteExpression(binary.Input2, SignalType.Obj, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Obj, environment, writer);
                             break;
                         case 421:
                             // equals bools
                             outType = SignalType.Bool;
-                            WriteExpression(binary.Input1, SignalType.Bool, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Bool, environment, writer);
                             writer.Write(" == ");
-                            WriteExpression(binary.Input2, SignalType.Bool, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Bool, environment, writer);
                             break;
                         case 128:
                             outType = SignalType.Bool;
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" < ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             break;
                         case 481:
                             outType = SignalType.Bool;
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" > ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             break;
                         case 168:
                             outType = SignalType.Float;
                             writer.Write("_ctx.GetRandomValue(");
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             writer.Write(')');
                             break;
                         case 176:
                             outType = SignalType.Float;
                             writer.Write("MathF.Min(");
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             writer.Write(')');
                             break;
                         case 180:
                             outType = SignalType.Float;
                             writer.Write("MathF.Max(");
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             writer.Write(')');
                             break;
                         case 580:
                             outType = SignalType.Float;
                             writer.Write("MathF.Log(");
-                            WriteExpression(binary.Input1, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             writer.Write(')');
                             break;
                         case 570:
                             outType = SignalType.Float;
                             writer.Write("float3.Dot(");
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
                             writer.Write(')');
                             break;
                         case 574:
                             outType = SignalType.Vec3;
                             writer.Write("float3.Cross(");
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
                             writer.Write(')');
                             break;
                         case 190:
                             outType = SignalType.Vec3;
                             writer.Write('(');
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" - ");
-                            WriteExpression(binary.Input2, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
                             writer.Write(").Length");
                             break;
                         case 200:
                             outType = SignalType.Rot;
                             writer.Write("QuaternionUtils.AxisAngle(");
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(".ToNumerics(), ");
-                            WriteExpression(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             writer.Write(')');
                             break;
                         case 204:
                             outType = SignalType.Rot;
                             writer.Write("QuaternionUtils.LookRotation(");
-                            WriteExpression(binary.Input1, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(".ToNumerics(), ");
                             if (binary.Input2 is null)
                             {
@@ -499,11 +640,11 @@ public partial class AstCompiler
                     var lerp = (LerpExpressionSyntax)terminal.Node;
 
                     writer.Write("Quaternion.Lerp(");
-                    WriteExpression(lerp.From, SignalType.Rot, environment, writer);
+                    WriteExpressionOrDefault(lerp.From, SignalType.Rot, environment, writer);
                     writer.Write(", ");
-                    WriteExpression(lerp.To, SignalType.Rot, environment, writer);
+                    WriteExpressionOrDefault(lerp.To, SignalType.Rot, environment, writer);
                     writer.Write(", ");
-                    WriteExpression(lerp.Amount, SignalType.Float, environment, writer);
+                    WriteExpressionOrDefault(lerp.Amount, SignalType.Float, environment, writer);
                     writer.Write(')');
                     return new ExpressionInfo(SignalType.Rot);
                 }
@@ -513,9 +654,9 @@ public partial class AstCompiler
                     var screenToWorld = (ScreenToWorldExpressionSyntax)terminal.Node;
 
                     writer.Write("_ctx.ScreenToWorld(new float2(");
-                    WriteExpression(screenToWorld.ScreenX, SignalType.Float, environment, writer);
+                    WriteExpressionOrDefault(screenToWorld.ScreenX, SignalType.Float, environment, writer);
                     writer.Write(", ");
-                    WriteExpression(screenToWorld.ScreenY, SignalType.Float, environment, writer);
+                    WriteExpressionOrDefault(screenToWorld.ScreenY, SignalType.Float, environment, writer);
                     writer.Write(')');
 
                     if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
@@ -539,7 +680,7 @@ public partial class AstCompiler
                     var worldToScreen = (WorldToScreenExpressionSyntax)terminal.Node;
 
                     writer.Write("_ctx.WorldToScreen(");
-                    WriteExpression(worldToScreen.WorldPos, SignalType.Vec3, environment, writer);
+                    WriteExpressionOrDefault(worldToScreen.WorldPos, SignalType.Vec3, environment, writer);
                     writer.Write(')');
 
                     if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
@@ -564,13 +705,13 @@ public partial class AstCompiler
                     var lineVsPlane = (LineVsPlaneExpressionSyntax)terminal.Node;
 
                     writer.Write("VectorUtils.LineVsPlane(");
-                    WriteExpression(lineVsPlane.LineFrom, SignalType.Vec3, environment, writer);
+                    WriteExpressionOrDefault(lineVsPlane.LineFrom, SignalType.Vec3, environment, writer);
                     writer.Write(".ToNumerics(), ");
-                    WriteExpression(lineVsPlane.LineTo, SignalType.Vec3, environment, writer);
+                    WriteExpressionOrDefault(lineVsPlane.LineTo, SignalType.Vec3, environment, writer);
                     writer.Write(".ToNumerics(), ");
-                    WriteExpression(lineVsPlane.PlanePoint, SignalType.Vec3, environment, writer);
+                    WriteExpressionOrDefault(lineVsPlane.PlanePoint, SignalType.Vec3, environment, writer);
                     writer.Write(".ToNumerics(), ");
-                    WriteExpression(lineVsPlane.PlaneNormal, SignalType.Vec3, environment, writer);
+                    WriteExpressionOrDefault(lineVsPlane.PlaneNormal, SignalType.Vec3, environment, writer);
                     writer.Write(')');
 
                     return new ExpressionInfo(SignalType.Vec3);
@@ -585,20 +726,20 @@ public partial class AstCompiler
                     {
                         case 150:
                             writer.Write("new float3(");
-                            WriteExpression(makeVecRot.X, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(makeVecRot.X, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(makeVecRot.Y, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(makeVecRot.Y, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(makeVecRot.Z, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(makeVecRot.Z, SignalType.Float, environment, writer);
                             writer.Write(')');
                             return new ExpressionInfo(SignalType.Vec3);
                         case 162:
                             writer.Write("Quaternion.CreateFromYawPitchRoll(");
-                            WriteExpression(makeVecRot.Y, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(makeVecRot.Y, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(makeVecRot.X, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(makeVecRot.X, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpression(makeVecRot.Z, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(makeVecRot.Z, SignalType.Float, environment, writer);
                             writer.Write(')');
                             return new ExpressionInfo(SignalType.Rot);
                         default:
@@ -613,7 +754,7 @@ public partial class AstCompiler
                     switch (breakVecRot.PrefabId)
                     {
                         case 156:
-                            WriteExpression(breakVecRot.VecRot, SignalType.Vec3, environment, writer);
+                            WriteExpressionOrDefault(breakVecRot.VecRot, SignalType.Vec3, environment, writer);
                             if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 3))
                             {
                                 writer.Write(".X");
@@ -633,7 +774,7 @@ public partial class AstCompiler
 
                             break;
                         case 442:
-                            WriteExpression(breakVecRot.VecRot, SignalType.Rot, environment, writer);
+                            WriteExpressionOrDefault(breakVecRot.VecRot, SignalType.Rot, environment, writer);
                             if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 3))
                             {
                                 writer.Write(".GetEulerX()");
@@ -669,15 +810,15 @@ public partial class AstCompiler
                     switch (terminal.Node.PrefabId)
                     {
                         case 36:
-                            writer.WriteInv($"{ToString(literal.Value.Float)}f");
+                            writer.WriteInv($"{literal.Value.Float}f");
                             return new ExpressionInfo(SignalType.Float);
                         case 38:
                             var vec = literal.Value.Float3;
-                            writer.WriteInv($"new float3({ToString(vec.X)}f, {ToString(vec.Y)}f, {ToString(vec.Z)}f)");
+                            writer.WriteInv($"new float3({vec.X}f, {vec.Y}f, {vec.Z}f)");
                             return new ExpressionInfo(SignalType.Vec3);
                         case 42:
                             var rot = literal.Value.Quaternion;
-                            writer.WriteInv($"new Quaternion({ToString(rot.X)}f, {ToString(rot.Y)}f, {ToString(rot.Z)}f, {ToString(rot.W)}f)");
+                            writer.WriteInv($"new Quaternion({rot.X}f, {rot.Y}f, {rot.Z}f, {rot.W}f)");
                             return new ExpressionInfo(SignalType.Rot);
                         case 449 or 451:
                             writer.Write(literal.Value.Bool ? "true" : "false");
@@ -714,7 +855,7 @@ public partial class AstCompiler
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var list = (ListExpressionSyntax)terminal.Node;
 
-                    var type = terminal.Node.PrefabId switch
+                    var listType = terminal.Node.PrefabId switch
                     {
                         82 => SignalType.Float,
                         461 => SignalType.Vec3,
@@ -727,18 +868,11 @@ public partial class AstCompiler
 
                     if (list.Variable is null)
                     {
-                        if (asReference)
-                        {
-                            writer.WriteInv($"""
-                                new FcList<{GetCSharpName(type)}>.Ref(null, 0)
-                                """);
-                        }
-                        else
-                        {
-                            writer.Write(GetDefaultValue(type));
-                        }
+                        var resultType = asReference ? listType.ToPointer() : listType;
 
-                        return new ExpressionInfo(type);
+                        writer.Write(GetDefaultValue(resultType));
+
+                        return new ExpressionInfo(resultType);
                     }
 
                     if (list.Index is null)
@@ -790,7 +924,70 @@ public partial class AstCompiler
                 }
 
             default:
-                throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                {
+                    switch (terminal.Node)
+                    {
+                        case OuterExpressionSyntax:
+                            {
+                                var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
+
+                                var customStatement = (CustomStatementSyntax)outerEnvironment.AST.Statements[environment.OuterPosition];
+
+                                foreach (var (innerPos, outerTerminal) in customStatement.ConnectedInputTerminals)
+                                {
+                                    if (innerPos == terminal.Position && outerTerminal is not null)
+                                    {
+                                        return WriteExpression(outerTerminal, asReference, outerEnvironment, writer);
+                                    }
+                                }
+
+                                foreach (var info in outerEnvironment.AST.TerminalInfo.InputTerminals)
+                                {
+                                    if (info.Position == terminal.Position)
+                                    {
+                                        writer.Write(GetDefaultValue(info.Type));
+                                        return new ExpressionInfo(info.Type);
+                                    }
+                                }
+
+                                // TODO: throw
+                                return new ExpressionInfo(SignalType.Error);
+                            }
+
+                        case CustomStatementSyntax custom:
+                            {
+                                var customEnvironment = (Environment)environment.BlockData[custom.Position];
+
+                                foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
+                                {
+                                    if (con.OutsidePosition == terminal.Position && conTerm is not null)
+                                    {
+                                        return WriteExpression(conTerm, asReference, customEnvironment, writer);
+                                    }
+                                }
+
+                                foreach (var info in customEnvironment.AST.TerminalInfo.OutputTerminals)
+                                {
+                                    if (info.Position == terminal.Position)
+                                    {
+                                        return new ExpressionInfo(info.Type);
+                                    }
+                                }
+
+                                // TODO: throw
+                                return new ExpressionInfo(SignalType.Error);
+                            }
+
+                        case ObjectExpressionSyntax:
+                            {
+                                writer.WriteInv($"_ctx.GetObjectId(terminal.Node.Position, terminal.Position)");
+                                return new ExpressionInfo(SignalType.Obj);
+                            }
+
+                        default:
+                            throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                    }
+                }
         }
     }
 }

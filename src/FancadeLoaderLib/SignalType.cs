@@ -129,5 +129,5 @@ public static class SignalTypeUtils
     /// <param name="signalType">The <see cref="SignalType"/> to check.</param>
     /// <returns><see langword="true"/> if <paramref name="signalType"/> is a pointer; otherwise, <see langword="false"/>.</returns>
     public static bool IsPointer(this SignalType signalType)
-        => signalType != SignalType.Void && ((int)signalType & 1) == 1;
+        => ((int)signalType & 1) == 1;
 }
