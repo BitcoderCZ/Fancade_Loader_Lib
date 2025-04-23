@@ -24,7 +24,6 @@ public sealed partial class AstCompiler
     private readonly Environment[] _environments;
     private readonly StringBuilder _writerBuilder;
     private readonly IndentedTextWriter _writer;
-    private readonly string _runtimeCtxType;
 
     private readonly Dictionary<(int, Variable), string> _varToName = [];
 
@@ -39,15 +38,13 @@ public sealed partial class AstCompiler
 
     private int _localVarCounter = 0;
 
-    public AstCompiler(AST ast, bool isRuntimeContext)
-        : this(ast, 4, isRuntimeContext)
+    public AstCompiler(AST ast)
+        : this(ast, 4)
     {
     }
 
-    public AstCompiler(AST ast, int maxDepth, bool isRuntimeContext)
+    public AstCompiler(AST ast, int maxDepth)
     {
-        _runtimeCtxType = isRuntimeContext ? nameof(RuntimeContext) : nameof(IRuntimeContext);
-
         List<Environment> environments = [];
         List<ImmutableArray<Variable>> variables = [];
 
@@ -68,15 +65,13 @@ public sealed partial class AstCompiler
     {
         // TODO: constant fold
 
-        var compiler = new AstCompiler(ast, false);
+        var compiler = new AstCompiler(ast);
 
         return compiler.WriteAll();
     }
 
-    public static IAstRunner? Compile(AST ast, IRuntimeContext ctx)
+    public static IAstRunner? Compile(string code, IRuntimeContext ctx)
     {
-        string code = new AstCompiler(ast, ctx is RuntimeContext).WriteAll();
-
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp13));
 
         string assemblyName = Path.GetRandomFileName();
@@ -130,7 +125,7 @@ public sealed partial class AstCompiler
                 Assembly assembly = Assembly.Load(ms.ToArray());
 
                 // create instance of the desired class and call the desired function
-                Type type = assembly.GetType("FancadeLoaderLib.Runtime.Compiled.Generated.CompiledAST")!;
+                Type type = assembly.GetType("FancadeLoaderLib.Runtime.Compiled.Generated.CompiledAST`1")!.MakeGenericType([ctx.GetType()]);
                 object obj = Activator.CreateInstance(type, [ctx])!;
                 return (IAstRunner)obj;
             }
@@ -151,10 +146,10 @@ public sealed partial class AstCompiler
 
             """);
 
-        using (_writer.CurlyIndent("public sealed class CompiledAST : IAstRunner"))
+        using (_writer.CurlyIndent("public sealed class CompiledAST<TRuntimeContext> : IAstRunner where TRuntimeContext : IRuntimeContext"))
         {
             _writer.WriteLineAllInv($"""
-                private readonly {_runtimeCtxType} _ctx;
+                private readonly TRuntimeContext _ctx;
 
                 private Queue<Action>? lateUpdateQueue = new();
                 
@@ -186,9 +181,11 @@ public sealed partial class AstCompiler
 
             _writer.WriteLine();
 
-            using (_writer.CurlyIndent($"public CompiledAST({_runtimeCtxType} ctx)"))
+            using (_writer.CurlyIndent("public CompiledAST(TRuntimeContext ctx)"))
             {
-                _writer.WriteLine("_ctx = ctx;");
+                _writer.WriteLine("""
+                    _ctx = ctx;
+                    """);
             }
 
             using (_writer.CurlyIndent("public Action RunFrame()"))
