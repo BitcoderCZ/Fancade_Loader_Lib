@@ -568,6 +568,8 @@ public partial class AstCompiler
                         throw new NotImplementedException($"Prefab with id {statement.PrefabId} is not implemented.");
                     }
 
+                    executeNext = new byte3(255, 255, 255);
+
                     var customEnvironment = (Environment)environment.BlockData[custom.Position];
 
                     foreach (var con in custom.AST.VoidInputs)

@@ -56,9 +56,9 @@ public interface IRuntimeContext
 
     (float3 Velocity, float3 Spin) GetVelocity(FcObject @object);
 
-    void SetVelocity(FcObject @object, float3 velocity, float3 spin);
+    void SetVelocity(FcObject @object, float3? velocity, float3? spin);
 
-    void SetLocked(FcObject @object, float3 position, float3 rotation);
+    void SetLocked(FcObject @object, float3? position, float3? rotation);
 
     void SetMass(FcObject @object, float mass);
 
@@ -68,19 +68,19 @@ public interface IRuntimeContext
 
     void SetGravity(float3 gravity);
 
-    FcConstraint AddConstraint(FcObject @base, FcObject part, float3 pivot);
+    FcConstraint AddConstraint(FcObject @base, FcObject part, float3? pivot);
 
-    void LinearLimits(FcConstraint constraint, float3 lower, float3 upper);
+    void LinearLimits(FcConstraint constraint, float3? lower, float3? upper);
 
-    void AngularLimits(FcConstraint constraint, float3 lower, float3 upper);
+    void AngularLimits(FcConstraint constraint, float3? lower, float3? upper);
 
-    void LinearSpring(FcConstraint constraint, float3 stiffness, float3 damping);
+    void LinearSpring(FcConstraint constraint, float3? stiffness, float3? damping);
 
-    void AngularSpring(FcConstraint constraint, float3 stiffness, float3 damping);
+    void AngularSpring(FcConstraint constraint, float3? stiffness, float3? damping);
 
-    void LinearMotor(FcConstraint constraint, float3 speed, float3 force);
+    void LinearMotor(FcConstraint constraint, float3? speed, float3? force);
 
-    void AngularMotor(FcConstraint constraint, float3 speed, float3 force);
+    void AngularMotor(FcConstraint constraint, float3? speed, float3? force);
 
     // **************************************** Control ****************************************
     bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);

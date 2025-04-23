@@ -5,6 +5,7 @@ using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Objects;
+using FancadeLoaderLib.Runtime.Syntax.Physics;
 using FancadeLoaderLib.Runtime.Syntax.Sound;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
@@ -317,6 +318,173 @@ public sealed class Interpreter : IAstRunner
 
                 // **************************************** Physics ****************************************
                 case 298:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(4), $"{nameof(terminalPos)} should be valid.");
+                        var addForce = (AddForceStatementSyntax)statement;
+
+                        if (addForce.Object is not null)
+                        {
+                            _ctx.AddForce((FcObject)GetValue(addForce.Object, environment).Int, addForce.Force is null ? null : GetValue(addForce.Force, environment).Float3, addForce.ApplyAt is null ? null : GetValue(addForce.ApplyAt, environment).Float3, addForce.Torque is null ? null : GetValue(addForce.Torque, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 292:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var setVelocity = (SetVelocityStatementSyntax)statement;
+
+                        if (setVelocity.Object is not null)
+                        {
+                            _ctx.SetVelocity((FcObject)GetValue(setVelocity.Object, environment).Int, setVelocity.Velocity is null ? null : GetValue(setVelocity.Velocity, environment).Float3, setVelocity.Spin is null ? null : GetValue(setVelocity.Spin, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 310:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var setLocked = (SetLockedStatementSyntax)statement;
+
+                        if (setLocked.Object is not null)
+                        {
+                            _ctx.SetLocked((FcObject)GetValue(setLocked.Object, environment).Int, setLocked.PositionTerminal is null ? null : GetValue(setLocked.PositionTerminal, environment).Float3, setLocked.RotationTerminal is null ? null : GetValue(setLocked.RotationTerminal, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 328:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var setMass = (SetMassStatementSyntax)statement;
+
+                        if (setMass.Object is not null && setMass.Mass is not null)
+                        {
+                            _ctx.SetMass((FcObject)GetValue(setMass.Object, environment).Int, GetValue(setMass.Mass, environment).Float);
+                        }
+                    }
+
+                    break;
+                case 332:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var setFriction = (SetFrictionStatementSyntax)statement;
+
+                        if (setFriction.Object is not null && setFriction.Friction is not null)
+                        {
+                            _ctx.SetFriction((FcObject)GetValue(setFriction.Object, environment).Int, GetValue(setFriction.Friction, environment).Float);
+                        }
+                    }
+
+                    break;
+                case 336:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var setBounciness = (SetBouncinessStatementSyntax)statement;
+
+                        if (setBounciness.Object is not null && setBounciness.Bounciness is not null)
+                        {
+                            _ctx.SetBounciness((FcObject)GetValue(setBounciness.Object, environment).Int, GetValue(setBounciness.Bounciness, environment).Float);
+                        }
+                    }
+
+                    break;
+                case 324:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        var setGravity = (SetGravityStatementSyntax)statement;
+
+                        if (setGravity.Gravity is not null)
+                        {
+                            _ctx.SetGravity(GetValue(setGravity.Gravity, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 340:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var addConstraint = (AddConstraintStatementSyntax)statement;
+
+                        if (addConstraint.Base is not null && addConstraint.Part is not null)
+                        {
+                            environment.BlockData[addConstraint.Position] = _ctx.AddConstraint((FcObject)GetValue(addConstraint.Base, environment).Int, (FcObject)GetValue(addConstraint.Part, environment).Int, addConstraint.Pivot is null ? null : GetValue(addConstraint.Pivot, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 346:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var linearLimits = (LinearLimitsStatementSyntax)statement;
+
+                        if (linearLimits.Constraint is not null)
+                        {
+                            _ctx.LinearLimits((FcConstraint)GetValue(linearLimits.Constraint, environment).Int, linearLimits.Lower is null ? null : GetValue(linearLimits.Lower, environment).Float3, linearLimits.Upper is null ? null : GetValue(linearLimits.Upper, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 352:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var angularLimits = (AngularLimitsStatementSyntax)statement;
+
+                        if (angularLimits.Constraint is not null)
+                        {
+                            _ctx.AngularLimits((FcConstraint)GetValue(angularLimits.Constraint, environment).Int, angularLimits.Lower is null ? null : GetValue(angularLimits.Lower, environment).Float3, angularLimits.Upper is null ? null : GetValue(angularLimits.Upper, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 358:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var linearSpring = (LinearSpringStatementSyntax)statement;
+
+                        if (linearSpring.Constraint is not null)
+                        {
+                            _ctx.LinearSpring((FcConstraint)GetValue(linearSpring.Constraint, environment).Int, linearSpring.Stiffness is null ? null : GetValue(linearSpring.Stiffness, environment).Float3, linearSpring.Damping is null ? null : GetValue(linearSpring.Damping, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 364:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var angularSpring = (AngularSpringStatementSyntax)statement;
+
+                        if (angularSpring.Constraint is not null)
+                        {
+                            _ctx.AngularSpring((FcConstraint)GetValue(angularSpring.Constraint, environment).Int, angularSpring.Stiffness is null ? null : GetValue(angularSpring.Stiffness, environment).Float3, angularSpring.Damping is null ? null : GetValue(angularSpring.Damping, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 370:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var linearMotor = (LinearMotorStatementSyntax)statement;
+
+                        if (linearMotor.Constraint is not null)
+                        {
+                            _ctx.LinearMotor((FcConstraint)GetValue(linearMotor.Constraint, environment).Int, linearMotor.Speed is null ? null : GetValue(linearMotor.Speed, environment).Float3, linearMotor.Force is null ? null : GetValue(linearMotor.Force, environment).Float3);
+                        }
+                    }
+
+                    break;
+                case 376:
+                    {
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                        var angularMotor = (AngularMotorStatementSyntax)statement;
+
+                        if (angularMotor.Constraint is not null)
+                        {
+                            _ctx.AngularMotor((FcConstraint)GetValue(angularMotor.Constraint, environment).Int, angularMotor.Speed is null ? null : GetValue(angularMotor.Speed, environment).Float3, angularMotor.Force is null ? null : GetValue(angularMotor.Force, environment).Float3);
+                        }
+                    }
+
+                    break;
 
                 // **************************************** Control ****************************************
                 case 234:
@@ -785,6 +953,54 @@ public sealed class Interpreter : IAstRunner
                     var playSound = (PlaySoundStatementSyntax)terminal.Node;
 
                     return new TerminalOutput(new RuntimeValue((float)environment.BlockData.GetValueOrDefault(playSound.Position, -1f)));
+                }
+
+            // **************************************** Physics ****************************************
+            case 288:
+                {
+                    var getVelocity = (GetVelocityExpressionSyntax)terminal.Node;
+
+                    float3 val;
+                    if (getVelocity.Object is null)
+                    {
+                        if (terminal.Position == PosOut02 || terminal.Position == PosOut12)
+                        {
+                            val = float3.Zero;
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+                    else
+                    {
+                        var (velocity, spin) = _ctx.GetVelocity((FcObject)GetValue(getVelocity.Object, environment).Int);
+
+                        if (terminal.Position == PosOut02)
+                        {
+                            val = velocity;
+                        }
+                        else if (terminal.Position == PosOut12)
+                        {
+                            val = spin;
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+
+                    return new TerminalOutput(new RuntimeValue(val));
+                }
+
+            case 340:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var addConstraint = (AddConstraintStatementSyntax)terminal.Node;
+
+                    var constraint = (FcConstraint)environment.BlockData.GetValueOrDefault(addConstraint.Position, FcConstraint.Null);
+
+                    return new TerminalOutput(new RuntimeValue(constraint.Value));
                 }
 
             // **************************************** Control ****************************************
