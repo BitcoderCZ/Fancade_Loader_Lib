@@ -6,6 +6,7 @@ using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Objects;
+using FancadeLoaderLib.Runtime.Syntax.Physics;
 using FancadeLoaderLib.Runtime.Syntax.Sound;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
@@ -139,7 +140,7 @@ public partial class AstCompiler
                     }
                     else
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(({nameof(FcObject)})");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(");
 
                         WriteExpression(getPosition.Object, false, environment, writer);
 
@@ -213,7 +214,7 @@ public partial class AstCompiler
                     }
                     else
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(({nameof(FcObject)})");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(");
                         WriteExpression(getSize.Object, false, environment, writer);
                         writer.Write(')');
 
@@ -264,6 +265,65 @@ public partial class AstCompiler
 
                     writer.Write(GetStateStoreVarName(environment.Index, playSound.Position, "play_sound_sound"));
                     return new ExpressionInfo(SignalType.Float);
+                }
+
+            // **************************************** Physics ****************************************
+            case 288:
+                {
+                    var getVelocity = (GetVelocityExpressionSyntax)terminal.Node;
+
+                    if (getVelocity.Object is null)
+                    {
+                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2) || terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                        {
+                            writer.Write(GetDefaultValue(SignalType.Vec3));
+                            return new ExpressionInfo(SignalType.Vec3);
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+                    else
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetVelocity)}(");
+                        WriteExpression(getVelocity.Object, false, environment, writer);
+                        writer.Write(')');
+
+                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
+                        {
+                            writer.Write(".Velocity");
+                        }
+                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                        {
+                            writer.Write(".Spin");
+                        }
+                        else
+                        {
+                            throw new InvalidTerminalException(terminal.Position);
+                        }
+                    }
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 340:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    var addConstraint = (AddConstraintStatementSyntax)terminal.Node;
+
+                    if (addConstraint.Base is not null && addConstraint.Part is not null)
+                    {
+                        string constraintVarName = GetStateStoreVarName(environment.Index, addConstraint.Position, "add_constraint_constraint");
+
+                        writer.Write(constraintVarName);
+                    }
+                    else
+                    {
+                        writer.Write(GetDefaultValue(SignalType.Con));
+                    }
+
+                    return new ExpressionInfo(SignalType.Con);
                 }
 
             // **************************************** Control ****************************************

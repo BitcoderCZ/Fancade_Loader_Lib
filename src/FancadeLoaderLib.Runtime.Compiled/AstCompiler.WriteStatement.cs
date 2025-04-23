@@ -5,6 +5,7 @@ using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Objects;
+using FancadeLoaderLib.Runtime.Syntax.Physics;
 using FancadeLoaderLib.Runtime.Syntax.Sound;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
@@ -92,7 +93,7 @@ public partial class AstCompiler
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.MenuItem)}(");
                     WriteExpressionOrNull(menuItem.Variable, SignalType.FloatPtr, environment, writer);
-                    writer.WriteInv($", ({nameof(FcObject)})");
+                    writer.WriteInv($", ");
                     WriteExpressionOrDefault(menuItem.Picture, SignalType.Obj, environment, writer);
                     writer.WriteLineInv($"""
                         , "{menuItem.Name}", new MaxBuyCount({menuItem.MaxBuyCount.Value}), PriceIncrease.{menuItem.PriceIncrease});
@@ -110,7 +111,7 @@ public partial class AstCompiler
 
                     if (setPosition.ObjectTerminal is not null)
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetPosition)}(({nameof(FcObject)})");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetPosition)}(");
                         WriteExpression(setPosition.ObjectTerminal, false, environment, writer);
                         writer.Write(", ");
                         WriteExpressionOrNull(setPosition.PositionTerminal, SignalType.Vec3, environment, writer);
@@ -128,7 +129,7 @@ public partial class AstCompiler
 
                     if (setVisible.Object is not null)
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetVisible)}(({nameof(FcObject)})");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetVisible)}(");
 
                         WriteExpression(setVisible.Object, false, environment, writer);
 
@@ -151,7 +152,7 @@ public partial class AstCompiler
                         string objectVarName = GetStateStoreVarName(environment.Index, createObject.Position, "create_object_object");
                         _stateStoreVariables.Add((objectVarName, "int", null));
 
-                        writer.WriteInv($"{objectVarName} = _ctx.{nameof(IRuntimeContext.CreateObject)}(({nameof(FcObject)})");
+                        writer.WriteInv($"{objectVarName} = _ctx.{nameof(IRuntimeContext.CreateObject)}(");
 
                         WriteExpression(createObject.Original, false, environment, writer);
 
@@ -167,7 +168,7 @@ public partial class AstCompiler
 
                     if (destroyObject.Object is not null)
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.DestroyObject)}(({nameof(FcObject)})");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.DestroyObject)}(");
 
                         WriteExpression(destroyObject.Object, false, environment, writer);
 
@@ -240,6 +241,254 @@ public partial class AstCompiler
                         WriteExpressionOrNull(volumePitch.Volume, SignalType.Float, environment, writer);
                         writer.Write(", ");
                         WriteExpressionOrNull(volumePitch.Pitch, SignalType.Float, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+
+            // **************************************** Physics ****************************************
+            case 298:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(4), $"{nameof(terminalPos)} should be valid.");
+                    var addForce = (AddForceStatementSyntax)statement;
+
+                    if (addForce.Object is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AddForce)}(");
+                        WriteExpression(addForce.Object, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(addForce.Force, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(addForce.ApplyAt, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(addForce.Torque, SignalType.Vec3, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 292:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var setVelocity = (SetVelocityStatementSyntax)statement;
+
+                    if (setVelocity.Object is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetVelocity)}(");
+                        WriteExpression(setVelocity.Object, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(setVelocity.Velocity, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(setVelocity.Spin, SignalType.Vec3, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 310:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var setLocked = (SetLockedStatementSyntax)statement;
+
+                    if (setLocked.Object is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetLocked)}(");
+                        WriteExpression(setLocked.Object, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(setLocked.PositionTerminal, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(setLocked.RotationTerminal, SignalType.Vec3, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 328:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var setMass = (SetMassStatementSyntax)statement;
+
+                    if (setMass.Object is not null && setMass.Mass is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetMass)}(");
+                        WriteExpression(setMass.Object, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpression(setMass.Mass, false, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 332:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var setFriction = (SetFrictionStatementSyntax)statement;
+
+                    if (setFriction.Object is not null && setFriction.Friction is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetFriction)}(");
+                        WriteExpression(setFriction.Object, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpression(setFriction.Friction, false, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 336:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var setBounciness = (SetBouncinessStatementSyntax)statement;
+
+                    if (setBounciness.Object is not null && setBounciness.Bounciness is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetBounciness)}(");
+                        WriteExpression(setBounciness.Object, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpression(setBounciness.Bounciness, false, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 324:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var setGravity = (SetGravityStatementSyntax)statement;
+
+                    if (setGravity.Gravity is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetGravity)}(");
+                        WriteExpression(setGravity.Gravity, false, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 340:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var addConstraint = (AddConstraintStatementSyntax)statement;
+
+                    if (addConstraint.Base is not null && addConstraint.Part is not null)
+                    {
+                        string constraintVarName = GetStateStoreVarName(environment.Index, addConstraint.Position, "add_constraint_constraint");
+
+                        writer.WriteInv($"{constraintVarName} = _ctx.{nameof(IRuntimeContext.AddConstraint)}(");
+                        WriteExpression(addConstraint.Base, false, environment, writer);
+                        writer.WriteInv($", ");
+                        WriteExpression(addConstraint.Part, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(addConstraint.Pivot, SignalType.Vec3, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 346:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var linearLimits = (LinearLimitsStatementSyntax)statement;
+
+                    if (linearLimits.Constraint is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.LinearLimits)}(");
+                        WriteExpression(linearLimits.Constraint, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(linearLimits.Lower, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(linearLimits.Upper, SignalType.Vec3, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 352:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var angularLimits = (AngularLimitsStatementSyntax)statement;
+
+                    if (angularLimits.Constraint is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AngularLimits)}(");
+                        WriteExpression(angularLimits.Constraint, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(angularLimits.Lower, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(angularLimits.Upper, SignalType.Vec3, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 358:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var linearSpring = (LinearSpringStatementSyntax)statement;
+
+                    if (linearSpring.Constraint is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.LinearSpring)}(");
+                        WriteExpression(linearSpring.Constraint, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(linearSpring.Stiffness, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(linearSpring.Damping, SignalType.Vec3, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 364:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var angularSpring = (AngularSpringStatementSyntax)statement;
+
+                    if (angularSpring.Constraint is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AngularSpring)}(");
+                        WriteExpression(angularSpring.Constraint, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(angularSpring.Stiffness, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(angularSpring.Damping, SignalType.Vec3, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 370:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var linearMotor = (LinearMotorStatementSyntax)statement;
+
+                    if (linearMotor.Constraint is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.LinearMotor)}(");
+                        WriteExpression(linearMotor.Constraint, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(linearMotor.Speed, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(linearMotor.Force, SignalType.Vec3, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+            case 376:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
+                    var angularMotor = (AngularMotorStatementSyntax)statement;
+
+                    if (angularMotor.Constraint is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AngularMotor)}(");
+                        WriteExpression(angularMotor.Constraint, false, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(angularMotor.Speed, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteExpressionOrNull(angularMotor.Force, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -407,7 +656,7 @@ public partial class AstCompiler
                         _stateStoreVariables.Add((impulseVarName, "float", null));
                         _stateStoreVariables.Add((normalVarName, nameof(float3), null));
 
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.TryGetCollision)}(({nameof(FcObject)})");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.TryGetCollision)}(");
                         WriteExpression(collision.FirstObject, false, environment, writer);
 
                         using (writer.CurlyIndent($", out int secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out float3 normal{_localVarCounter})"))
