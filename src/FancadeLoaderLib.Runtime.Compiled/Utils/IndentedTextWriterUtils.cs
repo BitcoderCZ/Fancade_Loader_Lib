@@ -77,6 +77,31 @@ internal static class IndentedTextWriterUtils
     }
 
 #if NET6_0_OR_GREATER
+    public static void WriteLineAllInv(this IndentedTextWriter writer, ref InvariantInterpolatedStringHandler handler)
+    {
+        string str = handler.ToStringAndClear();
+#else
+    public static void WriteLineAllInv(this IndentedTextWriter writer, FormattableString value)
+    {
+        string str = FormattableString.Invariant(value);
+#endif
+        var strSpan = str.AsSpan();
+
+        var enumerator = new MemoryUtils.SpanSplitEnumerator<char>(strSpan, '\n').GetEnumerator();
+        while (enumerator.MoveNext())
+        {
+            var line = strSpan[enumerator.Current];
+
+            if (!line.IsEmpty && line[^1] == '\r')
+            {
+                line = line[..^1];
+            }
+
+            writer.WriteLine(line);
+        }
+    }
+
+#if NET6_0_OR_GREATER
     [InterpolatedStringHandler]
     public ref struct InvariantInterpolatedStringHandler
     {

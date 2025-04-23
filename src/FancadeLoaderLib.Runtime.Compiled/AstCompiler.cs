@@ -24,6 +24,7 @@ public sealed partial class AstCompiler
     private readonly Environment[] _environments;
     private readonly StringBuilder _writerBuilder;
     private readonly IndentedTextWriter _writer;
+    private readonly string _runtimeCtxType;
 
     private readonly Dictionary<(int, Variable), string> _varToName = [];
 
@@ -38,13 +39,15 @@ public sealed partial class AstCompiler
 
     private int _localVarCounter = 0;
 
-    public AstCompiler(AST ast)
-        : this(ast, 4)
+    public AstCompiler(AST ast, bool isRuntimeContext)
+        : this(ast, 4, isRuntimeContext)
     {
     }
 
-    public AstCompiler(AST ast, int maxDepth)
+    public AstCompiler(AST ast, int maxDepth, bool isRuntimeContext)
     {
+        _runtimeCtxType = isRuntimeContext ? nameof(RuntimeContext) : nameof(IRuntimeContext);
+
         List<Environment> environments = [];
         List<ImmutableArray<Variable>> variables = [];
 
@@ -65,13 +68,15 @@ public sealed partial class AstCompiler
     {
         // TODO: constant fold
 
-        var compiler = new AstCompiler(ast);
+        var compiler = new AstCompiler(ast, false);
 
         return compiler.WriteAll();
     }
 
-    public static IAstRunner? Compile(string code, IRuntimeContext ctx)
+    public static IAstRunner? Compile(AST ast, IRuntimeContext ctx)
     {
+        string code = new AstCompiler(ast, ctx is RuntimeContext).WriteAll();
+
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp13));
 
         string assemblyName = Path.GetRandomFileName();
@@ -148,8 +153,8 @@ public sealed partial class AstCompiler
 
         using (_writer.CurlyIndent("public sealed class CompiledAST : IAstRunner"))
         {
-            _writer.WriteLineAll("""
-                private readonly IRuntimeContext _ctx;
+            _writer.WriteLineAllInv($"""
+                private readonly {_runtimeCtxType} _ctx;
 
                 private Queue<Action>? lateUpdateQueue = new();
                 
@@ -181,11 +186,9 @@ public sealed partial class AstCompiler
 
             _writer.WriteLine();
 
-            using (_writer.CurlyIndent("public CompiledAST(IRuntimeContext ctx)"))
+            using (_writer.CurlyIndent($"public CompiledAST({_runtimeCtxType} ctx)"))
             {
-                _writer.WriteLine("""
-                    _ctx = ctx;
-                    """);
+                _writer.WriteLine("_ctx = ctx;");
             }
 
             using (_writer.CurlyIndent("public Action RunFrame()"))
