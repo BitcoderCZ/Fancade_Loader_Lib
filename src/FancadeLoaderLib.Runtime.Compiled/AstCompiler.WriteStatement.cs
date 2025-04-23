@@ -92,7 +92,7 @@ public partial class AstCompiler
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.MenuItem)}(");
                     WriteExpressionOrNull(menuItem.Variable, SignalType.FloatPtr, environment, writer);
-                    writer.Write(", ");
+                    writer.WriteInv($", ({nameof(FcObject)})");
                     WriteExpressionOrDefault(menuItem.Picture, SignalType.Obj, environment, writer);
                     writer.WriteLineInv($"""
                         , "{menuItem.Name}", new MaxBuyCount({menuItem.MaxBuyCount.Value}), PriceIncrease.{menuItem.PriceIncrease});
@@ -110,7 +110,7 @@ public partial class AstCompiler
 
                     if (setPosition.ObjectTerminal is not null)
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetPosition)}(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetPosition)}(({nameof(FcObject)})");
                         WriteExpression(setPosition.ObjectTerminal, false, environment, writer);
                         writer.Write(", ");
                         WriteExpressionOrNull(setPosition.PositionTerminal, SignalType.Vec3, environment, writer);
@@ -128,7 +128,7 @@ public partial class AstCompiler
 
                     if (setVisible.Object is not null)
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetPosition)}(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetVisible)}(({nameof(FcObject)})");
 
                         WriteExpression(setVisible.Object, false, environment, writer);
 
@@ -151,7 +151,7 @@ public partial class AstCompiler
                         string objectVarName = GetStateStoreVarName(environment.Index, createObject.Position, "create_object_object");
                         _stateStoreVariables.Add((objectVarName, "int", null));
 
-                        writer.WriteInv($"{objectVarName} = _ctx.{nameof(IRuntimeContext.CreateObject)}(");
+                        writer.WriteInv($"{objectVarName} = _ctx.{nameof(IRuntimeContext.CreateObject)}(({nameof(FcObject)})");
 
                         WriteExpression(createObject.Original, false, environment, writer);
 
@@ -167,7 +167,7 @@ public partial class AstCompiler
 
                     if (destroyObject.Object is not null)
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.DestroyObject)}(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.DestroyObject)}(({nameof(FcObject)})");
 
                         WriteExpression(destroyObject.Object, false, environment, writer);
 
@@ -407,7 +407,7 @@ public partial class AstCompiler
                         _stateStoreVariables.Add((impulseVarName, "float", null));
                         _stateStoreVariables.Add((normalVarName, nameof(float3), null));
 
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.TryGetCollision)}(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.TryGetCollision)}(({nameof(FcObject)})");
                         WriteExpression(collision.FirstObject, false, environment, writer);
 
                         using (writer.CurlyIndent($", out int secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out float3 normal{_localVarCounter})"))

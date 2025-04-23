@@ -221,7 +221,7 @@ public sealed class Interpreter : IAstRunner
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var menuItem = (MenuItemStatementSyntax)statement;
 
-                        _ctx.MenuItem(menuItem.Variable is null ? null : GetOutput(menuItem.Variable, environment).Reference, GetValue(menuItem.Picture, environment).Int, menuItem.Name, menuItem.MaxBuyCount, menuItem.PriceIncrease);
+                        _ctx.MenuItem(menuItem.Variable is null ? null : GetOutput(menuItem.Variable, environment).Reference, (FcObject)GetValue(menuItem.Picture, environment).Int, menuItem.Name, menuItem.MaxBuyCount, menuItem.PriceIncrease);
                     }
 
                     break;
@@ -234,7 +234,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setPosition.ObjectTerminal is not null)
                         {
-                            _ctx.SetPosition(GetValue(setPosition.ObjectTerminal, environment).Int, setPosition.PositionTerminal is null ? null : GetValue(setPosition.PositionTerminal, environment).Float3, setPosition.RotationTerminal is null ? null : GetValue(setPosition.RotationTerminal, environment).Quaternion);
+                            _ctx.SetPosition((FcObject)GetValue(setPosition.ObjectTerminal, environment).Int, setPosition.PositionTerminal is null ? null : GetValue(setPosition.PositionTerminal, environment).Float3, setPosition.RotationTerminal is null ? null : GetValue(setPosition.RotationTerminal, environment).Quaternion);
                         }
                     }
 
@@ -246,7 +246,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setVisible.Object is not null)
                         {
-                            _ctx.SetVisible(GetValue(setVisible.Object, environment).Int, GetValue(setVisible.Visible, environment).Bool);
+                            _ctx.SetVisible((FcObject)GetValue(setVisible.Object, environment).Int, GetValue(setVisible.Visible, environment).Bool);
                         }
                     }
 
@@ -258,7 +258,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (createObject.Original is not null)
                         {
-                            environment.BlockData[createObject.Position] = _ctx.CreateObject(GetValue(createObject.Original, environment).Int);
+                            environment.BlockData[createObject.Position] = _ctx.CreateObject((FcObject)GetValue(createObject.Original, environment).Int);
                         }
                     }
 
@@ -270,7 +270,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (destroyObject.Object is not null)
                         {
-                            _ctx.DestroyObject(GetValue(destroyObject.Object, environment).Int);
+                            _ctx.DestroyObject((FcObject)GetValue(destroyObject.Object, environment).Int);
                         }
                     }
 
@@ -432,7 +432,7 @@ public sealed class Interpreter : IAstRunner
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var collision = (CollisionStatementSyntax)statement;
 
-                        if (collision.FirstObject is not null && _ctx.TryGetCollision(GetValue(collision.FirstObject, environment).Int, out int secondObject, out float impulse, out float3 normal))
+                        if (collision.FirstObject is not null && _ctx.TryGetCollision((FcObject)GetValue(collision.FirstObject, environment).Int, out FcObject secondObject, out float impulse, out float3 normal))
                         {
                             environment.BlockData[collision.Position] = (secondObject, impulse, normal);
                             executeNextSpan[nextCount++] = PosOut04;
@@ -687,7 +687,7 @@ public sealed class Interpreter : IAstRunner
                     }
                     else
                     {
-                        var (position, rotation) = _ctx.GetObjectPosition(GetValue(getPosition.Object, environment).Int);
+                        var (position, rotation) = _ctx.GetObjectPosition((FcObject)GetValue(getPosition.Object, environment).Int);
 
                         if (terminal.Position == PosOut02)
                         {
@@ -710,7 +710,7 @@ public sealed class Interpreter : IAstRunner
                 {
                     var raycast = (RaycastExpressionSyntax)terminal.Node;
 
-                    var (hit, hitPos, hitObjId) = _ctx.Raycast(GetValue(raycast.From, environment).Float3, GetValue(raycast.To, environment).Float3);
+                    var (hit, hitPos, hitObj) = _ctx.Raycast(GetValue(raycast.From, environment).Float3, GetValue(raycast.To, environment).Float3);
 
                     RuntimeValue val;
                     if (terminal.Position == PosOut03)
@@ -723,7 +723,7 @@ public sealed class Interpreter : IAstRunner
                     }
                     else if (terminal.Position == PosOut23)
                     {
-                        val = new RuntimeValue(hitObjId);
+                        val = new RuntimeValue(hitObj.Value);
                     }
                     else
                     {
@@ -751,7 +751,7 @@ public sealed class Interpreter : IAstRunner
                     }
                     else
                     {
-                        var (min, max) = _ctx.GetSize(GetValue(getSize.Object, environment).Int);
+                        var (min, max) = _ctx.GetSize((FcObject)GetValue(getSize.Object, environment).Int);
 
                         if (terminal.Position == PosOut02)
                         {
@@ -835,12 +835,12 @@ public sealed class Interpreter : IAstRunner
                 {
                     var collision = (CollisionStatementSyntax)terminal.Node;
 
-                    var (otherObject, impulse, normal) = ((int, float, float3))environment.BlockData.GetValueOrDefault(collision.Position, (0, 0f, float3.Zero));
+                    var (otherObject, impulse, normal) = ((FcObject, float, float3))environment.BlockData.GetValueOrDefault(collision.Position, (FcObject.Null, 0f, float3.Zero));
 
                     RuntimeValue val;
                     if (terminal.Position == PosOut14)
                     {
-                        val = new(otherObject);
+                        val = new(otherObject.Value);
                     }
                     else if (terminal.Position == PosOut24)
                     {
@@ -1192,7 +1192,7 @@ public sealed class Interpreter : IAstRunner
 
                         case ObjectExpressionSyntax:
                             {
-                                return new TerminalOutput(new RuntimeValue(_ctx.GetObjectId(terminal.Node.Position, terminal.Position)));
+                                return new TerminalOutput(new RuntimeValue(_ctx.GetObject(terminal.Node.Position, terminal.Position).Value));
                             }
 
                         default:

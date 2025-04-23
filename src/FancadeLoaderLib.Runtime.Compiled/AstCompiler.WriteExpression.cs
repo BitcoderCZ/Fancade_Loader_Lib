@@ -139,7 +139,7 @@ public partial class AstCompiler
                     }
                     else
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(({nameof(FcObject)})");
 
                         WriteExpression(getPosition.Object, false, environment, writer);
 
@@ -185,7 +185,7 @@ public partial class AstCompiler
                     }
                     else if (terminal.Position == TerminalDef.GetOutPosition(2, 2, 3))
                     {
-                        writer.Write(".HitObjId");
+                        writer.Write(".HitObj.Value");
                         return new ExpressionInfo(SignalType.Obj);
                     }
                     else
@@ -213,7 +213,7 @@ public partial class AstCompiler
                     }
                     else
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(({nameof(FcObject)})");
                         WriteExpression(getSize.Object, false, environment, writer);
                         writer.Write(')');
 
@@ -1021,7 +1021,7 @@ public partial class AstCompiler
 
                         case ObjectExpressionSyntax:
                             {
-                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectId)}(new ushort3({terminal.Node.Position.X}, {terminal.Node.Position.Y}, {terminal.Node.Position.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z}))");
+                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObject)}(new ushort3({terminal.Node.Position.X}, {terminal.Node.Position.Y}, {terminal.Node.Position.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z})).Value");
                                 return new ExpressionInfo(SignalType.Obj);
                             }
 

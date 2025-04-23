@@ -1,4 +1,4 @@
-﻿,using FancadeLoaderLib.Editing;
+﻿using FancadeLoaderLib.Editing;
 using MathUtils.Vectors;
 using System.Collections.Immutable;
 

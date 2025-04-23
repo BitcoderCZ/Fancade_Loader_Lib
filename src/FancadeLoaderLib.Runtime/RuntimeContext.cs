@@ -33,24 +33,24 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract void SetLight(float3? position, Quaternion? rotation);
 
-    public abstract void MenuItem(VariableReference? variable, int picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
+    public abstract void MenuItem(VariableReference? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
 
     // **************************************** Objects ****************************************
-    public abstract int GetObjectId(int3 position, byte3 voxelPosition);
+    public abstract FcObject GetObject(int3 position, byte3 voxelPosition);
 
-    public abstract (float3 Position, Quaternion Rotation) GetObjectPosition(int objectId);
+    public abstract (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object);
 
-    public abstract void SetPosition(int objectId, float3? position, Quaternion? rotation);
+    public abstract void SetPosition(FcObject @object, float3? position, Quaternion? rotation);
 
-    public abstract (bool Hit, float3 HitPos, int HitObjId) Raycast(float3 from, float3 to);
+    public abstract (bool Hit, float3 HitPos, FcObject HitObj) Raycast(float3 from, float3 to);
 
-    public abstract (float3 Min, float3 Max) GetSize(int objectId);
+    public abstract (float3 Min, float3 Max) GetSize(FcObject @object);
 
-    public abstract void SetVisible(int objectId, bool visible);
+    public abstract void SetVisible(FcObject @object, bool visible);
 
-    public abstract int CreateObject(int original);
+    public abstract int CreateObject(FcObject original);
 
-    public abstract void DestroyObject(int objectId);
+    public abstract void DestroyObject(FcObject @object);
 
     // **************************************** Sound ****************************************
     public abstract float PlaySound(float volume, float pitch, FcSound sound);
@@ -58,6 +58,37 @@ public abstract class RuntimeContext : IRuntimeContext
     public abstract void StopSound(float channel);
 
     public abstract void AdjustVolumePitch(float channel, float? volume, float? pitch);
+
+    // **************************************** Physics ****************************************
+    public abstract void AddForce(FcObject @object, float3? force, float3? applyAt, float3? torque);
+
+    public abstract (float3 Velocity, float3 Spin) GetVelocity(FcObject @object);
+
+    public abstract void SetVelocity(FcObject @object, float3 velocity, float3 spin);
+
+    public abstract void SetLocked(FcObject @object, float3 position, float3 rotation);
+
+    public abstract void SetMass(FcObject @object, float mass);
+
+    public abstract void SetFriction(FcObject @object, float friction);
+
+    public abstract void SetBounciness(FcObject @object, float bounciness);
+
+    public abstract void SetGravity(float3 gravity);
+
+    public abstract FcConstraint AddConstraint(FcObject @base, FcObject part, float3 pivot);
+
+    public abstract void LinearLimits(FcConstraint constraint, float3 lower, float3 upper);
+
+    public abstract void AngularLimits(FcConstraint constraint, float3 lower, float3 upper);
+
+    public abstract void LinearSpring(FcConstraint constraint, float3 stiffness, float3 damping);
+
+    public abstract void AngularSpring(FcConstraint constraint, float3 stiffness, float3 damping);
+
+    public abstract void LinearMotor(FcConstraint constraint, float3 speed, float3 force);
+
+    public abstract void AngularMotor(FcConstraint constraint, float3 speed, float3 force);
 
     // **************************************** Control ****************************************
     public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
@@ -68,7 +99,7 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract float3 GetJoystickDirection(JoystickType type);
 
-    public abstract bool TryGetCollision(int firstObject, out int secondObject, out float impulse, out float3 normal);
+    public abstract bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out float3 normal);
 
     // **************************************** Math ****************************************
     public abstract (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);

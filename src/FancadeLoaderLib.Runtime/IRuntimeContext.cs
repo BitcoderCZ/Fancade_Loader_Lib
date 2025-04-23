@@ -25,24 +25,24 @@ public interface IRuntimeContext
 
     void SetLight(float3? position, Quaternion? rotation);
 
-    void MenuItem(VariableReference? variable, int picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
+    void MenuItem(VariableReference? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
 
     // **************************************** Objects ****************************************
-    int GetObjectId(int3 position, byte3 voxelPosition);
+    FcObject GetObject(int3 position, byte3 voxelPosition);
 
-    (float3 Position, Quaternion Rotation) GetObjectPosition(int objectId);
+    (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object);
 
-    void SetPosition(int objectId, float3? position, Quaternion? rotation);
+    void SetPosition(FcObject @object, float3? position, Quaternion? rotation);
 
-    (bool Hit, float3 HitPos, int HitObjId) Raycast(float3 from, float3 to);
+    (bool Hit, float3 HitPos, FcObject HitObj) Raycast(float3 from, float3 to);
 
-    (float3 Min, float3 Max) GetSize(int objectId);
+    (float3 Min, float3 Max) GetSize(FcObject @object);
 
-    void SetVisible(int objectId, bool visible);
+    void SetVisible(FcObject @object, bool visible);
 
-    int CreateObject(int original);
+    int CreateObject(FcObject original);
 
-    void DestroyObject(int objectId);
+    void DestroyObject(FcObject @object);
 
     // **************************************** Sound ****************************************
     float PlaySound(float volume, float pitch, FcSound sound);
@@ -50,6 +50,37 @@ public interface IRuntimeContext
     void StopSound(float channel);
 
     void AdjustVolumePitch(float channel, float? volume, float? pitch);
+
+    // **************************************** Physics ****************************************
+    void AddForce(FcObject @object, float3? force, float3? applyAt, float3? torque);
+
+    (float3 Velocity, float3 Spin) GetVelocity(FcObject @object);
+
+    void SetVelocity(FcObject @object, float3 velocity, float3 spin);
+
+    void SetLocked(FcObject @object, float3 position, float3 rotation);
+
+    void SetMass(FcObject @object, float mass);
+
+    void SetFriction(FcObject @object, float friction);
+
+    void SetBounciness(FcObject @object, float bounciness);
+
+    void SetGravity(float3 gravity);
+
+    FcConstraint AddConstraint(FcObject @base, FcObject part, float3 pivot);
+
+    void LinearLimits(FcConstraint constraint, float3 lower, float3 upper);
+
+    void AngularLimits(FcConstraint constraint, float3 lower, float3 upper);
+
+    void LinearSpring(FcConstraint constraint, float3 stiffness, float3 damping);
+
+    void AngularSpring(FcConstraint constraint, float3 stiffness, float3 damping);
+
+    void LinearMotor(FcConstraint constraint, float3 speed, float3 force);
+
+    void AngularMotor(FcConstraint constraint, float3 speed, float3 force);
 
     // **************************************** Control ****************************************
     bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
@@ -60,7 +91,7 @@ public interface IRuntimeContext
 
     float3 GetJoystickDirection(JoystickType type);
 
-    bool TryGetCollision(int firstObject, out int secondObject, out float impulse, out float3 normal);
+    bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out float3 normal);
 
     // **************************************** Math ****************************************
     void SetRandomSeed(float seed);

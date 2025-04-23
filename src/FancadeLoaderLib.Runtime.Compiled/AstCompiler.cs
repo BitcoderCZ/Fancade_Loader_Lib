@@ -12,6 +12,7 @@ using Microsoft.Extensions.ObjectPool;
 using System.CodeDom.Compiler;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -747,16 +748,16 @@ public sealed partial class AstCompiler
             SignalType.Void => "void",
             SignalType.Float => "float",
             SignalType.FloatPtr => "FcList<float>.Ref",
-            SignalType.Vec3 => "float3",
-            SignalType.Vec3Ptr => "FcList<float3>.Ref",
-            SignalType.Rot => "Quaternion",
-            SignalType.RotPtr => "FcList<Quaternion>.Ref",
+            SignalType.Vec3 => nameof(float3),
+            SignalType.Vec3Ptr => $"FcList<{nameof(float3)}>.Ref",
+            SignalType.Rot => nameof(Quaternion),
+            SignalType.RotPtr => $"FcList<{nameof(Quaternion)}>.Ref",
             SignalType.Bool => "bool",
             SignalType.BoolPtr => "FcList<bool>.Ref",
-            SignalType.Obj => "int",
-            SignalType.ObjPtr => "FcList<int>.Ref",
-            SignalType.Con => "int",
-            SignalType.ConPtr => "FcList<int>.Ref",
+            SignalType.Obj => nameof(FcObject),
+            SignalType.ObjPtr => $"FcList<{nameof(FcObject)}>.Ref",
+            SignalType.Con => nameof(FcConstraint),
+            SignalType.ConPtr => $"FcList<{nameof(FcConstraint)}>.Ref",
             _ => throw new UnreachableException(),
         };
 
@@ -765,14 +766,16 @@ public sealed partial class AstCompiler
         {
             SignalType.Float => "0f",
             SignalType.FloatPtr => "new FcList<float>.Ref(null, 0)",
-            SignalType.Vec3 => "float3.Zero",
-            SignalType.Vec3Ptr => "new FcList<float3>.Ref(null, 0)",
-            SignalType.Rot => "Quaternion.Identity",
-            SignalType.RotPtr => "new FcList<Quaternion>.Ref(null, 0)",
+            SignalType.Vec3 => $"{nameof(float3)}.{nameof(float3.Zero)}",
+            SignalType.Vec3Ptr => $"new FcList<{nameof(float3)}>.Ref(null, 0)",
+            SignalType.Rot => $"{nameof(Quaternion)}.{nameof(Quaternion.Identity)}",
+            SignalType.RotPtr => $"new FcList<{nameof(Quaternion)}>.Ref(null, 0)",
             SignalType.Bool => "false",
             SignalType.BoolPtr => "new FcList<bool>.Ref(null, 0)",
-            SignalType.Obj or SignalType.Con => "0",
-            SignalType.ObjPtr or SignalType.ConPtr => "new FcList<int>.Ref(null, 0)",
+            SignalType.Obj => $"{nameof(FcObject)}.{nameof(FcObject.Null)}",
+            SignalType.ObjPtr => $"new FcList<{nameof(FcObject)}>.Ref(null, 0)",
+            SignalType.Con => $"{nameof(FcConstraint)}.{nameof(FcConstraint.Null)}",
+            SignalType.ConPtr => $"new FcList<{nameof(FcConstraint)}>.Ref(null, 0)",
             _ => throw new UnreachableException(),
         };
 
