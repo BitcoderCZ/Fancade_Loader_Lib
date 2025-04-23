@@ -40,7 +40,7 @@ public interface IRuntimeContext
 
     void SetVisible(FcObject @object, bool visible);
 
-    int CreateObject(FcObject original);
+    FcObject CreateObject(FcObject original);
 
     void DestroyObject(FcObject @object);
 

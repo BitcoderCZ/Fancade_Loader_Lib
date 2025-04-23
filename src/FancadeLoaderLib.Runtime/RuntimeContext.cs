@@ -48,7 +48,7 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract void SetVisible(FcObject @object, bool visible);
 
-    public abstract int CreateObject(FcObject original);
+    public abstract FcObject CreateObject(FcObject original);
 
     public abstract void DestroyObject(FcObject @object);
 
