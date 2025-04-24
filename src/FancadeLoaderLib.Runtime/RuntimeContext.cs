@@ -36,7 +36,7 @@ public abstract class RuntimeContext : IRuntimeContext
     public abstract void MenuItem(VariableReference? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
 
     // **************************************** Objects ****************************************
-    public abstract FcObject GetObject(int3 position, byte3 voxelPosition);
+    public abstract FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId);
 
     public abstract (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object);
 

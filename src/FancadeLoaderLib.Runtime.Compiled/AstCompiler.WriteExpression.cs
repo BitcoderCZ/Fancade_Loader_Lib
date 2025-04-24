@@ -1081,7 +1081,7 @@ public partial class AstCompiler
 
                         case ObjectExpressionSyntax:
                             {
-                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObject)}(new ushort3({terminal.Node.Position.X}, {terminal.Node.Position.Y}, {terminal.Node.Position.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z})).Value");
+                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObject)}(new ushort3({terminal.Node.Position.X}, {terminal.Node.Position.Y}, {terminal.Node.Position.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z}), {environment.AST.PrefabId}).Value");
                                 return new ExpressionInfo(SignalType.Obj);
                             }
 

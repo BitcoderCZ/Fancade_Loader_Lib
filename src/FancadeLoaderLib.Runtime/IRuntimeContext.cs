@@ -28,7 +28,7 @@ public interface IRuntimeContext
     void MenuItem(VariableReference? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
 
     // **************************************** Objects ****************************************
-    FcObject GetObject(int3 position, byte3 voxelPosition);
+    FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId);
 
     (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object);
 

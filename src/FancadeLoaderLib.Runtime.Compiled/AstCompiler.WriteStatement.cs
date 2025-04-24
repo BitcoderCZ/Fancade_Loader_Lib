@@ -703,6 +703,14 @@ public partial class AstCompiler
                     {
                         using (writer.CurlyIndent("while (true)"))
                         {
+                            if (_timeout != Timeout.InfiniteTimeSpan)
+                            {
+                                _writer.WriteLine("""
+                                    ThrowIfTimeout();
+
+                                    """);
+                            }
+
                             writer.Write("int stop = (int)MathF.Ceiling(");
                             WriteExpressionOrDefault(loop.Stop, SignalType.Float, environment, writer);
                             writer.WriteLine(");");

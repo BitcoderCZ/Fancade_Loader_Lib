@@ -109,6 +109,16 @@ public sealed class Interpreter : IAstRunner
 
         return () =>
         {
+            if (_timeoutWatch is not null)
+            {
+                if (!_timeoutWatch.IsRunning)
+                {
+                    throw new InvalidOperationException("This method cannot be called concurrently.");
+                }
+
+                _timeoutWatch.Restart();
+            }
+
             while (lateUpdateQueue.TryDequeue(out var entryPoint))
             {
                 Execute(entryPoint, null);
@@ -1408,7 +1418,7 @@ public sealed class Interpreter : IAstRunner
 
                         case ObjectExpressionSyntax:
                             {
-                                return new TerminalOutput(new RuntimeValue(_ctx.GetObject(terminal.Node.Position, terminal.Position).Value));
+                                return new TerminalOutput(new RuntimeValue(_ctx.GetObject(terminal.Node.Position, terminal.Position, environment.AST.PrefabId).Value));
                             }
 
                         default:

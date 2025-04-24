@@ -25,6 +25,8 @@ public sealed partial class AstCompiler
     private readonly StringBuilder _writerBuilder;
     private readonly IndentedTextWriter _writer;
 
+    private readonly TimeSpan _timeout;
+
     private readonly Dictionary<(int, Variable), string> _varToName = [];
 
     private readonly ImmutableArray<(int, Variable)> _variables;
@@ -38,13 +40,10 @@ public sealed partial class AstCompiler
 
     private int _localVarCounter = 0;
 
-    public AstCompiler(AST ast)
-        : this(ast, 4)
+    private AstCompiler(AST ast, TimeSpan timeout, int maxDepth)
     {
-    }
+        _timeout = timeout;
 
-    public AstCompiler(AST ast, int maxDepth)
-    {
         List<Environment> environments = [];
         List<ImmutableArray<Variable>> variables = [];
 
@@ -62,10 +61,16 @@ public sealed partial class AstCompiler
     }
 
     public static string Parse(AST ast)
+        => Parse(ast, TimeSpan.FromSeconds(3));
+
+    public static string Parse(AST ast, TimeSpan timeout)
+        => Parse(ast, timeout, 4);
+
+    public static string Parse(AST ast, TimeSpan timeout, int maxDepth)
     {
         // TODO: constant fold
 
-        var compiler = new AstCompiler(ast);
+        var compiler = new AstCompiler(ast, timeout, maxDepth);
 
         return compiler.WriteAll();
     }
@@ -140,7 +145,9 @@ public sealed partial class AstCompiler
             using MathUtils.Vectors;
             using System;
             using System.Collections.Generic;
+            using System.Diagnostics;
             using System.Numerics;
+            using System.Runtime.CompilerServices;
 
             namespace FancadeLoaderLib.Runtime.Compiled.Generated;
 
@@ -148,12 +155,21 @@ public sealed partial class AstCompiler
 
         using (_writer.CurlyIndent("public sealed class CompiledAST<TRuntimeContext> : IAstRunner where TRuntimeContext : IRuntimeContext"))
         {
-            _writer.WriteLineAllInv($"""
+            _writer.WriteLineAll("""
                 private readonly TRuntimeContext _ctx;
-
+                
                 private Queue<Action>? lateUpdateQueue = new();
                 
                 """);
+
+            if (_timeout != Timeout.InfiniteTimeSpan)
+            {
+                _writer.WriteLineAllInv($"""
+                    private readonly TimeSpan _timeout = new TimeSpan({_timeout.Ticks});
+                    private readonly Stopwatch _timeoutWatch = new();
+                    
+                    """);
+            }
 
             foreach (var (environmentIndex, variable) in _environments[0].AST.GlobalVariables.Select(var => (-1, var)).Concat(_variables))
             {
@@ -190,6 +206,19 @@ public sealed partial class AstCompiler
 
             using (_writer.CurlyIndent("public Action RunFrame()"))
             {
+                if (_timeout != Timeout.InfiniteTimeSpan)
+                {
+                    _writer.WriteLineAll("""  
+                        if (_timeoutWatch.IsRunning)
+                        {
+                            throw new InvalidOperationException("This method cannot be called concurrently.");
+                        }
+
+                        _timeoutWatch.Start();
+
+                        """);
+                }
+
                 foreach (var environment in _environments)
                 {
                     foreach (var entryPoint in environment.AST.NotConnectedVoidInputs)
@@ -198,21 +227,50 @@ public sealed partial class AstCompiler
                     }
                 }
 
-                _writer.WriteLine();
-                _writer.WriteLineAll("""
-                    return () =>
-                    { 
-                        var queue = lateUpdateQueue;
-                        lateUpdateQueue = null;
+                if (_timeout == Timeout.InfiniteTimeSpan)
+                {
+                    _writer.WriteLineAll("""
 
-                        while (queue.TryDequeue(out var lateUpdate))
-                        {
-                            lateUpdate();
-                        }
+                        return () =>
+                        { 
+                            var queue = lateUpdateQueue;
+                            lateUpdateQueue = null;
 
-                        lateUpdateQueue = queue;
-                    };
-                    """);
+                            while (queue.TryDequeue(out var lateUpdate))
+                            {
+                                lateUpdate();
+                            }
+
+                            lateUpdateQueue = queue;
+                        };
+                        """);
+                }
+                else
+                {
+                    _writer.WriteLineAll("""
+                        
+                        return () =>
+                        { 
+                            if (!_timeoutWatch.IsRunning)
+                            {
+                                throw new InvalidOperationException("This method cannot be called concurrently.");
+                            }
+                        
+                            _timeoutWatch.Restart();
+
+                            var queue = lateUpdateQueue;
+                            lateUpdateQueue = null;
+
+                            while (queue.TryDequeue(out var lateUpdate))
+                            {
+                                lateUpdate();
+                            }
+
+                            lateUpdateQueue = queue;
+                            _timeoutWatch.Reset();
+                        };
+                        """);
+                }
             }
 
             using (_writer.CurlyIndent("public Span<RuntimeValue> GetGlobalVariableValue(Variable variable)"))
@@ -248,6 +306,21 @@ public sealed partial class AstCompiler
                 _writer.WriteLine("return [];");
             }
 
+            if (_timeout != Timeout.InfiniteTimeSpan)
+            {
+                _writer.WriteLineAll("""
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    private void ThrowIfTimeout()
+                    {
+                        if (_timeoutWatch.Elapsed > _timeout)
+                        {
+                            throw new TimeoutException();
+                        }
+                    }
+
+                    """);
+            }
+
             while (_nodesToWrite.TryDequeue(out var item))
             {
                 var (terminal, environmentIndex, type) = item;
@@ -261,6 +334,14 @@ public sealed partial class AstCompiler
 
                 using (_writer.CurlyIndent($"private {GetCSharpName(type)} {GetEntryPointMethodName(entryPoint, type != SignalType.Void && type.IsPointer())}()"))
                 {
+                    if (_timeout != Timeout.InfiniteTimeSpan)
+                    {
+                        _writer.WriteLine("""
+                            ThrowIfTimeout();
+
+                            """);
+                    }
+
                     if (type == SignalType.Void)
                     {
                         WriteEntryPoint(entryPoint, true, _writer);
