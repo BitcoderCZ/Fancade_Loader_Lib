@@ -19,23 +19,58 @@ namespace FancadeLoaderLib.Editing;
 /// </summary>
 public static class StockBlocks
 {
-    private static PartialPrefabList? _prefabList;
+    private static PartialPrefabList? _partialPrefabList;
+    private static PrefabList? _prefabList;
 
     private static FrozenDictionary<ushort, BlockDef>? _blocks;
 
     /// <summary>
-    /// Gets a <see cref="PartialPrefabList"/> with all of the stock fancade prefabs.
+    /// Gets a <see cref="Partial.PartialPrefabList"/> with all of the stock fancade prefabs.
     /// </summary>
-    /// <value>A <see cref="PartialPrefabList"/> with all of the stock fancade prefabs.</value>
-    public static PartialPrefabList PrefabList
+    /// <value>A <see cref="Partial.PartialPrefabList"/> with all of the stock fancade prefabs.</value>
+    public static PartialPrefabList PartialPrefabList
+    {
+        get
+        {
+            if (_partialPrefabList is null)
+            {
+                using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcppl");
+                using var reader = new FcBinaryReader(resourceStream);
+                _partialPrefabList = PartialPrefabList.Load(reader);
+            }
+
+            return _partialPrefabList;
+        }
+    }
+
+    /// <summary>
+    /// Gets a <see cref="PrefabList"/> with all of the stock fancade prefabs.
+    /// </summary>
+    /// <value>A <see cref="PrefabList"/> with all of the stock fancade prefabs.</value>
+    public static PrefabList PrefabList
     {
         get
         {
             if (_prefabList is null)
             {
-                using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcppl");
+                using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcpl");
                 using var reader = new FcBinaryReader(resourceStream);
-                _prefabList = PartialPrefabList.Load(reader);
+                _prefabList = PrefabList.Load(reader);
+
+                foreach (var prefab in _prefabList.Prefabs)
+                {
+                    if (TryGetBlockDef(prefab.Id, out var def) && def.Terminals.Length > 0)
+                    {
+                        foreach (var terminal in def.Terminals)
+                        {
+                            prefab.Settings.Add((ushort3)terminal.Position, new PrefabSetting(
+                                0,
+                                SettingTypeUtils.FromTerminalSignalType(terminal.SignalType, terminal.Type == TerminalType.In),
+                                (ushort3)terminal.Position,
+                                terminal.Name ?? TerminalDef.GetDefaultName(terminal.SignalType)));
+                        }
+                    }
+                }
             }
 
             return _prefabList;
@@ -393,7 +428,7 @@ public static class StockBlocks
         /// <summary>
         /// The Divide block.
         /// </summary>
-        public static readonly BlockDef Divide_Number = new BlockDef("Divide", 124, ScriptBlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(SignalType.Float, TerminalType.Out, "Num1 + Num2").Add(SignalType.Float, TerminalType.In, "Num2").Add(SignalType.Float, TerminalType.In, "Num1"));
+        public static readonly BlockDef Divide_Number = new BlockDef("Divide", 124, ScriptBlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(SignalType.Float, TerminalType.Out, "Num1 / Num2").Add(SignalType.Float, TerminalType.In, "Num2").Add(SignalType.Float, TerminalType.In, "Num1"));
 
         /// <summary>
         /// The Modulo block.
@@ -822,7 +857,7 @@ public static class StockBlocks
         /// </summary>
         public static readonly BlockDef Set_Ptr_Con = new BlockDef("Set Constraint", 78, ScriptBlockType.Active, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(SignalType.Void, TerminalType.Out, "After").Add(SignalType.Obj, TerminalType.In, "Value").Add(SignalType.ConPtr, TerminalType.In, "Variable").Add(SignalType.Void, TerminalType.In, "Before"));
         #endregion
-        #region list
+        #region List
 
         /// <summary>
         /// The List Number block.

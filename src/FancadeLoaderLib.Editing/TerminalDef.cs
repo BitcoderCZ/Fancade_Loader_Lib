@@ -34,7 +34,7 @@ public sealed class TerminalDef
     /// <summary>
     /// Position of the terminal.
     /// </summary>
-    public readonly int3 Position;
+    public readonly byte3 Position;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TerminalDef"/> class.
@@ -43,7 +43,7 @@ public sealed class TerminalDef
     /// <param name="type">Type of the terminal.</param>
     /// <param name="index">Index of the terminal.</param>
     /// <param name="position">Position of the terminal.</param>
-    public TerminalDef(SignalType signalType, TerminalType type, int index, int3 position)
+    public TerminalDef(SignalType signalType, TerminalType type, int index, byte3 position)
         : this(signalType, type, null, index, position)
     {
         Index = index;
@@ -58,7 +58,7 @@ public sealed class TerminalDef
     /// <param name="name">Name of the terminal.</param>
     /// <param name="index">Index of the terminal.</param>
     /// <param name="position">Position of the terminal.</param>
-    public TerminalDef(SignalType signalType, TerminalType type, string? name, int index, int3 position)
+    public TerminalDef(SignalType signalType, TerminalType type, string? name, int index, byte3 position)
     {
         SignalType = signalType;
         Type = type;
@@ -66,6 +66,12 @@ public sealed class TerminalDef
         Index = index;
         Position = position;
     }
+
+    /// <summary>
+    /// Gets the position of the after terminal of a stock script block.
+    /// </summary>
+    /// <value>Position of the after terminal of a stock script block.</value>
+    public static byte3 AfterPosition => new byte3(3, 1, 0);
 
     /// <summary>
     /// Gets the default terminal name for a given <see cref="FancadeLoaderLib.SignalType"/>.
@@ -84,4 +90,31 @@ public sealed class TerminalDef
             SignalType.Con => "Constraint",
             _ => string.Empty,
         };
+
+    /// <summary>
+    /// Gets the position of the before terminal of a stock script block.
+    /// </summary>
+    /// <param name="sizeZ">Size of the block in segments along the z axis.</param>
+    /// <returns>Position of the before terminal of a stock script block of the specified size.</returns>
+    public static byte3 GetBeforePosition(int sizeZ)
+        => new byte3(3, 1, (sizeZ * 8) - 2);
+
+    /// <summary>
+    /// Gets the position of an input terminal of a stock script block.
+    /// </summary>
+    /// <param name="index">Position of the input terminal from +Z to -Z.</param>
+    /// <param name="sizeZ">Size of the block in segments along the z axis.</param>
+    /// <returns>Position of an input terminal of a stock script block of the specified size.</returns>
+    public static byte3 GetInPosition(int index, int sizeZ)
+        => new byte3(0, 1, ((sizeZ - 1 - index) * 8) + 3);
+
+    /// <summary>
+    /// Gets the position of an output terminal of a stock script block.
+    /// </summary>
+    /// <param name="index">Position of the output terminal from +Z to -Z.</param>
+    /// <param name="sizeX">Size of the block in segments along the x axis.</param>
+    /// <param name="sizeZ">Size of the block in segments along the z axis.</param>
+    /// <returns>Position of an output terminal of a stock script block of the specified size.</returns>
+    public static byte3 GetOutPosition(int index, int sizeX, int sizeZ)
+        => new byte3((sizeX * 8) - 2, 1, ((sizeZ - 1 - index) * 8) + 3);
 }

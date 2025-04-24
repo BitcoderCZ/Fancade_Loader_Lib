@@ -99,14 +99,14 @@ public readonly struct TerminalBuilder
             var terminal = _terminals[i];
 
             terminals[i] = terminal.Type == TerminalType.In
-                ? new TerminalDef(terminal.SignalType, terminal.Type, terminal.Name, i, new int3(0, 1, (countIn++ * 8) + 3))
-                : new TerminalDef(terminal.SignalType, terminal.Type, terminal.Name, i, new int3(outXPos, 1, (countOut++ * 8) + 3));
+                ? new TerminalDef(terminal.SignalType, terminal.Type, terminal.Name, i, new byte3(0, 1, (countIn++ * 8) + 3))
+                : new TerminalDef(terminal.SignalType, terminal.Type, terminal.Name, i, new byte3(outXPos, 1, (countOut++ * 8) + 3));
         }
 
         if (blockType == ScriptBlockType.Active)
         {
-            terminals[0] = new TerminalDef(_terminals[0].SignalType, _terminals[0].Type, "After", 0, new int3(3, 1, 0));
-            terminals[^1] = new TerminalDef(_terminals[^1].SignalType, _terminals[^1].Type, "Before", _terminals.Count - 1, new int3(3, 1, (blockSize.Z * 8) - 2));
+            terminals[0] = new TerminalDef(_terminals[0].SignalType, _terminals[0].Type, "After", 0, TerminalDef.AfterPosition);
+            terminals[^1] = new TerminalDef(_terminals[^1].SignalType, _terminals[^1].Type, "Before", _terminals.Count - 1, new byte3(3, 1, (blockSize.Z * 8) - 2));
         }
 
         return ImmutableCollectionsMarshal.AsImmutableArray(terminals);

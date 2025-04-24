@@ -124,7 +124,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
 
         Block[] blocks = PreBuild(buildPos, false);
 
-        PartialPrefabList stockPrefabs = StockBlocks.PrefabList;
+        PartialPrefabList stockPrefabs = StockBlocks.PartialPrefabList;
 
         Dictionary<ushort, PartialPrefab> prefabCache = [];
 
@@ -143,10 +143,9 @@ public sealed class GameFileBlockBuilder : BlockBuilder
         for (int i = 0; i < settings.Count; i++)
         {
             SettingRecord set = settings[i];
-            prefab.Settings.Add(new PrefabSetting()
-            {
-                Index = (byte)set.SettingIndex,
-                Type = set.Value switch
+            prefab.Settings.Add((ushort3)set.Block.Position, new PrefabSetting(
+                index: (byte)set.SettingIndex,
+                type: set.Value switch
                 {
                     byte => SettingType.Byte,
                     ushort => SettingType.Ushort,
@@ -156,9 +155,8 @@ public sealed class GameFileBlockBuilder : BlockBuilder
                     string => SettingType.String,
                     _ => throw new InvalidDataException($"Unsupported type of value: '{set.Value.GetType()}'."),
                 },
-                Position = (ushort3)set.Block.Position,
-                Value = set.Value is Rotation rot ? rot.Value : set.Value,
-            });
+                pos: (ushort3)set.Block.Position,
+                value: set.Value is Rotation rot ? rot.Value : set.Value));
         }
 
         for (int i = 0; i < connections.Count; i++)

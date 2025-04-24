@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
@@ -29,7 +28,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         IsEmpty = true;
 
 #if NET9_0_OR_GREATER
-        Lock instancesLock = new();
+        System.Threading.Lock instancesLock = new();
 #else
         object instancesLock = new();
 #endif
