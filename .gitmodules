@@ -1,0 +1,6 @@
+[submodule "libs/BulletSharpPInvoke"]
+	path = libs/BulletSharpPInvoke
+	url = https://github.com/BitcoderCZ/BulletSharpPInvoke
+[submodule "libs/bullet3"]
+	path = libs/bullet3
+	url = https://github.com/bulletphysics/bullet3
