@@ -741,7 +741,7 @@ public sealed class Interpreter : IAstRunner
                     {
                         if (statement is not CustomStatementSyntax custom)
                         {
-                            throw new NotImplementedException($"Prefab with id {statement.PrefabId} is not implemented.");
+                            throw new InvalidNodePrefabIdException(statement.PrefabId);
                         }
 
                         var customEnvironment = (Environment)environment.BlockData[custom.Position];
@@ -1269,7 +1269,7 @@ public sealed class Interpreter : IAstRunner
 
             case 156 or 442:
                 {
-                    var breakVecRot = (BreakVecRotExpressionnSyntax)terminal.Node;
+                    var breakVecRot = (BreakVecRotExpressionSyntax)terminal.Node;
 
                     var vecRot = GetValue(breakVecRot.VecRot, environment);
 
@@ -1422,7 +1422,7 @@ public sealed class Interpreter : IAstRunner
                             }
 
                         default:
-                            throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                            throw new InvalidNodePrefabIdException(terminal.Node.PrefabId);
                     }
                 }
         }

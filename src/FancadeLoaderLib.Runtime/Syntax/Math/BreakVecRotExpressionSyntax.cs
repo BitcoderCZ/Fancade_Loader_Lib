@@ -2,9 +2,9 @@
 
 namespace FancadeLoaderLib.Runtime.Syntax.Math;
 
-public sealed class BreakVecRotExpressionnSyntax : SyntaxNode
+public sealed class BreakVecRotExpressionSyntax : SyntaxNode
 {
-    public BreakVecRotExpressionnSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? vecRot)
+    public BreakVecRotExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? vecRot)
         : base(prefabId, position)
     {
         VecRot = vecRot;

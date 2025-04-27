@@ -811,7 +811,7 @@ public partial class AstCompiler
                     WriteExpressionOrDefault(lineVsPlane.PlanePoint, SignalType.Vec3, environment, writer);
                     writer.Write(".ToNumerics(), ");
                     WriteExpressionOrDefault(lineVsPlane.PlaneNormal, SignalType.Vec3, environment, writer);
-                    writer.Write(')');
+                    writer.Write(".ToNumerics())");
 
                     return new ExpressionInfo(SignalType.Vec3);
                 }
@@ -850,7 +850,7 @@ public partial class AstCompiler
             case 156 or 442:
                 {
                     Debug.Assert(!asReference);
-                    var breakVecRot = (BreakVecRotExpressionnSyntax)terminal.Node;
+                    var breakVecRot = (BreakVecRotExpressionSyntax)terminal.Node;
 
                     switch (breakVecRot.PrefabId)
                     {
@@ -1086,7 +1086,7 @@ public partial class AstCompiler
                             }
 
                         default:
-                            throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                            throw new InvalidNodePrefabIdException(terminal.Node.PrefabId);
                     }
                 }
         }
