@@ -2,8 +2,13 @@
 
 public static class AstExtensions
 {
-    public static AST ConstantFold(this AST ast)
-    {
-        return ast;
-    }
+    // Doesn't work and can't easily be made to work:
+    // a lot of things rely on the positions of blocks and terminals
+    // TODO: add some thing to remap connections in AstRewriter
+    //public static AST ConstantFold(this AST ast)
+    //{
+    //    var rewriter = new AstConstantFolder();
+
+    //    return rewriter.RewriteAst(ast);
+    //}
 }
