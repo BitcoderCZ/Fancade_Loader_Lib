@@ -238,7 +238,7 @@ public partial class AstCompiler
 
             case 156 or 442:
                 {
-                    Debug.Assert(terminal.Node is BreakVecRotExpressionnSyntax);
+                    Debug.Assert(terminal.Node is BreakVecRotExpressionSyntax);
 
                     return new ExpressionInfo(SignalType.Float);
                 }
@@ -360,7 +360,7 @@ public partial class AstCompiler
                             return new ExpressionInfo(SignalType.Obj);
 
                         default:
-                            throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                            throw new InvalidNodePrefabIdException(terminal.Node.PrefabId);
                     }
                 }
         }

@@ -1,9 +1,11 @@
 ﻿using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Editing.Scripting.Settings;
 using FancadeLoaderLib.Runtime.Compiled.Utils;
+using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Syntax;
 using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
+using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Objects;
 using FancadeLoaderLib.Runtime.Syntax.Physics;
 using FancadeLoaderLib.Runtime.Syntax.Sound;
@@ -731,6 +733,21 @@ public partial class AstCompiler
 
                 break;
 
+            // **************************************** Math ****************************************
+            case 485:
+                {
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    var randomSeed = (RandomSeedStatementSyntax)statement;
+                    if (randomSeed.Seed is not null)
+                    {
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetRandomSeed)}(");
+                        WriteExpression(randomSeed.Seed, false, environment, writer);
+                        writer.WriteLine(");");
+                    }
+                }
+
+                break;
+
             // **************************************** Value ****************************************
             case 16 or 20 or 24 or 28 or 32:
                 {
@@ -738,7 +755,7 @@ public partial class AstCompiler
                     var inspect = (InspectStatementSyntax)statement;
                     if (inspect.Input is not null)
                     {
-                        writer.Write($"_ctx.{nameof(IRuntimeContext.InspectValue)}(new RuntimeValue(");
+                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.InspectValue)}(new RuntimeValue(");
 
                         var info = WriteExpression(inspect.Input, false, environment, writer);
 
@@ -822,7 +839,7 @@ public partial class AstCompiler
                 {
                     if (statement is not CustomStatementSyntax custom)
                     {
-                        throw new NotImplementedException($"Prefab with id {statement.PrefabId} is not implemented.");
+                        throw new InvalidNodePrefabIdException(statement.PrefabId);
                     }
 
                     executeNext = new byte3(255, 255, 255);

@@ -502,9 +502,6 @@ public partial class AstCompiler
                     Debug.Assert(!asReference);
                     var binary = (BinaryExpressionSyntax)terminal.Node;
 
-                    const float EqualsNumbersMaxDiff = 0.001f;
-                    const float EqualsVectorsMaxDiff = 1.0000001e-06f;
-
                     writer.Write('(');
 
                     SignalType outType;
@@ -602,7 +599,7 @@ public partial class AstCompiler
                             WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" - ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
-                            writer.WriteInv($") < {EqualsNumbersMaxDiff}");
+                            writer.WriteInv($") < {Constants.EqualsNumbersMaxDiff}");
                             break;
                         case 136:
                             // equals vectors
@@ -611,7 +608,7 @@ public partial class AstCompiler
                             WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" - ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
-                            writer.WriteInv($").LengthSquared < {EqualsVectorsMaxDiff}");
+                            writer.WriteInv($").LengthSquared < {Constants.EqualsVectorsMaxDiff}");
                             break;
                         case 140:
                             // equals objects
@@ -811,7 +808,7 @@ public partial class AstCompiler
                     WriteExpressionOrDefault(lineVsPlane.PlanePoint, SignalType.Vec3, environment, writer);
                     writer.Write(".ToNumerics(), ");
                     WriteExpressionOrDefault(lineVsPlane.PlaneNormal, SignalType.Vec3, environment, writer);
-                    writer.Write(')');
+                    writer.Write(".ToNumerics())");
 
                     return new ExpressionInfo(SignalType.Vec3);
                 }
@@ -850,7 +847,7 @@ public partial class AstCompiler
             case 156 or 442:
                 {
                     Debug.Assert(!asReference);
-                    var breakVecRot = (BreakVecRotExpressionnSyntax)terminal.Node;
+                    var breakVecRot = (BreakVecRotExpressionSyntax)terminal.Node;
 
                     switch (breakVecRot.PrefabId)
                     {
@@ -1086,7 +1083,7 @@ public partial class AstCompiler
                             }
 
                         default:
-                            throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                            throw new InvalidNodePrefabIdException(terminal.Node.PrefabId);
                     }
                 }
         }

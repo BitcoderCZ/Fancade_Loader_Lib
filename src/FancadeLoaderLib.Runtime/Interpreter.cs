@@ -741,7 +741,7 @@ public sealed class Interpreter : IAstRunner
                     {
                         if (statement is not CustomStatementSyntax custom)
                         {
-                            throw new NotImplementedException($"Prefab with id {statement.PrefabId} is not implemented.");
+                            throw new InvalidNodePrefabIdException(statement.PrefabId);
                         }
 
                         var customEnvironment = (Environment)environment.BlockData[custom.Position];
@@ -1138,9 +1138,6 @@ public sealed class Interpreter : IAstRunner
                     var input2 = GetValue(binary.Input2, environment);
                     RuntimeValue value;
 
-                    const float EqualsNumbersMaxDiff = 0.001f;
-                    const float EqualsVectorsMaxDiff = 1.0000001e-06f;
-
                     value = terminal.Node.PrefabId switch
                     {
                         92 => new(input1.Float + input2.Float),
@@ -1154,8 +1151,8 @@ public sealed class Interpreter : IAstRunner
                         124 => new(input1.Float / input2.Float),
                         172 => new(FcMod(input1.Float, input2.Float)),
                         457 => new(MathF.Pow(input1.Float, input2.Float)),
-                        132 => new(MathF.Abs(input1.Float - input2.Float) < EqualsNumbersMaxDiff),
-                        136 => new((input1.Float3 - input2.Float3).LengthSquared < EqualsVectorsMaxDiff),
+                        132 => new(MathF.Abs(input1.Float - input2.Float) < Constants.EqualsNumbersMaxDiff),
+                        136 => new((input1.Float3 - input2.Float3).LengthSquared < Constants.EqualsVectorsMaxDiff),
                         140 => new(input1.Int == input2.Int),
                         421 => new(input1.Bool == input2.Bool),
                         128 => new(input1.Float < input2.Float),
@@ -1269,7 +1266,7 @@ public sealed class Interpreter : IAstRunner
 
             case 156 or 442:
                 {
-                    var breakVecRot = (BreakVecRotExpressionnSyntax)terminal.Node;
+                    var breakVecRot = (BreakVecRotExpressionSyntax)terminal.Node;
 
                     var vecRot = GetValue(breakVecRot.VecRot, environment);
 
@@ -1422,7 +1419,7 @@ public sealed class Interpreter : IAstRunner
                             }
 
                         default:
-                            throw new NotImplementedException($"Prefab with id {terminal.Node.PrefabId} is not implemented.");
+                            throw new InvalidNodePrefabIdException(terminal.Node.PrefabId);
                     }
                 }
         }

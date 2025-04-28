@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace FancadeLoaderLib.Runtime;
 
 [StructLayout(LayoutKind.Sequential, Size = 16)]
-public readonly struct RuntimeValue
+public readonly struct RuntimeValue : IEquatable<RuntimeValue>
 {
     public static readonly RuntimeValue Zero = default;
 
@@ -47,6 +47,16 @@ public readonly struct RuntimeValue
 
     public readonly int Int => Read<int>();
 
+    private readonly long Long1 => Read<long>();
+
+    private readonly long Long2 => Read<long>(8);
+
+    public static bool operator ==(RuntimeValue left, RuntimeValue right)
+        => left.Long1 == right.Long1 && left.Long2 == right.Long2;
+
+    public static bool operator !=(RuntimeValue left, RuntimeValue right)
+        => left.Long1 != right.Long1 || left.Long2 != right.Long2;
+
     public object GetValueOfType(SignalType type)
         => type.ToNotPointer() switch
         {
@@ -56,6 +66,15 @@ public readonly struct RuntimeValue
             SignalType.Bool => Bool,
             _ => throw new ArgumentException($"{nameof(type)} must be {nameof(SignalType.Float)}, {nameof(SignalType.Vec3)}, {nameof(SignalType.Rot)} or {nameof(SignalType.Bool)}.", nameof(type)),
         };
+
+    public bool Equals(RuntimeValue other)
+        => this == other;
+
+    public override int GetHashCode()
+        => HashCode.Combine(Long1, Long2);
+
+    public override bool Equals(object? obj)
+        => obj is RuntimeValue other && this == other;
 
 #pragma warning disable SA1114
     private void Write<T>(T value)
@@ -67,12 +86,12 @@ public readonly struct RuntimeValue
 #endif
             value);
 
-    private readonly T Read<T>()
+    private readonly T Read<T>(nuint offset = 0)
         => Unsafe.ReadUnaligned<T>(
 #if NET8_0_OR_GREATER
-            ref MemoryMarshal.GetReference((ReadOnlySpan<byte>)_data));
+            ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference((ReadOnlySpan<byte>)_data), offset));
 #else
-            ref Unsafe.AsRef(in _data._element0));
+            ref Unsafe.AddByteOffset(ref Unsafe.AsRef(in _data._element0), offset));
 #endif
 #pragma warning restore SA1114
 
