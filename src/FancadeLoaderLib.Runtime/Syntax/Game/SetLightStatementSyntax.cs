@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Game;
 
 public sealed class SetLightStatementSyntax : StatementSyntax
 {
-    public SetLightStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal)
-        : base(prefabId, position, outVoidConnections)
+    public SetLightStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal)
+        : base(274, position, outVoidConnections)
     {
         PositionTerminal = positionTerminal;
         RotationTerminal = rotationTerminal;

@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class LinearSpringStatementSyntax : StatementSyntax
 {
-    public LinearSpringStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? stiffness, SyntaxTerminal? damping)
-        : base(prefabId, position, outVoidConnections)
+    public LinearSpringStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? stiffness, SyntaxTerminal? damping)
+        : base(358, position, outVoidConnections)
     {
         Constraint = constraint;
         Stiffness = stiffness;

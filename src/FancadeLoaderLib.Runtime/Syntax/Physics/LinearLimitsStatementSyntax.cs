@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class LinearLimitsStatementSyntax : StatementSyntax
 {
-    public LinearLimitsStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? lower, SyntaxTerminal? upper)
-        : base(prefabId, position, outVoidConnections)
+    public LinearLimitsStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? lower, SyntaxTerminal? upper)
+        : base(346, position, outVoidConnections)
     {
         Constraint = constraint;
         Lower = lower;

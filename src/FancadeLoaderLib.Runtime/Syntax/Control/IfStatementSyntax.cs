@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class IfStatementSyntax : StatementSyntax
 {
-    public IfStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? condition)
-        : base(prefabId, position, outVoidConnections)
+    public IfStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? condition)
+        : base(234, position, outVoidConnections)
     {
         Condition = condition;
     }

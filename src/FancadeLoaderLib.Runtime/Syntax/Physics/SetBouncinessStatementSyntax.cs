@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class SetBouncinessStatementSyntax : StatementSyntax
 {
-    public SetBouncinessStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? bounciness)
-        : base(prefabId, position, outVoidConnections)
+    public SetBouncinessStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? bounciness)
+        : base(336, position, outVoidConnections)
     {
         Object = @object;
         Bounciness = bounciness;

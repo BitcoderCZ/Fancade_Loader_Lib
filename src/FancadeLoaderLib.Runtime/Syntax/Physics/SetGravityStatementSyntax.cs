@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class SetGravityStatementSyntax : StatementSyntax
 {
-    public SetGravityStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? gravity)
-        : base(prefabId, position, outVoidConnections)
+    public SetGravityStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? gravity)
+        : base(324, position, outVoidConnections)
     {
         Gravity = gravity;
     }

@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class SetVelocityStatementSyntax : StatementSyntax
 {
-    public SetVelocityStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? velocity, SyntaxTerminal? spin)
-        : base(prefabId, position, outVoidConnections)
+    public SetVelocityStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? velocity, SyntaxTerminal? spin)
+        : base(292, position, outVoidConnections)
     {
         Object = @object;
         Velocity = velocity;

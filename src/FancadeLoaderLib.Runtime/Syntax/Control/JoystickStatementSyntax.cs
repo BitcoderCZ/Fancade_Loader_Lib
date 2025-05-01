@@ -7,8 +7,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class JoystickStatementSyntax : StatementSyntax
 {
-    public JoystickStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, JoystickType type)
-        : base(prefabId, position, outVoidConnections)
+    public JoystickStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, JoystickType type)
+        : base(592, position, outVoidConnections)
     {
         Type = type;
     }

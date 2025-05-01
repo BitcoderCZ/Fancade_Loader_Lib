@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class SwipeSensorStatementSyntax : StatementSyntax
 {
-    public SwipeSensorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
-        : base(prefabId, position, outVoidConnections)
+    public SwipeSensorStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections)
+        : base(248, position, outVoidConnections)
     {
     }
 

@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Game;
 
 public sealed class SetCameraStatementSyntax : StatementSyntax
 {
-    public SetCameraStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal, SyntaxTerminal? rangeTerminal, bool perspective)
-        : base(prefabId, position, outVoidConnections)
+    public SetCameraStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal, SyntaxTerminal? rangeTerminal, bool perspective)
+        : base(268, position, outVoidConnections)
     {
         PositionTerminal = positionTerminal;
         RotationTerminal = rotationTerminal;

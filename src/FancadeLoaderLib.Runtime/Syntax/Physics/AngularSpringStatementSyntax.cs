@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class AngularSpringStatementSyntax : StatementSyntax
 {
-    public AngularSpringStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? stiffness, SyntaxTerminal? damping)
-        : base(prefabId, position, outVoidConnections)
+    public AngularSpringStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? stiffness, SyntaxTerminal? damping)
+        : base(364, position, outVoidConnections)
     {
         Constraint = constraint;
         Stiffness = stiffness;

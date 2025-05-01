@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class SetFrictionStatementSyntax : StatementSyntax
 {
-    public SetFrictionStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? friction)
-        : base(prefabId, position, outVoidConnections)
+    public SetFrictionStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? friction)
+        : base(332, position, outVoidConnections)
     {
         Object = @object;
         Friction = friction;

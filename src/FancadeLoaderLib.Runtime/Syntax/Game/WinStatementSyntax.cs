@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Game;
 
 public sealed class WinStatementSyntax : StatementSyntax
 {
-    public WinStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, int delay)
-        : base(prefabId, position, outVoidConnections)
+    public WinStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, int delay)
+        : base(252, position, outVoidConnections)
     {
         Delay = delay;
     }

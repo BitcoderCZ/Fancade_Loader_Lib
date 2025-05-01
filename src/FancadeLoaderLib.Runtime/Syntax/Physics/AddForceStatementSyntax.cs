@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class AddForceStatementSyntax : StatementSyntax
 {
-    public AddForceStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? force, SyntaxTerminal? applyAt, SyntaxTerminal? torque)
-        : base(prefabId, position, outVoidConnections)
+    public AddForceStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? force, SyntaxTerminal? applyAt, SyntaxTerminal? torque)
+        : base(298, position, outVoidConnections)
     {
         Object = @object;
         Force = force;

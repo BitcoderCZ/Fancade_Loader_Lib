@@ -8,8 +8,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class TouchSensorStatementSyntax : StatementSyntax
 {
-    public TouchSensorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, TouchState state, int fingerIndex)
-        : base(prefabId, position, outVoidConnections)
+    public TouchSensorStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, TouchState state, int fingerIndex)
+        : base(242, position, outVoidConnections)
     {
         if (fingerIndex < 0 || fingerIndex > 2)
         {

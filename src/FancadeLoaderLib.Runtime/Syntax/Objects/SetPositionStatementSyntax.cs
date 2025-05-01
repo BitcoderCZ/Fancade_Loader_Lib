@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Objects;
 
 public sealed class SetPositionStatementSyntax : StatementSyntax
 {
-    public SetPositionStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? objectTerminal, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal)
-        : base(prefabId, position, outVoidConnections)
+    public SetPositionStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? objectTerminal, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal)
+        : base(282, position, outVoidConnections)
     {
         ObjectTerminal = objectTerminal;
         PositionTerminal = positionTerminal;

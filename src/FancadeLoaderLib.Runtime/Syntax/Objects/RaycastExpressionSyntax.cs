@@ -4,8 +4,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Objects;
 
 public sealed class RaycastExpressionSyntax : SyntaxNode
 {
-    public RaycastExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? from, SyntaxTerminal? to)
-        : base(prefabId, position)
+    public RaycastExpressionSyntax(ushort3 position, SyntaxTerminal? from, SyntaxTerminal? to)
+        : base(228, position)
     {
         From = from;
         To = to;

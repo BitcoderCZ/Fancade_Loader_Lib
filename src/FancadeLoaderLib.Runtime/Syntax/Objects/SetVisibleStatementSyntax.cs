@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Objects;
 
 public sealed class SetVisibleStatementSyntax : StatementSyntax
 {
-    public SetVisibleStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? visible)
-        : base(prefabId, position, outVoidConnections)
+    public SetVisibleStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? visible)
+        : base(306, position, outVoidConnections)
     {
         Object = @object;
         Visible = visible;

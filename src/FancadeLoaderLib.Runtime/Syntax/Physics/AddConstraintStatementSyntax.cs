@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class AddConstraintStatementSyntax : StatementSyntax
 {
-    public AddConstraintStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @base, SyntaxTerminal? part, SyntaxTerminal? pivot)
-        : base(prefabId, position, outVoidConnections)
+    public AddConstraintStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @base, SyntaxTerminal? part, SyntaxTerminal? pivot)
+        : base(340, position, outVoidConnections)
     {
         Base = @base;
         Part = part;

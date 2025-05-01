@@ -7,8 +7,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Sound;
 
 public sealed class PlaySoundStatementSyntax : StatementSyntax
 {
-    public PlaySoundStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? volume, SyntaxTerminal? pitch, FcSound sound)
-        : base(prefabId, position, outVoidConnections)
+    public PlaySoundStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? volume, SyntaxTerminal? pitch, FcSound sound)
+        : base(264, position, outVoidConnections)
     {
         Volume = volume;
         Pitch = pitch;

@@ -4,8 +4,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Math;
 
 public sealed class ScreenToWorldExpressionSyntax : SyntaxNode
 {
-    public ScreenToWorldExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? screenX, SyntaxTerminal? screenY)
-        : base(prefabId, position)
+    public ScreenToWorldExpressionSyntax(ushort3 position, SyntaxTerminal? screenX, SyntaxTerminal? screenY)
+        : base(216, position)
     {
         ScreenX = screenX;
         ScreenY = screenY;

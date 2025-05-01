@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class SetMassStatementSyntax : StatementSyntax
 {
-    public SetMassStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? mass)
-        : base(prefabId, position, outVoidConnections)
+    public SetMassStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? mass)
+        : base(328, position, outVoidConnections)
     {
         Object = @object;
         Mass = mass;

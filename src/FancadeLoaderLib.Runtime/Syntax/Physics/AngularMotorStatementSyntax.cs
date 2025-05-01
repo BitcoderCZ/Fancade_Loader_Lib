@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class AngularMotorStatementSyntax : StatementSyntax
 {
-    public AngularMotorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? speed, SyntaxTerminal? force)
-        : base(prefabId, position, outVoidConnections)
+    public AngularMotorStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? speed, SyntaxTerminal? force)
+        : base(376, position, outVoidConnections)
     {
         Constraint = constraint;
         Speed = speed;

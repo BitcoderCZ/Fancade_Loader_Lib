@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Game;
 
 public sealed class LoseStatementSyntax : StatementSyntax
 {
-    public LoseStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, int delay)
-        : base(prefabId, position, outVoidConnections)
+    public LoseStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, int delay)
+        : base(256, position, outVoidConnections)
     {
         Delay = delay;
     }

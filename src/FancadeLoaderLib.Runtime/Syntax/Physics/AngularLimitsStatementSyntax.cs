@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class AngularLimitsStatementSyntax : StatementSyntax
 {
-    public AngularLimitsStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? lower, SyntaxTerminal? upper)
-        : base(prefabId, position, outVoidConnections)
+    public AngularLimitsStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? lower, SyntaxTerminal? upper)
+        : base(352, position, outVoidConnections)
     {
         Constraint = constraint;
         Lower = lower;

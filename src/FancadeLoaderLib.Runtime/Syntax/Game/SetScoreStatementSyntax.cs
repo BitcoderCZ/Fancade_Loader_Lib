@@ -7,8 +7,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Game;
 
 public sealed class SetScoreStatementSyntax : StatementSyntax
 {
-    public SetScoreStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? score, SyntaxTerminal? coins, Ranking ranking)
-        : base(prefabId, position, outVoidConnections)
+    public SetScoreStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? score, SyntaxTerminal? coins, Ranking ranking)
+        : base(260, position, outVoidConnections)
     {
         Score = score;
         Coins = coins;

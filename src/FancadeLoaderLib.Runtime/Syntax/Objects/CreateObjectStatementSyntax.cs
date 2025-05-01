@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Objects;
 
 public sealed class CreateObjectStatementSyntax : StatementSyntax
 {
-    public CreateObjectStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? original)
-        : base(prefabId, position, outVoidConnections)
+    public CreateObjectStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? original)
+        : base(316, position, outVoidConnections)
     {
         Original = original;
     }

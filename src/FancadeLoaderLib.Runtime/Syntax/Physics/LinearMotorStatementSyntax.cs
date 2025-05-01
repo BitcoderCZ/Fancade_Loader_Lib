@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class LinearMotorStatementSyntax : StatementSyntax
 {
-    public LinearMotorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? speed, SyntaxTerminal? force)
-        : base(prefabId, position, outVoidConnections)
+    public LinearMotorStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? speed, SyntaxTerminal? force)
+        : base(370, position, outVoidConnections)
     {
         Constraint = constraint;
         Speed = speed;

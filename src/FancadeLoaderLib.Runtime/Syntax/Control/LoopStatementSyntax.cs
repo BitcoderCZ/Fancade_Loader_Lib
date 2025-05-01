@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class LoopStatementSyntax : StatementSyntax
 {
-    public LoopStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? start, SyntaxTerminal? stop)
-        : base(prefabId, position, outVoidConnections)
+    public LoopStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? start, SyntaxTerminal? stop)
+        : base(560, position, outVoidConnections)
     {
         Start = start;
         Stop = stop;

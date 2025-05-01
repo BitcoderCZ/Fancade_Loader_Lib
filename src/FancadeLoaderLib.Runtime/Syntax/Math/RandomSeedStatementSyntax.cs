@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Math;
 
 public sealed class RandomSeedStatementSyntax : StatementSyntax
 {
-    public RandomSeedStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? seed)
-        : base(prefabId, position, outVoidConnections)
+    public RandomSeedStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? seed)
+        : base(485, position, outVoidConnections)
     {
         Seed = seed;
     }

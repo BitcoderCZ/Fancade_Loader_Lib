@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class CollisionStatementSyntax : StatementSyntax
 {
-    public CollisionStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? firstObject)
-        : base(prefabId, position, outVoidConnections)
+    public CollisionStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? firstObject)
+        : base(401, position, outVoidConnections)
     {
         FirstObject = firstObject;
     }

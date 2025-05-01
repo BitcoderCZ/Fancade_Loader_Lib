@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class LateUpdateStatementSyntax : StatementSyntax
 {
-    public LateUpdateStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
-        : base(prefabId, position, outVoidConnections)
+    public LateUpdateStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections)
+        : base(566, position, outVoidConnections)
     {
     }
 

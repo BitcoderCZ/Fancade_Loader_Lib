@@ -7,8 +7,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Game;
 
 public sealed class MenuItemStatementSyntax : StatementSyntax
 {
-    public MenuItemStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? variable, SyntaxTerminal? picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease)
-        : base(prefabId, position, outVoidConnections)
+    public MenuItemStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? variable, SyntaxTerminal? picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease)
+        : base(584, position, outVoidConnections)
     {
         Variable = variable;
         Picture = picture;

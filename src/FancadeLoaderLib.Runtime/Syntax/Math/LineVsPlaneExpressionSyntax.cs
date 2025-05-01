@@ -4,8 +4,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Math;
 
 public sealed class LineVsPlaneExpressionSyntax : SyntaxNode
 {
-    public LineVsPlaneExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? lineFrom, SyntaxTerminal? lineTo, SyntaxTerminal? planePoint, SyntaxTerminal? planeNormal)
-        : base(prefabId, position)
+    public LineVsPlaneExpressionSyntax(ushort3 position, SyntaxTerminal? lineFrom, SyntaxTerminal? lineTo, SyntaxTerminal? planePoint, SyntaxTerminal? planeNormal)
+        : base(208, position)
     {
         LineFrom = lineFrom;
         LineTo = lineTo;

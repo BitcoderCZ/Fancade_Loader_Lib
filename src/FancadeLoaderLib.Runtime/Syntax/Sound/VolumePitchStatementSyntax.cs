@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Sound;
 
 public sealed class VolumePitchStatementSyntax : StatementSyntax
 {
-    public VolumePitchStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? channel, SyntaxTerminal? volume, SyntaxTerminal? pitch)
-        : base(prefabId, position, outVoidConnections)
+    public VolumePitchStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? channel, SyntaxTerminal? volume, SyntaxTerminal? pitch)
+        : base(391, position, outVoidConnections)
     {
         Channel = channel;
         Volume = volume;

@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Physics;
 
 public sealed class SetLockedStatementSyntax : StatementSyntax
 {
-    public SetLockedStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal)
-        : base(prefabId, position, outVoidConnections)
+    public SetLockedStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal)
+        : base(310, position, outVoidConnections)
     {
         Object = @object;
         PositionTerminal = positionTerminal;

@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class BoxArtStatementSyntax : StatementSyntax
 {
-    public BoxArtStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
-        : base(prefabId, position, outVoidConnections)
+    public BoxArtStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections)
+        : base(409, position, outVoidConnections)
     {
     }
 

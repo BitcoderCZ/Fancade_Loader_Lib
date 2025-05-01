@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class PlaySensorStatementSyntax : StatementSyntax
 {
-    public PlaySensorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
-        : base(prefabId, position, outVoidConnections)
+    public PlaySensorStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections)
+        : base(238, position, outVoidConnections)
     {
     }
 

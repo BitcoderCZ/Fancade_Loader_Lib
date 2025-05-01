@@ -6,8 +6,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Sound;
 
 public sealed class StopSoundStatementSyntax : StatementSyntax
 {
-    public StopSoundStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? channel)
-        : base(prefabId, position, outVoidConnections)
+    public StopSoundStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? channel)
+        : base(397, position, outVoidConnections)
     {
         Channel = channel;
     }

@@ -7,8 +7,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Control;
 
 public sealed class ButtonStatementSyntax : StatementSyntax
 {
-    public ButtonStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, ButtonType type)
-        : base(prefabId, position, outVoidConnections)
+    public ButtonStatementSyntax(ushort3 position, ImmutableArray<Connection> outVoidConnections, ButtonType type)
+        : base(588, position, outVoidConnections)
     {
         Type = type;
     }

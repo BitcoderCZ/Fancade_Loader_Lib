@@ -4,8 +4,8 @@ namespace FancadeLoaderLib.Runtime.Syntax.Math;
 
 public sealed class LerpExpressionSyntax : SyntaxNode
 {
-    public LerpExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? from, SyntaxTerminal? to, SyntaxTerminal? amount)
-        : base(prefabId, position)
+    public LerpExpressionSyntax(ushort3 position, SyntaxTerminal? from, SyntaxTerminal? to, SyntaxTerminal? amount)
+        : base(194, position)
     {
         From = from;
         To = to;
