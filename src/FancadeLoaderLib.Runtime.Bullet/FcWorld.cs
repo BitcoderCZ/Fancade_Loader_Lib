@@ -1,22 +1,31 @@
 ﻿using BulletSharp;
-using BulletSharp.SoftBody;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using FancadeLoaderLib.Runtime.Bullet.Utils;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime.Bullet;
 
-public sealed class FcWorld : IDisposable
+public sealed partial class FcWorld : IDisposable
 {
     private readonly DiscreteDynamicsWorld _world;
 
+    private readonly BulletRuntimeContext _runtimeCtx;
+
+    private readonly IAstRunner _runner;
+
+    private readonly RigidBody _groundPlane;
+
+    private readonly List<RuntimeObject> _objects = [];
+
+    private readonly Dictionary<FcObject, int> _idToIndex = [];
+
     private int _disposed;
 
-    private FcWorld()
+    private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory)
     {
+        _runtimeCtx = new BulletRuntimeContext(this, runtimeContext);
+        _runner = runnerFactory(_runtimeCtx);
+
         var collisionConf = new DefaultCollisionConfiguration();
         var dispatcher = new CollisionDispatcher(collisionConf);
         var broadphase = new DbvtBroadphase();
@@ -26,42 +35,32 @@ public sealed class FcWorld : IDisposable
             Gravity = new Vector3(0, -10, 0)
         };
 
-        var groundShape = new StaticPlaneShape(new Vector3(0, 1, 0), 1);
-        var groundMotionState = new DefaultMotionState(Matrix4x4.CreateTranslation(0, -1, 0));
-        var groundRigidBodyCI = new RigidBodyConstructionInfo(0, groundMotionState, groundShape);
-        var groundBody = new RigidBody(groundRigidBodyCI);
-        groundBody.Restitution = 1f;
-        _world.AddRigidBody(groundBody);
+        _groundPlane = _world.CreateStaticBody(Matrix4x4.Identity, new StaticPlaneShape(Vector3.UnitY, 0f));
+        _groundPlane.Restitution = 1f;
+    }
 
-        var sphereShape = new SphereShape(1);
-        float mass = 1.0f;
-        var localInertia = sphereShape.CalculateLocalInertia(mass);
-        var motionState = new DefaultMotionState(Matrix4x4.CreateTranslation(0, 10, 0));
-        var bodyCI = new RigidBodyConstructionInfo(mass, motionState, sphereShape, localInertia);
-        var body = new RigidBody(bodyCI);
-        body.Restitution = 0.5f;
-        _world.AddRigidBody(body);
+    public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory)
+    {
+        ThrowIfNull(runtimeContext, nameof(runtimeContext));
+        ThrowIfNull(runnerFactory, nameof(runnerFactory));
 
-        for (int i = 0; i < 300; i++)
+        return new FcWorld(runtimeContext, runnerFactory);
+    }
+
+    public void RunFrame(float timeStep = 1f / 60f)
+    {
+        if (_disposed == 1)
         {
-            _world.StepSimulation(1 / 60f);
-            var trans = body.MotionState.WorldTransform;
-            Console.WriteLine($"Step {i}: Sphere Y = {trans.Translation.Y}");
+            throw new ObjectDisposedException(nameof(FcWorld));
         }
 
-        body.Dispose();
-        motionState.Dispose();
-        sphereShape.Dispose();
-    }
+        var lateUpdate = _runner.RunFrame();
 
-    public static FcWorld Create(Func<IRuntimeContext, IAstRunner> runnerFactory)
-    {
-        return new();
-    }
+        _world.StepSimulation(timeStep);
 
-    public void RunFrame()
-    {
+        lateUpdate();
 
+        _runtimeCtx.CurrentFrame++;
     }
 
     public void Dispose()
@@ -77,10 +76,8 @@ public sealed class FcWorld : IDisposable
             return;
         }
 
-        if (disposing)
-        {
-            _world.Dispose();
-        }
+        _world.Dispose();
+        _groundPlane.Dispose();
 
         GC.SuppressFinalize(this);
     }
