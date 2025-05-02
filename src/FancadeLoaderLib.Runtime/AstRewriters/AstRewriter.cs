@@ -135,7 +135,7 @@ internal abstract class AstRewriter
 
         return score == node.Score && coins == node.Coins
             ? node
-            : new SetScoreStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, score, coins, node.Ranking);
+            : new SetScoreStatementSyntax(node.Position, node.OutVoidConnections, score, coins, node.Ranking);
     }
 
     protected virtual StatementSyntax RewriteSetCameraStatement(SetCameraStatementSyntax node)
@@ -146,7 +146,7 @@ internal abstract class AstRewriter
 
         return position == node.PositionTerminal && rotation == node.RotationTerminal && range == node.RangeTerminal
             ? node
-            : new SetCameraStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, position, rotation, range, node.Perspective);
+            : new SetCameraStatementSyntax(node.Position, node.OutVoidConnections, position, rotation, range, node.Perspective);
     }
 
     protected virtual StatementSyntax RewriteSetLightStatement(SetLightStatementSyntax node)
@@ -156,7 +156,7 @@ internal abstract class AstRewriter
 
         return position == node.PositionTerminal && rotation == node.RotationTerminal
             ? node
-            : new SetLightStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, position, rotation);
+            : new SetLightStatementSyntax(node.Position, node.OutVoidConnections, position, rotation);
     }
 
     protected virtual StatementSyntax RewriteMenuItemStatement(MenuItemStatementSyntax node)
@@ -166,7 +166,7 @@ internal abstract class AstRewriter
 
         return variable == node.Variable && picture == node.Picture
             ? node
-            : new MenuItemStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, variable, picture, node.Name, node.MaxBuyCount, node.PriceIncrease);
+            : new MenuItemStatementSyntax(node.Position, node.OutVoidConnections, variable, picture, node.Name, node.MaxBuyCount, node.PriceIncrease);
     }
 
     #endregion
@@ -179,7 +179,7 @@ internal abstract class AstRewriter
 
         return @object == node.ObjectTerminal && position == node.PositionTerminal && rotation == node.RotationTerminal
             ? node
-            : new SetPositionStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @object, position, rotation);
+            : new SetPositionStatementSyntax(node.Position, node.OutVoidConnections, @object, position, rotation);
     }
 
     protected virtual StatementSyntax RewriteSetVisibleStatement(SetVisibleStatementSyntax node)
@@ -189,7 +189,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object && visible == node.Visible
             ? node
-            : new SetVisibleStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @object, visible);
+            : new SetVisibleStatementSyntax(node.Position, node.OutVoidConnections, @object, visible);
     }
 
     protected virtual StatementSyntax RewriteCreateObjectStatement(CreateObjectStatementSyntax node)
@@ -198,7 +198,7 @@ internal abstract class AstRewriter
 
         return original == node.Original
             ? node
-            : new CreateObjectStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, original);
+            : new CreateObjectStatementSyntax(node.Position, node.OutVoidConnections, original);
     }
 
     protected virtual StatementSyntax RewriteDestroyObjectStatement(DestroyObjectStatementSyntax node)
@@ -207,7 +207,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object
             ? node
-            : new DestroyObjectStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @object);
+            : new DestroyObjectStatementSyntax(node.Position, node.OutVoidConnections, @object);
     }
 
     #endregion
@@ -219,7 +219,7 @@ internal abstract class AstRewriter
 
         return volume == node.Volume && pitch == node.Pitch
             ? node
-            : new PlaySoundStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, volume, pitch, node.Sound);
+            : new PlaySoundStatementSyntax(node.Position, node.OutVoidConnections, volume, pitch, node.Sound);
     }
 
     protected virtual StatementSyntax RewriteStopSoundStatement(StopSoundStatementSyntax node)
@@ -228,7 +228,7 @@ internal abstract class AstRewriter
 
         return channel == node.Channel
             ? node
-            : new StopSoundStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, channel);
+            : new StopSoundStatementSyntax(node.Position, node.OutVoidConnections, channel);
     }
 
     protected virtual StatementSyntax RewriteVolumePitchStatement(VolumePitchStatementSyntax node)
@@ -239,7 +239,7 @@ internal abstract class AstRewriter
 
         return channel == node.Channel && volume == node.Volume && pitch == node.Pitch
             ? node
-            : new VolumePitchStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, channel, volume, pitch);
+            : new VolumePitchStatementSyntax(node.Position, node.OutVoidConnections, channel, volume, pitch);
     }
 
     #endregion
@@ -253,7 +253,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object && force == node.Force && applyAt == node.ApplyAt && torque == node.Torque
             ? node
-            : new AddForceStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @object, force, applyAt, torque);
+            : new AddForceStatementSyntax(node.Position, node.OutVoidConnections, @object, force, applyAt, torque);
     }
 
     protected virtual StatementSyntax RewriteSetVelocityStatement(SetVelocityStatementSyntax node)
@@ -264,7 +264,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object && velocity == node.Velocity && spin == node.Spin
             ? node
-            : new SetVelocityStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @object, velocity, spin);
+            : new SetVelocityStatementSyntax(node.Position, node.OutVoidConnections, @object, velocity, spin);
     }
 
     protected virtual StatementSyntax RewriteSetLockedStatement(SetLockedStatementSyntax node)
@@ -275,7 +275,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object && position == node.PositionTerminal && rotation == node.RotationTerminal
             ? node
-            : new SetLockedStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @object, position, rotation);
+            : new SetLockedStatementSyntax(node.Position, node.OutVoidConnections, @object, position, rotation);
     }
 
     protected virtual StatementSyntax RewriteSetMassStatement(SetMassStatementSyntax node)
@@ -285,7 +285,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object && mass == node.Mass
             ? node
-            : new SetMassStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @object, mass);
+            : new SetMassStatementSyntax(node.Position, node.OutVoidConnections, @object, mass);
     }
 
     protected virtual StatementSyntax RewriteSetFrictionStatement(SetFrictionStatementSyntax node)
@@ -295,7 +295,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object && friction == node.Friction
             ? node
-            : new SetFrictionStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @object, friction);
+            : new SetFrictionStatementSyntax(node.Position, node.OutVoidConnections, @object, friction);
     }
 
     protected virtual StatementSyntax RewriteSetBouncinessStatement(SetBouncinessStatementSyntax node)
@@ -305,7 +305,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object && bounciness == node.Bounciness
             ? node
-            : new SetBouncinessStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @object, bounciness);
+            : new SetBouncinessStatementSyntax(node.Position, node.OutVoidConnections, @object, bounciness);
     }
 
     protected virtual StatementSyntax RewriteSetGravityStatement(SetGravityStatementSyntax node)
@@ -314,7 +314,7 @@ internal abstract class AstRewriter
 
         return gravity == node.Gravity
             ? node
-            : new SetGravityStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, gravity);
+            : new SetGravityStatementSyntax(node.Position, node.OutVoidConnections, gravity);
     }
 
     protected virtual StatementSyntax RewriteAddConstraintStatement(AddConstraintStatementSyntax node)
@@ -325,7 +325,7 @@ internal abstract class AstRewriter
 
         return @base == node.Base && part == node.Part && pivot == node.Pivot
             ? node
-            : new AddConstraintStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @base, part, pivot);
+            : new AddConstraintStatementSyntax(node.Position, node.OutVoidConnections, @base, part, pivot);
     }
 
     protected virtual StatementSyntax RewriteLinearLimitsStatement(LinearLimitsStatementSyntax node)
@@ -336,7 +336,7 @@ internal abstract class AstRewriter
 
         return constraint == node.Constraint && lower == node.Lower && upper == node.Upper
             ? node
-            : new LinearLimitsStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, constraint, lower, upper);
+            : new LinearLimitsStatementSyntax(node.Position, node.OutVoidConnections, constraint, lower, upper);
     }
 
     protected virtual StatementSyntax RewriteAngularLimitsStatement(AngularLimitsStatementSyntax node)
@@ -347,7 +347,7 @@ internal abstract class AstRewriter
 
         return constraint == node.Constraint && lower == node.Lower && upper == node.Upper
             ? node
-            : new AngularLimitsStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, constraint, lower, upper);
+            : new AngularLimitsStatementSyntax(node.Position, node.OutVoidConnections, constraint, lower, upper);
     }
 
     protected virtual StatementSyntax RewriteLinearSpringStatement(LinearSpringStatementSyntax node)
@@ -358,7 +358,7 @@ internal abstract class AstRewriter
 
         return constraint == node.Constraint && stiffness == node.Stiffness && damping == node.Damping
             ? node
-            : new LinearSpringStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, constraint, stiffness, damping);
+            : new LinearSpringStatementSyntax(node.Position, node.OutVoidConnections, constraint, stiffness, damping);
     }
 
     protected virtual StatementSyntax RewriteAngularSpringStatement(AngularSpringStatementSyntax node)
@@ -369,7 +369,7 @@ internal abstract class AstRewriter
 
         return constraint == node.Constraint && stiffness == node.Stiffness && damping == node.Damping
             ? node
-            : new AngularSpringStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, constraint, stiffness, damping);
+            : new AngularSpringStatementSyntax(node.Position, node.OutVoidConnections, constraint, stiffness, damping);
     }
 
     protected virtual StatementSyntax RewriteLinearMotorStatement(LinearMotorStatementSyntax node)
@@ -380,7 +380,7 @@ internal abstract class AstRewriter
 
         return constraint == node.Constraint && speed == node.Speed && force == node.Force
             ? node
-            : new LinearMotorStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, constraint, speed, force);
+            : new LinearMotorStatementSyntax(node.Position, node.OutVoidConnections, constraint, speed, force);
     }
 
     protected virtual StatementSyntax RewriteAngularMotorStatement(AngularMotorStatementSyntax node)
@@ -391,7 +391,7 @@ internal abstract class AstRewriter
 
         return constraint == node.Constraint && speed == node.Speed && force == node.Force
             ? node
-            : new AngularMotorStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, constraint, speed, force);
+            : new AngularMotorStatementSyntax(node.Position, node.OutVoidConnections, constraint, speed, force);
     }
 
     #endregion
@@ -402,7 +402,7 @@ internal abstract class AstRewriter
 
         return condition == node.Condition
             ? node
-            : new IfStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, condition);
+            : new IfStatementSyntax(node.Position, node.OutVoidConnections, condition);
     }
 
     protected virtual StatementSyntax RewritePlaySensorStatement(PlaySensorStatementSyntax node)
@@ -436,7 +436,7 @@ internal abstract class AstRewriter
 
         return start == node.Start && stop == node.Stop
             ? node
-            : new LoopStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, start, stop);
+            : new LoopStatementSyntax(node.Position, node.OutVoidConnections, start, stop);
     }
 
     #endregion
@@ -447,7 +447,7 @@ internal abstract class AstRewriter
 
         return seed == node.Seed
             ? node
-            : new RandomSeedStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, seed);
+            : new RandomSeedStatementSyntax(node.Position, node.OutVoidConnections, seed);
     }
 
     #endregion
@@ -622,7 +622,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object
             ? (node, terminalPos)
-            : (new GetPositionExpressionSyntax(node.PrefabId, node.Position, @object), terminalPos);
+            : (new GetPositionExpressionSyntax(node.Position, @object), terminalPos);
     }
 
     protected virtual (SyntaxNode Node, byte3 TerminalPosition) RewriteRaycastExpression(RaycastExpressionSyntax node, byte3 terminalPos)
@@ -634,7 +634,7 @@ internal abstract class AstRewriter
 
         return from == node.From && to == node.To
             ? (node, terminalPos)
-            : (new RaycastExpressionSyntax(node.PrefabId, node.Position, from, to), terminalPos);
+            : (new RaycastExpressionSyntax(node.Position, from, to), terminalPos);
     }
 
     protected virtual (SyntaxNode Node, byte3 TerminalPosition) RewriteGetSizeExpression(GetSizeExpressionSyntax node, byte3 terminalPos)
@@ -645,7 +645,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object
             ? (node, terminalPos)
-            : (new GetSizeExpressionSyntax(node.PrefabId, node.Position, @object), terminalPos);
+            : (new GetSizeExpressionSyntax(node.Position, @object), terminalPos);
     }
 
     protected virtual (SyntaxNode Node, byte3 TerminalPosition) RewriteCreateObjectExpression(CreateObjectStatementSyntax node, byte3 terminalPos)
@@ -656,7 +656,7 @@ internal abstract class AstRewriter
 
         return original == node.Original
             ? (node, terminalPos)
-            : (new CreateObjectStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, original), terminalPos);
+            : (new CreateObjectStatementSyntax(node.Position, node.OutVoidConnections, original), terminalPos);
     }
 
     #endregion
@@ -670,7 +670,7 @@ internal abstract class AstRewriter
 
         return volume == node.Volume && pitch == node.Pitch
             ? (node, terminalPos)
-            : (new PlaySoundStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, volume, pitch, node.Sound), terminalPos);
+            : (new PlaySoundStatementSyntax(node.Position, node.OutVoidConnections, volume, pitch, node.Sound), terminalPos);
     }
 
     #endregion
@@ -683,7 +683,7 @@ internal abstract class AstRewriter
 
         return @object == node.Object
             ? (node, terminalPos)
-            : (new GetVelocityExpressionSyntax(node.PrefabId, node.Position, @object), terminalPos);
+            : (new GetVelocityExpressionSyntax(node.Position, @object), terminalPos);
     }
 
     protected virtual (SyntaxNode Node, byte3 TerminalPosition) RewriteAddConstraintExpression(AddConstraintStatementSyntax node, byte3 terminalPos)
@@ -696,7 +696,7 @@ internal abstract class AstRewriter
 
         return @base == node.Base && part == node.Part && pivot == node.Pivot
             ? (node, terminalPos)
-            : (new AddConstraintStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, @base, part, pivot), terminalPos);
+            : (new AddConstraintStatementSyntax(node.Position, node.OutVoidConnections, @base, part, pivot), terminalPos);
     }
 
     #endregion
@@ -730,7 +730,7 @@ internal abstract class AstRewriter
 
         return firstObject == node.FirstObject
             ? (node, terminalPos)
-            : (new CollisionStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, firstObject), terminalPos);
+            : (new CollisionStatementSyntax( node.Position, node.OutVoidConnections, firstObject), terminalPos);
     }
 
     protected virtual (SyntaxNode Node, byte3 TerminalPosition) RewriteLoopSensorExpression(LoopStatementSyntax node, byte3 terminalPos)
@@ -742,7 +742,7 @@ internal abstract class AstRewriter
 
         return start == node.Start && stop == node.Stop
             ? (node, terminalPos)
-            : (new LoopStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, start, stop), terminalPos);
+            : (new LoopStatementSyntax(node.Position, node.OutVoidConnections, start, stop), terminalPos);
     }
 
     #endregion
@@ -780,7 +780,7 @@ internal abstract class AstRewriter
 
         return from == node.From && to == node.To && amount == node.Amount
             ? (node, terminalPos)
-            : (new LerpExpressionSyntax(node.PrefabId, node.Position, from, to, amount), terminalPos);
+            : (new LerpExpressionSyntax(node.Position, from, to, amount), terminalPos);
     }
 
     protected virtual (SyntaxNode Node, byte3 TerminalPosition) RewriteScreenToWorldExpression(ScreenToWorldExpressionSyntax node, byte3 terminalPos)
@@ -792,7 +792,7 @@ internal abstract class AstRewriter
 
         return screenX == node.ScreenX && screenY == node.ScreenY
             ? (node, terminalPos)
-            : (new ScreenToWorldExpressionSyntax(node.PrefabId, node.Position, screenX, screenY), terminalPos);
+            : (new ScreenToWorldExpressionSyntax(node.Position, screenX, screenY), terminalPos);
     }
 
     protected virtual (SyntaxNode Node, byte3 TerminalPosition) RewriteWorldToScreenExpression(WorldToScreenExpressionSyntax node, byte3 terminalPos)
@@ -803,7 +803,7 @@ internal abstract class AstRewriter
 
         return worldPos == node.WorldPos
             ? (node, terminalPos)
-            : (new WorldToScreenExpressionSyntax(node.PrefabId, node.Position, worldPos), terminalPos);
+            : (new WorldToScreenExpressionSyntax(node.Position, worldPos), terminalPos);
     }
 
     protected virtual (SyntaxNode Node, byte3 TerminalPosition) RewriteLineVsPlaneExpression(LineVsPlaneExpressionSyntax node, byte3 terminalPos)
@@ -817,7 +817,7 @@ internal abstract class AstRewriter
 
         return lineFrom == node.LineFrom && lineTo == node.LineTo && planePoint == node.PlanePoint && planeNormal == node.PlaneNormal
             ? (node, terminalPos)
-            : (new LineVsPlaneExpressionSyntax(node.PrefabId, node.Position, lineFrom, lineTo, planePoint, planeNormal), terminalPos);
+            : (new LineVsPlaneExpressionSyntax(node.Position, lineFrom, lineTo, planePoint, planeNormal), terminalPos);
     }
 
     protected virtual (SyntaxNode Node, byte3 TerminalPosition) RewriteMakeVecRotExpression(MakeVecRotExpressionSyntax node, byte3 terminalPos)
