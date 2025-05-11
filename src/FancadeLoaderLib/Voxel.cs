@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
 
@@ -129,6 +130,28 @@ public unsafe struct Voxel : IEquatable<Voxel>
            left.Attribs[3] != right.Attribs[3] ||
            left.Attribs[4] != right.Attribs[4] ||
            left.Attribs[5] != right.Attribs[5];
+
+    /// <summary>
+    /// Convers <see cref="Voxel"/>s to their raw representation.
+    /// </summary>
+    /// <param name="voxels">The <see cref="Voxel"/>s to convert.</param>
+    /// <param name="dest">
+    /// The destination <see cref="Span{T}"/> buffer.
+    /// Must be at least <paramref name="voxels"/>.Length * <c>6</c> bytes in length.
+    /// </param>
+    public static unsafe void ToRaw(ReadOnlySpan<Voxel> voxels, Span<byte> dest)
+    {
+        ThrowIfLessThan(dest.Length, 8 * 8 * 8 * 6, $"{nameof(dest)}.Length");
+
+        int index = 0;
+        for (int side = 0; side < 6; side++)
+        {
+            for (int i = 0; i < voxels.Length; i++)
+            {
+                dest[index++] = (byte)(voxels[i].Colors[side] | (voxels[i].Attribs[side] ? 0b_1000_0000 : 0));
+            }
+        }
+    }
 
     /// <inheritdoc/>
     public readonly override int GetHashCode()

@@ -3,6 +3,7 @@
 // </copyright>
 
 using FancadeLoaderLib.Partial;
+using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
 using System;
 using System.Collections.Frozen;
@@ -209,4 +210,22 @@ public static class PrefabListUtils
             return false;
         }
     }
+
+    /// <summary>
+    /// Gets the prefab with the specified id from <see cref="StockBlocks.PrefabList"/> or <paramref name="list"/>.
+    /// </summary>
+    /// <param name="list">The list to get the prefab from, <see cref="PrefabList.IdOffset"/> must be equal to <see cref="RawGame.CurrentNumbStockPrefabs"/>.</param>
+    /// <param name="id">Id of the prefab to get.</param>
+    /// <returns>The prefab with the specified id.</returns>
+    public static Prefab GetPrefabOrStock(this PrefabList list, ushort id)
+        => id < RawGame.CurrentNumbStockPrefabs ? StockBlocks.PrefabList.GetPrefab(id) : list.GetPrefab(id);
+
+    /// <summary>
+    /// Gets the segment with the specified id from <see cref="StockBlocks.PrefabList"/> or <paramref name="list"/>.
+    /// </summary>
+    /// <param name="list">The list to get the segment from, <see cref="PrefabList.IdOffset"/> must be equal to <see cref="RawGame.CurrentNumbStockPrefabs"/>.</param>
+    /// <param name="id">Id of the segment to get.</param>
+    /// <returns>The segment with the specified id.</returns>
+    public static PrefabSegment GetSegmentOrStock(this PrefabList list, ushort id)
+        => id < RawGame.CurrentNumbStockPrefabs ? StockBlocks.PrefabList.GetSegment(id) : list.GetSegment(id);
 }

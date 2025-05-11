@@ -1,4 +1,6 @@
 ﻿using FancadeLoaderLib.Editing.Scripting.Settings;
+using FancadeLoaderLib.Runtime.Exceptions;
+using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
 using System.Numerics;
 
@@ -60,10 +62,27 @@ public sealed partial class FcWorld
             => throw new NotImplementedException();
 
         public (float3 Min, float3 Max) GetSize(FcObject @object)
-            => throw new NotImplementedException();
+        {
+            var rObject = _world.GetObject(@object);
+
+            if (rObject is not null)
+            {
+                return (rObject.SizeMin, rObject.SizeMax);
+            }
+
+            // TODO: get level size
+            return (float3.Zero, float3.Zero);
+        }
 
         public void SetVisible(FcObject @object, bool visible)
-            => throw new NotImplementedException();
+        {
+            var rObject = _world.GetObject(@object);
+
+            if (rObject is not null)
+            {
+                rObject.IsVisible = visible;
+            }
+        }
 
         public FcObject CreateObject(FcObject original)
             => throw new NotImplementedException();
@@ -104,7 +123,14 @@ public sealed partial class FcWorld
             => throw new NotImplementedException();
 
         public void SetGravity(float3 gravity)
-            => throw new NotImplementedException();
+        {
+            if (gravity.IsInfOrNaN())
+            {
+                throw new InvalidInputException("Set Gravity");
+            }
+
+            _world._world.Gravity = gravity.ToNumerics();
+        }
 
         public FcConstraint AddConstraint(FcObject @base, FcObject part, float3? pivot)
             => throw new NotImplementedException();

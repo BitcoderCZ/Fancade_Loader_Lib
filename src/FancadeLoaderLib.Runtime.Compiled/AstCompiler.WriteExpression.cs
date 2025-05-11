@@ -200,38 +200,23 @@ public partial class AstCompiler
                     Debug.Assert(!asReference);
                     var getSize = (GetSizeExpressionSyntax)terminal.Node;
 
-                    if (getSize.Object is null)
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(");
+                    WriteExpressionOrDefault(getSize.Object, SignalType.Obj, environment, writer);
+                    writer.Write(')');
+
+                    if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
                     {
-                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2) || terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
-                        {
-                            writer.Write(GetDefaultValue(SignalType.Float));
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        writer.Write(".Min");
+                        return new ExpressionInfo(SignalType.Float);
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                    {
+                        writer.Write(".Max");
+                        return new ExpressionInfo(SignalType.Float);
                     }
                     else
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(");
-                        WriteExpression(getSize.Object, false, environment, writer);
-                        writer.Write(')');
-
-                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
-                        {
-                            writer.Write(".Min");
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
-                        {
-                            writer.Write(".Max");
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        throw new InvalidTerminalException(terminal.Position);
                     }
                 }
 
@@ -1078,7 +1063,7 @@ public partial class AstCompiler
 
                         case ObjectExpressionSyntax:
                             {
-                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObject)}(new ushort3({terminal.Node.Position.X}, {terminal.Node.Position.Y}, {terminal.Node.Position.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z}), {environment.AST.PrefabId}).Value");
+                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObject)}(new ushort3({terminal.Node.Position.X}, {terminal.Node.Position.Y}, {terminal.Node.Position.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z}), {environment.AST.PrefabId})");
                                 return new ExpressionInfo(SignalType.Obj);
                             }
 

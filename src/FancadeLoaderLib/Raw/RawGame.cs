@@ -24,7 +24,7 @@ public class RawGame
     public static readonly ushort CurrentFileVersion = 31;
 
     /// <summary>
-    /// The current ammount of stock/built in prefabs in fancade.
+    /// The current ammount of segments of stock/built in prefabs in fancade.
     /// </summary>
     public static readonly ushort CurrentNumbStockPrefabs = 597;
 

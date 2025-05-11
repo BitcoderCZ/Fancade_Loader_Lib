@@ -4,6 +4,9 @@
 
 using MathUtils.Vectors;
 using System;
+using System.Collections;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib;
@@ -116,6 +119,34 @@ public class PrefabSegment : ICloneable
     }
 
     /// <summary>
+    /// Gets the <see cref="Voxels"/> attribs as a <see cref="BitArray"/>.
+    /// </summary>
+    /// <value><see cref="Voxels"/> attribs as a <see cref="BitArray"/>.</value>
+    public unsafe BitArray? VoxelAttribs
+    {
+        get
+        {
+            if (_voxels is null)
+            {
+                return null;
+            }
+
+            var attribs = new BitArray(NumbVoxels * 6);
+
+            int index = 0;
+            for (int side = 0; side < 6; side++)
+            {
+                for (int i = 0; i < NumbVoxels; i++)
+                {
+                    attribs[index++] = _voxels[i].Attribs[side];
+                }
+            }
+
+            return attribs;
+        }
+    }
+
+    /// <summary>
     /// Gets a value indicating whether this <see cref="PrefabSegment"/> is empty.
     /// </summary>
     /// <value><see langword="true"/> if <see cref="Voxels"/> is null or <see cref="Voxel.IsEmpty"/> is true for all of the voxels; otherwise, <see langword="false"/>.</value>
@@ -148,8 +179,9 @@ public class PrefabSegment : ICloneable
     /// </remarks>
     /// <param name="pos">The 3D index.</param>
     /// <returns>The converted 1D index.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int IndexVoxels(int3 pos)
-        => pos.ToIndex(8, 8);
+        => pos.X + (pos.Y * 8) + (pos.Z * 64);
 
     /// <summary>
     /// Converts raw voxel data to <see cref="Voxel"/>s.

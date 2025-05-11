@@ -916,33 +916,19 @@ public sealed class Interpreter : IAstRunner
                     var getSize = (GetSizeExpressionSyntax)terminal.Node;
 
                     float3 val;
-                    if (getSize.Object is null)
+                    var (min, max) = _ctx.GetSize((FcObject)GetValue(getSize.Object, environment).Int);
+
+                    if (terminal.Position == PosOut02)
                     {
-                        if (terminal.Position == PosOut02 || terminal.Position == PosOut12)
-                        {
-                            val = float3.Zero;
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        val = min;
+                    }
+                    else if (terminal.Position == PosOut12)
+                    {
+                        val = max;
                     }
                     else
                     {
-                        var (min, max) = _ctx.GetSize((FcObject)GetValue(getSize.Object, environment).Int);
-
-                        if (terminal.Position == PosOut02)
-                        {
-                            val = min;
-                        }
-                        else if (terminal.Position == PosOut12)
-                        {
-                            val = max;
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        throw new InvalidTerminalException(terminal.Position);
                     }
 
                     return new TerminalOutput(new RuntimeValue(val));
