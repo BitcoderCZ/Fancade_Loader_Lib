@@ -50,7 +50,14 @@ public sealed partial class FcWorld
 
         // **************************************** Objects ****************************************
         public FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId)
-            => throw new NotImplementedException();
+        {
+            if (_world._connectorToObject.TryGetValue((prefabId, position, voxelPosition), out var obj))
+            {
+                return obj;
+            }
+
+            return FcObject.Null;
+        }
 
         public (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object)
             => throw new NotImplementedException();

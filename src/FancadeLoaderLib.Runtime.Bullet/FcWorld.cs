@@ -28,6 +28,8 @@ public sealed partial class FcWorld : IDisposable
 
     private readonly Dictionary<FcObject, RuntimeObject> _idToObject = [];
 
+    private readonly Dictionary<(ushort PrefabId, int3 Pos, byte3 VoxelPos), FcObject> _connectorToObject = [];
+
     private int _objectIdCounter = 1;
 
     private int _disposed;
@@ -203,6 +205,58 @@ public sealed partial class FcWorld : IDisposable
                 }
 
                 AddColliders(rObject);
+            }
+        }
+
+        InitConnectedObjects(usedPrefabs);
+    }
+
+    private void InitConnectedObjects(PrefabUsedCache usedPrefabs)
+    {
+        var stockPrefabs = StockBlocks.PrefabList;
+
+        var terminalInfos = PrefabTerminalInfo.Create(stockPrefabs.Concat(_prefabs));
+
+        foreach (var prefab in stockPrefabs.Concat(_prefabs))
+        {
+            if (!usedPrefabs.Used(prefab.Id) ||
+                (prefab.Id < RawGame.CurrentNumbStockPrefabs && StockIsScript.Data[prefab.Id]) ||
+                prefab.Connections.Count == 0)
+            {
+                continue;
+            }
+
+            var meshInfo = _gameMesh.GetBlockMesh(prefab.Id);
+
+            foreach (var connection in prefab.Connections)
+            {
+                if (connection.IsFromOutside)
+                {
+                    continue;
+                }
+
+                ushort blockId = prefab.Blocks.GetBlock(connection.From);
+                ushort segmentId = prefab.Blocks.GetBlock(connection.From + connection.FromVoxel / 8);
+
+                if (blockId == 0 || segmentId == 0)
+                {
+                    continue;
+                }
+
+                var terminalInfo = terminalInfos[blockId];
+                var segmentMeshes = _gameMesh.GetSegmentMesh(segmentId);
+
+                if (!terminalInfo.OutputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
+                {
+                    int meshIndex = meshInfo.BlockMeshIds[segmentMeshes.VoxelMeshIndex[PrefabSegment.IndexVoxels(connection.FromVoxel % 8)] + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)]];
+
+                    var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
+
+                    if (obj is not null)
+                    {
+                        _connectorToObject.Add((prefab.Id, connection.From, (byte3)connection.FromVoxel), obj.Id);
+                    }
+                }
             }
         }
     }
