@@ -23,7 +23,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
     /// <param name="blockId">Id of the block to find.</param>
     public BlockInstancesCache(IEnumerable<Prefab> prefabs, ushort blockId)
     {
-        BLockId = blockId;
+        BlockId = blockId;
 
         IsEmpty = true;
 
@@ -66,12 +66,12 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
     /// Gets the id of the block this <see cref="BlockInstancesCache"/> was created for.
     /// </summary>
     /// <value>Id of the block this <see cref="BlockInstancesCache"/> was created for.</value>
-    public ushort BLockId { get; private set; }
+    public ushort BlockId { get; private set; }
 
     /// <summary>
     /// Gets a value indicating whether this <see cref="BlockInstancesCache"/> is empty.
     /// </summary>
-    /// <value><see langword="true"/> if no blocks with id <see cref="BLockId"/> were found, when this <see cref="BlockInstancesCache"/> was created; otherwise, <see langword="false"/>.</value>
+    /// <value><see langword="true"/> if no blocks with id <see cref="BlockId"/> were found, when this <see cref="BlockInstancesCache"/> was created; otherwise, <see langword="false"/>.</value>
     public bool IsEmpty { get; private set; }
 
     /// <summary>
