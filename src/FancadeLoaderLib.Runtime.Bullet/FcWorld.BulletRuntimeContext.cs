@@ -61,7 +61,7 @@ public sealed partial class FcWorld
 
         public (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object)
         {
-            if (@object == FcObject.Null || !_world._idToObject.TryGetValue(@object, out var rObject))
+            if (!_world.TryGetObject(@object, out var rObject))
             {
                 // TODO: return outside position
                 return (default, Quaternion.Identity);
@@ -71,16 +71,31 @@ public sealed partial class FcWorld
         }
 
         public void SetPosition(FcObject @object, float3? position, Quaternion? rotation)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(@object, out var rObject))
+            {
+                return;
+            }
+
+            if (position is { } pos && pos.IsInfOrNaN())
+            {
+                throw new InvalidInputException("Set Position");
+            }
+
+            if (rotation is { } rot && rot.IsInfOrNaN())
+            {
+                throw new InvalidInputException("Set Position");
+            }
+
+            rObject.SetRotPos(position, rotation);
+        }
 
         public (bool Hit, float3 HitPos, FcObject HitObj) Raycast(float3 from, float3 to)
             => throw new NotImplementedException();
 
         public (float3 Min, float3 Max) GetSize(FcObject @object)
         {
-            var rObject = _world.GetObject(@object);
-
-            if (rObject is not null)
+            if (_world.TryGetObject(@object, out var rObject))
             {
                 return (rObject.SizeMin, rObject.SizeMax);
             }
@@ -91,9 +106,7 @@ public sealed partial class FcWorld
 
         public void SetVisible(FcObject @object, bool visible)
         {
-            var rObject = _world.GetObject(@object);
-
-            if (rObject is not null)
+            if (_world.TryGetObject(@object, out var rObject))
             {
                 rObject.IsVisible = visible;
             }
@@ -117,7 +130,46 @@ public sealed partial class FcWorld
 
         // **************************************** Physics ****************************************
         public void AddForce(FcObject @object, float3? force, float3? applyAt, float3? torque)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(@object, out var rObject))
+            {
+                return;
+            }
+
+            rObject.Unfix();
+
+            if (force is { } forceVal)
+            {
+                if (forceVal.IsInfOrNaN())
+                {
+                    throw new InvalidInputException("Add Force");
+                }
+
+                if (applyAt is { } applyAtVal)
+                {
+                    if (applyAtVal.IsInfOrNaN())
+                    {
+                        throw new InvalidInputException("Add Force");
+                    }
+
+                    rObject.RigidBody.ApplyForce(forceVal.ToNumerics(), applyAtVal.ToNumerics());
+                }
+                else
+                {
+                    rObject.RigidBody.ApplyCentralForce(forceVal.ToNumerics());
+                }
+            }
+
+            if (torque is { } torqueVal)
+            {
+                if (torqueVal.IsInfOrNaN())
+                {
+                    throw new InvalidInputException("Add Force");
+                }
+
+                rObject.RigidBody.ApplyTorque(torqueVal.ToNumerics());
+            }
+        }
 
         public (float3 Velocity, float3 Spin) GetVelocity(FcObject @object)
             => throw new NotImplementedException();

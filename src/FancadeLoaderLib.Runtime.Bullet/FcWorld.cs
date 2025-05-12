@@ -5,6 +5,7 @@ using FancadeLoaderLib.Runtime.Bullet.Utils;
 using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
@@ -90,11 +91,6 @@ public sealed partial class FcWorld : IDisposable
 
         _runtimeCtx.CurrentFrame++;
     }
-
-    public RuntimeObject? GetObject(FcObject @object)
-        => @object == FcObject.Null || !_idToObject.TryGetValue(@object, out var rObject)
-        ? null
-        : rObject;
 
     private void InitObjects(ushort mainId)
     {
@@ -195,6 +191,7 @@ public sealed partial class FcWorld : IDisposable
                 sizeMax -= pos;
 
                 var rigidBody = BulletCreate(pos.ToNumerics(), Quaternion.Identity, mass, objectId);
+                rigidBody.UpdateInertiaTensor();
 
                 RuntimeObject rObject = new(objectId, prefab.Id, objectInPrefabMeshIndex, rigidBody, pos, Quaternion.Identity, sizeMin, sizeMax, mass)
                 {
@@ -555,6 +552,17 @@ public sealed partial class FcWorld : IDisposable
                 ((CompoundShape)rObject.RigidBody.CollisionShape).AddChildShape(Matrix4x4.CreateTranslation(offset.ToNumerics()), shape);
             }
         }
+    }
+
+    private bool TryGetObject(FcObject @object, [MaybeNullWhen(false)] out RuntimeObject rObject)
+    {
+        if (@object == FcObject.Null)
+        {
+            rObject = null;
+            return false;
+        }
+
+        return _idToObject.TryGetValue(@object, out rObject);
     }
 
     public void Dispose()

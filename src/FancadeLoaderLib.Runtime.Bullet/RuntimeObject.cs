@@ -8,6 +8,8 @@ namespace FancadeLoaderLib.Runtime.Bullet;
 
 public sealed class RuntimeObject : IDisposable
 {
+    private float _mass = 1f;
+
     public RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, float3 pos, Quaternion rot, float3 sizeMin, float3 sizeMax, float mass)
     {
         Debug.Assert(id != FcObject.Null);
@@ -21,7 +23,7 @@ public sealed class RuntimeObject : IDisposable
         Rot = rot;
         SizeMin = sizeMin;
         SizeMax = sizeMax;
-        Mass = mass;
+        _mass = mass;
     }
 
     public FcObject Id { get; }
@@ -42,7 +44,15 @@ public sealed class RuntimeObject : IDisposable
 
     public float3 SizeMax { get; }
 
-    public float Mass { get; }
+    public float Mass
+    {
+        get => _mass;
+        set
+        {
+            RigidBody.SetMassProps(Mass, RigidBody.LocalInertia);
+            _mass = value;
+        }
+    }
 
     public bool InOpenLevel { get; init; }
 
@@ -50,7 +60,7 @@ public sealed class RuntimeObject : IDisposable
 
     public bool IsVisible { get; set; } = true;
 
-    public bool IsFixed { get; set; } = true;
+    public bool IsFixed { get; private set; } = false;
 
     public void Update()
     {
@@ -60,6 +70,47 @@ public sealed class RuntimeObject : IDisposable
 
         Pos = wt.Translation.ToFloat3();
         Rot = wt.GetRotation();
+    }
+
+    public void SetRotPos(float3? position, Quaternion? rotation)
+    {
+        Debug.Assert(RigidBody.MotionState is not null);
+        var mat = RigidBody.MotionState.WorldTransform;
+
+        if (position is { } pos)
+        {
+            Pos = pos;
+            mat.Translation = pos.ToNumerics();
+        }
+
+        if (rotation is { } rot)
+        {
+            Rot = rot;
+            mat.SetRotation(rot, out mat);
+        }
+
+        if (position is not null || rotation is not null)
+        {
+            RigidBody.WorldTransform = mat;
+            RigidBody.MotionState.WorldTransform = mat;
+        }
+    }
+
+    public void Unfix()
+    {
+        if (!IsFixed)
+        {
+            return;
+        }
+
+        Mass = _mass;
+
+        if (RigidBody.IsInWorld)
+        {
+            RigidBody.Activate();
+        }
+
+        IsFixed = false;
     }
 
     public void Dispose()
