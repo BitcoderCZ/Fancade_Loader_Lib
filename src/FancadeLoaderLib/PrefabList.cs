@@ -21,6 +21,7 @@ namespace FancadeLoaderLib;
 /// </summary>
 /// <remarks>
 /// Ids are automatically changed when prefabs are inserter/removed.
+/// Prefabs are not automatically sorted, levels after non level prefabs will not be invisible in the Fancade app.
 /// </remarks>
 public class PrefabList : IEnumerable<Prefab>, ICloneable
 {
@@ -276,6 +277,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
     /// <remarks>
     /// The prefab's id is changed to <see cref="SegmentCount"/> + <see cref="IdOffset"/>.
     /// The prefab's segments must not be modified while it is in the <see cref="PrefabList"/>.
+    /// Levels preceded by non Level prefabs will not be invisible in the Fancade app.
     /// </remarks>
     /// <param name="value">The prefab to add.</param>
     public void AddPrefab(Prefab value)
@@ -291,6 +293,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
     /// </summary>
     /// <remarks>
     /// The prefab's segments must not be modified while it is in the <see cref="PrefabList"/>.
+    /// Levels preceded by non Level prefabs will not be invisible in the Fancade app.
     /// </remarks>
     /// <param name="value">The prefab to add, a prefab with it's id must already be in the <see cref="PrefabList"/>.</param>
     public void InsertPrefab(Prefab value)
