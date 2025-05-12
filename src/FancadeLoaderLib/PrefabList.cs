@@ -403,7 +403,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
 
         _segments.RemoveRange(id - IdOffset, prefab.Count);
 
-        RemovePrefabFromBLocks(prefab, cache);
+        RemovePrefabFromBlocks(prefab, cache);
 
         if (WillBeLastPrefab(prefab))
         {
@@ -431,7 +431,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
 
         _segments.RemoveRange(id - IdOffset, prefab.Count);
 
-        RemovePrefabFromBLocks(prefab, cache);
+        RemovePrefabFromBlocks(prefab, cache);
 
         if (WillBeLastPrefab(prefab))
         {
@@ -449,11 +449,11 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
     /// <param name="id">Id of the prefab to remove.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if the prefab was removed (it was found at least once); otherwise <see langword="false"/>.</returns>
-    public bool RemovePrefabFromBLocks(ushort id, BlockInstancesCache? cache = null)
+    public bool RemovePrefabFromBlocks(ushort id, BlockInstancesCache? cache = null)
     {
         var prefab = _prefabs[id];
 
-        return RemovePrefabFromBLocks(prefab, cache);
+        return RemovePrefabFromBlocks(prefab, cache);
     }
 
     /// <summary>
@@ -653,9 +653,9 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
     private static IEnumerable<PrefabSegment> SegmentsFromPrefabs(IEnumerable<KeyValuePair<ushort, Prefab>> prefabs)
         => prefabs.OrderBy(item => item.Key).SelectMany(item => item.Value.OrderedValues);
 
-    private bool RemovePrefabFromBLocks(Prefab prefab, BlockInstancesCache? cache = null)
+    private bool RemovePrefabFromBlocks(Prefab prefab, BlockInstancesCache? cache = null)
     {
-        Debug.Assert(cache is null || cache.BLockId == prefab.Id, "The cache should be for the prefab.");
+        Debug.Assert(cache is null || cache.BlockId == prefab.Id, "The cache should be for the prefab.");
 
         Debug.Assert(prefab.Count <= 4 * 4 * 4, "prefab.Count should be smaller that it's max size.");
         Span<int3> offsets = stackalloc int3[4 * 4 * 4];

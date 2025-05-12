@@ -570,7 +570,7 @@ public class PrefabListTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
-    public async Task RemovePrefabFromBLocks_RemovesIds(bool cache)
+    public async Task RemovePrefabFromBlocks_RemovesIds(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -590,7 +590,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab2);
         prefabList.AddPrefab(prefab3);
 
-        bool removed = prefabList.RemovePrefabFromBLocks(prefab2.Id, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab2.Id) : null);
+        bool removed = prefabList.RemovePrefabFromBlocks(prefab2.Id, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab2.Id) : null);
 
         await Assert.That(removed).IsTrue();
 
@@ -610,7 +610,7 @@ public class PrefabListTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
-    public async Task RemovePrefabFromBLocks_WhenNotContained_ReturnsFalse(bool cache)
+    public async Task RemovePrefabFromBlocks_WhenNotContained_ReturnsFalse(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -629,7 +629,7 @@ public class PrefabListTests
         prefabList.AddPrefab(prefab2);
         prefabList.AddPrefab(prefab3);
 
-        bool removed = prefabList.RemovePrefabFromBLocks(prefab2.Id, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab2.Id) : null);
+        bool removed = prefabList.RemovePrefabFromBlocks(prefab2.Id, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab2.Id) : null);
 
         await Assert.That(removed).IsFalse();
 
