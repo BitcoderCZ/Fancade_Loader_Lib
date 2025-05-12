@@ -1,4 +1,5 @@
 ﻿using BulletSharp;
+using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
 using System.Diagnostics;
 using System.Numerics;
@@ -50,6 +51,16 @@ public sealed class RuntimeObject : IDisposable
     public bool IsVisible { get; set; } = true;
 
     public bool IsFixed { get; set; } = true;
+
+    public void Update()
+    {
+        Debug.Assert(RigidBody.MotionState is not null);
+
+        var wt = RigidBody.MotionState.WorldTransform;
+
+        Pos = wt.Translation.ToFloat3();
+        Rot = wt.GetRotation();
+    }
 
     public void Dispose()
         => RigidBody.Dispose();

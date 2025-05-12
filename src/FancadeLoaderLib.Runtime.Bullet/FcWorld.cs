@@ -81,6 +81,11 @@ public sealed partial class FcWorld : IDisposable
 
         _world.StepSimulation(timeStep);
 
+        foreach (var rObject in _objects)
+        {
+            rObject.Update();
+        }
+
         lateUpdate();
 
         _runtimeCtx.CurrentFrame++;

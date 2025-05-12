@@ -848,37 +848,19 @@ public sealed class Interpreter : IAstRunner
                     var getPosition = (GetPositionExpressionSyntax)terminal.Node;
 
                     RuntimeValue val;
-                    if (getPosition.Object is null)
+                    var (position, rotation) = _ctx.GetObjectPosition((FcObject)GetValue(getPosition.Object, environment).Int);
+
+                    if (terminal.Position == PosOut02)
                     {
-                        if (terminal.Position == PosOut02)
-                        {
-                            val = new(float3.Zero);
-                        }
-                        else if (terminal.Position == PosOut12)
-                        {
-                            val = new(Quaternion.Identity);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        val = new(position);
+                    }
+                    else if (terminal.Position == PosOut12)
+                    {
+                        val = new(rotation);
                     }
                     else
                     {
-                        var (position, rotation) = _ctx.GetObjectPosition((FcObject)GetValue(getPosition.Object, environment).Int);
-
-                        if (terminal.Position == PosOut02)
-                        {
-                            val = new(position);
-                        }
-                        else if (terminal.Position == PosOut12)
-                        {
-                            val = new(rotation);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        throw new InvalidTerminalException(terminal.Position);
                     }
 
                     return new TerminalOutput(val);

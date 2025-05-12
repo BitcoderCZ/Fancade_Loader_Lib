@@ -121,45 +121,25 @@ public partial class AstCompiler
                     Debug.Assert(!asReference);
                     var getPosition = (GetPositionExpressionSyntax)terminal.Node;
 
-                    if (getPosition.Object is null)
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(");
+
+                    WriteExpressionOrDefault(getPosition.Object, SignalType.Obj, environment, writer);
+
+                    writer.Write(')');
+
+                    if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
                     {
-                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
-                        {
-                            writer.Write(GetDefaultValue(SignalType.Float));
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
-                        {
-                            writer.Write(GetDefaultValue(SignalType.Rot));
-                            return new ExpressionInfo(SignalType.Rot);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        writer.Write(".Position");
+                        return new ExpressionInfo(SignalType.Vec3);
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                    {
+                        writer.Write(".Rotation");
+                        return new ExpressionInfo(SignalType.Rot);
                     }
                     else
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(");
-
-                        WriteExpression(getPosition.Object, false, environment, writer);
-
-                        writer.Write(')');
-
-                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
-                        {
-                            writer.Write(".Position");
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
-                        {
-                            writer.Write(".Rotation");
-                            return new ExpressionInfo(SignalType.Rot);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        throw new InvalidTerminalException(terminal.Position);
                     }
                 }
 

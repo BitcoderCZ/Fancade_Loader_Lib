@@ -60,7 +60,15 @@ public sealed partial class FcWorld
         }
 
         public (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object)
-            => throw new NotImplementedException();
+        {
+            if (@object == FcObject.Null || !_world._idToObject.TryGetValue(@object, out var rObject))
+            {
+                // TODO: return outside position
+                return (default, Quaternion.Identity);
+            }
+
+            return (rObject.Pos, rObject.Rot);
+        }
 
         public void SetPosition(FcObject @object, float3? position, Quaternion? rotation)
             => throw new NotImplementedException();
