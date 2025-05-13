@@ -398,9 +398,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.LinearLimits)}(");
                         WriteExpression(linearLimits.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearLimits.Lower, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearLimits.Lower, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearLimits.Upper, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearLimits.Upper, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -416,9 +416,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AngularLimits)}(");
                         WriteExpression(angularLimits.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularLimits.Lower, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularLimits.Lower, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularLimits.Upper, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularLimits.Upper, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -434,9 +434,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.LinearSpring)}(");
                         WriteExpression(linearSpring.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearSpring.Stiffness, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearSpring.Stiffness, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearSpring.Damping, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearSpring.Damping, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -452,9 +452,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AngularSpring)}(");
                         WriteExpression(angularSpring.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularSpring.Stiffness, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularSpring.Stiffness, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularSpring.Damping, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularSpring.Damping, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -470,9 +470,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.LinearMotor)}(");
                         WriteExpression(linearMotor.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearMotor.Speed, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearMotor.Speed, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearMotor.Force, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearMotor.Force, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -488,9 +488,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AngularMotor)}(");
                         WriteExpression(angularMotor.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularMotor.Speed, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularMotor.Speed, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularMotor.Force, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularMotor.Force, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }

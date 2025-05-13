@@ -44,17 +44,17 @@ public interface IRuntimeContext : IRuntimeContextBase
 
     FcConstraint AddConstraint(FcObject @base, FcObject part, float3 pivot);
 
-    void LinearLimits(FcConstraint constraint, float3? lower, float3? upper);
+    void LinearLimits(FcConstraint constraint, float3 lower, float3 upper);
 
-    void AngularLimits(FcConstraint constraint, float3? lower, float3? upper);
+    void AngularLimits(FcConstraint constraint, float3 lower, float3 upper);
 
-    void LinearSpring(FcConstraint constraint, float3? stiffness, float3? damping);
+    void LinearSpring(FcConstraint constraint, float3 stiffness, float3 damping);
 
-    void AngularSpring(FcConstraint constraint, float3? stiffness, float3? damping);
+    void AngularSpring(FcConstraint constraint, float3 stiffness, float3 damping);
 
-    void LinearMotor(FcConstraint constraint, float3? speed, float3? force);
+    void LinearMotor(FcConstraint constraint, float3 speed, float3 force);
 
-    void AngularMotor(FcConstraint constraint, float3? speed, float3? force);
+    void AngularMotor(FcConstraint constraint, float3 speed, float3 force);
 
     // **************************************** Control ****************************************
     bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out float3 normal);

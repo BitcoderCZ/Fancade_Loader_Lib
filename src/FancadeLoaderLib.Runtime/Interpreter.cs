@@ -430,7 +430,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (linearLimits.Constraint is not null)
                         {
-                            _ctx.LinearLimits((FcConstraint)GetValue(linearLimits.Constraint, environment).Int, linearLimits.Lower is null ? null : GetValue(linearLimits.Lower, environment).Float3, linearLimits.Upper is null ? null : GetValue(linearLimits.Upper, environment).Float3);
+                            _ctx.LinearLimits((FcConstraint)GetValue(linearLimits.Constraint, environment).Int, GetValue(linearLimits.Lower, environment).Float3, GetValue(linearLimits.Upper, environment).Float3);
                         }
                     }
 
@@ -442,7 +442,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (angularLimits.Constraint is not null)
                         {
-                            _ctx.AngularLimits((FcConstraint)GetValue(angularLimits.Constraint, environment).Int, angularLimits.Lower is null ? null : GetValue(angularLimits.Lower, environment).Float3, angularLimits.Upper is null ? null : GetValue(angularLimits.Upper, environment).Float3);
+                            _ctx.AngularLimits((FcConstraint)GetValue(angularLimits.Constraint, environment).Int, GetValue(angularLimits.Lower, environment).Float3, GetValue(angularLimits.Upper, environment).Float3);
                         }
                     }
 
@@ -454,7 +454,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (linearSpring.Constraint is not null)
                         {
-                            _ctx.LinearSpring((FcConstraint)GetValue(linearSpring.Constraint, environment).Int, linearSpring.Stiffness is null ? null : GetValue(linearSpring.Stiffness, environment).Float3, linearSpring.Damping is null ? null : GetValue(linearSpring.Damping, environment).Float3);
+                            _ctx.LinearSpring((FcConstraint)GetValue(linearSpring.Constraint, environment).Int, GetValue(linearSpring.Stiffness, environment).Float3, GetValue(linearSpring.Damping, environment).Float3);
                         }
                     }
 
@@ -466,7 +466,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (angularSpring.Constraint is not null)
                         {
-                            _ctx.AngularSpring((FcConstraint)GetValue(angularSpring.Constraint, environment).Int, angularSpring.Stiffness is null ? null : GetValue(angularSpring.Stiffness, environment).Float3, angularSpring.Damping is null ? null : GetValue(angularSpring.Damping, environment).Float3);
+                            _ctx.AngularSpring((FcConstraint)GetValue(angularSpring.Constraint, environment).Int, GetValue(angularSpring.Stiffness, environment).Float3, GetValue(angularSpring.Damping, environment).Float3);
                         }
                     }
 
@@ -478,7 +478,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (linearMotor.Constraint is not null)
                         {
-                            _ctx.LinearMotor((FcConstraint)GetValue(linearMotor.Constraint, environment).Int, linearMotor.Speed is null ? null : GetValue(linearMotor.Speed, environment).Float3, linearMotor.Force is null ? null : GetValue(linearMotor.Force, environment).Float3);
+                            _ctx.LinearMotor((FcConstraint)GetValue(linearMotor.Constraint, environment).Int, GetValue(linearMotor.Speed, environment).Float3, GetValue(linearMotor.Force, environment).Float3);
                         }
                     }
 
@@ -490,7 +490,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (angularMotor.Constraint is not null)
                         {
-                            _ctx.AngularMotor((FcConstraint)GetValue(angularMotor.Constraint, environment).Int, angularMotor.Speed is null ? null : GetValue(angularMotor.Speed, environment).Float3, angularMotor.Force is null ? null : GetValue(angularMotor.Force, environment).Float3);
+                            _ctx.AngularMotor((FcConstraint)GetValue(angularMotor.Constraint, environment).Int, GetValue(angularMotor.Speed, environment).Float3, GetValue(angularMotor.Force, environment).Float3);
                         }
                     }
 

@@ -339,23 +339,103 @@ public sealed partial class FcWorld
             return id;
         }
 
-        public void LinearLimits(FcConstraint constraint, float3? lower, float3? upper)
-            => throw new NotImplementedException();
+        public void LinearLimits(FcConstraint constraint, float3 lower, float3 upper)
+        {
+            if (!_world.TryGetConstraint(constraint, out var bConstraint))
+            {
+                return;
+            }
 
-        public void AngularLimits(FcConstraint constraint, float3? lower, float3? upper)
-            => throw new NotImplementedException();
+            bConstraint.LinearLowerLimit = lower.ToNumerics();
+            bConstraint.LinearUpperLimit = upper.ToNumerics();
 
-        public void LinearSpring(FcConstraint constraint, float3? stiffness, float3? damping)
-            => throw new NotImplementedException();
+            bConstraint.RigidBodyB.Activate(true);
+        }
 
-        public void AngularSpring(FcConstraint constraint, float3? stiffness, float3? damping)
-            => throw new NotImplementedException();
+        public void AngularLimits(FcConstraint constraint, float3 lower, float3 upper)
+        {
+            if (!_world.TryGetConstraint(constraint, out var bConstraint))
+            {
+                return;
+            }
 
-        public void LinearMotor(FcConstraint constraint, float3? speed, float3? force)
-            => throw new NotImplementedException();
+            bConstraint.AngularLowerLimit = lower.ToNumerics() * (MathF.PI / 180f);
+            bConstraint.AngularUpperLimit = upper.ToNumerics() * (MathF.PI / 180f);
 
-        public void AngularMotor(FcConstraint constraint, float3? speed, float3? force)
-            => throw new NotImplementedException();
+            bConstraint.RigidBodyB.Activate(true);
+        }
+
+        public void LinearSpring(FcConstraint constraint, float3 stiffness, float3 damping)
+        {
+            if (!_world.TryGetConstraint(constraint, out var bConstraint))
+            {
+                return;
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                bConstraint.EnableSpring(i, stiffness[i] != 0f);
+                bConstraint.SetStiffness(i, stiffness[i], true);
+                bConstraint.SetDamping(i, damping[i], true);
+            }
+
+            bConstraint.RigidBodyB.Activate(true);
+        }
+
+        public void AngularSpring(FcConstraint constraint, float3 stiffness, float3 damping)
+        {
+            if (!_world.TryGetConstraint(constraint, out var bConstraint))
+            {
+                return;
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                bConstraint.EnableSpring(i + 3, stiffness[i] != 0f);
+                bConstraint.SetStiffness(i + 3, stiffness[i], true);
+                bConstraint.SetDamping(i + 3, damping[i], true);
+            }
+
+            bConstraint.RigidBodyB.Activate(true);
+        }
+
+        public void LinearMotor(FcConstraint constraint, float3 speed, float3 force)
+        {
+            if (!_world.TryGetConstraint(constraint, out var bConstraint))
+            {
+                return;
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                bConstraint.EnableMotor(i, force[i] != 0f);
+                bConstraint.SetTargetVelocity(i, speed[i]);
+                bConstraint.SetMaxMotorForce(i, force[i]);
+            }
+
+            bConstraint.RigidBodyA.Activate(true);
+            bConstraint.RigidBodyB.Activate(true);
+        }
+
+        public void AngularMotor(FcConstraint constraint, float3 speed, float3 force)
+        {
+            if (!_world.TryGetConstraint(constraint, out var bConstraint))
+            {
+                return;
+            }
+
+            speed *= MathF.PI / 180f; // deg to rad
+
+            for (int i = 0; i < 3; i++)
+            {
+                bConstraint.EnableMotor(i + 3, force[i] != 0f);
+                bConstraint.SetTargetVelocity(i + 3, -speed[i]);
+                bConstraint.SetMaxMotorForce(i + 3, force[i]);
+            }
+
+            bConstraint.RigidBodyA.Activate(true);
+            bConstraint.RigidBodyB.Activate(true);
+        }
 
         // **************************************** Control ****************************************
         public bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos)

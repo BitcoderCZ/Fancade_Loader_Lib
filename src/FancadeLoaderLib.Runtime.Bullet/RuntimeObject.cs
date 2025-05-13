@@ -107,7 +107,7 @@ public sealed class RuntimeObject : IDisposable
 
         if (RigidBody.IsInWorld)
         {
-            RigidBody.Activate();
+            RigidBody.Activate(true);
         }
 
         IsFixed = false;

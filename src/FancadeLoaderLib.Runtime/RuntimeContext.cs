@@ -78,17 +78,17 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract FcConstraint AddConstraint(FcObject @base, FcObject part, float3 pivot);
 
-    public abstract void LinearLimits(FcConstraint constraint, float3? lower, float3? upper);
+    public abstract void LinearLimits(FcConstraint constraint, float3 lower, float3 upper);
 
-    public abstract void AngularLimits(FcConstraint constraint, float3? lower, float3? upper);
+    public abstract void AngularLimits(FcConstraint constraint, float3 lower, float3 upper);
 
-    public abstract void LinearSpring(FcConstraint constraint, float3? stiffness, float3? damping);
+    public abstract void LinearSpring(FcConstraint constraint, float3 stiffness, float3 damping);
 
-    public abstract void AngularSpring(FcConstraint constraint, float3? stiffness, float3? damping);
+    public abstract void AngularSpring(FcConstraint constraint, float3 stiffness, float3 damping);
 
-    public abstract void LinearMotor(FcConstraint constraint, float3? speed, float3? force);
+    public abstract void LinearMotor(FcConstraint constraint, float3 speed, float3 force);
 
-    public abstract void AngularMotor(FcConstraint constraint, float3? speed, float3? force);
+    public abstract void AngularMotor(FcConstraint constraint, float3 speed, float3 force);
 
     // **************************************** Control ****************************************
     public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
