@@ -1,7 +1,9 @@
-﻿using FancadeLoaderLib.Editing.Scripting.Settings;
+﻿using BulletSharp;
+using FancadeLoaderLib.Editing.Scripting.Settings;
 using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
+using System;
 using System.Numerics;
 
 namespace FancadeLoaderLib.Runtime.Bullet;
@@ -109,6 +111,7 @@ public sealed partial class FcWorld
             if (_world.TryGetObject(@object, out var rObject))
             {
                 rObject.IsVisible = visible;
+                // TODO: add/remove from world
             }
         }
 
@@ -172,22 +175,121 @@ public sealed partial class FcWorld
         }
 
         public (float3 Velocity, float3 Spin) GetVelocity(FcObject @object)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(@object, out var rObject))
+            {
+                return (default, default);
+            }
+
+            return (rObject.RigidBody.LinearVelocity.ToFloat3(), rObject.RigidBody.AngularVelocity.ToFloat3() * (180f / MathF.PI));
+        }
 
         public void SetVelocity(FcObject @object, float3? velocity, float3? spin)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(@object, out var rObject))
+            {
+                return;
+            }
+
+            rObject.Unfix();
+
+            if (velocity is { } velocityVal)
+            {
+                if (velocityVal.IsInfOrNaN())
+                {
+                    throw new InvalidInputException("Set Velocity");
+                }
+
+                rObject.RigidBody.LinearVelocity = velocityVal.ToNumerics();
+            }
+
+            if (spin is { } spinVal)
+            {
+                if (spinVal.IsInfOrNaN())
+                {
+                    throw new InvalidInputException("Set Velocity");
+                }
+
+                rObject.RigidBody.AngularVelocity = spinVal.ToNumerics() * (MathF.PI / 180f);
+            }
+        }
 
         public void SetLocked(FcObject @object, float3? position, float3? rotation)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(@object, out var rObject))
+            {
+                return;
+            }
+
+            rObject.Unfix();
+
+            if (position is { } positionVal)
+            {
+                if (positionVal.IsInfOrNaN())
+                {
+                    throw new InvalidInputException("Set Locked");
+                }
+
+                rObject.RigidBody.LinearFactor = positionVal.ToNumerics();
+            }
+
+            if (rotation is { } rotationVal)
+            {
+                if (rotationVal.IsInfOrNaN())
+                {
+                    throw new InvalidInputException("Set Locked");
+                }
+
+                rObject.RigidBody.AngularFactor = rotationVal.ToNumerics();
+            }
+        }
 
         public void SetMass(FcObject @object, float mass)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(@object, out var rObject))
+            {
+                return;
+            }
+
+            rObject.Unfix();
+
+            if (float.IsNaN(mass) || float.IsInfinity(mass))
+            {
+                throw new InvalidInputException("Set Mass/Friction/Bounciness");
+            }
+
+            rObject.Mass = mass;
+        }
 
         public void SetFriction(FcObject @object, float friction)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(@object, out var rObject))
+            {
+                return;
+            }
+
+            if (float.IsNaN(friction) || float.IsInfinity(friction))
+            {
+                throw new InvalidInputException("Set Mass/Friction/Bounciness");
+            }
+
+            rObject.RigidBody.Friction = friction;
+        }
 
         public void SetBounciness(FcObject @object, float bounciness)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(@object, out var rObject))
+            {
+                return;
+            }
+
+            if (float.IsNaN(bounciness) || float.IsInfinity(bounciness))
+            {
+                throw new InvalidInputException("Set Mass/Friction/Bounciness");
+            }
+
+            rObject.RigidBody.Restitution = bounciness;
+        }
 
         public void SetGravity(float3 gravity)
         {
@@ -199,8 +301,43 @@ public sealed partial class FcWorld
             _world._world.Gravity = gravity.ToNumerics();
         }
 
-        public FcConstraint AddConstraint(FcObject @base, FcObject part, float3? pivot)
-            => throw new NotImplementedException();
+        public FcConstraint AddConstraint(FcObject @base, FcObject part, float3 pivot)
+        {
+            if (!_world.TryGetObject(@base, out var rBase) || !_world.TryGetObject(part, out var rPart))
+            {
+                return FcConstraint.Null;
+            }
+
+            if (pivot.IsInfOrNaN())
+            {
+                throw new InvalidInputException("Add Constraint");
+            }
+
+            var baseTransform = rBase.RigidBody.WorldTransform;
+            var partTransform = rPart.RigidBody.WorldTransform;
+
+            Vector3 baseOrigin = baseTransform.Translation;
+
+            Vector3 localPivotA = Vector3.Transform(pivot.ToNumerics() - baseOrigin, Matrix4x4.Transpose(Matrix4x4.CreateFromQuaternion(Quaternion.CreateFromRotationMatrix(baseTransform))));
+
+            var frameInA = Matrix4x4.CreateTranslation(localPivotA);
+
+            Vector3 partOrigin = partTransform.Translation;
+
+            Vector3 localPivotB = Vector3.Transform(pivot.ToNumerics() - partOrigin, Matrix4x4.Transpose(Matrix4x4.CreateFromQuaternion(Quaternion.CreateFromRotationMatrix(partTransform))));
+
+            var frameInB = Matrix4x4.CreateTranslation(localPivotB);
+
+            Generic6DofSpring2Constraint constraint = new Generic6DofSpring2Constraint(rBase.RigidBody, rPart.RigidBody, frameInA, frameInB, RotateOrder.XYZ);
+
+            _world._constraints.Add(constraint);
+
+            var id = (FcConstraint)_world._constraintIdCounter++;
+
+            _world._idToConstraint.Add(id, constraint);
+
+            return id;
+        }
 
         public void LinearLimits(FcConstraint constraint, float3? lower, float3? upper)
             => throw new NotImplementedException();

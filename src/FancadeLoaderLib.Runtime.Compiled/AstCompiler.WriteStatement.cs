@@ -382,7 +382,7 @@ public partial class AstCompiler
                         writer.WriteInv($", ");
                         WriteExpression(addConstraint.Part, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(addConstraint.Pivot, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(addConstraint.Pivot, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }

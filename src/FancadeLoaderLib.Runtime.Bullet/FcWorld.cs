@@ -27,11 +27,17 @@ public sealed partial class FcWorld : IDisposable
 
     private readonly List<RuntimeObject> _objects = [];
 
+    private readonly List<Generic6DofSpring2Constraint> _constraints = [];
+
     private readonly Dictionary<FcObject, RuntimeObject> _idToObject = [];
+
+    private readonly Dictionary<FcConstraint, Generic6DofSpring2Constraint> _idToConstraint = [];
 
     private readonly Dictionary<(ushort PrefabId, int3 Pos, byte3 VoxelPos), FcObject> _connectorToObject = [];
 
     private int _objectIdCounter = 1;
+
+    private int _constraintIdCounter = 1;
 
     private int _disposed;
 
@@ -563,6 +569,17 @@ public sealed partial class FcWorld : IDisposable
         }
 
         return _idToObject.TryGetValue(@object, out rObject);
+    }
+
+    private bool TryGetConstraint(FcConstraint constraint, [MaybeNullWhen(false)] out Generic6DofSpring2Constraint bConstraint)
+    {
+        if (constraint == FcConstraint.Null)
+        {
+            bConstraint = null;
+            return false;
+        }
+
+        return _idToConstraint.TryGetValue(constraint, out bConstraint);
     }
 
     public void Dispose()

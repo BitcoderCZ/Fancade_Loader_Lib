@@ -418,7 +418,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (addConstraint.Base is not null && addConstraint.Part is not null)
                         {
-                            environment.BlockData[addConstraint.Position] = _ctx.AddConstraint((FcObject)GetValue(addConstraint.Base, environment).Int, (FcObject)GetValue(addConstraint.Part, environment).Int, addConstraint.Pivot is null ? null : GetValue(addConstraint.Pivot, environment).Float3);
+                            environment.BlockData[addConstraint.Position] = _ctx.AddConstraint((FcObject)GetValue(addConstraint.Base, environment).Int, (FcObject)GetValue(addConstraint.Part, environment).Int, GetValue(addConstraint.Pivot, environment).Float3);
                         }
                     }
 
