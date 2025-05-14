@@ -156,10 +156,12 @@ public sealed partial class FcWorld
                     }
 
                     rObject.RigidBody.ApplyForce(forceVal.ToNumerics(), applyAtVal.ToNumerics());
+                    rObject.RigidBody.Activate();
                 }
                 else
                 {
                     rObject.RigidBody.ApplyCentralForce(forceVal.ToNumerics());
+                    rObject.RigidBody.Activate();
                 }
             }
 
@@ -171,6 +173,7 @@ public sealed partial class FcWorld
                 }
 
                 rObject.RigidBody.ApplyTorque(torqueVal.ToNumerics());
+                rObject.RigidBody.Activate();
             }
         }
 
@@ -201,6 +204,7 @@ public sealed partial class FcWorld
                 }
 
                 rObject.RigidBody.LinearVelocity = velocityVal.ToNumerics();
+                rObject.RigidBody.Activate();
             }
 
             if (spin is { } spinVal)
@@ -211,6 +215,7 @@ public sealed partial class FcWorld
                 }
 
                 rObject.RigidBody.AngularVelocity = spinVal.ToNumerics() * (MathF.PI / 180f);
+                rObject.RigidBody.Activate();
             }
         }
 
