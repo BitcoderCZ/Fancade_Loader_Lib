@@ -42,7 +42,7 @@ public interface IRuntimeContext : IRuntimeContextBase
 
     void SetGravity(float3 gravity);
 
-    FcConstraint AddConstraint(FcObject @base, FcObject part, float3 pivot);
+    FcConstraint AddConstraint(FcObject @base, FcObject part, float3? pivot);
 
     void LinearLimits(FcConstraint constraint, float3 lower, float3 upper);
 

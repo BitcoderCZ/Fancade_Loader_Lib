@@ -76,7 +76,7 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract void SetGravity(float3 gravity);
 
-    public abstract FcConstraint AddConstraint(FcObject @base, FcObject part, float3 pivot);
+    public abstract FcConstraint AddConstraint(FcObject @base, FcObject part, float3? pivot);
 
     public abstract void LinearLimits(FcConstraint constraint, float3 lower, float3 upper);
 

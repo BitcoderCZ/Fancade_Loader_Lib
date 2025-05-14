@@ -126,6 +126,8 @@ public sealed partial class FcWorld : IDisposable
                 float3 sizeMin = new float3(float.MaxValue, float.MaxValue, float.MaxValue);
                 float3 sizeMax = new float3(float.MinValue, float.MinValue, float.MinValue);
 
+                bool foundPhysics = false;
+
                 int index = 0;
                 for (int z = 0; z < insideSize.Z; z++)
                 {
@@ -152,6 +154,8 @@ public sealed partial class FcWorld : IDisposable
                                     {
                                         continue;
                                     }
+
+                                    foundPhysics = true;
 
                                     var (boundsMin, boundsMax) = GetMeshBounds(currentSegment.Voxels, currentSegmentMesh, (byte)meshIndex);
 
@@ -196,13 +200,18 @@ public sealed partial class FcWorld : IDisposable
                 sizeMin -= pos;
                 sizeMax -= pos;
 
-                var rigidBody = BulletCreate(pos.ToNumerics(), Quaternion.Identity, mass, objectId);
+                var rigidBody = BulletCreate(pos.ToNumerics(), Quaternion.Identity, objectId);
                 rigidBody.UpdateInertiaTensor();
 
                 RuntimeObject rObject = new(objectId, prefab.Id, objectInPrefabMeshIndex, rigidBody, pos, Quaternion.Identity, sizeMin, sizeMax, mass)
                 {
                     InOpenLevel = prefab.Id == mainId,
                 };
+
+                if (foundPhysics)
+                {
+                    rObject.Unfix();
+                }
 
                 _objects.Add(rObject);
                 _idToObject.Add(rObject.Id, rObject);
@@ -269,18 +278,16 @@ public sealed partial class FcWorld : IDisposable
         }
     }
 
-    private static RigidBody BulletCreate(Vector3 position, Quaternion rotation, float mass, FcObject id)
+    private static RigidBody BulletCreate(Vector3 position, Quaternion rotation, FcObject id)
     {
-        Debug.Assert(mass > 0f);
-
         CompoundShape shape = new CompoundShape(true, 0);
 
         var motionState = new DefaultMotionState(Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position));
 
-        Vector3 localInertia = shape.CalculateLocalInertia(mass);
+        Vector3 localInertia = shape.CalculateLocalInertia(0f);
 
         RigidBody body;
-        using (var rbInfo = new RigidBodyConstructionInfo(mass, motionState, shape, localInertia))
+        using (var rbInfo = new RigidBodyConstructionInfo(0f, motionState, shape, localInertia))
         {
             body = new RigidBody(rbInfo);
         }

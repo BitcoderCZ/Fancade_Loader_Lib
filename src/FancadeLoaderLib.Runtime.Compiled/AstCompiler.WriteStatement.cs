@@ -152,7 +152,7 @@ public partial class AstCompiler
                     if (createObject.Original is not null)
                     {
                         string objectVarName = GetStateStoreVarName(environment.Index, createObject.Position, "create_object_object");
-                        _stateStoreVariables.Add((objectVarName, "int", null));
+                        _stateStoreVariables.Add((objectVarName, nameof(FcObject), null));
 
                         writer.WriteInv($"{objectVarName} = _ctx.{nameof(IRuntimeContext.CreateObject)}(");
 
@@ -376,13 +376,14 @@ public partial class AstCompiler
                     if (addConstraint.Base is not null && addConstraint.Part is not null)
                     {
                         string constraintVarName = GetStateStoreVarName(environment.Index, addConstraint.Position, "add_constraint_constraint");
+                        _stateStoreVariables.Add((constraintVarName, nameof(FcConstraint), null));
 
                         writer.WriteInv($"{constraintVarName} = _ctx.{nameof(IRuntimeContext.AddConstraint)}(");
                         WriteExpression(addConstraint.Base, false, environment, writer);
                         writer.WriteInv($", ");
                         WriteExpression(addConstraint.Part, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrDefault(addConstraint.Pivot, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrNull(addConstraint.Pivot, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -654,7 +655,7 @@ public partial class AstCompiler
                         string secondObjectVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_second_object");
                         string impulseVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_impulse");
                         string normalVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_normal");
-                        _stateStoreVariables.Add((secondObjectVarName, "int", null));
+                        _stateStoreVariables.Add((secondObjectVarName, nameof(FcObject), null));
                         _stateStoreVariables.Add((impulseVarName, "float", null));
                         _stateStoreVariables.Add((normalVarName, nameof(float3), null));
 

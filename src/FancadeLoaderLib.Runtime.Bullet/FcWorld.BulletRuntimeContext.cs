@@ -3,7 +3,7 @@ using FancadeLoaderLib.Editing.Scripting.Settings;
 using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
-using System;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace FancadeLoaderLib.Runtime.Bullet;
@@ -301,34 +301,40 @@ public sealed partial class FcWorld
             _world._world.Gravity = gravity.ToNumerics();
         }
 
-        public FcConstraint AddConstraint(FcObject @base, FcObject part, float3 pivot)
+        public FcConstraint AddConstraint(FcObject @base, FcObject part, float3? pivot)
         {
-            if (!_world.TryGetObject(@base, out var rBase) || !_world.TryGetObject(part, out var rPart))
+            if (@base == part || !_world.TryGetObject(@base, out var rBase) || !_world.TryGetObject(part, out var rPart))
             {
                 return FcConstraint.Null;
             }
 
-            if (pivot.IsInfOrNaN())
+            if (pivot is not { } pivotVal)
+            {
+                pivotVal = rPart.Pos;
+            }
+
+            if (pivotVal.IsInfOrNaN())
             {
                 throw new InvalidInputException("Add Constraint");
             }
 
-            var baseTransform = rBase.RigidBody.WorldTransform;
-            var partTransform = rPart.RigidBody.WorldTransform;
+            rPart.Unfix();
 
-            Vector3 baseOrigin = baseTransform.Translation;
+            bool inverted = Matrix4x4.Invert(rBase.RigidBody.WorldTransform, out var invBase);
+            Debug.Assert(inverted);
+            inverted = Matrix4x4.Invert(rPart.RigidBody.WorldTransform, out var invPart);
+            Debug.Assert(inverted);
 
-            Vector3 localPivotA = Vector3.Transform(pivot.ToNumerics() - baseOrigin, Matrix4x4.Transpose(Matrix4x4.CreateFromQuaternion(Quaternion.CreateFromRotationMatrix(baseTransform))));
+            Vector3 localPivotA = Vector3.Transform(pivotVal.ToNumerics(), invBase);
+            Vector3 localPivotB = Vector3.Transform(pivotVal.ToNumerics(), invPart);
 
             var frameInA = Matrix4x4.CreateTranslation(localPivotA);
-
-            Vector3 partOrigin = partTransform.Translation;
-
-            Vector3 localPivotB = Vector3.Transform(pivot.ToNumerics() - partOrigin, Matrix4x4.Transpose(Matrix4x4.CreateFromQuaternion(Quaternion.CreateFromRotationMatrix(partTransform))));
-
             var frameInB = Matrix4x4.CreateTranslation(localPivotB);
 
             Generic6DofSpring2Constraint constraint = new Generic6DofSpring2Constraint(rBase.RigidBody, rPart.RigidBody, frameInA, frameInB, RotateOrder.XYZ);
+
+            constraint.AngularLowerLimit = Vector3.Zero;
+            constraint.AngularUpperLimit = Vector3.Zero;
 
             _world._constraints.Add(constraint);
 
@@ -336,6 +342,7 @@ public sealed partial class FcWorld
 
             _world._idToConstraint.Add(id, constraint);
 
+            _world._world.AddConstraint(constraint, true);
             return id;
         }
 

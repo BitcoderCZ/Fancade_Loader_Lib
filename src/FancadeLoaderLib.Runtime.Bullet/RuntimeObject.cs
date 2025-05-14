@@ -60,7 +60,7 @@ public sealed class RuntimeObject : IDisposable
 
     public bool IsVisible { get; set; } = true;
 
-    public bool IsFixed { get; private set; } = false;
+    public bool IsFixed { get; private set; } = true;
 
     public void Update()
     {
