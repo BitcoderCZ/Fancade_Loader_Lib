@@ -647,7 +647,7 @@ public partial class AstCompiler
                 break;
             case 401:
                 {
-                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(4), $"{nameof(terminalPos)} should be valid.");
                     var collision = (CollisionStatementSyntax)statement;
 
                     if (collision.FirstObject is not null)
@@ -659,10 +659,10 @@ public partial class AstCompiler
                         _stateStoreVariables.Add((impulseVarName, "float", null));
                         _stateStoreVariables.Add((normalVarName, nameof(float3), null));
 
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.TryGetCollision)}(");
+                        writer.WriteInv($"if (_ctx.{nameof(IRuntimeContext.TryGetCollision)}(");
                         WriteExpression(collision.FirstObject, false, environment, writer);
 
-                        using (writer.CurlyIndent($", out int secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out float3 normal{_localVarCounter})"))
+                        using (writer.CurlyIndent($", out {nameof(FcObject)} secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out {nameof(float3)} normal{_localVarCounter}))"))
                         {
                             writer.WriteLineInv($"{secondObjectVarName} = secondObject{_localVarCounter};");
                             writer.WriteLineInv($"{impulseVarName} = impulse{_localVarCounter};");

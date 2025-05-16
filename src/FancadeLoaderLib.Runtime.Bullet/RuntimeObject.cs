@@ -62,6 +62,8 @@ public sealed class RuntimeObject : IDisposable
 
     public bool IsFixed { get; private set; } = true;
 
+    public CollisionInfo MaxForceCollision { get; set; } = CollisionInfo.Default;
+
     public void Update()
     {
         Debug.Assert(RigidBody.MotionState is not null);
@@ -115,4 +117,22 @@ public sealed class RuntimeObject : IDisposable
 
     public void Dispose()
         => RigidBody.Dispose();
+
+    public readonly struct CollisionInfo
+    {
+        public static readonly CollisionInfo Default = new CollisionInfo(-1f, default, default);
+
+        public CollisionInfo(float force, FcObject otherObject, Vector3 normal)
+        {
+            Force = force;
+            OtherObject = otherObject;
+            Normal = normal;
+        }
+
+        public float Force { get; }
+
+        public FcObject OtherObject { get; }
+
+        public Vector3 Normal { get; }
+    }
 }

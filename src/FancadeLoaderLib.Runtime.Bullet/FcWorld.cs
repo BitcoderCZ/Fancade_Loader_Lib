@@ -57,11 +57,14 @@ public sealed partial class FcWorld : IDisposable
         };
 
         _groundPlane = _world.CreateStaticBody(Matrix4x4.Identity, new StaticPlaneShape(Vector3.UnitY, 0f));
+        _groundPlane.UserIndex = FcObject.Null.Value;
         _groundPlane.Restitution = 1f;
 
         _gameMesh = GameMeshInfo.Create(prefabs, mainId);
 
         InitObjects(mainId);
+
+        _world.UpdateAabbs();
     }
 
     public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory)
@@ -86,7 +89,63 @@ public sealed partial class FcWorld : IDisposable
 
         var lateUpdate = _runner.RunFrame();
 
+        foreach (var rObject in _objects)
+        {
+            rObject.MaxForceCollision = RuntimeObject.CollisionInfo.Default;
+        }
+
         _world.StepSimulation(timeStep);
+
+        int numManifolds = _world.Dispatcher.NumManifolds;
+        for (int i = 0; i < numManifolds; i++)
+        {
+            var manifold = _world.Dispatcher.GetManifoldByIndexInternal(i);
+
+            int numContacts = manifold.NumContacts;
+            if (numContacts == 0)
+            {
+                continue;
+            }
+
+            float maxImpulse = 0f;
+            ManifoldPoint? strongestPoint = null;
+
+            for (int j = 0; j < numContacts; j++)
+            {
+                var pt = manifold.GetContactPoint(j);
+                if (pt.AppliedImpulse > maxImpulse)
+                {
+                    maxImpulse = pt.AppliedImpulse;
+                    strongestPoint = pt;
+                }
+            }
+
+            // TODO: IsActive and Distance not needed originally, also AppliedImpulse seems to be higher with my impl, fancade uses custom collision algorithm so that might be the cause, but I can't replicate that with BulletSharp (without modifying it, which I don't/can't do); investigate why
+            if (strongestPoint == null || maxImpulse < 0.1f || strongestPoint.Distance > -0.005f)
+            {
+                continue;
+            }
+
+            manifold.ClearManifold();
+
+            var bodyA = manifold.Body0 as RigidBody;
+            var bodyB = manifold.Body1 as RigidBody;
+
+            int idA = bodyA?.UserIndex ?? -1;
+            int idB = bodyB?.UserIndex ?? -1;
+
+            Vector3 normalOnB = strongestPoint.NormalWorldOnB;
+
+            if (idA != -1 && TryGetObject((FcObject)idA, out var rA) && rA.RigidBody.IsActive)
+            {
+                rA.MaxForceCollision = new RuntimeObject.CollisionInfo(maxImpulse, (FcObject)idB, normalOnB);
+            }
+
+            if (idB != -1 && TryGetObject((FcObject)idB, out var rB) && rB.RigidBody.IsActive)
+            {
+                rB.MaxForceCollision = new RuntimeObject.CollisionInfo(maxImpulse, (FcObject)idA, -normalOnB);
+            }
+        }
 
         foreach (var rObject in _objects)
         {
@@ -287,7 +346,10 @@ public sealed partial class FcWorld : IDisposable
         Vector3 localInertia = shape.CalculateLocalInertia(0f);
 
         RigidBody body;
-        using (var rbInfo = new RigidBodyConstructionInfo(0f, motionState, shape, localInertia))
+        using (var rbInfo = new RigidBodyConstructionInfo(0f, motionState, shape, localInertia)
+        {
+            Friction = 0.5f,
+        })
         {
             body = new RigidBody(rbInfo);
         }

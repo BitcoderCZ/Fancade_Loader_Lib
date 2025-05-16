@@ -607,7 +607,7 @@ public sealed class Interpreter : IAstRunner
                     break;
                 case 401:
                     {
-                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(4), $"{nameof(terminalPos)} should be valid.");
                         var collision = (CollisionStatementSyntax)statement;
 
                         if (collision.FirstObject is not null && _ctx.TryGetCollision((FcObject)GetValue(collision.FirstObject, environment).Int, out FcObject secondObject, out float impulse, out float3 normal))

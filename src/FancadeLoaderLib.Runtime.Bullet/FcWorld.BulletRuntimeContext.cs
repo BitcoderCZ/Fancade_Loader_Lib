@@ -463,7 +463,21 @@ public sealed partial class FcWorld
             => _baseCtx.GetJoystickDirection(type);
 
         public bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out float3 normal)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(firstObject, out var rFirstObject) || rFirstObject.MaxForceCollision.Force == -1f)
+            {
+                secondObject = FcObject.Null;
+                impulse = 0f;
+                normal = float3.Zero;
+                return false;
+            }
+
+            secondObject = rFirstObject.MaxForceCollision.OtherObject;
+            impulse = rFirstObject.MaxForceCollision.Force;
+            normal = rFirstObject.MaxForceCollision.Normal.ToFloat3();
+
+            return true;
+        }
 
         // **************************************** Math ****************************************
         public void SetRandomSeed(float seed)
