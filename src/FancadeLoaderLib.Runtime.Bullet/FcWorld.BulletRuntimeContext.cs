@@ -166,7 +166,7 @@ public sealed partial class FcWorld
 
         public void DestroyObject(FcObject @object)
         {
-            if (!_world.TryGetObject(@object, out var rObject))
+            if (!_world.TryGetObject(@object, out var rObject) || !rObject.IsUserCreated)
             {
                 return;
             }
