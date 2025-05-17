@@ -26,6 +26,22 @@ public sealed class RuntimeObject : IDisposable
         _mass = mass;
     }
 
+    private RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, float3 pos, float3 startPos, Quaternion rot, float3 sizeMin, float3 sizeMax, float mass, bool inOpenLevel, bool isUserCreated)
+    {
+        Id = id;
+        OutsidePrefabId = outsidePrefabId;
+        InPrefabMeshIndex = inPrefabMeshIndex;
+        RigidBody = rigidBody;
+        Pos = pos;
+        StartPos = startPos;
+        Rot = rot;
+        SizeMin = sizeMin;
+        SizeMax = sizeMax;
+        _mass = mass;
+        InOpenLevel = inOpenLevel;
+        IsUserCreated = isUserCreated;
+    }
+
     public FcObject Id { get; }
 
     public ushort OutsidePrefabId { get; }
@@ -49,14 +65,19 @@ public sealed class RuntimeObject : IDisposable
         get => _mass;
         set
         {
-            RigidBody.SetMassProps(Mass, RigidBody.LocalInertia);
+            RigidBody.SetMassProps(value, RigidBody.CollisionShape.CalculateLocalInertia(value));
+            RigidBody.UpdateInertiaTensor();
+            if (RigidBody.IsInWorld)
+            {
+                RigidBody.Activate(true);
+            }
             _mass = value;
         }
     }
 
     public bool InOpenLevel { get; init; }
 
-    public bool UserCreated => InPrefabMeshIndex == -1;
+    public bool IsUserCreated { get; init; } = false;
 
     public bool IsVisible { get; set; } = true;
 
@@ -98,25 +119,49 @@ public sealed class RuntimeObject : IDisposable
         }
     }
 
-    public void Unfix()
+    public void Unfix(DynamicsWorld world)
     {
         if (!IsFixed)
         {
+            if (RigidBody.IsInWorld)
+            {
+                RigidBody.Activate(true);
+            }
+
             return;
         }
 
-        Mass = _mass;
-
+        bool waInWorld = RigidBody.IsInWorld;
         if (RigidBody.IsInWorld)
         {
+            world.RemoveRigidBody(RigidBody);
+        }
+
+        RigidBody.Gravity = world.Gravity;
+
+        Mass = _mass;
+
+        if (waInWorld)
+        {
+            world.AddRigidBody(RigidBody);
             RigidBody.Activate(true);
         }
 
         IsFixed = false;
     }
 
+    public RuntimeObject Clone(FcObject newId, RigidBody newBody, bool userCreated)
+    {
+        var newObject = new RuntimeObject(newId, OutsidePrefabId, InPrefabMeshIndex, newBody, Pos + float3.One, StartPos, Rot, SizeMin, SizeMax, Mass, true, userCreated);
+
+        return newObject;
+    }
+
     public void Dispose()
-        => RigidBody.Dispose();
+    {
+        RigidBody.MotionState?.Dispose();
+        RigidBody.Dispose();
+    }
 
     public readonly struct CollisionInfo
     {

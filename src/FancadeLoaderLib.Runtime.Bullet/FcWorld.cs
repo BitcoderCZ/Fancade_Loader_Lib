@@ -35,6 +35,8 @@ public sealed partial class FcWorld : IDisposable
 
     private readonly Dictionary<(ushort PrefabId, int3 Pos, byte3 VoxelPos), FcObject> _connectorToObject = [];
 
+    private readonly Dictionary<(int Type, float3 Size), CollisionShape> _collisionShapeCache = [];
+
     private int _objectIdCounter = 1;
 
     private int _constraintIdCounter = 1;
@@ -269,7 +271,7 @@ public sealed partial class FcWorld : IDisposable
 
                 if (foundPhysics)
                 {
-                    rObject.Unfix();
+                    rObject.Unfix(_world);
                 }
 
                 _objects.Add(rObject);
@@ -330,7 +332,14 @@ public sealed partial class FcWorld : IDisposable
 
                     if (obj is not null)
                     {
-                        _connectorToObject.Add((prefab.Id, connection.From, (byte3)connection.FromVoxel), obj.Id);
+#if RELEASE
+                        _connectorToObject[(prefab.Id, connection.From, (byte3)connection.FromVoxel)] = obj.Id;
+#else
+                        if (!_connectorToObject.TryAdd((prefab.Id, connection.From, (byte3)connection.FromVoxel), obj.Id))
+                        {
+                            Debug.Assert(_connectorToObject[(prefab.Id, connection.From, (byte3)connection.FromVoxel)] == obj.Id);
+                        }
+#endif
                     }
                 }
             }
@@ -609,19 +618,21 @@ public sealed partial class FcWorld : IDisposable
                         break;
                 }
 
-                // TODO: reuse shapes
-
-                CollisionShape shape;
-                switch (colliderType)
+                if (!_collisionShapeCache.TryGetValue((colliderType, size), out var shape))
                 {
-                    case 1:
-                        shape = new BoxShape(size.ToNumerics() * 0.5f);
-                        break;
-                    case 2:
-                        shape = new SphereShape(size.X * 0.5f);
-                        break;
-                    default:
-                        continue;
+                    switch (colliderType)
+                    {
+                        case 1:
+                            shape = new BoxShape(size.ToNumerics() * 0.5f);
+                            break;
+                        case 2:
+                            shape = new SphereShape(size.X * 0.5f);
+                            break;
+                        default:
+                            continue;
+                    }
+
+                    _collisionShapeCache.Add((colliderType, size), shape);
                 }
 
                 ((CompoundShape)rObject.RigidBody.CollisionShape).AddChildShape(Matrix4x4.CreateTranslation(offset.ToNumerics()), shape);
@@ -664,9 +675,23 @@ public sealed partial class FcWorld : IDisposable
             return;
         }
 
-        _world.Dispose();
+        foreach (var shape in _collisionShapeCache)
+        {
+            shape.Value.Dispose();
+        }
+
+        foreach (var obj in _objects)
+        {
+            obj.Dispose();
+        }
+
+        foreach (var con in _constraints)
+        {
+            con.Dispose();
+        }
+
         _groundPlane.Dispose();
 
-        GC.SuppressFinalize(this);
+        _world.Dispose();
     }
 }

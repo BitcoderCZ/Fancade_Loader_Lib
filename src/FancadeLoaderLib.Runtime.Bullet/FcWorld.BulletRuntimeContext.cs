@@ -116,10 +116,65 @@ public sealed partial class FcWorld
         }
 
         public FcObject CreateObject(FcObject original)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(original, out var rOriginal))
+            {
+                return FcObject.Null;
+            }
+
+            var newId = (FcObject)_world._objectIdCounter++;
+            var newRigidBody = BulletCreate((rOriginal.Pos + float3.One).ToNumerics(), rOriginal.Rot, newId);
+
+            newRigidBody.UpdateInertiaTensor();
+
+            RuntimeObject newObject = rOriginal.Clone(newId, newRigidBody, true);
+            newObject.RigidBody.CollisionShape = rOriginal.RigidBody.CollisionShape;
+
+            if (!rOriginal.IsFixed)
+            {
+                newObject.Unfix(_world._world);
+            }
+
+            _world._world.AddRigidBody(newRigidBody);
+            _world._objects.Add(newObject);
+            _world._idToObject.Add(newId, newObject);
+
+            return newId;
+        }
 
         public void DestroyObject(FcObject @object)
-            => throw new NotImplementedException();
+        {
+            if (!_world.TryGetObject(@object, out var rObject))
+            {
+                return;
+            }
+
+            for (int i = 0; i < _world._constraints.Count; i++)
+            {
+                var con = _world._constraints[i];
+
+                if (con.RigidBodyA == rObject.RigidBody || con.RigidBodyB == rObject.RigidBody)
+                {
+                    _world._constraints.RemoveAt(i);
+                    Debug.Assert(con.Userobject is FcConstraint);
+                    _world._idToConstraint.Remove((FcConstraint)con.Userobject);
+                    _world._world.RemoveConstraint(con);
+                    con.Dispose();
+                    i--;
+                }
+            }
+
+            rObject.RigidBody.MotionState?.Dispose();
+            if (rObject.RigidBody.IsInWorld)
+            {
+                _world._world.RemoveRigidBody(rObject.RigidBody);
+            }
+
+            rObject.RigidBody.Dispose();
+
+            _world._objects.Remove(rObject);
+            _world._idToObject.Remove(rObject.Id);
+        }
 
         // **************************************** Sound ****************************************
         public float PlaySound(float volume, float pitch, FcSound sound)
@@ -139,7 +194,7 @@ public sealed partial class FcWorld
                 return;
             }
 
-            rObject.Unfix();
+            rObject.Unfix(_world._world);
 
             if (force is { } forceVal)
             {
@@ -194,7 +249,7 @@ public sealed partial class FcWorld
                 return;
             }
 
-            rObject.Unfix();
+            rObject.Unfix(_world._world);
 
             if (velocity is { } velocityVal)
             {
@@ -226,7 +281,7 @@ public sealed partial class FcWorld
                 return;
             }
 
-            rObject.Unfix();
+            rObject.Unfix(_world._world);
 
             if (position is { } positionVal)
             {
@@ -256,7 +311,7 @@ public sealed partial class FcWorld
                 return;
             }
 
-            rObject.Unfix();
+            rObject.Unfix(_world._world);
 
             if (float.IsNaN(mass) || float.IsInfinity(mass))
             {
@@ -323,7 +378,7 @@ public sealed partial class FcWorld
                 throw new InvalidInputException("Add Constraint");
             }
 
-            rPart.Unfix();
+            rPart.Unfix(_world._world);
 
             bool inverted = Matrix4x4.Invert(rBase.RigidBody.WorldTransform, out var invBase);
             Debug.Assert(inverted);
@@ -345,6 +400,7 @@ public sealed partial class FcWorld
 
             var id = (FcConstraint)_world._constraintIdCounter++;
 
+            constraint.Userobject = id;
             _world._idToConstraint.Add(id, constraint);
 
             _world._world.AddConstraint(constraint, true);
