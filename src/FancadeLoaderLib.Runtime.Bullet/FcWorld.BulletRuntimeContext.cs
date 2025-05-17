@@ -93,7 +93,27 @@ public sealed partial class FcWorld
         }
 
         public (bool Hit, float3 HitPos, FcObject HitObj) Raycast(float3 from, float3 to)
-            => throw new NotImplementedException();
+        {
+            if ((to - from).LengthSquared < 1.0000001e-06f)
+            {
+                return (false, float3.Zero, FcObject.Null);
+            }
+
+            var nFrom = from.ToNumerics();
+            var nTo = to.ToNumerics();
+
+            using (var callback = new ClosestRayResultCallback(ref nFrom, ref nTo))
+            {
+                _world._world.RayTest(nFrom, nTo, callback);
+
+                if (callback.CollisionObject is null)
+                {
+                    return (false, float3.Zero, FcObject.Null);
+                }
+
+                return (true, callback.HitPointWorld.ToFloat3(), (FcObject)callback.CollisionObject.UserIndex);
+            }
+        }
 
         public (float3 Min, float3 Max) GetSize(FcObject @object)
         {
@@ -108,11 +128,13 @@ public sealed partial class FcWorld
 
         public void SetVisible(FcObject @object, bool visible)
         {
-            if (_world.TryGetObject(@object, out var rObject))
+            if (!_world.TryGetObject(@object, out var rObject))
             {
-                rObject.IsVisible = visible;
-                // TODO: add/remove from world
+                return;
             }
+
+            rObject.IsVisible = visible;
+            // TODO: add/remove from world
         }
 
         public FcObject CreateObject(FcObject original)
