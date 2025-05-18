@@ -134,8 +134,36 @@ public sealed partial class FcWorld
                 return;
             }
 
+            if (rObject.IsVisible)
+            {
+                if (!visible)
+                {
+                    for (int i = 0; i < _world._constraints.Count; i++)
+                    {
+                        var con = _world._constraints[i];
+
+                        if (con.RigidBodyA == rObject.RigidBody || con.RigidBodyB == rObject.RigidBody)
+                        {
+                            _world._constraints.RemoveAt(i);
+                            Debug.Assert(con.Userobject is FcConstraint);
+                            _world._idToConstraint.Remove((FcConstraint)con.Userobject);
+                            _world._world.RemoveConstraint(con);
+                            con.Dispose();
+                            i--;
+                        }
+                    }
+
+                    Debug.Assert(rObject.RigidBody.IsInWorld);
+                    _world._world.RemoveRigidBody(rObject.RigidBody);
+                }
+            }
+            else if (visible)
+            {
+                Debug.Assert(!rObject.RigidBody.IsInWorld);
+                _world._world.AddRigidBody(rObject.RigidBody);
+            }
+
             rObject.IsVisible = visible;
-            // TODO: add/remove from world
         }
 
         public FcObject CreateObject(FcObject original)

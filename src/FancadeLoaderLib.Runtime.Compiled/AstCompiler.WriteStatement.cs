@@ -585,7 +585,7 @@ public partial class AstCompiler
                 break;
             case 242:
                 {
-                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
                     var touchSensor = (TouchSensorStatementSyntax)statement;
 
                     string touchPosVarName = GetStateStoreVarName(environment.Index, touchSensor.Position, "touch_pos");

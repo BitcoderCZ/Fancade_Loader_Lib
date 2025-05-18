@@ -26,7 +26,7 @@ public sealed class RuntimeObject : IDisposable
         _mass = mass;
     }
 
-    private RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, float3 pos, float3 startPos, Quaternion rot, float3 sizeMin, float3 sizeMax, float mass, bool inOpenLevel, bool isUserCreated)
+    private RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, float3 pos, float3 startPos, Quaternion rot, float3 sizeMin, float3 sizeMax, float mass, bool isVisible, bool isUserCreated)
     {
         Id = id;
         OutsidePrefabId = outsidePrefabId;
@@ -38,7 +38,7 @@ public sealed class RuntimeObject : IDisposable
         SizeMin = sizeMin;
         SizeMax = sizeMax;
         _mass = mass;
-        InOpenLevel = inOpenLevel;
+        IsVisible = isVisible;
         IsUserCreated = isUserCreated;
     }
 
@@ -71,11 +71,10 @@ public sealed class RuntimeObject : IDisposable
             {
                 RigidBody.Activate(true);
             }
+
             _mass = value;
         }
     }
-
-    public bool InOpenLevel { get; init; }
 
     public bool IsUserCreated { get; init; } = false;
 

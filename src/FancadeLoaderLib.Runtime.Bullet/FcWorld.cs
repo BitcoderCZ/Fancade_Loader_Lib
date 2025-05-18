@@ -271,7 +271,7 @@ public sealed partial class FcWorld : IDisposable
 
                 RuntimeObject rObject = new(objectId, prefab.Id, objectInPrefabMeshIndex, rigidBody, pos, Quaternion.Identity, sizeMin, sizeMax, mass)
                 {
-                    InOpenLevel = prefab.Id == mainId,
+                    IsVisible = prefab.Id == mainId,
                 };
 
                 if (foundPhysics)
@@ -282,7 +282,7 @@ public sealed partial class FcWorld : IDisposable
                 _objects.Add(rObject);
                 _idToObject.Add(rObject.Id, rObject);
 
-                if (rObject.InOpenLevel)
+                if (rObject.IsVisible)
                 {
                     _world.AddRigidBody(rObject.RigidBody);
                 }
