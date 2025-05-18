@@ -19,6 +19,8 @@ public sealed partial class FcWorld : IDisposable
 
     private readonly IAstRunner _runner;
 
+    private readonly CameraInfo _cameraInfo;
+
     private readonly RigidBody _groundPlane;
 
     private readonly PrefabList _prefabs;
@@ -47,6 +49,7 @@ public sealed partial class FcWorld : IDisposable
     {
         _runtimeCtx = new BulletRuntimeContext(this, runtimeContext);
         _runner = runnerFactory(_runtimeCtx);
+        _cameraInfo = new CameraInfo(new ScreenInfo(_runtimeCtx.ScreenSize.ToNumerics()));
         _prefabs = prefabs;
 
         var collisionConf = new DefaultCollisionConfiguration();
@@ -88,6 +91,8 @@ public sealed partial class FcWorld : IDisposable
         {
             throw new ObjectDisposedException(nameof(FcWorld));
         }
+
+        _cameraInfo.Step(new ScreenInfo(_runtimeCtx.ScreenSize.ToNumerics())); // wts/stw are delayed by 1 frame
 
         var lateUpdate = _runner.RunFrame();
 

@@ -1,5 +1,6 @@
 ﻿using BulletSharp;
 using FancadeLoaderLib.Editing.Scripting.Settings;
+using FancadeLoaderLib.Runtime.Bullet.Utils;
 using FancadeLoaderLib.Runtime.Exceptions;
 using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
@@ -42,7 +43,7 @@ public sealed partial class FcWorld
             => _baseCtx.SetScore(score, coins, ranking);
 
         public void SetCamera(float3? position, Quaternion? rotation, float? range, bool perspective)
-            => _baseCtx.SetCamera(position, rotation, range, perspective);
+            => _world._cameraInfo.Set(position?.ToNumerics(), rotation, range, perspective, new ScreenInfo(_baseCtx.ScreenSize.ToNumerics()));
 
         public void SetLight(float3? position, Quaternion? rotation)
             => _baseCtx.SetLight(position, rotation);
@@ -565,10 +566,14 @@ public sealed partial class FcWorld
             => _rng.NextSingle(min, max);
 
         public (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos)
-            => _baseCtx.ScreenToWorld(screenPos);
+        {
+            var res = _world._cameraInfo.ScreenToWorld(screenPos.ToNumerics(), new ScreenInfo(_baseCtx.ScreenSize.ToNumerics()));
+
+            return (res.Near.ToFloat3(), res.Far.ToFloat3());
+        }
 
         public float2 WorldToScreen(float3 worldPos)
-            => _baseCtx.WorldToScreen(worldPos);
+            => _world._cameraInfo.WorldToScreen(worldPos.ToNumerics(), new ScreenInfo(_baseCtx.ScreenSize.ToNumerics())).ToFloat2();
 
         // **************************************** Values ****************************************
         public void InspectValue(RuntimeValue value, SignalType type, string? variableName, ushort prefabId, ushort3 inspectBlockPosition)

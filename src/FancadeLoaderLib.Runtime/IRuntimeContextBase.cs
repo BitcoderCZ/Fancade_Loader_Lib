@@ -22,8 +22,6 @@ public interface IRuntimeContextBase
 
     void SetScore(float? score, float? coins, Ranking ranking);
 
-    void SetCamera(float3? position, Quaternion? rotation, float? range, bool perspective);
-
     void SetLight(float3? position, Quaternion? rotation);
 
     void MenuItem(VariableReference? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
@@ -43,11 +41,6 @@ public interface IRuntimeContextBase
     bool GetButtonPressed(ButtonType type);
 
     float3 GetJoystickDirection(JoystickType type);
-
-    // **************************************** Math ****************************************
-    (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
-
-    float2 WorldToScreen(float3 worldPos);
 
     // **************************************** Values ****************************************
     void InspectValue(RuntimeValue value, SignalType type, string? variableName, ushort prefabId, ushort3 inspectBlockPosition);

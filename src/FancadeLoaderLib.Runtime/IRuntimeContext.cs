@@ -8,6 +8,9 @@ public interface IRuntimeContext : IRuntimeContextBase
 {
     long CurrentFrame { get; }
 
+    // **************************************** Game ****************************************
+    void SetCamera(float3? position, Quaternion? rotation, float? range, bool perspective);
+
     // **************************************** Objects ****************************************
     FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId);
 
@@ -63,4 +66,8 @@ public interface IRuntimeContext : IRuntimeContextBase
     void SetRandomSeed(float seed);
 
     float GetRandomValue(float min, float max);
+
+    (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
+
+    float2 WorldToScreen(float3 worldPos);
 }

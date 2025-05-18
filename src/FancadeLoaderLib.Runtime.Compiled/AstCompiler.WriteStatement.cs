@@ -66,7 +66,7 @@ public partial class AstCompiler
                     var setCamera = (SetCameraStatementSyntax)statement;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetCamera)}(");
-                    WriteExpressionOrNull(setCamera.PositionTerminal, SignalType.Vec3Ptr, environment, writer);
+                    WriteExpressionOrNull(setCamera.PositionTerminal, SignalType.Vec3, environment, writer);
                     writer.Write(", ");
                     WriteExpressionOrNull(setCamera.RotationTerminal, SignalType.Rot, environment, writer);
                     writer.Write(", ");

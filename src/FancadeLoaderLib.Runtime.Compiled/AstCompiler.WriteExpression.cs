@@ -716,7 +716,7 @@ public partial class AstCompiler
                     WriteExpressionOrDefault(screenToWorld.ScreenX, SignalType.Float, environment, writer);
                     writer.Write(", ");
                     WriteExpressionOrDefault(screenToWorld.ScreenY, SignalType.Float, environment, writer);
-                    writer.Write(')');
+                    writer.Write("))");
 
                     if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
                     {

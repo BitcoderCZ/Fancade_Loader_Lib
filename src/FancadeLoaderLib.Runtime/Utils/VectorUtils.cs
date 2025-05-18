@@ -10,6 +10,12 @@ internal static class VectorUtils
 {
     private const float DegToRad = MathF.PI / 180f;
 
+    public static Vector2 ToNumerics(this float2 value)
+        => new Vector2(value.X, value.Y);
+
+    public static float2 ToFloat2(this Vector2 value)
+        => new float2(value.X, value.Y);
+
     public static Vector3 ToNumerics(this float3 value)
         => new Vector3(value.X, value.Y, value.Z);
 
