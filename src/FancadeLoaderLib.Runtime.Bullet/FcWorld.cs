@@ -72,6 +72,8 @@ public sealed partial class FcWorld : IDisposable
         _world.UpdateAabbs();
     }
 
+    public Camera Camera { get; } = new Camera();
+
     public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory)
     {
         ThrowIfNull(runtimeContext, nameof(runtimeContext));
@@ -91,8 +93,6 @@ public sealed partial class FcWorld : IDisposable
         {
             throw new ObjectDisposedException(nameof(FcWorld));
         }
-
-        _cameraInfo.Step(new ScreenInfo(_runtimeCtx.ScreenSize.ToNumerics())); // wts/stw are delayed by 1 frame
 
         var lateUpdate = _runner.RunFrame();
 
@@ -160,6 +160,9 @@ public sealed partial class FcWorld : IDisposable
         }
 
         lateUpdate();
+
+        _cameraInfo.Step(new ScreenInfo(_runtimeCtx.ScreenSize.ToNumerics())); // wts/stw are delayed by 1 frame
+        Camera.WorldPosition = _cameraInfo.WorldPos;
 
         _runtimeCtx.CurrentFrame++;
     }

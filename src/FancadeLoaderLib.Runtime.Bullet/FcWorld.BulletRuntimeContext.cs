@@ -43,7 +43,28 @@ public sealed partial class FcWorld
             => _baseCtx.SetScore(score, coins, ranking);
 
         public void SetCamera(float3? position, Quaternion? rotation, float? range, bool perspective)
-            => _world._cameraInfo.Set(position?.ToNumerics(), rotation, range, perspective, new ScreenInfo(_baseCtx.ScreenSize.ToNumerics()));
+        {
+            _world._cameraInfo.Set(position?.ToNumerics(), rotation, range, perspective, new ScreenInfo(_baseCtx.ScreenSize.ToNumerics()));
+
+            if (position is { } posVal)
+            {
+                _world.Camera.Position = posVal.ToNumerics();
+            }
+
+            if (rotation is { } rotVal)
+            {
+                _world.Camera.Rotation = rotVal;
+            }
+
+            if (range is { } rangeVal)
+            {
+                _world.Camera.Range = rangeVal;
+            }
+
+            _world.Camera.Perspective = perspective;
+
+            _world.Camera.Focus = _world._cameraInfo.Focus;
+        }
 
         public void SetLight(float3? position, Quaternion? rotation)
             => _baseCtx.SetLight(position, rotation);
