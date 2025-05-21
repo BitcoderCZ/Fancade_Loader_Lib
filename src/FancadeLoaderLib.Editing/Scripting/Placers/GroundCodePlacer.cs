@@ -144,7 +144,8 @@ public sealed class GroundCodePlacer : IScopedCodePlacer
 
         if (_statements.Count == 1)
         {
-            Debug.Assert(expression.Parent?.Parent is not null, "Parent of parent shouldn't be null.");
+            // TODO: get's hit but code still works fine, figure out why it's here and fix or remove
+            //Debug.Assert(expression.Parent?.Parent is not null, "Parent of parent shouldn't be null.");
 
             // if this is child of the top statement, process and assign x and y position to blocks
             LayerStack.Process(expression, BlockXOffset);

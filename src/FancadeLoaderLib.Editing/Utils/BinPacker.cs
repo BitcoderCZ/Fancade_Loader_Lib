@@ -82,7 +82,7 @@ internal static class BinPacker
     }
 
     private static long CalculateArea(int3 size)
-        => size.X * (int)Math.Pow(size.Y, 1.25) * size.Z; // favor x and z over y
+        => (long)(size.X * Math.Pow(size.Y, 1.25) * size.Z); // favor x and z over y
 
     private struct Container
     {

@@ -10,8 +10,9 @@ using FancadeLoaderLib.Editing.Scripting.Utils;
 using FancadeLoaderLib.Editing.Utils;
 using MathUtils.Vectors;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+using System.Data;
+using System.Diagnostics;
+using System.Transactions;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting;
@@ -19,357 +20,661 @@ namespace FancadeLoaderLib.Editing.Scripting;
 /// <summary>
 /// A helper class for writing fancade code.
 /// </summary>
-public sealed class CodeWriter
+public sealed partial class CodeWriter
 {
     private readonly IScopedCodePlacer _codePlacer;
 
-    private readonly Dictionary<string, BreakBlockCache> _vectorBreakCache = [];
-    private readonly Dictionary<string, BreakBlockCache> _rotationBreakCache = [];
+    private readonly TerminalConnector _connector;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CodeWriter"/> class.
     /// </summary>
     /// <param name="codePlacer">The <see cref="ICodePlacer"/> used to place blocks.</param>
-    public CodeWriter(ICodePlacer codePlacer)
+    /// <param name="connector">The <see cref="TerminalConnector"/> to use to connect statements.</param>
+    public CodeWriter(ICodePlacer codePlacer, TerminalConnector connector)
     {
         _codePlacer = codePlacer is IScopedCodePlacer scoped ? scoped : new ScopedCodePlacerWrapper(codePlacer);
+        _connector = connector;
     }
 
     /// <summary>
-    /// Places a literal value.
+    /// Represents a non-void output.
     /// </summary>
-    /// <remarks>
-    /// <paramref name="value"/> can be one of: <see cref="bool"/>, <see cref="float"/>, <see cref="float3"/>, <see cref="Rotation"/>.
-    /// </remarks>
-    /// <param name="value">The value to place.</param>
-    /// <returns>The out terminal of the literal block.</returns>
-    public ITerminal PlaceLiteral(object value)
+    public interface IExpression
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Values.ValueByType(value));
+        /// <summary>
+        /// Gets the type of the <see cref="IExpression"/>.
+        /// </summary>
+        /// <value>Type of the <see cref="IExpression"/>.</value>
+        SignalType Type { get; }
 
-        if (value is not bool)
-        {
-            _codePlacer.SetSetting(block, 0, value);
-        }
+        /// <summary>
+        /// Writes the <see cref="IExpression"/> to <paramref name="writer"/>.
+        /// </summary>
+        /// <param name="writer">The <see cref="CodeWriter"/> to write the <see cref="IExpression"/> to.</param>
+        /// <returns>An <see cref="ITerminal"/> representing the written output of the expression.</returns>
+        ITerminal WriteTo(CodeWriter writer);
+    }
 
-        return new BlockTerminal(block, block.Type.Terminals[0]);
+    #region Statements
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Game.Win"/> block.
+    /// </summary>
+    /// <param name="delay">Time to win (in frames).</param>
+    public void Win(int delay)
+    {
+        ThrowIfGreaterThan(delay, 120);
+        ThrowIfLessThan(delay, 0);
+
+        var block = _codePlacer.PlaceBlock(StockBlocks.Game.Win);
+
+        _codePlacer.SetSetting(block, 0, (byte)delay);
+
+        _connector.Add(new TerminalStore(block));
     }
 
     /// <summary>
-    /// Places a variable.
+    /// Writes the <see cref="StockBlocks.Game.Lose"/> block.
     /// </summary>
-    /// <param name="name">Name of the variable to place.</param>
-    /// <param name="type">Type of the variable to place.</param>
-    /// <returns>The out terminal of the variable block.</returns>
-    public ITerminal PlaceVariable(string name, SignalType type)
+    /// <param name="delay">Time to lose (in frames).</param>
+    public void Lose(int delay)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.GetVariableByType(type));
+        ThrowIfGreaterThan(delay, 120);
+        ThrowIfLessThan(delay, 0);
 
-        _codePlacer.SetSetting(block, 0, name);
+        var block = _codePlacer.PlaceBlock(StockBlocks.Game.Lose);
 
-        return new BlockTerminal(block, block.Type.Terminals[0]);
+        _codePlacer.SetSetting(block, 0, (byte)delay);
+
+        _connector.Add(new TerminalStore(block));
     }
 
     /// <summary>
-    /// Places a comment.
+    /// Writes the <see cref="StockBlocks.Game.SetScore"/> block.
     /// </summary>
-    /// <remarks>
-    /// If <paramref name="text"/> is too long, multiple comment blocks are placed.
-    /// </remarks>
-    /// <param name="text">Text of the comment.</param>
-    public void PlaceComment(string text)
+    /// <param name="ranking">Determines how players are ranked.</param>
+    /// <param name="score">The new score. If <paramref name="ranking"/> is <see cref="Ranking.FastestTime"/> or <see cref="Ranking.LongestTime"/>, time is specified in frames (60 - 1s).</param>
+    /// <param name="coins">The new amount of coins.</param>
+    public void SetScore(Ranking ranking, IExpression score, IExpression coins)
     {
-        var span = text.AsSpan();
+        var block = _codePlacer.PlaceBlock(StockBlocks.Game.SetScore);
 
-        foreach (var lineRange in StringUtils.SplitByMaxLength(span, FancadeConstants.MaxCommentLength))
-        {
-            Block block = _codePlacer.PlaceBlock(StockBlocks.Values.Comment);
-            _codePlacer.SetSetting(block, 0, new string(span[lineRange]));
-        }
-    }
-
-    /// <summary>
-    /// Sets a variable to a value.
-    /// </summary>
-    /// <param name="name">Name of the variable.</param>
-    /// <param name="value">The value to set the variable to.</param>
-    /// <returns>The before and after terminals of the set variable block.</returns>
-    public ITerminalStore SetVariable(string name, object value)
-    {
-        ThrowIfNull(value, nameof(value));
-
-        var signalType = SignalTypeUtils.FromType(value.GetType());
-
-        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(signalType));
-
-        _codePlacer.SetSetting(block, 0, name);
-
-        using (_codePlacer.ExpressionBlock())
-        {
-            var valueTerminal = PlaceLiteral(value);
-
-            _codePlacer.Connect(valueTerminal, new BlockTerminal(block, "Value"));
-        }
-
-        return new TerminalStore(block);
-    }
-
-    /// <summary>
-    /// Sets a variable to a terminal.
-    /// </summary>
-    /// <param name="name">Name of the variable.</param>
-    /// <param name="terminal">The terminal to connect to the set variable input.</param>
-    /// <returns>The before and after terminals of the set variable block.</returns>
-    public ITerminalStore SetVariable(string name, ITerminal terminal)
-    {
-        ThrowIfNull(terminal, nameof(terminal));
-
-        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminal.SignalType));
-
-        _codePlacer.Connect(terminal, new BlockTerminal(block, "Value"));
-
-        _codePlacer.SetSetting(block, 0, name);
-
-        return new TerminalStore(block);
-    }
-
-    /// <summary>
-    /// Sets a variable to a terminal.
-    /// </summary>
-    /// <param name="name">Name of the variable.</param>
-    /// <param name="getTerminalFunc">A method to get the terminal.</param>
-    /// <param name="terminalType">Type of the variable.</param>
-    /// <returns>The before and after terminals of the set variable block.</returns>
-    public ITerminalStore SetVariable(string name, Func<ITerminal> getTerminalFunc, SignalType terminalType)
-    {
-        ThrowIfNull(getTerminalFunc, nameof(getTerminalFunc));
-
-        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(terminalType));
-
-        _codePlacer.Connect(getTerminalFunc(), new BlockTerminal(block, "Value"));
-
-        _codePlacer.SetSetting(block, 0, name);
-
-        return new TerminalStore(block);
-    }
-
-    /// <summary>
-    /// Sets a range of a fancade list.
-    /// </summary>
-    /// <typeparam name="T">The type of the list elements.</typeparam>
-    /// <param name="variableName">Name of the variable.</param>
-    /// <param name="values">The values to set.</param>
-    /// <param name="startIndex">The index to start to set at.</param>
-    /// <returns>A <see cref="ITerminalStore"/> representing the beginning and end of the operation.</returns>
-    public ITerminalStore SetListRange<T>(string variableName, ReadOnlySpan<T> values, int startIndex)
-        where T : notnull
-    {
-        var signalType = SignalTypeUtils.FromType(typeof(T));
-
-        TerminalConnector connector = new TerminalConnector(_codePlacer.Connect);
-
-        ITerminal? lastElementTerminal = null;
-
-        for (int i = 0; i < values.Length; i++)
-        {
-            if (i == 0 && startIndex == 0)
-            {
-                connector.Add(SetVariable(variableName, values[i]));
-            }
-            else
-            {
-                Block setBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(signalType));
-
-                connector.Add(new TerminalStore(setBlock));
-
-                using (ExpressionBlock())
-                {
-                    Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(signalType));
-
-                    _codePlacer.Connect(TerminalStore.CreateOut(listBlock, listBlock.Type["Element"]), TerminalStore.CreateIn(setBlock, setBlock.Type["Variable"]));
-
-                    using (ExpressionBlock())
-                    {
-                        lastElementTerminal ??= PlaceVariable(variableName, signalType);
-
-                        _codePlacer.Connect(lastElementTerminal, TerminalStore.CreateIn(listBlock, listBlock.Type["Variable"]));
-
-                        lastElementTerminal = new BlockTerminal(listBlock, "Element");
-
-                        _codePlacer.Connect(i == 0 ? PlaceLiteral((float)startIndex) : PlaceLiteral(1f), TerminalStore.CreateIn(listBlock, listBlock.Type["Index"]));
-                    }
-
-                    _codePlacer.Connect(PlaceLiteral(values[i]), TerminalStore.CreateIn(setBlock, setBlock.Type["Value"]));
-                }
-            }
-        }
-
-        return connector.Store;
-    }
-
-    /// <summary>
-    /// Sets a range of a fancade list.
-    /// </summary>
-    /// <typeparam name="T">The type of the list elements.</typeparam>
-    /// <param name="variableName">Name of the variable.</param>
-    /// <param name="values">The values to set.</param>
-    /// <param name="startIndexVariableName">Name of the fancade number variable used as the index to start to set at.</param>
-    /// <returns>A <see cref="ITerminalStore"/> representing the beginning and end of the operation.</returns>
-    public ITerminalStore SetListRange<T>(string variableName, ReadOnlySpan<T> values, string startIndexVariableName)
-        where T : notnull
-    {
-        var signalType = SignalTypeUtils.FromType(typeof(T));
-
-        TerminalConnector connector = new TerminalConnector(_codePlacer.Connect);
-
-        ITerminal? lastElementTerminal = null;
-
-        for (int i = 0; i < values.Length; i++)
-        {
-            Block setBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(signalType));
-
-            connector.Add(new TerminalStore(setBlock));
-
-            using (ExpressionBlock())
-            {
-                Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(signalType));
-
-                _codePlacer.Connect(TerminalStore.CreateOut(listBlock, listBlock.Type["Element"]), TerminalStore.CreateIn(setBlock, setBlock.Type["Variable"]));
-
-                using (ExpressionBlock())
-                {
-                    lastElementTerminal ??= PlaceVariable(variableName, signalType);
-
-                    _codePlacer.Connect(lastElementTerminal, TerminalStore.CreateIn(listBlock, listBlock.Type["Variable"]));
-
-                    lastElementTerminal = new BlockTerminal(listBlock, "Element");
-
-                    _codePlacer.Connect(i == 0 ? PlaceVariable(startIndexVariableName, SignalType.Float) : PlaceLiteral(1f), TerminalStore.CreateIn(listBlock, listBlock.Type["Index"]));
-                }
-
-                _codePlacer.Connect(PlaceLiteral(values[i]), TerminalStore.CreateIn(setBlock, setBlock.Type["Value"]));
-            }
-        }
-
-        return connector.Store;
-    }
-
-    /// <summary>
-    /// Breaks a vector or rotation variable.
-    /// </summary>
-    /// <param name="variableName">Name of the variable.</param>
-    /// <param name="type">Type of the variable, must be <see cref="SignalType.Vec3"/>(Ptr) or <see cref="SignalType.Rot"/>(Ptr).</param>
-    /// <param name="cache">If the break block should be cached.</param>
-    /// <returns>The X, Y and Z out terminal.</returns>
-    /// <exception cref="InvalidEnumArgumentException">Thrown when <paramref name="type"/> is not <see cref="SignalType.Vec3"/>(Ptr) or <see cref="SignalType.Rot"/>(Ptr).</exception>
-    public (ITerminal X, ITerminal Y, ITerminal Z) BreakVector(string variableName, SignalType type, bool cache = true)
-    {
-        type = type.ToNotPointer();
-
-        switch (type)
-        {
-            case SignalType.Vec3:
-            case SignalType.Rot:
-                break;
-            default:
-                throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(SignalType));
-        }
-
-        Block? block;
-
-        if (cache)
-        {
-            BreakBlockCache blockCache = (type == SignalType.Vec3 ? _vectorBreakCache : _rotationBreakCache)
-                .AddIfAbsent(variableName, new BreakBlockCache(null, FancadeConstants.MaxWireSplits));
-
-            if (!blockCache.TryGet(out block))
-            {
-                block = _codePlacer.PlaceBlock(type == SignalType.Vec3 ? StockBlocks.Math.Break_Vector : StockBlocks.Math.Break_Rotation);
-                blockCache.SetNewBlock(block);
-
-                using (ExpressionBlock())
-                {
-                    ITerminal variableTerminal = PlaceVariable(variableName, type);
-                    _codePlacer.Connect(variableTerminal, new BlockTerminal(block, 3));
-                }
-            }
-        }
-        else
-        {
-            block = _codePlacer.PlaceBlock(StockBlocks.Math.BreakByType(type));
-        }
+        _codePlacer.SetSetting(block, 0, (byte)ranking);
 
         using (ExpressionBlock())
         {
-            ITerminal terminal = PlaceVariable(variableName, type);
-            _codePlacer.Connect(terminal, new BlockTerminal(block, 3));
+            _codePlacer.Connect(score.WriteTo(this), new BlockTerminal(block, "Score"));
+            _codePlacer.Connect(coins.WriteTo(this), new BlockTerminal(block, "Coins"));
         }
 
-        return (
-            new BlockTerminal(block, 2),
-            new BlockTerminal(block, 1),
-            new BlockTerminal(block, 0)
-        );
+        _connector.Add(new TerminalStore(block));
     }
 
     /// <summary>
-    /// Places the if block.
+    /// Writes the <see cref="StockBlocks.Game.SetCamera"/> block.
     /// </summary>
-    /// <param name="getConditionTerminalFunc">A method to get the bool terminal to connect to the condition input.</param>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the if block and the true and false terminals.</returns>
-    public (ITerminalStore Store, ITerminal TrueTerminal, ITerminal FalseTerminal) PlaceIf(Func<ITerminal> getConditionTerminalFunc)
+    /// <param name="perpective">If <see langword="true"/>, the camera will be in perspective mode; otherwise, it will be in orthographic mode.</param>
+    /// <param name="position">The new position of the camera.</param>
+    /// <param name="rotation">The new rotation of the camera.</param>
+    /// <param name="range">
+    /// <list type="bullet">
+    ///     <item>If in orthographic (isometric) mode, determines how wide the view frustum is.</item>
+    ///     <item>If in perspective mode specifies half of the field of view.</item>
+    /// </list>
+    /// </param>
+    public void SetCamera(bool perpective, IExpression position, IExpression rotation, IExpression range)
     {
-        ThrowIfNull(getConditionTerminalFunc, nameof(getConditionTerminalFunc));
+        var block = _codePlacer.PlaceBlock(StockBlocks.Game.SetCamera);
+
+        _codePlacer.SetSetting(block, 0, (byte)(perpective ? 1 : 0));
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(position.WriteTo(this), new BlockTerminal(block, "Position"));
+            _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
+            _codePlacer.Connect(range.WriteTo(this), new BlockTerminal(block, "Range"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Game.SetLight"/> block.
+    /// </summary>
+    /// <param name="position">Position of the light, <strong>currently unused</strong>.</param>
+    /// <param name="rotation">Direction of the light.</param>
+    public void SetLight(IExpression position, IExpression rotation)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Game.SetLight);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(position.WriteTo(this), new BlockTerminal(block, "Position"));
+            _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Game.MenuItem"/> block.
+    /// </summary>
+    /// <param name="name">Name of the item.</param>
+    /// <param name="maxBuyCount">The maximum number of times the item can be bought.</param>
+    /// <param name="priceIncrease">Specifies what the initial price is and how it increases.</param>
+    /// <param name="variable">
+    /// The variable to store the amount of times bought in, should have the saved modifier.
+    /// <para>If <see cref="Expressions.None"/> is connected, shows as a title on a new shop page.</para>
+    /// </param>
+    /// <param name="picture">Determines object to display for the item.</param>
+    public void MenuItem(string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease, IExpression variable, IExpression picture)
+    {
+        ThrowIfNull(name);
+
+        var block = _codePlacer.PlaceBlock(StockBlocks.Game.MenuItem);
+
+        _codePlacer.SetSetting(block, 0, name);
+        _codePlacer.SetSetting(block, 1, (byte)maxBuyCount);
+        _codePlacer.SetSetting(block, 2, (byte)priceIncrease);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
+            _codePlacer.Connect(picture.WriteTo(this), new BlockTerminal(block, "Picture"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Objects.SetPos"/> block.
+    /// </summary>
+    /// <param name="object">The object whose position and rotation is to be set.</param>
+    /// <param name="position">The new position.</param>
+    /// <param name="rotation">The new rotation.</param>
+    public void SetPosition(IExpression @object, IExpression position, IExpression rotation)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Objects.SetPos);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codePlacer.Connect(position.WriteTo(this), new BlockTerminal(block, "Position"));
+            _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Objects.SetPos"/> block.
+    /// </summary>
+    /// <param name="object">The object whose visibility is to be set.</param>
+    /// <param name="visible">The new visibility of the object.</param>
+    public void SetVisible(IExpression @object, IExpression visible)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Objects.SetVisible);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codePlacer.Connect(visible.WriteTo(this), new BlockTerminal(block, "Visible"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Objects.CreateObject"/> block.
+    /// </summary>
+    /// <param name="object">The object to clone.</param>
+    /// <returns>A copy of <paramref name="object"/>.</returns>
+    public ITerminal CreateObject(IExpression @object)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Objects.CreateObject);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+
+        return new BlockTerminal(block, "Copy");
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Objects.DestroyObject"/> block.
+    /// </summary>
+    /// <param name="object">The object to be destroyed.</param>
+    public void DestroyObject(IExpression @object)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Objects.DestroyObject);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Sound.PlaySound"/> block.
+    /// </summary>
+    /// <param name="sound">The sound to play.</param>
+    /// <param name="volume">Volume of the sound.</param>
+    /// <param name="pitch">Pitch of the sound.</param>
+    /// <returns>The channel on which the sound is playing.</returns>
+    public ITerminal PlaySound(FcSound sound, IExpression volume, IExpression pitch)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Sound.PlaySound);
+
+        _codePlacer.SetSetting(block, 0, (byte)sound);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(volume.WriteTo(this), new BlockTerminal(block, "Volume"));
+            _codePlacer.Connect(pitch.WriteTo(this), new BlockTerminal(block, "Pitch"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+
+        return new BlockTerminal(block, "Channel");
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Sound.VolumePitch"/> block.
+    /// </summary>
+    /// <param name="channel">The channel whose sound should be adjusted.</param>
+    /// <param name="volume">The channel's new volume.</param>
+    /// <param name="pitch">The channel's new pitch.</param>
+    public void VolumePitch(IExpression channel, IExpression volume, IExpression pitch)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Sound.VolumePitch);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(channel.WriteTo(this), new BlockTerminal(block, "Channel"));
+            _codePlacer.Connect(volume.WriteTo(this), new BlockTerminal(block, "Volume"));
+            _codePlacer.Connect(pitch.WriteTo(this), new BlockTerminal(block, "Pitch"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Sound.StopSound"/> block.
+    /// </summary>
+    /// <param name="channel">The channel whose sound should be stopped.</param>
+    public void StopSound(IExpression channel)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Sound.StopSound);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(channel.WriteTo(this), new BlockTerminal(block, "Channel"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.AddForce"/> block.
+    /// </summary>
+    /// <param name="object">The object to which the force should be applied to.</param>
+    /// <param name="force">The force to apply to <paramref name="object"/>.</param>
+    /// <param name="applyAt">Where on <paramref name="object"/> should <paramref name="force"/> be applied at (center of mass by default).</param>
+    /// <param name="torque">The rotational force to apply to <paramref name="object"/>.</param>
+    public void AddForce(IExpression @object, IExpression force, IExpression applyAt, IExpression torque)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AddForce);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codePlacer.Connect(force.WriteTo(this), new BlockTerminal(block, "Force"));
+            _codePlacer.Connect(applyAt.WriteTo(this), new BlockTerminal(block, "Apply at"));
+            _codePlacer.Connect(torque.WriteTo(this), new BlockTerminal(block, "Torque"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.SetVelocity"/> block.
+    /// </summary>
+    /// <param name="object">The object whose velocity is to be set.</param>
+    /// <param name="velocity">The new velocity of <paramref name="object"/>.</param>
+    /// <param name="spin">The new rotational velocity of <paramref name="object"/>.</param>
+    public void SetVelocity(IExpression @object, IExpression velocity, IExpression spin)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetVelocity);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codePlacer.Connect(velocity.WriteTo(this), new BlockTerminal(block, "Velocity"));
+            _codePlacer.Connect(spin.WriteTo(this), new BlockTerminal(block, "Spin"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.SetLocked"/> block.
+    /// </summary>
+    /// <param name="object">The object whose movement is to be restricted.</param>
+    /// <param name="position">The movement multiplier.</param>
+    /// <param name="rotation">The rotation multiplier.</param>
+    public void SetLocked(IExpression @object, IExpression position, IExpression rotation)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetLocked);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codePlacer.Connect(position.WriteTo(this), new BlockTerminal(block, "Position"));
+            _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.SetMass"/> block.
+    /// </summary>
+    /// <param name="object">The object whose mass is to be set.</param>
+    /// <param name="mass">The new mass of the object.</param>
+    public void SetMass(IExpression @object, IExpression mass)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetMass);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codePlacer.Connect(mass.WriteTo(this), new BlockTerminal(block, "Mass"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.SetFriction"/> block.
+    /// </summary>
+    /// <param name="object">The object whose friction is to be set.</param>
+    /// <param name="friction">The new friction of the object.</param>
+    public void SetFriction(IExpression @object, IExpression friction)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetFriction);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codePlacer.Connect(friction.WriteTo(this), new BlockTerminal(block, "Friction"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.SetBounciness"/> block.
+    /// </summary>
+    /// <param name="object">The object whose bounciness is to be set.</param>
+    /// <param name="bounciness">The new bounciness of the object.</param>
+    public void SetBounciness(IExpression @object, IExpression bounciness)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetBounciness);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codePlacer.Connect(bounciness.WriteTo(this), new BlockTerminal(block, "Bounciness"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.SetGravity"/> block.
+    /// </summary>
+    /// <param name="gravity">The new gravity.</param>
+    public void SetGravity(IExpression gravity)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetGravity);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(gravity.WriteTo(this), new BlockTerminal(block, "Gravity"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.AddConstraint"/> block.
+    /// </summary>
+    /// <param name="base">The base of the constraint.</param>
+    /// <param name="part">The part of the constraint.</param>
+    /// <param name="pivot">The pivot of the constraint.</param>
+    /// <returns>The constraint.</returns>
+    public ITerminal AddConstraint(IExpression @base, IExpression part, IExpression pivot)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AddConstraint);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(@base.WriteTo(this), new BlockTerminal(block, "Base"));
+            _codePlacer.Connect(part.WriteTo(this), new BlockTerminal(block, "Part"));
+            _codePlacer.Connect(pivot.WriteTo(this), new BlockTerminal(block, "Pivot"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+
+        return new BlockTerminal(block, "Constraint");
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.LinearLimits"/> block.
+    /// </summary>
+    /// <param name="constraint">The constraint whose linear limits should be set.</param>
+    /// <param name="lower">The lower limit.</param>
+    /// <param name="upper">The upper limit.</param>
+    public void LinearLimits(IExpression constraint, IExpression lower, IExpression upper)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.LinearLimits);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
+            _codePlacer.Connect(lower.WriteTo(this), new BlockTerminal(block, "Lower"));
+            _codePlacer.Connect(upper.WriteTo(this), new BlockTerminal(block, "Upper"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.AngularLimits"/> block.
+    /// </summary>
+    /// <param name="constraint">The constraint whose angular limits should be set.</param>
+    /// <param name="lower">The lower limit.</param>
+    /// <param name="upper">The upper limit.</param>
+    public void AngularLimits(IExpression constraint, IExpression lower, IExpression upper)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AngularLimits);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
+            _codePlacer.Connect(lower.WriteTo(this), new BlockTerminal(block, "Lower"));
+            _codePlacer.Connect(upper.WriteTo(this), new BlockTerminal(block, "Upper"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.LinearSpring"/> block.
+    /// </summary>
+    /// <param name="constraint">The constraint whose linear spring should be set.</param>
+    /// <param name="stiffness">The spring's stiffness.</param>
+    /// <param name="damping">The spring's damping.</param>
+    public void LinearSpring(IExpression constraint, IExpression stiffness, IExpression damping)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.LinearSpring);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
+            _codePlacer.Connect(stiffness.WriteTo(this), new BlockTerminal(block, "Stiffness"));
+            _codePlacer.Connect(damping.WriteTo(this), new BlockTerminal(block, "Damping"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.AngularSpring"/> block.
+    /// </summary>
+    /// <param name="constraint">The constraint whose angular spring should be set.</param>
+    /// <param name="stiffness">The spring's stiffness.</param>
+    /// <param name="damping">The spring's damping.</param>
+    public void AngularSpring(IExpression constraint, IExpression stiffness, IExpression damping)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AngularSpring);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
+            _codePlacer.Connect(stiffness.WriteTo(this), new BlockTerminal(block, "Stiffness"));
+            _codePlacer.Connect(damping.WriteTo(this), new BlockTerminal(block, "Damping"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.LinearMotor"/> block.
+    /// </summary>
+    /// <param name="constraint">The constraint whose linear motor should be set.</param>
+    /// <param name="speed">The motor's speed.</param>
+    /// <param name="force">The motor's force.</param>
+    public void LinearMotor(IExpression constraint, IExpression speed, IExpression force)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.LinearMotor);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
+            _codePlacer.Connect(speed.WriteTo(this), new BlockTerminal(block, "Speed"));
+            _codePlacer.Connect(force.WriteTo(this), new BlockTerminal(block, "Force"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Physics.AngularMotor"/> block.
+    /// </summary>
+    /// <param name="constraint">The constraint whose angular motor should be set.</param>
+    /// <param name="speed">The motor's speed.</param>
+    /// <param name="force">The motor's force.</param>
+    public void AngularMotor(IExpression constraint, IExpression speed, IExpression force)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AngularMotor);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
+            _codePlacer.Connect(speed.WriteTo(this), new BlockTerminal(block, "Speed"));
+            _codePlacer.Connect(force.WriteTo(this), new BlockTerminal(block, "Force"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Control.If"/> block.
+    /// </summary>
+    /// <param name="condition">Condition of the if.</param>
+    /// <param name="true">Writes what should be executed when <paramref name="condition"/> is <see langword="true"/>.</param>
+    /// <param name="false">Writes what should be executed when <paramref name="condition"/> is <see langword="false"/>.</param>
+    public void If(IExpression condition, Action<CodeWriter> @true, Action<CodeWriter> @false)
+    {
+        ThrowIfNull(condition);
+        ThrowIfNull(@true);
+        ThrowIfNull(@false);
 
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.If);
 
-        ITerminal condition = getConditionTerminalFunc();
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(condition.WriteTo(this), new BlockTerminal(block, "Condition"));
+        }
 
-        _codePlacer.Connect(condition, new BlockTerminal(block, "Condition"));
+        _connector.Add(new TerminalStore(block));
 
-        return (new TerminalStore(block), new BlockTerminal(block, "True"), new BlockTerminal(block, "False"));
+        ConnectOut(new BlockTerminal(block, "True"), @true);
+        ConnectOut(new BlockTerminal(block, "False"), @false);
+
+        _connector.SetLast(new TerminalStore(block));
     }
 
     /// <summary>
-    /// Places the play sensor block.
+    /// Writes the <see cref="StockBlocks.Control.PlaySensor"/> block.
     /// </summary>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the play sensor block and the on play terminal.</returns>
-    public (ITerminalStore Store, ITerminal OnPlayTerminal) PlacePlaySensor()
+    /// <param name="onPlay">Writes what should be executed only on the first frame.</param>
+    public void PlaySensor(Action<CodeWriter> onPlay)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.PlaySensor);
 
-        return (new TerminalStore(block), new BlockTerminal(block, "On Play"));
+        _connector.Add(new TerminalStore(block));
+
+        ConnectOut(new BlockTerminal(block, "On Play"), onPlay);
+
+        _connector.SetLast(new TerminalStore(block));
     }
 
     /// <summary>
-    /// Places the late update block.
+    /// Writes the <see cref="StockBlocks.Control.LateUpdate"/> block.
     /// </summary>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the late update block and the after physics terminal.</returns>
-    public (ITerminalStore Store, ITerminal AfterPhysicsTerminal) PlaceLateUpdate()
+    /// <param name="afterPhysics">Writes what should be executed only after physics but before rendering.</param>
+    public void LateUpdate(Action<CodeWriter> afterPhysics)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.LateUpdate);
 
-        return (new TerminalStore(block), new BlockTerminal(block, "After Physics"));
+        _connector.Add(new TerminalStore(block));
+
+        ConnectOut(new BlockTerminal(block, "After Physics"), afterPhysics);
+
+        _connector.SetLast(new TerminalStore(block));
     }
 
     /// <summary>
-    /// Places the box art sensor block.
+    /// Writes the <see cref="StockBlocks.Control.BoxArtSensor"/> block.
     /// </summary>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the box art sensor block and the on screenshot terminal.</returns>
-    public (ITerminalStore Store, ITerminal OnScreenshotTerminal) PlaceBoxArtSensor()
+    /// <param name="onScreenshot">Writes what should be executed only when taking boxart.</param>
+    public void BoxArtSensor(Action<CodeWriter> onScreenshot)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.BoxArtSensor);
 
-        return (new TerminalStore(block), new BlockTerminal(block, "On Screenshot"));
+        _connector.Add(new TerminalStore(block));
+
+        ConnectOut(new BlockTerminal(block, "On Screenshot"), onScreenshot);
+
+        _connector.SetLast(new TerminalStore(block));
     }
 
     /// <summary>
-    /// Places the touch sensor block.
+    /// Writes the <see cref="StockBlocks.Control.TouchSensor"/> block.
     /// </summary>
-    /// <param name="touchState">The state of touch to detect.</param>
-    /// <param name="touchFinger">The finger to detect.</param>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the touch sensor block and the touched, screen x and screen y terminals.</returns>
-    public (ITerminalStore Store, ITerminal TouchedTerminal, ITerminal ScreenXTerminal, ITerminal ScreenYTerminal) PlaceTouchSensor(TouchState touchState, int touchFinger)
+    /// <param name="touchState">The <see cref="TouchState"/> to detect.</param>
+    /// <param name="touchFinger">Index of the finger to detect, 0 - 2.</param>
+    /// <param name="touched">Writes what should be executed when touch is detected.</param>
+    /// <returns>The x and y position of the touch.</returns>
+    public (ITerminal ScreenX, ITerminal ScreenY) TouchSensor(TouchState touchState, int touchFinger, Action<CodeWriter, ITerminal, ITerminal> touched)
     {
         if (touchFinger < 0 || touchFinger > FancadeConstants.TouchSensorMaxFingerIndex)
         {
@@ -381,100 +686,288 @@ public sealed class CodeWriter
         _codePlacer.SetSetting(block, 0, (byte)touchState);
         _codePlacer.SetSetting(block, 1, (byte)touchFinger);
 
-        return (new TerminalStore(block), new BlockTerminal(block, "Touched"), new BlockTerminal(block, "Screen X"), new BlockTerminal(block, "Screen Y"));
+        _connector.Add(new TerminalStore(block));
+
+        ConnectOut(new BlockTerminal(block, "Touched"), touched, new BlockTerminal(block, "Screen X"), new BlockTerminal(block, "Screen Y"));
+
+        _connector.SetLast(new TerminalStore(block));
+
+        return (new BlockTerminal(block, "Screen X"), new BlockTerminal(block, "Screen Y"));
     }
 
     /// <summary>
-    /// Places the swipe sensor block.
+    /// Writes the <see cref="StockBlocks.Control.SwipeSensor"/> block.
     /// </summary>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the swipe sensor block and the swiped and direction terminals.</returns>
-    public (ITerminalStore Store, ITerminal SwipedTerminal, ITerminal DirectionTerminal) PlaceSwipeSensor()
+    /// <param name="swiped">Writes what should be executed when swipe is detected.</param>
+    /// <returns>Direction of the swipe.</returns>
+    public ITerminal SwipeSensor(Action<CodeWriter, ITerminal> swiped)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.SwipeSensor);
 
-        return (new TerminalStore(block), new BlockTerminal(block, "Swiped"), new BlockTerminal(block, "Direction"));
+        _connector.Add(new TerminalStore(block));
+
+        ConnectOut(new BlockTerminal(block, "Swiped"), swiped, new BlockTerminal(block, "Direction"));
+
+        _connector.SetLast(new TerminalStore(block));
+
+        return new BlockTerminal(block, "Direction");
     }
 
     /// <summary>
-    /// Places the button block.
+    /// Writes the <see cref="StockBlocks.Control.Button"/> block.
     /// </summary>
     /// <param name="buttonType">Type of the button.</param>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the button block and the button terminal.</returns>
-    public (ITerminalStore Store, ITerminal ButtonTerminal) PlaceButton(ButtonType buttonType)
+    /// <param name="button">Writes what should be executed when the button is pressed.</param>
+    public void Button(ButtonType buttonType, Action<CodeWriter> button)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Button);
 
         _codePlacer.SetSetting(block, 0, (byte)buttonType);
 
-        return (new TerminalStore(block), new BlockTerminal(block, "Button"));
+        _connector.Add(new TerminalStore(block));
+
+        ConnectOut(new BlockTerminal(block, "Button"), button);
+
+        _connector.SetLast(new TerminalStore(block));
     }
 
     /// <summary>
-    /// Places the collision block.
+    /// Writes the <see cref="StockBlocks.Control.Collision"/> block.
     /// </summary>
-    /// <param name="getFirstObjectTerminalFunc">A method to get the object terminal to connect to the first object terminal.</param>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the collision block and the collided, second object, impulse and normal terminals.</returns>
-    public (ITerminalStore Store, ITerminal CollidedTerminal, ITerminal SecondObjectTerminal, ITerminal ImpulseTerminal, ITerminal NormalTerminal) PlaceCollision(Func<ITerminal> getFirstObjectTerminalFunc)
+    /// <param name="firstObject">The object whose collisions should be detected.</param>
+    /// <param name="collided">Writes what should be executed when <paramref name="firstObject"/> collides with another object.</param>
+    /// <returns>The object <paramref name="firstObject"/> collided with, impulse of the collision and the normal of the collision.</returns>
+    public (ITerminal SecondObjectTerminal, ITerminal ImpulseTerminal, ITerminal NormalTerminal) Collision(IExpression firstObject, Action<CodeWriter, ITerminal, ITerminal, ITerminal> collided)
     {
-        ThrowIfNull(getFirstObjectTerminalFunc, nameof(getFirstObjectTerminalFunc));
-
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Collision);
 
-        _codePlacer.Connect(getFirstObjectTerminalFunc(), new BlockTerminal(block, "1st Object"));
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(firstObject.WriteTo(this), new BlockTerminal(block, "1st Object"));
+        }
 
-        return (new TerminalStore(block), new BlockTerminal(block, "Collided"), new BlockTerminal(block, "2nd Object"), new BlockTerminal(block, "Impulse"), new BlockTerminal(block, "Normal"));
+        _connector.Add(new TerminalStore(block));
+
+        ConnectOut(new BlockTerminal(block, "Collided"), collided, new BlockTerminal(block, "2nd Object"), new BlockTerminal(block, "Impulse"), new BlockTerminal(block, "Normal"));
+
+        _connector.SetLast(new TerminalStore(block));
+
+        return (new BlockTerminal(block, "2nd Object"), new BlockTerminal(block, "Impulse"), new BlockTerminal(block, "Normal"));
     }
 
     /// <summary>
-    /// Places the loop block.
+    /// Writes the <see cref="StockBlocks.Control.Loop"/> block.
     /// </summary>
-    /// <param name="getStartTerminalFunc">A method to get the number terminal to connect to the start terminal.</param>
-    /// <param name="getStopTerminalFunc">A method to get the number terminal to connect to the stop terminal.</param>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the loop block and the do and counter terminals.</returns>
-    public (ITerminalStore Store, ITerminal DoTerminal, ITerminal CounterTerminal) PlaceLoop(Func<ITerminal> getStartTerminalFunc, Func<ITerminal> getStopTerminalFunc)
+    /// <param name="start">The start value (inclusive).</param>
+    /// <param name="stop">The end value (exclusive).</param>
+    /// <param name="do">Writes what should be executed in the loop.</param>
+    /// <returns>The current value of the loop.</returns>
+    public ITerminal Loop(IExpression start, IExpression stop, Action<CodeWriter, ITerminal> @do)
     {
-        ThrowIfNull(getStartTerminalFunc, nameof(getStartTerminalFunc));
-        ThrowIfNull(getStopTerminalFunc, nameof(getStopTerminalFunc));
-
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Loop);
 
-        _codePlacer.Connect(getStartTerminalFunc(), new BlockTerminal(block, "Start"));
-        _codePlacer.Connect(getStopTerminalFunc(), new BlockTerminal(block, "Stop"));
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(start.WriteTo(this), new BlockTerminal(block, "Start"));
+            _codePlacer.Connect(stop.WriteTo(this), new BlockTerminal(block, "Stop"));
+        }
 
-        return (new TerminalStore(block), new BlockTerminal(block, "Do"), new BlockTerminal(block, "Counter"));
+        _connector.Add(new TerminalStore(block));
+
+        ConnectOut(new BlockTerminal(block, "Do"), @do, new BlockTerminal(block, "Counter"));
+
+        _connector.SetLast(new TerminalStore(block));
+
+        return new BlockTerminal(block, "Counter");
     }
 
     /// <summary>
-    /// Places the increase number block.
+    /// Writes the <see cref="StockBlocks.Math.RandomSeed"/> block.
     /// </summary>
-    /// <param name="getVariableTerminalFunc">A method to get a terminal to connect to the variable terminal.</param>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the increase number block.</returns>
-    public ITerminalStore PlaceIncrementNumber(Func<ITerminal> getVariableTerminalFunc)
+    /// <param name="seed">The new random seed.</param>
+    public void RandomSeed(IExpression seed)
     {
-        ThrowIfNull(getVariableTerminalFunc, nameof(getVariableTerminalFunc));
+        var block = _codePlacer.PlaceBlock(StockBlocks.Math.Random);
 
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(seed.WriteTo(this), new BlockTerminal(block, "Seed"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes a comment.
+    /// </summary>
+    /// <remarks>
+    /// If <paramref name="text"/> is too long, multiple comment blocks are placed.
+    /// </remarks>
+    /// <param name="text">Text of the comment.</param>
+    public void Comment(string text)
+    {
+        var span = text.AsSpan();
+
+        foreach (var lineRange in StringUtils.SplitByMaxLength(span, FancadeConstants.MaxCommentLength))
+        {
+            Block block = _codePlacer.PlaceBlock(StockBlocks.Values.Comment);
+            _codePlacer.SetSetting(block, 0, new string(span[lineRange]));
+        }
+    }
+
+    /// <summary>
+    /// Writes the inspect block.
+    /// </summary>
+    /// <param name="value">The value to inspect.</param>
+    public void Inspect(IExpression value)
+        => Inspect(value, value.Type);
+
+    /// <summary>
+    /// Writes the inspect block of a specified type.
+    /// </summary>
+    /// <param name="value">The value to inspect.</param>
+    /// <param name="type">Type of the inspect block.</param>
+    public void Inspect(IExpression value, SignalType type)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Values.InspectByType(type));
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(value.WriteTo(this), new BlockTerminal(block, 1));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the set variable block.
+    /// </summary>
+    /// <param name="variable">The variable whose value should be set.</param>
+    /// <param name="value">The new value of the variable.</param>
+    public void SetVariable(Variable variable, IExpression value)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(variable.Type));
+
+        _codePlacer.SetSetting(block, 0, variable.Name);
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(value.WriteTo(this), new BlockTerminal(block, "Value"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Writes the set variable block.
+    /// </summary>
+    /// <param name="variable">The variable whose value should be set.</param>
+    /// <param name="value">The new value of the variable.</param>
+    public void SetVariable(IExpression variable, IExpression value)
+        => SetVariable(variable, value, variable.Type);
+
+    /// <summary>
+    /// Writes the set variable block.
+    /// </summary>
+    /// <param name="variable">The variable whose value should be set.</param>
+    /// <param name="value">The new value of the variable.</param>
+    /// <param name="variableType">Type of the variable.</param>
+    public void SetVariable(IExpression variable, IExpression value, SignalType variableType)
+    {
+        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(variableType));
+
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
+            _codePlacer.Connect(value.WriteTo(this), new BlockTerminal(block, "Value"));
+        }
+
+        _connector.Add(new TerminalStore(block));
+    }
+
+    /// <summary>
+    /// Sets a range of a list.
+    /// </summary>
+    /// <typeparam name="T">Type of the values.</typeparam>
+    /// <param name="variable">The variable that should be assigned.</param>
+    /// <param name="values">The values to set to <paramref name="variable"/>.</param>
+    /// <param name="startIndex">The index at which to start assigning to <paramref name="variable"/>.</param>
+    public void SetListRange<T>(Variable variable, ReadOnlySpan<T> values, IExpression startIndex)
+        where T : notnull
+    {
+        var signalType = SignalTypeUtils.FromType(typeof(T));
+
+        ITerminal? lastElementTerminal = null;
+
+        var variableEx = Expressions.Variable(variable);
+
+        for (int i = 0; i < values.Length; i++)
+        {
+            if (i == 0 && IsLiteralOfValue(startIndex, 0f))
+            {
+                SetVariable(variable, Expressions.Literal(values[i]));
+            }
+            else
+            {
+                Block setBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(signalType));
+
+                _connector.Add(new TerminalStore(setBlock));
+
+                using (ExpressionBlock())
+                {
+                    Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(signalType));
+
+                    _codePlacer.Connect(TerminalStore.CreateOut(listBlock, listBlock.Type["Element"]), TerminalStore.CreateIn(setBlock, setBlock.Type["Variable"]));
+
+                    using (ExpressionBlock())
+                    {
+                        lastElementTerminal ??= variableEx.WriteTo(this);
+
+                        _codePlacer.Connect(lastElementTerminal, TerminalStore.CreateIn(listBlock, listBlock.Type["Variable"]));
+
+                        lastElementTerminal = new BlockTerminal(listBlock, "Element");
+
+                        _codePlacer.Connect(i == 0 ? startIndex.WriteTo(this) : Expressions.Number(1f).WriteTo(this), TerminalStore.CreateIn(listBlock, listBlock.Type["Index"]));
+                    }
+
+                    _codePlacer.Connect(Expressions.Literal(values[i]).WriteTo(this), TerminalStore.CreateIn(setBlock, setBlock.Type["Value"]));
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes the <see cref="StockBlocks.Variables.IncrementNumber"/> block.
+    /// </summary>
+    /// <param name="variable">The variable that should be incremented.</param>
+    public void IncrementNumber(IExpression variable)
+    {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.IncrementNumber);
 
-        _codePlacer.Connect(getVariableTerminalFunc(), new BlockTerminal(block, "Variable"));
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
+        }
 
-        return new TerminalStore(block);
+        _connector.Add(new TerminalStore(block));
     }
 
     /// <summary>
-    /// Places the decrease number block.
+    /// Writes the <see cref="StockBlocks.Variables.DecrementNumber"/> block.
     /// </summary>
-    /// <param name="getVariableTerminalFunc">A method to get a terminal to connect to the variable terminal.</param>
-    /// <returns>A <see cref="ITerminalStore"/> with the before and after terminals of the decrease number block.</returns>
-    public ITerminalStore PlaceDecrementNumber(Func<ITerminal> getVariableTerminalFunc)
+    /// <param name="variable">The variable that should be decremented.</param>
+    public void DecrementNumber(IExpression variable)
     {
-        ThrowIfNull(getVariableTerminalFunc, nameof(getVariableTerminalFunc));
-
         Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.DecrementNumber);
 
-        _codePlacer.Connect(getVariableTerminalFunc(), new BlockTerminal(block, "Variable"));
+        using (ExpressionBlock())
+        {
+            _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
+        }
 
-        return new TerminalStore(block);
+        _connector.Add(new TerminalStore(block));
     }
+    #endregion
 
     #region Blocks
 
@@ -498,5 +991,45 @@ public sealed class CodeWriter
     /// <returns>An <see cref="IDisposable"/>, that when disposed exits the highlight block.</returns>
     public IDisposable HighlightBlock()
         => _codePlacer.HighlightBlock();
+
     #endregion
+
+    private static bool IsLiteralOfValue(IExpression expression, float value)
+        => expression is Expressions.LiteralExpression literal && literal.Type == SignalType.Float && (float)literal._value == value;
+
+    private void ConnectOut(ITerminal terminal, Action<CodeWriter> writeFunc)
+    {
+        _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
+        using (_codePlacer.StatementBlock())
+        {
+            writeFunc(this);
+        }
+    }
+
+    private void ConnectOut(ITerminal terminal, Action<CodeWriter, ITerminal> writeFunc, ITerminal arg1)
+    {
+        _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
+        using (_codePlacer.StatementBlock())
+        {
+            writeFunc(this, arg1);
+        }
+    }
+
+    private void ConnectOut(ITerminal terminal, Action<CodeWriter, ITerminal, ITerminal> writeFunc, ITerminal arg1, ITerminal arg2)
+    {
+        _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
+        using (_codePlacer.StatementBlock())
+        {
+            writeFunc(this, arg1, arg2);
+        }
+    }
+
+    private void ConnectOut(ITerminal terminal, Action<CodeWriter, ITerminal, ITerminal, ITerminal> writeFunc, ITerminal arg1, ITerminal arg2, ITerminal arg3)
+    {
+        _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
+        using (_codePlacer.StatementBlock())
+        {
+            writeFunc(this, arg1, arg2, arg3);
+        }
+    }
 }

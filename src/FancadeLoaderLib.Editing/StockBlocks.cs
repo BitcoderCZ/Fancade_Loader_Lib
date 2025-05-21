@@ -223,7 +223,7 @@ public static class StockBlocks
         /// <summary>
         /// The VolumePitch block.
         /// </summary>
-        public static readonly BlockDef VolumePitch = new BlockDef("VolumePitch", 391, ScriptBlockType.Active, PrefabType.Script, new int3(2, 1, 3), TerminalBuilder.Create().Add(SignalType.Void, TerminalType.Out).Add(SignalType.Float, TerminalType.In, "Pitch").Add(SignalType.Float, TerminalType.In, "Volume").Add(SignalType.Float, TerminalType.In, "Channel").Add(SignalType.Void, TerminalType.In));
+        public static readonly BlockDef VolumePitch = new BlockDef("Volume Pitch", 391, ScriptBlockType.Active, PrefabType.Script, new int3(2, 1, 3), TerminalBuilder.Create().Add(SignalType.Void, TerminalType.Out).Add(SignalType.Float, TerminalType.In, "Pitch").Add(SignalType.Float, TerminalType.In, "Volume").Add(SignalType.Float, TerminalType.In, "Channel").Add(SignalType.Void, TerminalType.In));
     }
 
     /// <summary>

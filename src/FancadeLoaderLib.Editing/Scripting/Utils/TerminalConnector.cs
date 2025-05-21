@@ -53,6 +53,16 @@ public sealed class TerminalConnector
     }
 
     /// <summary>
+    /// Sets the last <see cref="ITerminalStore"/> without connecting it to the last one.
+    /// </summary>
+    /// <param name="store">The <see cref="ITerminalStore"/> to set as the last one.</param>
+    public void SetLast(ITerminalStore store)
+    {
+        _firstStore ??= store;
+        _lastStore = store;
+    }
+
+    /// <summary>
     /// Clears this <see cref="TerminalConnector"/>.
     /// </summary>
     public void Clear()

@@ -182,7 +182,7 @@ public abstract class BlockBuilder
     }
 
     /// <summary>
-    /// Choose the voxel position of the therminal for a given block position.
+    /// Chooses the voxel position of the terminal for a given block position.
     /// </summary>
     /// <param name="pos">Position of the block the terminal is on.</param>
     /// <returns>The voxel position of the terminal.</returns>
