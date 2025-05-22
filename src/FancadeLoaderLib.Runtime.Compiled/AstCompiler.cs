@@ -140,6 +140,7 @@ public sealed partial class AstCompiler
     private string WriteAll()
     {
         _writer.WriteLine("""
+            using FancadeLoaderLib.Editing;
             using FancadeLoaderLib.Editing.Scripting.Settings;
             using FancadeLoaderLib.Runtime;
             using MathUtils.Vectors;

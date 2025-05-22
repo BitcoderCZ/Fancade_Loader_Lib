@@ -8,16 +8,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <Compile Remove="ExecutionTests.Math.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="ExecutionTests.Math.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="TUnit" Version="0.21.16" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FancadeLoaderLib.Editing\FancadeLoaderLib.Editing.csproj" />
-    <ProjectReference Include="..\FancadeLoaderLib.Tests.Common\FancadeLoaderLib.Tests.Common.csproj" />
+    <ProjectReference Include="..\FancadeLoaderLib.Runtime.Compiled\FancadeLoaderLib.Runtime.Compiled.csproj" />
+    <ProjectReference Include="..\FancadeLoaderLib.Runtime\FancadeLoaderLib.Runtime.csproj" />
     <ProjectReference Include="..\FancadeLoaderLib\FancadeLoaderLib.csproj" />
   </ItemGroup>
 

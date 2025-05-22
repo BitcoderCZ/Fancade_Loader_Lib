@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FancadeLoaderLib.Runtime", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FancadeLoaderLib.Runtime.Compiled", "FancadeLoaderLib.Runtime.Compiled\FancadeLoaderLib.Runtime.Compiled.csproj", "{02236C10-33BB-4C86-88F8-EE514C491048}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FancadeLoaderLib.Runtime.Tests", "FancadeLoaderLib.Runtime.Tests\FancadeLoaderLib.Runtime.Tests.csproj", "{B5C2ECF1-2040-A263-638C-D4C6B1B3A810}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{02236C10-33BB-4C86-88F8-EE514C491048}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02236C10-33BB-4C86-88F8-EE514C491048}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02236C10-33BB-4C86-88F8-EE514C491048}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5C2ECF1-2040-A263-638C-D4C6B1B3A810}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5C2ECF1-2040-A263-638C-D4C6B1B3A810}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5C2ECF1-2040-A263-638C-D4C6B1B3A810}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5C2ECF1-2040-A263-638C-D4C6B1B3A810}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

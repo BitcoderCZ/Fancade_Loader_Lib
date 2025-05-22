@@ -6,6 +6,9 @@ using FancadeLoaderLib.Editing.Scripting.Terminals;
 using MathUtils.Vectors;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("FancadeLoaderLib.Runtime.Tests")]
 
 namespace FancadeLoaderLib.Editing.Scripting;
 

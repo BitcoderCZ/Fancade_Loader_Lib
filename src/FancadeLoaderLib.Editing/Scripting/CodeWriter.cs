@@ -52,6 +52,12 @@ public sealed partial class CodeWriter
         ITerminal WriteTo(CodeWriter writer);
     }
 
+    /// <summary>
+    /// Gets the underlying <see cref="ICodePlacer"/>.
+    /// </summary>
+    /// <value>The underlying <see cref="ICodePlacer"/>.</value>
+    public ICodePlacer Placer => _codePlacer;
+
     #region Statements
 
     /// <summary>
@@ -964,6 +970,12 @@ public sealed partial class CodeWriter
         _connector.Add(new TerminalStore(block));
     }
     #endregion
+
+    /// <summary>
+    /// Calls <see cref="ICodePlacer.Flush"/> on the underlying <see cref="ICodePlacer"/>.
+    /// </summary>
+    public void Flush()
+        => _codePlacer.Flush();
 
     #region Blocks
 

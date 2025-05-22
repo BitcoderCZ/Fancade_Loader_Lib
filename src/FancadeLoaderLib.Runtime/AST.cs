@@ -47,6 +47,15 @@ public sealed partial class AST
         ConnectionsTo = connectionsTo;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="AST"/> instance from a <see cref="PrefabList"/>.
+    /// </summary>
+    /// <param name="prefabs">
+    /// The <see cref="PrefabList"/> to create the <see cref="AST"/> from.
+    /// <para><see cref="PrefabListUtils.AddImplicitConnections(PrefabList, FrozenDictionary{ushort, PrefabTerminalInfo}?)"/> must be called before <see cref="Parse(PrefabList, ushort)"/>.</para>
+    /// </param>
+    /// <param name="mainPrefabId">Id of the "main" prefab (the open level).</param>
+    /// <returns>The constructed <see cref="AST"/>.</returns>
     public static AST Parse(PrefabList prefabs, ushort mainPrefabId)
     {
         ThrowIfNull(prefabs, nameof(prefabs));

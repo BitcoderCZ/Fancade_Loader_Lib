@@ -16,7 +16,7 @@ public static class PrefabGenerator
 
     public static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count, bool initVoxels = false)
     {
-        Debug.Assert(count < 4 * 4 * 4);
+        Debug.Assert(count <= 4 * 4 * 4);
 
         // Generate in reverse to catch potential bugs caused by segments not being ordered
         for (int i = count - 1; i >= 0; i--)

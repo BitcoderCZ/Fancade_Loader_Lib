@@ -38,6 +38,9 @@ public sealed class GroundCodePlacer : IScopedCodePlacer
     }
 
     /// <inheritdoc/>
+    public BlockBuilder Builder => _builder;
+
+    /// <inheritdoc/>
     public int CurrentCodeBlockBlocks => _expressions.Count != 0 ? _expressions.Peek().BlockCount : _statements.Peek().BlockCount;
 
     /// <inheritdoc/>
@@ -159,6 +162,20 @@ public sealed class GroundCodePlacer : IScopedCodePlacer
     /// <inheritdoc/>
     public void ExitHightlight()
         => _inHighlight = false;
+
+    /// <inheritdoc/>
+    public void Flush()
+    {
+        while (_expressions.Count > 0)
+        {
+            ExitExpressionBlock();
+        }
+
+        while (_statements.Count > 0)
+        {
+            ExitStatementBlock();
+        }
+    }
 
     private StatementCodeBlock CreateFunction()
         => new StatementCodeBlock(this, 0);
