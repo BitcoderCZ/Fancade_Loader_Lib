@@ -344,8 +344,8 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Add_Vector"/> block.
         /// </summary>
-        /// <param name="vec1"></param>
-        /// <param name="vec2"></param>
+        /// <param name="vec1">The first vector.</param>
+        /// <param name="vec2">The second vector.</param>
         public static IExpression AddVectors(IExpression vec1, IExpression vec2)
             => new BinaryExpression(vec1, vec2, StockBlocks.Math.Add_Vector);
 
@@ -360,8 +360,8 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Subtract_Vector"/> block.
         /// </summary>
-        /// <param name="vec1"></param>
-        /// <param name="vec2"></param>
+        /// <param name="vec1">The first vector.</param>
+        /// <param name="vec2">The second vector.</param>
         public static IExpression SubtractVectors(IExpression vec1, IExpression vec2)
             => new BinaryExpression(vec1, vec2, StockBlocks.Math.Subtract_Vector);
 
@@ -376,24 +376,24 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Multiply_Vector"/> block.
         /// </summary>
-        /// <param name="vec"></param>
-        /// <param name="num"></param>
+        /// <param name="vec">The vector.</param>
+        /// <param name="num">The number.</param>
         public static IExpression Scale(IExpression vec, IExpression num)
             => new BinaryExpression(vec, num, StockBlocks.Math.Multiply_Vector);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Rotate_Vector"/> block.
         /// </summary>
-        /// <param name="vec"></param>
-        /// <param name="rot"></param>
+        /// <param name="vec">The vector.</param>
+        /// <param name="rot">The rotation.</param>
         public static IExpression Rotate(IExpression vec, IExpression rot)
             => new BinaryExpression(vec, rot, StockBlocks.Math.Rotate_Vector);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Multiply_Rotation"/> block.
         /// </summary>
-        /// <param name="rot1"></param>
-        /// <param name="rot2"></param>
+        /// <param name="rot1">The first rotation.</param>
+        /// <param name="rot2">The second rotation.</param>
         public static IExpression Combine(IExpression rot1, IExpression rot2)
             => new BinaryExpression(rot1, rot2, StockBlocks.Math.Multiply_Rotation);
 
@@ -457,146 +457,146 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.LogicalAnd"/> block.
         /// </summary>
-        /// <param name="tru1"></param>
-        /// <param name="tru2"></param>
+        /// <param name="tru1">The first truth.</param>
+        /// <param name="tru2">The second truth.</param>
         public static IExpression And(IExpression tru1, IExpression tru2)
             => new BinaryExpression(tru1, tru2, StockBlocks.Math.LogicalAnd);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.LogicalOr"/> block.
         /// </summary>
-        /// <param name="tru1"></param>
-        /// <param name="tru2"></param>
+        /// <param name="tru1">The first truth.</param>
+        /// <param name="tru2">The second truth.</param>
         public static IExpression Or(IExpression tru1, IExpression tru2)
             => new BinaryExpression(tru1, tru2, StockBlocks.Math.LogicalOr);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Less"/> block.
         /// </summary>
-        /// <param name="num1"></param>
-        /// <param name="num2"></param>
+        /// <param name="num1">The first number.</param>
+        /// <param name="num2">The second number.</param>
         public static IExpression LessThan(IExpression num1, IExpression num2)
             => new BinaryExpression(num1, num2, StockBlocks.Math.Less);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Greater"/> block.
         /// </summary>
-        /// <param name="num1"></param>
-        /// <param name="num2"></param>
+        /// <param name="num1">The first number.</param>
+        /// <param name="num2">The second number.</param>
         public static IExpression GreaterThan(IExpression num1, IExpression num2)
             => new BinaryExpression(num1, num2, StockBlocks.Math.Greater);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Random"/> block.
         /// </summary>
-        /// <param name="min"></param>
-        /// <param name="max"></param>
+        /// <param name="min">The minimum number (inclusive).</param>
+        /// <param name="max">The maximum number (exclusive).</param>
         public static IExpression Random(IExpression min, IExpression max)
             => new BinaryExpression(min, max, StockBlocks.Math.Random);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Min"/> block.
         /// </summary>
-        /// <param name="num1"></param>
-        /// <param name="num2"></param>
+        /// <param name="num1">The first number.</param>
+        /// <param name="num2">The second number.</param>
         public static IExpression Min(IExpression num1, IExpression num2)
             => new BinaryExpression(num1, num2, StockBlocks.Math.Min);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Max"/> block.
         /// </summary>
-        /// <param name="num1"></param>
-        /// <param name="num2"></param>
+        /// <param name="num1">The first number.</param>
+        /// <param name="num2">The second number.</param>
         public static IExpression Max(IExpression num1, IExpression num2)
             => new BinaryExpression(num1, num2, StockBlocks.Math.Max);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Sin"/> block.
         /// </summary>
-        /// <param name="num"></param>
+        /// <param name="num">Angle in degrees.</param>
         public static IExpression Sin(IExpression num)
             => new UnaryExpression(num, StockBlocks.Math.Sin);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Cos"/> block.
         /// </summary>
-        /// <param name="num"></param>
+        /// <param name="num">Angle in degrees.</param>
         public static IExpression Cos(IExpression num)
             => new UnaryExpression(num, StockBlocks.Math.Cos);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Round"/> block.
         /// </summary>
-        /// <param name="number"></param>
+        /// <param name="number">The number to round.</param>
         public static IExpression Round(IExpression number)
             => new UnaryExpression(number, StockBlocks.Math.Round);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Floor"/> block.
         /// </summary>
-        /// <param name="number"></param>
+        /// <param name="number">The number to floor.</param>
         public static IExpression Floor(IExpression number)
             => new UnaryExpression(number, StockBlocks.Math.Floor);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Ceiling"/> block.
         /// </summary>
-        /// <param name="number"></param>
+        /// <param name="number">The number to ceil.</param>
         public static IExpression Ceiling(IExpression number)
             => new UnaryExpression(number, StockBlocks.Math.Ceiling);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Absolute"/> block.
         /// </summary>
-        /// <param name="num"></param>
+        /// <param name="num">The number whose absolute value should be retrived.</param>
         public static IExpression Absolute(IExpression num)
             => new UnaryExpression(num, StockBlocks.Math.Absolute);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Logarithm"/> block.
         /// </summary>
-        /// <param name="number"></param>
-        /// <param name="base"></param>
+        /// <param name="number">The number whose logarithm value should be retrived.</param>
+        /// <param name="base">Base of the logarithm.</param>
         public static IExpression Logarithm(IExpression number, IExpression @base)
             => new BinaryExpression(number, @base, StockBlocks.Math.Logarithm);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Normalize"/> block.
         /// </summary>
-        /// <param name="vector"></param>
+        /// <param name="vector">The vector that should be normalized.</param>
         public static IExpression Normalize(IExpression vector)
             => new UnaryExpression(vector, StockBlocks.Math.Normalize);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.DotProduct"/> block.
         /// </summary>
-        /// <param name="vector1"></param>
-        /// <param name="vector2"></param>
+        /// <param name="vector1">The first vector.</param>
+        /// <param name="vector2">The second vector.</param>
         public static IExpression DotProduct(IExpression vector1, IExpression vector2)
             => new BinaryExpression(vector1, vector2, StockBlocks.Math.DotProduct);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.CrossProduct"/> block.
         /// </summary>
-        /// <param name="vector1"></param>
-        /// <param name="vector2"></param>
+        /// <param name="vector1">The first vector.</param>
+        /// <param name="vector2">The second vector.</param>
         public static IExpression CrossProduct(IExpression vector1, IExpression vector2)
             => new BinaryExpression(vector1, vector2, StockBlocks.Math.CrossProduct);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Distance"/> block.
         /// </summary>
-        /// <param name="vector1"></param>
-        /// <param name="vector2"></param>
+        /// <param name="vector1">The first vector.</param>
+        /// <param name="vector2">The second vector.</param>
         public static IExpression Distance(IExpression vector1, IExpression vector2)
             => new BinaryExpression(vector1, vector2, StockBlocks.Math.Distance);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Lerp"/> block.
         /// </summary>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
-        /// <param name="amount"></param>
+        /// <param name="from">The start rotation.</param>
+        /// <param name="to">The end rotation.</param>
+        /// <param name="amount">How far between <paramref name="from"/> and <paramref name="to"/> to transition (0 - 1).</param>
         public static IExpression Lerp(IExpression from, IExpression to, IExpression amount)
             => new LerpExpression(from, to, amount);
 
@@ -633,16 +633,16 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.AxisAngle"/> block.
         /// </summary>
-        /// <param name="axis"></param>
-        /// <param name="angle"></param>
+        /// <param name="axis">The axis to rotate around.</param>
+        /// <param name="angle">How much to rotate (in degrees).</param>
         public static IExpression AxisAngle(IExpression axis, IExpression angle)
             => new BinaryExpression(axis, angle, StockBlocks.Math.AxisAngle);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.ScreenToWorld"/> block.
         /// </summary>
-        /// <param name="screenX"></param>
-        /// <param name="screenY"></param>
+        /// <param name="screenX">The x position in screen space.</param>
+        /// <param name="screenY">The y position in screen space.</param>
         public static (IExpression WorldNear, IExpression WorldFar) ScreenToWorld(IExpression screenX, IExpression screenY)
         {
             var expression = new ScreenToWorldExpression(screenX, screenY);
@@ -685,8 +685,8 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.WorldToScreen"/> block.
         /// </summary>
-        /// <param name="worldPos"></param>
-        public static (IExpression WorldNear, IExpression WorldFar) WorldToScreen(IExpression worldPos)
+        /// <param name="worldPos">Position in world space.</param>
+        public static (IExpression ScreenX, IExpression ScreenY) WorldToScreen(IExpression worldPos)
         {
             var expression = new WorldToScreenExpression(worldPos);
 
@@ -725,10 +725,10 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.LineVsPlane"/> block.
         /// </summary>
-        /// <param name="lineFrom"></param>
-        /// <param name="lineTo"></param>
-        /// <param name="planePoint"></param>
-        /// <param name="planeNormal"></param>
+        /// <param name="lineFrom">Line's starting position.</param>
+        /// <param name="lineTo">Line's end position.</param>
+        /// <param name="planePoint">A point on the plane.</param>
+        /// <param name="planeNormal">A vector perpendicular to the plane (the up direction from the plane's surface).</param>
         public static IExpression LineVsPlane(IExpression lineFrom, IExpression lineTo, IExpression planePoint, IExpression planeNormal)
             => new LineVsPlaneExpression(lineFrom, lineTo, planePoint, planeNormal);
 
@@ -768,26 +768,26 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.LookRotation"/> block.
         /// </summary>
-        /// <param name="direction"></param>
-        /// <param name="up"></param>
+        /// <param name="direction">The direction to point in.</param>
+        /// <param name="up">The up direction.</param>
         public static IExpression LookRotation(IExpression direction, IExpression up)
             => new BinaryExpression(direction, up, StockBlocks.Math.LookRotation);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Make_Vector"/> block.
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="z"></param>
+        /// <param name="x">The x component of the vector.</param>
+        /// <param name="y">The y component of the vector.</param>
+        /// <param name="z">The z component of the vector.</param>
         public static IExpression MakeVector(IExpression x, IExpression y, IExpression z)
             => new MakeVectorExpression(x, y, z, true);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Make_Rotation"/> block.
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="z"></param>
+        /// <param name="x">The x component of the rotation (in degrees).</param>
+        /// <param name="y">The y component of the rotation (in degrees).</param>
+        /// <param name="z">The z component of the rotation (in degrees).</param>
         public static IExpression MakeRotation(IExpression x, IExpression y, IExpression z)
             => new MakeVectorExpression(x, y, z, false);
 
@@ -826,7 +826,7 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Break_Vector"/> block.
         /// </summary>
-        /// <param name="vector"></param>
+        /// <param name="vector">The vector to break.</param>
         public static (IExpression X, IExpression Y, IExpression Z) BreakVector(IExpression vector)
         {
             var expression = new BreakVecRotExpression(vector, true);
@@ -837,7 +837,7 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Break_Rotation"/> block.
         /// </summary>
-        /// <param name="rotation"></param>
+        /// <param name="rotation">The rotation to break.</param>
         public static (IExpression X, IExpression Y, IExpression Z) BreakRotation(IExpression rotation)
         {
             var expression = new BreakVecRotExpression(rotation, false);
@@ -880,28 +880,28 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Values.Number"/> block.
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">The value to write.</param>
         public static IExpression Number(float value)
             => new LiteralExpression(value, SignalType.Float);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Values.Vector"/> block.
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">The value to write.</param>
         public static IExpression Vector(Vector3 value)
             => new LiteralExpression(value, SignalType.Vec3);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Values.Rotation"/> block.
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">The value to write.</param>
         public static IExpression Rotation(Vector3 value)
             => new LiteralExpression(new Rotation(new float3(value.X, value.Y, value.Z)), SignalType.Rot);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Values.True"/> or <see cref="StockBlocks.Values.False"/> block.
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">The value to write.</param>
         public static IExpression Truth(bool value)
             => new LiteralExpression(value, SignalType.Bool);
 
@@ -953,7 +953,7 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the get variable block.
         /// </summary>
-        /// <param name="variable"></param>
+        /// <param name="variable">The variable to write.</param>
         public static IExpression Variable(Variable variable)
             => new VariableExpression(variable);
 
@@ -981,17 +981,17 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the list block.
         /// </summary>
-        /// <param name="variable"></param>
-        /// <param name="index"></param>
+        /// <param name="variable">The variable whose index should be changed.</param>
+        /// <param name="index">The value to add to <paramref name="variable"/>'s index.</param>
         public static IExpression List(IExpression variable, IExpression index)
             => new ListExpression(variable, index, variable.Type);
 
         /// <summary>
         /// Writes the list block.
         /// </summary>
-        /// <param name="variable"></param>
-        /// <param name="index"></param>
-        /// <param name="type"></param>
+        /// <param name="variable">The variable whose index should be changed.</param>
+        /// <param name="index">The value to add to <paramref name="variable"/>'s index.</param>
+        /// <param name="type">Type of the variable.</param>
         public static IExpression List(IExpression variable, IExpression index, SignalType type)
             => new ListExpression(variable, index, type);
 

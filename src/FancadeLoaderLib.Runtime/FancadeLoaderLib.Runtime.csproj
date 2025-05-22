@@ -4,7 +4,7 @@
     <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<LangVersion>latest</LangVersion>
+	<LangVersion>13</LangVersion>
 	<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	<EnableNETAnalyzers>True</EnableNETAnalyzers>
 	<AnalysisLevel>latest</AnalysisLevel>

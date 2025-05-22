@@ -8,11 +8,7 @@ using FancadeLoaderLib.Editing.Scripting.Terminals;
 using FancadeLoaderLib.Editing.Scripting.TerminalStores;
 using FancadeLoaderLib.Editing.Scripting.Utils;
 using FancadeLoaderLib.Editing.Utils;
-using MathUtils.Vectors;
 using System;
-using System.Data;
-using System.Diagnostics;
-using System.Transactions;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting;
