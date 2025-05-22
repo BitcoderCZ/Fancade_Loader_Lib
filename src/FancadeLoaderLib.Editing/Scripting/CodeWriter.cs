@@ -603,12 +603,8 @@ public sealed partial class CodeWriter
     /// <param name="condition">Condition of the if.</param>
     /// <param name="true">Writes what should be executed when <paramref name="condition"/> is <see langword="true"/>.</param>
     /// <param name="false">Writes what should be executed when <paramref name="condition"/> is <see langword="false"/>.</param>
-    public void If(IExpression condition, Action<CodeWriter> @true, Action<CodeWriter> @false)
+    public void If(IExpression condition, Action<CodeWriter>? @true, Action<CodeWriter>? @false)
     {
-        ThrowIfNull(condition);
-        ThrowIfNull(@true);
-        ThrowIfNull(@false);
-
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.If);
 
         using (ExpressionBlock())
@@ -628,7 +624,7 @@ public sealed partial class CodeWriter
     /// Writes the <see cref="StockBlocks.Control.PlaySensor"/> block.
     /// </summary>
     /// <param name="onPlay">Writes what should be executed only on the first frame.</param>
-    public void PlaySensor(Action<CodeWriter> onPlay)
+    public void PlaySensor(Action<CodeWriter>? onPlay)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.PlaySensor);
 
@@ -643,7 +639,7 @@ public sealed partial class CodeWriter
     /// Writes the <see cref="StockBlocks.Control.LateUpdate"/> block.
     /// </summary>
     /// <param name="afterPhysics">Writes what should be executed only after physics but before rendering.</param>
-    public void LateUpdate(Action<CodeWriter> afterPhysics)
+    public void LateUpdate(Action<CodeWriter>? afterPhysics)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.LateUpdate);
 
@@ -658,7 +654,7 @@ public sealed partial class CodeWriter
     /// Writes the <see cref="StockBlocks.Control.BoxArtSensor"/> block.
     /// </summary>
     /// <param name="onScreenshot">Writes what should be executed only when taking boxart.</param>
-    public void BoxArtSensor(Action<CodeWriter> onScreenshot)
+    public void BoxArtSensor(Action<CodeWriter>? onScreenshot)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.BoxArtSensor);
 
@@ -676,7 +672,7 @@ public sealed partial class CodeWriter
     /// <param name="touchFinger">Index of the finger to detect, 0 - 2.</param>
     /// <param name="touched">Writes what should be executed when touch is detected.</param>
     /// <returns>The x and y position of the touch.</returns>
-    public (ITerminal ScreenX, ITerminal ScreenY) TouchSensor(TouchState touchState, int touchFinger, Action<CodeWriter, ITerminal, ITerminal> touched)
+    public (ITerminal ScreenX, ITerminal ScreenY) TouchSensor(TouchState touchState, int touchFinger, Action<CodeWriter, ITerminal, ITerminal>? touched)
     {
         if (touchFinger < 0 || touchFinger > FancadeConstants.TouchSensorMaxFingerIndex)
         {
@@ -702,7 +698,7 @@ public sealed partial class CodeWriter
     /// </summary>
     /// <param name="swiped">Writes what should be executed when swipe is detected.</param>
     /// <returns>Direction of the swipe.</returns>
-    public ITerminal SwipeSensor(Action<CodeWriter, ITerminal> swiped)
+    public ITerminal SwipeSensor(Action<CodeWriter, ITerminal>? swiped)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.SwipeSensor);
 
@@ -720,7 +716,7 @@ public sealed partial class CodeWriter
     /// </summary>
     /// <param name="buttonType">Type of the button.</param>
     /// <param name="button">Writes what should be executed when the button is pressed.</param>
-    public void Button(ButtonType buttonType, Action<CodeWriter> button)
+    public void Button(ButtonType buttonType, Action<CodeWriter>? button)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Button);
 
@@ -739,7 +735,7 @@ public sealed partial class CodeWriter
     /// <param name="firstObject">The object whose collisions should be detected.</param>
     /// <param name="collided">Writes what should be executed when <paramref name="firstObject"/> collides with another object.</param>
     /// <returns>The object <paramref name="firstObject"/> collided with, impulse of the collision and the normal of the collision.</returns>
-    public (ITerminal SecondObjectTerminal, ITerminal ImpulseTerminal, ITerminal NormalTerminal) Collision(IExpression firstObject, Action<CodeWriter, ITerminal, ITerminal, ITerminal> collided)
+    public (ITerminal SecondObjectTerminal, ITerminal ImpulseTerminal, ITerminal NormalTerminal) Collision(IExpression firstObject, Action<CodeWriter, ITerminal, ITerminal, ITerminal>? collided)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Collision);
 
@@ -764,7 +760,7 @@ public sealed partial class CodeWriter
     /// <param name="stop">The end value (exclusive).</param>
     /// <param name="do">Writes what should be executed in the loop.</param>
     /// <returns>The current value of the loop.</returns>
-    public ITerminal Loop(IExpression start, IExpression stop, Action<CodeWriter, ITerminal> @do)
+    public ITerminal Loop(IExpression start, IExpression stop, Action<CodeWriter, ITerminal>? @do)
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Loop);
 
@@ -1005,8 +1001,13 @@ public sealed partial class CodeWriter
     private static bool IsLiteralOfValue(IExpression expression, float value)
         => expression is Expressions.LiteralExpression literal && literal.Type == SignalType.Float && (float)literal._value == value;
 
-    private void ConnectOut(ITerminal terminal, Action<CodeWriter> writeFunc)
+    private void ConnectOut(ITerminal terminal, Action<CodeWriter>? writeFunc)
     {
+        if (writeFunc is null)
+        {
+            return;
+        }
+
         _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
         using (_codePlacer.StatementBlock())
         {
@@ -1014,8 +1015,13 @@ public sealed partial class CodeWriter
         }
     }
 
-    private void ConnectOut(ITerminal terminal, Action<CodeWriter, ITerminal> writeFunc, ITerminal arg1)
+    private void ConnectOut(ITerminal terminal, Action<CodeWriter, ITerminal>? writeFunc, ITerminal arg1)
     {
+        if (writeFunc is null)
+        {
+            return;
+        }
+
         _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
         using (_codePlacer.StatementBlock())
         {
@@ -1023,8 +1029,13 @@ public sealed partial class CodeWriter
         }
     }
 
-    private void ConnectOut(ITerminal terminal, Action<CodeWriter, ITerminal, ITerminal> writeFunc, ITerminal arg1, ITerminal arg2)
+    private void ConnectOut(ITerminal terminal, Action<CodeWriter, ITerminal, ITerminal>? writeFunc, ITerminal arg1, ITerminal arg2)
     {
+        if (writeFunc is null)
+        {
+            return;
+        }
+
         _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
         using (_codePlacer.StatementBlock())
         {
@@ -1032,8 +1043,13 @@ public sealed partial class CodeWriter
         }
     }
 
-    private void ConnectOut(ITerminal terminal, Action<CodeWriter, ITerminal, ITerminal, ITerminal> writeFunc, ITerminal arg1, ITerminal arg2, ITerminal arg3)
+    private void ConnectOut(ITerminal terminal, Action<CodeWriter, ITerminal, ITerminal, ITerminal>? writeFunc, ITerminal arg1, ITerminal arg2, ITerminal arg3)
     {
+        if (writeFunc is null)
+        {
+            return;
+        }
+
         _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
         using (_codePlacer.StatementBlock())
         {
