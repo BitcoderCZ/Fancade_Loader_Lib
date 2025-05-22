@@ -82,3 +82,5 @@ using static FancadeLoaderLib.Editing.Scripting.CodeWriter.Expressions;
      writer.Inspect(Variable(c));
  }
 ```
+Results in:
+![CodeWriter example result](https://github.com/BitcoderCZ/Fancade_Loader_Lib/blob/main/images/CodeWriter.png?raw=true)
