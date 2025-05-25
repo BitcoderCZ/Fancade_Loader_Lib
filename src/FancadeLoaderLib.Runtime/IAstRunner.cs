@@ -1,4 +1,6 @@
-﻿namespace FancadeLoaderLib.Runtime;
+﻿using FancadeLoaderLib.Editing;
+
+namespace FancadeLoaderLib.Runtime;
 
 public interface IAstRunner
 {

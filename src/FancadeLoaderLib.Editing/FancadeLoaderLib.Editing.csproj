@@ -4,7 +4,7 @@
     <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <Version>2.2.0</Version>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>13</LangVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
@@ -49,7 +49,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
-    <PackageReference Include="System.Collections.Immutable" Version="9.0.4" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.5" />
   </ItemGroup>
 
   <ItemGroup>

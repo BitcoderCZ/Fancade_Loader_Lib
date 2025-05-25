@@ -25,6 +25,9 @@ public sealed class ScopedCodePlacerWrapper : IScopedCodePlacer
     }
 
     /// <inheritdoc/>
+    public BlockBuilder Builder => _placer.Builder;
+
+    /// <inheritdoc/>
     public int CurrentCodeBlockBlocks => _scoped is null ? _placer.PlacedBlockCount : _scoped.CurrentCodeBlockBlocks;
 
     /// <inheritdoc/>
@@ -65,4 +68,8 @@ public sealed class ScopedCodePlacerWrapper : IScopedCodePlacer
     /// <inheritdoc/>
     public void ExitStatementBlock()
         => _scoped?.ExitStatementBlock();
+
+    /// <inheritdoc/>
+    public void Flush()
+        => _placer.Flush();
 }

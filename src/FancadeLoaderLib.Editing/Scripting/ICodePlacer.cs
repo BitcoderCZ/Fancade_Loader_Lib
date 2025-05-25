@@ -9,10 +9,16 @@ using static FancadeLoaderLib.Utils.ThrowHelper;
 namespace FancadeLoaderLib.Editing.Scripting;
 
 /// <summary>
-/// Exposes funcitons for placingand connecting blocks and setting setttings.
+/// Exposes funcitons for placing and connecting blocks and setting setttings.
 /// </summary>
 public interface ICodePlacer
 {
+    /// <summary>
+    /// Gets the underlying <see cref="BlockBuilder"/>.
+    /// </summary>
+    /// <value>The underlying <see cref="BlockBuilder"/>.</value>
+    BlockBuilder Builder { get; }
+
     /// <summary>
     /// Gets the number of blocks placed.
     /// </summary>
@@ -40,6 +46,11 @@ public interface ICodePlacer
     /// <param name="settingIndex">Index of the setting.</param>
     /// <param name="value">The setting value.</param>
     void SetSetting(Block block, int settingIndex, object value);
+
+    /// <summary>
+    /// Flushes the data to the underlying builder.
+    /// </summary>
+    void Flush();
 }
 
 /// <summary>

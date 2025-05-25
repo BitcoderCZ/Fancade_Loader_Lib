@@ -110,7 +110,7 @@ internal static class ThrowHelper
 
     #region Conditional
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNegative(int value, string paramName)
+    public static void ThrowIfNegative(int value, [CallerArgumentExpression("value")] string paramName = "")
     {
         if (value < 0)
         {
@@ -119,25 +119,25 @@ internal static class ThrowHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfLessThan(int value, int other, string paramName)
+    public static void ThrowIfLessThan(int value, int other, [CallerArgumentExpression("value")] string paramName = "")
     {
         if (value < other)
         {
-            ThrowArgumentOutOfRangeException(paramName, $"{paramName} ({value}) must be greater than or equal to {other}.");
+            ThrowArgumentOutOfRangeException(paramName, $"{paramName} ({value}) must be greater than or equal {other}.");
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfGreaterThan(int value, int other, string paramName)
+    public static void ThrowIfGreaterThan(int value, int other, [CallerArgumentExpression("value")] string paramName = "")
     {
-        if (value > other)
+        if (value.CompareTo(other) > 0)
         {
             ThrowArgumentOutOfRangeException(paramName, $"{paramName} ({value}) must be less than or equal to {other}.");
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNull<T>(T? value, string paramName)
+    public static void ThrowIfNull<T>(T? value, [CallerArgumentExpression("value")] string paramName = "")
     {
         if (value is null)
         {

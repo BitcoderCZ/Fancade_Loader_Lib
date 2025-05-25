@@ -50,4 +50,34 @@ public static class QuaternionUtils
 
         return Quaternion.CreateFromRotationMatrix(rotationMatrix);
     }
+
+    public static Vector3 GetEuler(this Quaternion rot)
+        => new Vector3(rot.GetEulerX(), rot.GetEulerY(), rot.GetEulerZ());
+
+    public static float GetEulerX(this Quaternion rot)
+    {
+        float pitchSin = 2.0f * ((rot.W * rot.Y) - (rot.Z * rot.X));
+
+        return pitchSin > 1.0f ? 90f : pitchSin < -1.0f ? -90f : MathF.Asin(pitchSin) * (180f / MathF.PI);
+    }
+
+    public static float GetEulerY(this Quaternion rot)
+    {
+        float xx = rot.X * rot.X;
+        float yy = rot.Y * rot.Y;
+        float zz = rot.Z * rot.Z;
+        float ww = rot.W * rot.W;
+
+        return MathF.Atan2(2.0f * ((rot.Y * rot.Z) + (rot.W * rot.X)), ww + xx - yy - zz) * (180f / MathF.PI);
+    }
+
+    public static float GetEulerZ(this Quaternion rot)
+    {
+        float xx = rot.X * rot.X;
+        float yy = rot.Y * rot.Y;
+        float zz = rot.Z * rot.Z;
+        float ww = rot.W * rot.W;
+
+        return MathF.Atan2(2.0f * ((rot.X * rot.Y) + (rot.W * rot.Z)), ww - xx - yy + zz) * (180f / MathF.PI);
+    }
 }

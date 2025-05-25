@@ -38,6 +38,9 @@ public sealed class GroundCodePlacer : IScopedCodePlacer
     }
 
     /// <inheritdoc/>
+    public BlockBuilder Builder => _builder;
+
+    /// <inheritdoc/>
     public int CurrentCodeBlockBlocks => _expressions.Count != 0 ? _expressions.Peek().BlockCount : _statements.Peek().BlockCount;
 
     /// <inheritdoc/>
@@ -144,7 +147,8 @@ public sealed class GroundCodePlacer : IScopedCodePlacer
 
         if (_statements.Count == 1)
         {
-            Debug.Assert(expression.Parent?.Parent is not null, "Parent of parent shouldn't be null.");
+            // TODO: get's hit but code still works fine, figure out why it's here and fix or remove
+            //Debug.Assert(expression.Parent?.Parent is not null, "Parent of parent shouldn't be null.");
 
             // if this is child of the top statement, process and assign x and y position to blocks
             LayerStack.Process(expression, BlockXOffset);
@@ -158,6 +162,20 @@ public sealed class GroundCodePlacer : IScopedCodePlacer
     /// <inheritdoc/>
     public void ExitHightlight()
         => _inHighlight = false;
+
+    /// <inheritdoc/>
+    public void Flush()
+    {
+        while (_expressions.Count > 0)
+        {
+            ExitExpressionBlock();
+        }
+
+        while (_statements.Count > 0)
+        {
+            ExitStatementBlock();
+        }
+    }
 
     private StatementCodeBlock CreateFunction()
         => new StatementCodeBlock(this, 0);

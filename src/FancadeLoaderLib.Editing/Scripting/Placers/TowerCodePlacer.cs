@@ -33,6 +33,9 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
     }
 
     /// <inheritdoc/>
+    public BlockBuilder Builder => _builder;
+
+    /// <inheritdoc/>
     public int CurrentCodeBlockBlocks => _blocks.Count;
 
     /// <inheritdoc/>
@@ -105,7 +108,7 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
 
         if (_statementDepth < 0)
         {
-            ThrowInvalidOperationException("Must be in a statement to exit one.");
+            ThrowInvalidOperationException("Exited a statement block without being in one.");
         }
 
         if (_statementDepth <= 0 && _blocks.Count > 0)
@@ -163,4 +166,13 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
     /// <inheritdoc/>
     public void ExitHightlight()
         => _inHighlight = false;
+
+    /// <inheritdoc/>
+    public void Flush()
+    {
+        while (_statementDepth > 0)
+        {
+            ExitStatementBlock();
+        }
+    }
 }

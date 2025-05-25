@@ -1,4 +1,5 @@
-﻿using MathUtils.Vectors;
+using FancadeLoaderLib.Editing;
+using MathUtils.Vectors;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Runtime.Syntax.Variables;

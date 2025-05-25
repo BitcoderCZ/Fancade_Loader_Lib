@@ -29,7 +29,7 @@ public readonly struct MaxBuyCount : IEquatable<MaxBuyCount>
     /// <param name="value">Value of the <see cref="MaxBuyCount"/>, must be between 0 and 101.</param>
     public MaxBuyCount(int value)
     {
-        ThrowIfNegative(value, nameof(value));
+        ThrowIfNegative(value);
         if (value > 101)
         {
             ThrowArgumentOutOfRangeException($"{nameof(value)} must be less than or equal to 101.", nameof(value));

@@ -1,4 +1,8 @@
-﻿namespace FancadeLoaderLib.Runtime;
+﻿using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("FancadeLoaderLib.Runtime.Tests")]
+
+namespace FancadeLoaderLib.Runtime;
 
 internal static class Constants
 {
