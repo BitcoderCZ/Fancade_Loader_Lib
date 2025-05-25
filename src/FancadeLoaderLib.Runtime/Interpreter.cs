@@ -1124,7 +1124,8 @@ public sealed class Interpreter : IAstRunner
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var binary = (BinaryExpressionSyntax)terminal.Node;
-                    var input1 = GetValue(binary.Input1, environment);
+                    var input1Out = GetOutput(binary.Input1, environment);
+                    var input1 = input1Out.GetValue(_variableAccessor);
 
                     // optimize by not getting the second value when not needed
                     switch (terminal.Node.PrefabId)
@@ -1135,7 +1136,8 @@ public sealed class Interpreter : IAstRunner
                             return new TerminalOutput(new RuntimeValue(input1.Bool || GetValue(binary.Input2, environment).Bool));
                     }
 
-                    var input2 = GetValue(binary.Input2, environment);
+                    var input2Out = GetOutput(binary.Input2, environment);
+                    var input2 = input1Out.GetValue(_variableAccessor);
                     RuntimeValue value;
 
                     value = terminal.Node.PrefabId switch
@@ -1157,7 +1159,7 @@ public sealed class Interpreter : IAstRunner
                         421 => new(input1.Bool == input2.Bool),
                         128 => new(input1.Float < input2.Float),
                         481 => new(input1.Float > input2.Float),
-                        168 => new(_ctx.GetRandomValue(input1.Float, input2.Float)),
+                        168 => new(_ctx.GetRandomValue(input1.Float, input2Out.IsConnected ? input2.Float : 1f)),
                         176 => new(MathF.Min(input1.Float, input2.Float)),
                         180 => new(MathF.Max(input1.Float, input2.Float)),
                         580 => new(MathF.Log(input1.Float, input2.Float)),

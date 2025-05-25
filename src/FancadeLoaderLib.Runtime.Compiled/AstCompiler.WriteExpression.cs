@@ -29,6 +29,18 @@ public partial class AstCompiler
         return WriteExpression(terminal, type.IsPointer(), environment, writer);
     }
 
+    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, string defaultValue, SignalType type, Environment environment, IndentedTextWriter writer)
+    {
+        if (terminal is null)
+        {
+            writer.Write(defaultValue);
+
+            return new ExpressionInfo(type);
+        }
+
+        return WriteExpression(terminal, type.IsPointer(), environment, writer);
+    }
+
     private ExpressionInfo WriteExpressionOrNull(SyntaxTerminal? terminal, SignalType type, Environment environment, IndentedTextWriter writer)
     {
         if (terminal is null)
@@ -424,14 +436,16 @@ public partial class AstCompiler
                     {
                         case 90:
                             outType = SignalType.Float;
-                            writer.Write('-');
+                            writer.Write("-(");
                             WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
+                            writer.Write(')');
 
                             break;
                         case 144:
                             outType = SignalType.Bool;
-                            writer.Write('!');
+                            writer.Write("!(");
                             WriteExpressionOrDefault(unary.Input, SignalType.Bool, environment, writer);
+                            writer.Write(')');
 
                             break;
                         case 440:
@@ -641,7 +655,7 @@ public partial class AstCompiler
                             writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetRandomValue)}(");
                             WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(", ");
-                            WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
+                            WriteExpressionOrDefault(binary.Input2, "1f", SignalType.Float, environment, writer);
                             writer.Write(')');
                             break;
                         case 176:

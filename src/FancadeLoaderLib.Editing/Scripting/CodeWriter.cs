@@ -785,7 +785,7 @@ public sealed partial class CodeWriter
     /// <param name="seed">The new random seed.</param>
     public void RandomSeed(IExpression seed)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Math.Random);
+        var block = _codePlacer.PlaceBlock(StockBlocks.Math.RandomSeed);
 
         using (ExpressionBlock())
         {

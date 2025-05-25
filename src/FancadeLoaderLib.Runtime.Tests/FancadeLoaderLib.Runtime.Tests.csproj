@@ -8,14 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="ExecutionTests.Math.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="ExecutionTests.Math.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="TUnit" Version="0.21.16" />
   </ItemGroup>
 

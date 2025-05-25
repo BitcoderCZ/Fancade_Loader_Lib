@@ -140,6 +140,23 @@ public partial class ExecutionTests
         await Assert.That(compiled).Inspects(Enumerable.Range(1, 10).Select(i => new InspectAssertExpected((float)(11 - i)) { Order = i, FrameCount = 1 }));
     }
 
+    [Test]
+    public async Task Random_ValueIsCorrect()
+    {
+        var writer = CreateWriter();
+
+        writer.RandomSeed(Number(0f));
+        writer.Inspect(Random(None(), None()));
+        writer.Inspect(Random(None(), None()));
+
+        var compiled = Compile(writer);
+
+        var rng = new FcRandom();
+        rng.SetSeed(0f);
+
+        await Assert.That(compiled).Inspects([new(rng.NextSingle()) { Count = 2 }, new(rng.NextSingle()) { Count = 2 }], runFor: 2);
+    }
+
     private static CodeWriter CreateWriter()
     {
         var builder = CreateBuilder();

@@ -1,5 +1,6 @@
 ﻿using FancadeLoaderLib.Editing.Scripting.Settings;
 using FancadeLoaderLib.Runtime.Compiled;
+using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
 using System.Diagnostics;
 using System.Numerics;
@@ -175,7 +176,16 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
 
                 if (AllowOnlyExpectedInspects && !matched)
                 {
-                    return AssertionResult.Fail($"non expected inspect occured, '{inspect.Value}' at pos {inspect.InspectBlockPosition}");
+                    object inspectVal = inspect.Value.GetValueOfType(inspect.Type);
+                    string inspected = inspectVal switch
+                    {
+                        float f => f.ToString("0.###"),
+                        float3 f3 => f3.ToString("0.###"),
+                        Quaternion q => q.GetEuler().ToString("0.###"),
+                        _ => inspectVal?.ToString() ?? "null",
+                    };
+
+                    return AssertionResult.Fail($"non expected inspect occured, '{inspected}' at pos {inspect.InspectBlockPosition}");
                 }
             }
 
@@ -248,6 +258,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
     private sealed class InspectRuntimeContext : IRuntimeContext
     {
         private readonly Queue<Inspect> _inspectQueue;
+        private readonly FcRandom _rng = new();
 
         public InspectRuntimeContext(Queue<Inspect> inspectQueue)
         {
@@ -313,7 +324,10 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
             => default;
 
         public float GetRandomValue(float min, float max)
-            => default;
+        {
+            float val = _rng.NextSingle(min, max);
+            return val;
+        }
 
         public (float3 Min, float3 Max) GetSize(FcObject @object)
             => default;
@@ -383,8 +397,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         }
 
         public void SetRandomSeed(float seed)
-        {
-        }
+            => _rng.SetSeed(seed);
 
         public void SetScore(float? score, float? coins, Ranking ranking)
         {
