@@ -292,15 +292,15 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void AngularLimits(FcConstraint constraint, float3? lower, float3? upper)
+        public void AngularLimits(FcConstraint constraint, float3 lower, float3 upper)
         {
         }
 
-        public void AngularMotor(FcConstraint constraint, float3? speed, float3? force)
+        public void AngularMotor(FcConstraint constraint, float3 speed, float3 force)
         {
         }
 
-        public void AngularSpring(FcConstraint constraint, float3? stiffness, float3? damping)
+        public void AngularSpring(FcConstraint constraint, float3 stiffness, float3 damping)
         {
         }
 
@@ -335,15 +335,15 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public (float3 Velocity, float3 Spin) GetVelocity(FcObject @object)
             => default;
 
-        public void LinearLimits(FcConstraint constraint, float3? lower, float3? upper)
+        public void LinearLimits(FcConstraint constraint, float3 lower, float3 upper)
         {
         }
 
-        public void LinearMotor(FcConstraint constraint, float3? speed, float3? force)
+        public void LinearMotor(FcConstraint constraint, float3 speed, float3 force)
         {
         }
 
-        public void LinearSpring(FcConstraint constraint, float3? stiffness, float3? damping)
+        public void LinearSpring(FcConstraint constraint, float3 stiffness, float3 damping)
         {
         }
 
