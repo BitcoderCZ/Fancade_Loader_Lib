@@ -88,7 +88,10 @@ public sealed class RuntimeObject : IDisposable
     {
         Debug.Assert(RigidBody.MotionState is not null);
 
-        var wt = RigidBody.MotionState.WorldTransform;
+        // for some reason in some situations not updated
+        //var wt = RigidBody.MotionState.WorldTransform;
+        //Debug.Assert(wt == RigidBody.WorldTransform);
+        var wt = RigidBody.WorldTransform;
 
         Pos = wt.Translation.ToFloat3();
         Rot = wt.GetRotation();

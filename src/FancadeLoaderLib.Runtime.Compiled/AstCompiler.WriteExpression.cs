@@ -10,6 +10,7 @@ using FancadeLoaderLib.Runtime.Syntax.Physics;
 using FancadeLoaderLib.Runtime.Syntax.Sound;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
+using MathUtils.Vectors;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
 
@@ -17,7 +18,7 @@ namespace FancadeLoaderLib.Runtime.Compiled;
 
 public partial class AstCompiler
 {
-    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, SignalType type, Environment environment, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, SignalType type, FcEnvironment environment, IndentedTextWriter writer)
     {
         if (terminal is null)
         {
@@ -29,7 +30,7 @@ public partial class AstCompiler
         return WriteExpression(terminal, type.IsPointer(), environment, writer);
     }
 
-    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, string defaultValue, SignalType type, Environment environment, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, string defaultValue, SignalType type, FcEnvironment environment, IndentedTextWriter writer)
     {
         if (terminal is null)
         {
@@ -41,7 +42,7 @@ public partial class AstCompiler
         return WriteExpression(terminal, type.IsPointer(), environment, writer);
     }
 
-    private ExpressionInfo WriteExpressionOrNull(SyntaxTerminal? terminal, SignalType type, Environment environment, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpressionOrNull(SyntaxTerminal? terminal, SignalType type, FcEnvironment environment, IndentedTextWriter writer)
     {
         if (terminal is null)
         {
@@ -53,10 +54,10 @@ public partial class AstCompiler
         return WriteExpression(terminal, type.IsPointer(), environment, writer);
     }
 
-    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, Environment environment, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, FcEnvironment environment, IndentedTextWriter writer)
         => WriteExpression(terminal, asReference, environment, false, writer);
 
-    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, Environment environment, bool direct, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, FcEnvironment environment, bool direct, IndentedTextWriter writer)
     {
         if (!direct)
         {
@@ -137,7 +138,8 @@ public partial class AstCompiler
 
                     WriteExpressionOrDefault(getPosition.Object, SignalType.Obj, environment, writer);
 
-                    writer.Write(')');
+                    var np = terminal.Node.Position;
+                    writer.WriteInv($", _environments[{environment.Index}], new {nameof(int3)}({np.X}, {np.Y}, {np.Z}))");
 
                     if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
                     {
@@ -178,7 +180,7 @@ public partial class AstCompiler
                     }
                     else if (terminal.Position == TerminalDef.GetOutPosition(2, 2, 3))
                     {
-                        writer.Write(".HitObj.Value");
+                        writer.Write(".HitObj");
                         return new ExpressionInfo(SignalType.Obj);
                     }
                     else
@@ -1027,13 +1029,13 @@ public partial class AstCompiler
                                     }
                                 }
 
-                                // TODO: throw
-                                return new ExpressionInfo(SignalType.Error);
+                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObject)}(new ushort3({environment.OuterPosition.X}, {environment.OuterPosition.Y}, {environment.OuterPosition.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z}), {outerEnvironment.AST.PrefabId})");
+                                return new ExpressionInfo(SignalType.Obj);
                             }
 
                         case CustomStatementSyntax custom:
                             {
-                                var customEnvironment = (Environment)environment.BlockData[custom.Position];
+                                var customEnvironment = (FcEnvironment)environment.BlockData[custom.Position];
 
                                 foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
                                 {

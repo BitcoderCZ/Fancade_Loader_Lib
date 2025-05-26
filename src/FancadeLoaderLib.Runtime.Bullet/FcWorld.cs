@@ -23,6 +23,8 @@ public sealed partial class FcWorld : IDisposable
 
     private readonly RigidBody _groundPlane;
 
+    private readonly ushort _mainPrefab;
+
     private readonly PrefabList _prefabs;
 
     private readonly GameMeshInfo _gameMesh;
@@ -51,6 +53,7 @@ public sealed partial class FcWorld : IDisposable
         _runner = runnerFactory(_runtimeCtx);
         _cameraInfo = new CameraInfo(new ScreenInfo(_runtimeCtx.ScreenSize.ToNumerics()));
         _prefabs = prefabs;
+        _mainPrefab = mainId;
 
         var collisionConf = new DefaultCollisionConfiguration();
         var dispatcher = new CollisionDispatcher(collisionConf);
@@ -668,6 +671,75 @@ public sealed partial class FcWorld : IDisposable
         }
 
         return _idToConstraint.TryGetValue(constraint, out bConstraint);
+    }
+
+    private bool TryGetObjectByPos(ushort prefabId, int3 pos, int3 voxelPos, [MaybeNullWhen(false)] out RuntimeObject rObject)
+    {
+        var stockPrefabs = StockBlocks.PrefabList;
+
+        // TODO
+        var terminalInfos = PrefabTerminalInfo.Create(stockPrefabs.Concat(_prefabs));
+
+        Prefab prefab;
+        try
+        {
+            prefab = _prefabs.GetPrefabOrStock(prefabId);
+        }
+        catch
+        {
+            rObject = null;
+            return false;
+        }
+
+        var meshInfo = _gameMesh.GetBlockMesh(prefab.Id);
+        var segmentMeshes = _gameMesh.GetSegmentMesh(prefab.Id);
+
+        int meshIndex = meshInfo.BlockMeshIds[meshInfo.BlockMeshIdOffsets[pos.ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)] + segmentMeshes.VoxelMeshIndex[PrefabSegment.IndexVoxels(voxelPos)]];
+
+        var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
+
+        if (obj is not null)
+        {
+            rObject = obj;
+            return true;
+        }
+
+        rObject = null;
+        return false;
+    }
+
+    private bool TryGetObjectByPos(ushort prefabId, int3 pos, int meshIndex, [MaybeNullWhen(false)] out RuntimeObject rObject)
+    {
+        var stockPrefabs = StockBlocks.PrefabList;
+
+        // TODO
+        var terminalInfos = PrefabTerminalInfo.Create(stockPrefabs.Concat(_prefabs));
+
+        Prefab prefab;
+        try
+        {
+            prefab = _prefabs.GetPrefabOrStock(prefabId);
+        }
+        catch
+        {
+            rObject = null;
+            return false;
+        }
+
+        var meshInfo = _gameMesh.GetBlockMesh(prefab.Id);
+
+        int prefabMeshIndex = meshInfo.BlockMeshIds[meshInfo.BlockMeshIdOffsets[pos.ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)] + meshIndex];
+
+        var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == prefabMeshIndex);
+
+        if (obj is not null)
+        {
+            rObject = obj;
+            return true;
+        }
+
+        rObject = null;
+        return false;
     }
 
     public void Dispose()

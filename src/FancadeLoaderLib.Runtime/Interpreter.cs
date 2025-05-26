@@ -35,7 +35,7 @@ public sealed class Interpreter : IAstRunner
     private static readonly byte3 PosOut24 = TerminalDef.GetOutPosition(2, 2, 4);
     private static readonly byte3 PosOut34 = TerminalDef.GetOutPosition(3, 2, 4);
 
-    private readonly Environment[] _environments;
+    private readonly FcEnvironment[] _environments;
     private readonly IRuntimeContext _ctx;
 
     private readonly InterpreterVariableAccessor _variableAccessor;
@@ -60,10 +60,10 @@ public sealed class Interpreter : IAstRunner
 
         _ctx = ctx;
 
-        List<Environment> environments = [];
+        List<FcEnvironment> environments = [];
         List<ImmutableArray<Variable>> variables = [];
 
-        var mainEnvironment = new Environment(ast, 0, -1, ushort3.Zero);
+        var mainEnvironment = new FcEnvironment(ast, 0, -1, ushort3.Zero);
         environments.Add(mainEnvironment);
         variables.Add(mainEnvironment.AST.Variables);
 
@@ -138,7 +138,10 @@ public sealed class Interpreter : IAstRunner
         return _variableAccessor.GetVariableValues(_variableAccessor.GetVariableId(_environments[0], variable));
     }
 
-    private static void InitEnvironments(Environment outer, List<Environment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
+    public IFcEnvironment GetEnvironment(int index)
+        => _environments[index];
+
+    private static void InitEnvironments(FcEnvironment outer, List<FcEnvironment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
     {
         if (depth > maxDepth)
         {
@@ -149,7 +152,7 @@ public sealed class Interpreter : IAstRunner
         {
             if (node is CustomStatementSyntax customStatement)
             {
-                var environment = new Environment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
+                var environment = new FcEnvironment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
                 environments.Add(environment);
                 variables.Add(environment.AST.Variables);
                 outer.BlockData[customStatement.Position] = environment;
@@ -744,7 +747,7 @@ public sealed class Interpreter : IAstRunner
                             throw new InvalidNodePrefabIdException(statement.PrefabId);
                         }
 
-                        var customEnvironment = (Environment)environment.BlockData[custom.Position];
+                        var customEnvironment = (FcEnvironment)environment.BlockData[custom.Position];
 
                         foreach (var con in custom.AST.VoidInputs)
                         {
@@ -765,7 +768,7 @@ public sealed class Interpreter : IAstRunner
         }
     }
 
-    private void PushAfter(StatementSyntax statement, byte3 terminalPos, Environment environment, Stack<EntryPoint> stack)
+    private void PushAfter(StatementSyntax statement, byte3 terminalPos, FcEnvironment environment, Stack<EntryPoint> stack)
     {
         for (int i = statement.OutVoidConnections.Length - 1; i >= 0; i--)
         {
@@ -787,10 +790,10 @@ public sealed class Interpreter : IAstRunner
         }
     }
 
-    private RuntimeValue GetValue(SyntaxTerminal? terminal, Environment environment)
+    private RuntimeValue GetValue(SyntaxTerminal? terminal, FcEnvironment environment)
         => GetOutput(terminal, environment).GetValue(_variableAccessor);
 
-    private TerminalOutput GetOutput(SyntaxTerminal? terminal, Environment environment)
+    private TerminalOutput GetOutput(SyntaxTerminal? terminal, FcEnvironment environment)
     {
         if (terminal is null)
         {
@@ -848,7 +851,7 @@ public sealed class Interpreter : IAstRunner
                     var getPosition = (GetPositionExpressionSyntax)terminal.Node;
 
                     RuntimeValue val;
-                    var (position, rotation) = _ctx.GetObjectPosition((FcObject)GetValue(getPosition.Object, environment).Int);
+                    var (position, rotation) = _ctx.GetObjectPosition((FcObject)GetValue(getPosition.Object, environment).Int, environment, terminal.Node.Position);
 
                     if (terminal.Position == PosOut02)
                     {
@@ -1365,12 +1368,12 @@ public sealed class Interpreter : IAstRunner
                                     }
                                 }
 
-                                return TerminalOutput.Disconnected;
+                                return new TerminalOutput(new RuntimeValue(_ctx.GetObject(environment.OuterPosition, terminal.Position, outerEnvironment.AST.PrefabId).Value));
                             }
 
                         case CustomStatementSyntax custom:
                             {
-                                var customEnvironment = (Environment)environment.BlockData[custom.Position];
+                                var customEnvironment = (FcEnvironment)environment.BlockData[custom.Position];
 
                                 foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
                                 {
@@ -1444,7 +1447,7 @@ public sealed class Interpreter : IAstRunner
 
         public IEnumerable<KeyValuePair<Variable, int>> GlobalVariables => _globalVariableToId;
 
-        public int GetVariableId(Environment environment, Variable variable)
+        public int GetVariableId(FcEnvironment environment, Variable variable)
             => variable.IsGlobal ? _globalVariableToId[variable] : _variableToId[(environment.Index, variable)];
 
         public (int EnvironmentIndex, Variable Variable) GetVariable(int variableId)
@@ -1458,26 +1461,5 @@ public sealed class Interpreter : IAstRunner
 
         public Span<RuntimeValue> GetVariableValues(int variableId)
             => _variableManager.GetVariableValues(variableId);
-    }
-
-    private sealed class Environment
-    {
-        public Environment(AST ast, int index, int outerEnvironmentIndex, ushort3 outerPosition)
-        {
-            Index = index;
-            OuterEnvironmentIndex = outerEnvironmentIndex;
-            AST = ast;
-            OuterPosition = outerPosition;
-        }
-
-        public AST AST { get; }
-
-        public int Index { get; }
-
-        public int OuterEnvironmentIndex { get; }
-
-        public ushort3 OuterPosition { get; }
-
-        public Dictionary<ushort3, object> BlockData { get; } = [];
     }
 }

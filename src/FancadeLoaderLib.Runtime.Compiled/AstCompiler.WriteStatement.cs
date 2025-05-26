@@ -19,7 +19,7 @@ namespace FancadeLoaderLib.Runtime.Compiled;
 
 public partial class AstCompiler
 {
-    private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, Environment environment, out byte3 executeNext, IndentedTextWriter writer)
+    private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, FcEnvironment environment, out byte3 executeNext, IndentedTextWriter writer)
     {
         var statement = environment.AST.Statements[pos];
 
@@ -232,7 +232,7 @@ public partial class AstCompiler
                 break;
             case 391:
                 {
-                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
                     var volumePitch = (VolumePitchStatementSyntax)statement;
 
                     if (volumePitch.Channel is not null)
@@ -845,7 +845,7 @@ public partial class AstCompiler
 
                     executeNext = new byte3(255, 255, 255);
 
-                    var customEnvironment = (Environment)environment.BlockData[custom.Position];
+                    var customEnvironment = (FcEnvironment)environment.BlockData[custom.Position];
 
                     foreach (var con in custom.AST.VoidInputs)
                     {

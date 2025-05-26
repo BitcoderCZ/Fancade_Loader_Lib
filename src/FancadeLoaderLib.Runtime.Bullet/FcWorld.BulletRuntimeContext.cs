@@ -1,4 +1,5 @@
 ﻿using BulletSharp;
+using FancadeLoaderLib.Editing;
 using FancadeLoaderLib.Editing.Scripting.Settings;
 using FancadeLoaderLib.Runtime.Bullet.Utils;
 using FancadeLoaderLib.Runtime.Exceptions;
@@ -79,15 +80,56 @@ public sealed partial class FcWorld
             {
                 return obj;
             }
+            else if (_world.TryGetObjectByPos(prefabId, position, voxelPosition, out var rObject))
+            {
+                return rObject.Id;
+            }
 
             return FcObject.Null;
         }
 
-        public (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object)
+        public (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, IFcEnvironment environment, int3 blockPosition)
         {
+            if (@object == FcObject.Null)
+            {
+                if (environment.OuterEnvironmentIndex == -1)
+                {
+                    return (blockPosition + new float3(0.9375f, 0.1875f, 0.9375f), Quaternion.Identity);
+                }
+
+                // get the second top most environment
+                while (true)
+                {
+                    var outer = _world._runner.GetEnvironment(environment.OuterEnvironmentIndex);
+
+                    if (outer.OuterEnvironmentIndex == -1)
+                    {
+                        break;
+                    }
+
+                    environment = outer;
+                }
+
+                var (min, max) = _world._gameMesh.GetPrefabMeshBounds(environment.PrefabId);
+
+                var segment = _world._prefabs.GetSegmentOrStock(_world._prefabs.GetPrefab(_world._mainPrefab).Blocks.GetBlockOrDefault(environment.OuterPosition));
+
+                // prefab pos + size / 2
+                Vector3 pos = ((environment.OuterPosition - segment.PosInPrefab) + ((float3)((max - min) + int3.One) * 0.5f + min) * 0.125f).ToNumerics();
+                Quaternion rot = Quaternion.Identity;
+
+                if (_world.TryGetObjectByPos(_world._mainPrefab, environment.OuterPosition, 0, out var obj))
+                {
+                    pos -= obj.StartPos.ToNumerics();
+                    pos += obj.Pos.ToNumerics();
+                    rot = obj.Rot;
+                }
+
+                return (pos.ToFloat3(), rot);
+            }
+
             if (!_world.TryGetObject(@object, out var rObject))
             {
-                // TODO: return outside position
                 return (default, Quaternion.Identity);
             }
 

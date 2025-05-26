@@ -9,4 +9,6 @@ public interface IAstRunner
     Action RunFrame();
 
     Span<RuntimeValue> GetGlobalVariableValue(Variable variable);
+
+    IFcEnvironment GetEnvironment(int index);
 }

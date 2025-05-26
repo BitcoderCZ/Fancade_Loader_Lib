@@ -320,7 +320,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId)
             => default;
 
-        public (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object)
+        public (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, PrefabOutsideInfo? outside)
             => default;
 
         public float GetRandomValue(float min, float max)

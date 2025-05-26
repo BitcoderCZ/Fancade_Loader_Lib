@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace FancadeLoaderLib.Runtime.Bullet;
 
-public readonly struct PrefabSegmentMeshes
+public sealed class PrefabSegmentMeshes
 {
     private static readonly Vector3[] chunk_voxels_vertex_pos0 = new Vector3[6 * 0x30000];
     private static readonly Vector3[] chunk_voxels_vertex_pos1 = new Vector3[6 * 0x30000];
@@ -26,7 +26,7 @@ public readonly struct PrefabSegmentMeshes
 
     private static readonly byte[] EmptyVoxelMeshIndex = new byte[8 * 8 * 8];
 
-    public static readonly PrefabSegmentMeshes Empty = new PrefabSegmentMeshes(0, EmptyVoxelMeshIndex, []);
+    public static readonly PrefabSegmentMeshes Empty = new PrefabSegmentMeshes(0, EmptyVoxelMeshIndex, [], int3.Zero, int3.Zero);
 
     private static readonly short3[] NeighborOffsets =
     [
@@ -42,16 +42,22 @@ public readonly struct PrefabSegmentMeshes
 
     private readonly PrefabSegmentMesh[] _meshes;
 
-    private PrefabSegmentMeshes(int meshCount, byte[] voxelMeshIndex, PrefabSegmentMesh[] meshes)
+    private PrefabSegmentMeshes(int meshCount, byte[] voxelMeshIndex, PrefabSegmentMesh[] meshes, int3 minPosition, int3 maxPosition)
     {
         Debug.Assert(voxelMeshIndex.Length == 8 * 8 * 8);
 
         MeshCount = meshCount;
         _voxelMeshIndex = voxelMeshIndex;
         _meshes = meshes;
+        MinPosition = minPosition;
+        MaxPosition = maxPosition;
     }
 
     public int MeshCount { get; }
+
+    public int3 MinPosition { get; }
+
+    public int3 MaxPosition { get; }
 
     public ReadOnlySpan<byte> VoxelMeshIndex => _voxelMeshIndex;
 
@@ -65,7 +71,7 @@ public readonly struct PrefabSegmentMeshes
     {
         if (segment.Voxels is null || segment.PrefabId == 0)
         {
-            return new PrefabSegmentMeshes(0, EmptyVoxelMeshIndex, []);
+            return Empty;
         }
 
         byte[] voxelMeshIndex = new byte[8 * 8 * 8];
@@ -78,6 +84,9 @@ public readonly struct PrefabSegmentMeshes
         int voxelIndex = 0;
 
         var voxels = segment.Voxels;
+
+        int3 min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+        int3 max = new int3(int.MinValue, int.MinValue, int.MinValue);
 
         for (int z = 0; z < 8; z++)
         {
@@ -96,6 +105,9 @@ public readonly struct PrefabSegmentMeshes
 
                     while (stack.TryPop(out var currentPos))
                     {
+                        min = int3.Min(min, currentPos);
+                        max = int3.Max(max, currentPos);
+
                         int currentVoxelIndex = PrefabSegment.IndexVoxels(currentPos);
 
                         voxelMeshIndex[currentVoxelIndex] = meshCount;
@@ -129,7 +141,7 @@ public readonly struct PrefabSegmentMeshes
             }
         }
 
-        return new PrefabSegmentMeshes(meshCount, voxelMeshIndex, ChunkVoxels(meshCount, voxelMeshIndex, voxels));
+        return new PrefabSegmentMeshes(meshCount, voxelMeshIndex, ChunkVoxels(meshCount, voxelMeshIndex, voxels), min, max);
     }
 
     private static unsafe PrefabSegmentMesh[] ChunkVoxels(int meshCount, byte[] voxelMeshIndex, Voxel[] voxels)

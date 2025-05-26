@@ -5,6 +5,8 @@ using FancadeLoaderLib.Runtime.Syntax.Control;
 using FancadeLoaderLib.Runtime.Syntax.Game;
 using FancadeLoaderLib.Runtime.Syntax.Math;
 using FancadeLoaderLib.Runtime.Syntax.Objects;
+using FancadeLoaderLib.Runtime.Syntax.Physics;
+using FancadeLoaderLib.Runtime.Syntax.Sound;
 using FancadeLoaderLib.Runtime.Syntax.Values;
 using FancadeLoaderLib.Runtime.Syntax.Variables;
 using System.Diagnostics;
@@ -13,7 +15,7 @@ namespace FancadeLoaderLib.Runtime.Compiled;
 
 public partial class AstCompiler
 {
-    private ExpressionInfo GetExpressionInfo(SyntaxTerminal terminal, bool asReference, Environment environment)
+    private ExpressionInfo GetExpressionInfo(SyntaxTerminal terminal, bool asReference, FcEnvironment environment)
     {
         // faster than switching on type
         switch (terminal.Node.PrefabId)
@@ -48,7 +50,7 @@ public partial class AstCompiler
                     Debug.Assert(terminal.Node is GetPositionExpressionSyntax);
 
                     return terminal.Position == TerminalDef.GetOutPosition(0, 2, 2)
-                        ? new ExpressionInfo(SignalType.Float)
+                        ? new ExpressionInfo(SignalType.Vec3)
                         : terminal.Position == TerminalDef.GetOutPosition(1, 2, 2)
                         ? new ExpressionInfo(SignalType.Rot)
                         : throw new InvalidTerminalException(terminal.Position);
@@ -72,7 +74,7 @@ public partial class AstCompiler
                     Debug.Assert(terminal.Node is GetSizeExpressionSyntax);
 
                     return terminal.Position == TerminalDef.GetOutPosition(0, 2, 2) || terminal.Position == TerminalDef.GetOutPosition(1, 2, 2)
-                        ? new ExpressionInfo(SignalType.Float)
+                        ? new ExpressionInfo(SignalType.Vec3)
                         : throw new InvalidTerminalException(terminal.Position);
                 }
 
@@ -82,6 +84,31 @@ public partial class AstCompiler
                     Debug.Assert(terminal.Node is CreateObjectStatementSyntax);
 
                     return new ExpressionInfo(SignalType.Obj);
+                }
+
+            // **************************************** Sound ****************************************
+            case 264:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is PlaySoundStatementSyntax);
+
+                    return new ExpressionInfo(SignalType.Float);
+                }
+
+            // **************************************** Physics ****************************************
+            case 288:
+                {
+                    Debug.Assert(terminal.Node is GetVelocityExpressionSyntax);
+
+                    return new ExpressionInfo(SignalType.Vec3);
+                }
+
+            case 340:
+                {
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
+                    Debug.Assert(terminal.Node is AddConstraintStatementSyntax);
+
+                    return new ExpressionInfo(SignalType.Con);
                 }
 
             // **************************************** Control ****************************************
@@ -335,7 +362,7 @@ public partial class AstCompiler
 
                         case CustomStatementSyntax custom:
                             {
-                                var customEnvironment = (Environment)environment.BlockData[custom.Position];
+                                var customEnvironment = (FcEnvironment)environment.BlockData[custom.Position];
 
                                 foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
                                 {

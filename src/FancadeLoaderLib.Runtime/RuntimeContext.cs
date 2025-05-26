@@ -38,7 +38,7 @@ public abstract class RuntimeContext : IRuntimeContext
     // **************************************** Objects ****************************************
     public abstract FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId);
 
-    public abstract (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object);
+    public abstract (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, IFcEnvironment environment, int3 blockPosition);
 
     public abstract void SetPosition(FcObject @object, float3? position, Quaternion? rotation);
 

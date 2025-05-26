@@ -6,6 +6,7 @@ using FancadeLoaderLib.Runtime.Utils;
 using MathUtils.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace FancadeLoaderLib.Runtime;
@@ -37,7 +38,7 @@ public sealed partial class AST
                 var ctx = new ParseContext(
                         this,
                         prefab,
-                        prefab.Id < RawGame.CurrentNumbStockPrefabs || (prefab.Type == PrefabType.Level && prefab.Id != MainId));
+                        /*prefab.Id < RawGame.CurrentNumbStockPrefabs || */(prefab.Type == PrefabType.Level && prefab.Id != MainId));
 
                 prefabInfos.Add(prefab.Id, new(PrefabTerminalInfo.Create(prefab), ctx));
 
@@ -292,6 +293,12 @@ public sealed partial class AST
             {
                 if (_globalCtx.StockPrefabs.TryGetPrefab(id, out var stockPrefab) && stockPrefab.Settings.Count > 0)
                 {
+                    if (stockPrefab.Blocks.Size != int3.Zero)
+                    {
+                        ParseCustom(stockPrefab, out node);
+                        return true;
+                    }
+
                     node = NodeCreation.CreateNode(id, pos, this);
 
                     if (node is not null)
@@ -331,44 +338,7 @@ public sealed partial class AST
             {
                 if (_globalCtx.Prefabs.TryGetPrefab(id, out var prefab) && prefab.Blocks.Size != int3.Zero)
                 {
-                    var infos = _globalCtx.PrefabInfos[id].TerminalInfo;
-
-                    var connectedInputTerminals = ImmutableArray.CreateBuilder<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)>(2);
-
-                    foreach (var info in infos.InputTerminals)
-                    {
-                        if (info.Type != SignalType.Void)
-                        {
-                            connectedInputTerminals.Add((info.Position, GetConnectedTerminal(pos, info.Position)));
-                        }
-                    }
-
-                    var customStatement = new CustomStatementSyntax(id, pos, GetOutVoidConnections(pos), _globalCtx.PrefabInfos[id].ParseCtx.AST, connectedInputTerminals.DrainToImmutable());
-                    node = customStatement;
-
-                    _nodes.Add(pos, node);
-
-                    foreach (var termPos in customStatement.InputVoidTerminals)
-                    {
-                        bool foundConnection = false;
-                        foreach (var connection in GetConnectionsTo(Prefab.Connections, pos))
-                        {
-                            if (connection.ToVoxel == termPos)
-                            {
-                                foundConnection = true;
-
-                                if (connection.IsFromOutside)
-                                {
-                                    _voidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, pos, termPos));
-                                }
-                            }
-                        }
-
-                        if (!foundConnection)
-                        {
-                            _notConnectedVoidInputs.Add((pos, termPos));
-                        }
-                    }
+                    ParseCustom(prefab, out node);
 
                     return true;
                 }
@@ -376,6 +346,50 @@ public sealed partial class AST
 
             node = null;
             return false;
+
+            void ParseCustom(Prefab prefab, out SyntaxNode node)
+            {
+                Debug.Assert(prefab.Blocks.Size != int3.Zero, $"{nameof(prefab)} shoudn't be empty.");
+
+                var infos = _globalCtx.PrefabInfos[id].TerminalInfo;
+
+                var connectedInputTerminals = ImmutableArray.CreateBuilder<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)>(2);
+
+                foreach (var info in infos.InputTerminals)
+                {
+                    if (info.Type != SignalType.Void)
+                    {
+                        connectedInputTerminals.Add((info.Position, GetConnectedTerminal(pos, info.Position)));
+                    }
+                }
+
+                var customStatement = new CustomStatementSyntax(id, pos, GetOutVoidConnections(pos), _globalCtx.PrefabInfos[id].ParseCtx.AST, connectedInputTerminals.DrainToImmutable());
+                node = customStatement;
+
+                _nodes.Add(pos, node);
+
+                foreach (var termPos in customStatement.InputVoidTerminals)
+                {
+                    bool foundConnection = false;
+                    foreach (var connection in GetConnectionsTo(Prefab.Connections, pos))
+                    {
+                        if (connection.ToVoxel == termPos)
+                        {
+                            foundConnection = true;
+
+                            if (connection.IsFromOutside)
+                            {
+                                _voidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, pos, termPos));
+                            }
+                        }
+                    }
+
+                    if (!foundConnection)
+                    {
+                        _notConnectedVoidInputs.Add((pos, termPos));
+                    }
+                }
+            }
         }
 
         public bool TryGetOrCreateNode(ushort3 pos, [MaybeNullWhen(false)] out SyntaxNode node)
@@ -385,9 +399,11 @@ public sealed partial class AST
             => TryGetOrCreateNode(pos, out var node) ? node : null;
 
         public SyntaxTerminal? GetTerminal(ushort3 pos, byte3 voxelPos)
-            => TryGetOrCreateNode(pos, out var node)
-            ? new SyntaxTerminal(node, voxelPos)
-            : null;
+            => _globalCtx.PrefabInfos.TryGetValue(Prefab.Blocks.GetBlockOrDefault(pos), out var info) && !info.TerminalInfo.Terminals.Any(terminal => terminal.Position == voxelPos)
+                ? null
+                : TryGetOrCreateNode(pos, out var node)
+                ? new SyntaxTerminal(node, voxelPos)
+                : null;
 
         public SyntaxTerminal? GetConnectedTerminal(ushort3 pos, byte3 voxelPos)
         {
