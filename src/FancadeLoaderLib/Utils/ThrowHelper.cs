@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("FancadeLoaderLib.Data")]
 [assembly: InternalsVisibleTo("FancadeLoaderLib.Editing")]
 [assembly: InternalsVisibleTo("FancadeLoaderLib.Runtime")]
 

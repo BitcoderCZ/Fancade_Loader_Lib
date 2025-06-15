@@ -1,13 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
+[assembly: InternalsVisibleTo("FancadeLoaderLib.Audio")]
+
 namespace System.Runtime.InteropServices;
 #pragma warning restore IDE0130 // Namespace does not match folder structure
 
 #if !NET5_0_OR_GREATER
+
 internal static class CollectionsMarshal
 {
     /// <summary>
