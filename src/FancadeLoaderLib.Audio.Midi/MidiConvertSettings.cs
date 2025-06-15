@@ -32,6 +32,9 @@ public sealed class MidiConvertSettings
         // TODO: this could be better
         mappingSpan[0..8].Fill(FcSound.Piano); // Piano Timbres
         mappingSpan[8..16].Fill(FcSound.Clang); // Chromatic Percussion
+        mappingSpan[49..56].Fill(FcSound.Pad); // ENSEMBLE
+        mappingSpan[56..63].Fill(FcSound.Pad); // BRASS
+        mappingSpan[64..71].Fill(FcSound.Pad); // REED
         mappingSpan[80..88].Fill(FcSound.Pad); // Synth Lead
         mappingSpan[88..96].Fill(FcSound.Pad); // Synth Pad
         mappingSpan[123] = FcSound.Chirp; // Bird Tweet

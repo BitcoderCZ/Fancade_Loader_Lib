@@ -17,7 +17,7 @@ internal class Program
     {
         var loggger = new LoggerConfiguration()
             .WriteTo.Console()
-            .MinimumLevel.Debug()
+            .MinimumLevel.Information()
             .CreateLogger();
 
         Log.Logger = loggger;

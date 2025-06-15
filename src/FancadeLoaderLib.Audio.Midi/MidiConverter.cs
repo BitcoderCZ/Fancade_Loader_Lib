@@ -21,8 +21,8 @@ public sealed class MidiConverter
 
     private readonly ILogger _logger;
 
-    private long _microsecondsPerQuaterNote = 500000;
-    private readonly short _ticksPerQuaterNote;
+    private long _microsecondsPerQuarterNote = 500000;
+    private readonly short _ticksPerQuarterNote;
 
     private readonly int _maxVelocity;
 
@@ -39,15 +39,15 @@ public sealed class MidiConverter
         switch (file.TimeDivision)
         {
             case TicksPerQuarterNoteTimeDivision tpqnDivision:
-                _ticksPerQuaterNote = tpqnDivision.TicksPerQuarterNote;
-                _logger.Debug($"TicksPerQuarterNote: {_ticksPerQuaterNote}");
+                _ticksPerQuarterNote = tpqnDivision.TicksPerQuarterNote;
+                _logger.Debug($"TicksPerQuarterNote: {_ticksPerQuarterNote}");
                 break;
             case SmpteTimeDivision: // TODO
             default:
                 throw new Exception($"Unknown TimeDivision '{file.TimeDivision.GetType()}'");
         }
 
-        if (_ticksPerQuaterNote == 0)
+        if (_ticksPerQuarterNote == 0)
         {
             throw new Exception($"TicksPerQuarterNote cannot be zero."); // divisor - can't be zero
         }
@@ -81,6 +81,7 @@ public sealed class MidiConverter
     {
         var chunks = _file.Chunks.OfType<TrackChunk>().Select(chunk => new ChunkWithEvent(chunk)).ToArray();
 
+        // TODO: figure out why tf I did this and if it can be removed
         for (int i = 0; i < chunks.Length; i++)
         {
             var chunk = chunks[i];
@@ -170,7 +171,7 @@ public sealed class MidiConverter
 
     private void HandleSetTempo(ChunkEvent<SetTempoEvent> @event)
     {
-        _microsecondsPerQuaterNote = @event.Event.MicrosecondsPerQuarterNote;
+        _microsecondsPerQuarterNote = @event.Event.MicrosecondsPerQuarterNote;
         _logger.Debug($"[{@event.Chunk}] Set tempo to {@event.Event.MicrosecondsPerQuarterNote} mc/qnote ({@event.Event.MicrosecondsPerQuarterNote / 1000f} ms/qnote)");
     }
 
@@ -272,7 +273,7 @@ public sealed class MidiConverter
 
         Note note = Note.Get(@event.Event.NoteNumber);
 
-        Log.Debug($"PLAY {@event.Event.NoteNumber} {_chunkTime[@event.Chunk]}");
+        _logger.Debug($"PLAY {@event.Event.NoteNumber} {_chunkTime[@event.Chunk]}");
         _builder.TryPlaySound(_chunkTime[@event.Chunk], NoteToNumb(note), ((double)@event.Event.Velocity / _maxVelocity) * channel.VolumeMult, _settings.SoundMapping[channel.Program], out fcChannel);
     }
 
@@ -286,14 +287,14 @@ public sealed class MidiConverter
         }
         else
         {
-            Log.Debug($"STOP {@event.Event.NoteNumber} {_chunkTime[@event.Chunk]}");
+            _logger.Debug($"STOP {@event.Event.NoteNumber} {_chunkTime[@event.Chunk]}");
             _builder.StopSound(_chunkTime[@event.Chunk], fcChannel);
             fcChannel = -1;
         }
     }
 
     private TimeSpan DeltaToTime(long deltaTimeTicks)
-        => TimeSpan.FromMicroseconds((_microsecondsPerQuaterNote / _ticksPerQuaterNote) * deltaTimeTicks);
+        => TimeSpan.FromMicroseconds((_microsecondsPerQuarterNote / _ticksPerQuarterNote) * deltaTimeTicks);
 
     private static byte NoteToNumb(Note note)
         => note.NoteNumber;
