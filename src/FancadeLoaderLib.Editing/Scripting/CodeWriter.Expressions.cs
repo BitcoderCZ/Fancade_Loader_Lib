@@ -4,7 +4,6 @@
 
 using FancadeLoaderLib.Editing.Scripting.Terminals;
 using MathUtils.Vectors;
-using System;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;

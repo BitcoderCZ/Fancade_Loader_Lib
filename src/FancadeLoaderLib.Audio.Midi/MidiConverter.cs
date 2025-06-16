@@ -1,15 +1,8 @@
-﻿using FancadeLoaderLib.Editing.Scripting.Settings;
-using Melanchall.DryWetMidi.Common;
+﻿using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.MusicTheory;
-using Microsoft.VisualBasic;
 using Serilog;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FancadeLoaderLib.Audio.Midi;
 
@@ -118,7 +111,13 @@ public sealed class MidiConverter
             var time = _chunkTime[chunkIndex];
 
             var firstEvent = chunk.Event;
-            foreach (var @event in chunk.Events.TakeWhile(e => e == firstEvent || e.DeltaTime == 0).Order(MidiEventComparer.Instance))
+            foreach (var @event in chunk.Events.TakeWhile(e => e == firstEvent || e.DeltaTime == 0)
+#if NET7_0_OR_GREATER
+                .Order(MidiEventComparer.Instance)
+#else
+                .OrderBy(_ => _, MidiEventComparer.Instance)
+#endif
+                )
             {
                 _chunkTime[chunkIndex] += DeltaToTime(@event.DeltaTime);
 
@@ -294,7 +293,12 @@ public sealed class MidiConverter
     }
 
     private TimeSpan DeltaToTime(long deltaTimeTicks)
-        => TimeSpan.FromMicroseconds((_microsecondsPerQuarterNote / _ticksPerQuarterNote) * deltaTimeTicks);
+#if NET7_0_OR_GREATER
+        => TimeSpan.FromMicroseconds(
+#else
+        => new TimeSpan(10 /*TimeSpan.TicksPerMicrosecond*/ *
+#endif
+        (_microsecondsPerQuarterNote / _ticksPerQuarterNote) * deltaTimeTicks);
 
     private static byte NoteToNumb(Note note)
         => note.NoteNumber;

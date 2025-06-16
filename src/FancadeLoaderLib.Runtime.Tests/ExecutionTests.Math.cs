@@ -1,12 +1,5 @@
 ﻿using FancadeLoaderLib.Editing.Scripting;
 using FancadeLoaderLib.Runtime.Tests.AssertUtils;
-using FancadeLoaderLib.Runtime.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using static FancadeLoaderLib.Editing.Scripting.CodeWriter.Expressions;
 
 namespace FancadeLoaderLib.Runtime.Tests;

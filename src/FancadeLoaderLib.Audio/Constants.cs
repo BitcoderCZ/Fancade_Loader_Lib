@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FancadeLoaderLib.Audio;
+﻿namespace FancadeLoaderLib.Audio;
 
 public static class FcAudioConstants
 {

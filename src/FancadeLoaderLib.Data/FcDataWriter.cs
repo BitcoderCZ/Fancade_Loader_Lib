@@ -1,19 +1,14 @@
 ﻿using FancadeLoaderLib.Common;
 using FancadeLoaderLib.Editing;
-using FancadeLoaderLib.Raw;
 using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Drawing;
-using System.Text;
 
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Data;
 
-public static class FcDataWriter
+public class FcDataWriter
 {
     public const int MaxBlocksPerPrefab = 19683; // 3^9, should be power of 3
     private const int MaxBlockValue = 64;
@@ -24,63 +19,86 @@ public static class FcDataWriter
     private static readonly ImmutableArray<byte> DataBlockColors =
     [
         (byte)FcColor.Purple,
-            (byte)FcColor.Pink,
-            (byte)FcColor.Blue,
-            (byte)FcColor.Green,
-            (byte)FcColor.Yellow,
-            (byte)FcColor.Orange,
-            (byte)FcColor.Red,
-            (byte)FcColor.LightBrown,
-        ];
+        (byte)FcColor.Pink,
+        (byte)FcColor.Blue,
+        (byte)FcColor.Green,
+        (byte)FcColor.Yellow,
+        (byte)FcColor.Orange,
+        (byte)FcColor.Red,
+        (byte)FcColor.LightBrown,
+    ];
+
+    private readonly PrefabList _prefabs;
+    private readonly Prefab _prefab;
+    private readonly int3 _dataBlockPos;
+    private readonly ushort[] _ids;
+
+    public FcDataWriter(PrefabList prefabs, ushort targetPrefabId, int3 dataBlockPos, bool optimizedModel = true)
+    {
+        ThrowIfNull(prefabs);
+
+        ThrowIfNegative(dataBlockPos.X);
+        ThrowIfNegative(dataBlockPos.Y);
+        ThrowIfNegative(dataBlockPos.Z);
+
+        _prefabs = prefabs;
+        _prefab = _prefabs.GetPrefab(targetPrefabId);
+        _dataBlockPos = dataBlockPos;
+
+        _ids = new ushort[MaxBlockValue];
+
+        AddDataBlocks(_prefabs, _ids, optimizedModel);
+    }
+
+    public int DataBlockCount { get; private set; }
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="prefabs"></param>
-    /// <param name="level"></param>
     /// <param name="data"></param>
-    /// <param name="dataPos"></param>
     /// <param name="dataPosInBlock"></param>
     /// <param name="ids">Ids of the data prefabs, initialized by <see cref="AddDataBlocks(PrefabList, Span{ushort}, bool)"/>.</param>
     /// <param name="prefabNameSuffix"></param>
-    /// <param name="dataBlockCount"></param>
-    public static void WriteData(PrefabList prefabs, Prefab level, Span<byte> data, int3 dataPos, int3 dataPosInBlock, Span<ushort> ids, string prefabNameSuffix, out int dataBlockCount)
+    /// <returns>Id of the first data containing prefab or <see cref="ushort.MaxValue"/> if <paramref name="data"/> is empty.</returns>
+    public ushort WriteData(ReadOnlySpan<byte> data, int3 dataPosInBlock, string prefabNameSuffix)
     {
-        Debug.Assert(dataPos.X >= 0 && dataPos.Y >= 0 && dataPos.Z >= 0);
-        Debug.Assert(ids.Length >= MaxBlockValue);
-
         if (data.IsEmpty)
         {
-            dataBlockCount = 0;
-            return;
+            return ushort.MaxValue;
         }
 
         int lenght6Bit = Maths.DivCeiling(data.Length * 8, 6);
-        Span<byte> data6Bit = lenght6Bit < 1024 ? stackalloc byte[lenght6Bit] : new byte[lenght6Bit];
+        Span<byte> data6Bit = lenght6Bit < 1024 ? (stackalloc byte[1024])[..lenght6Bit] : new byte[lenght6Bit];
         BitUtils.Copy8To6Bit(data, data6Bit);
 
         var blockVoxels = BlockVoxelsGenerator.CreateScript(int2.One).First().Value;
 
-        dataBlockCount = 0;
-        for (int i = 0; i < data6Bit.Length; i += MaxBlocksPerPrefab, dataBlockCount++)
+        ushort? firstDataPrefabId = null;
+        for (int i = 0; i < data6Bit.Length; i += MaxBlocksPerPrefab, DataBlockCount++)
         {
             Span<byte> blockData = data6Bit[i..Math.Min(i + MaxBlocksPerPrefab, data6Bit.Length)];
 
-            Prefab dataBlock = Prefab.CreateBlock(0, $"D{prefabNameSuffix}{dataBlockCount}");
-            dataBlock.Type = PrefabType.Script;
-            dataBlock.Collider = PrefabCollider.None;
-            dataBlock[int3.Zero].Voxels = blockVoxels;
+            Prefab dataPrefab = Prefab.CreateBlock(0, $"D{prefabNameSuffix}{DataBlockCount}");
+            dataPrefab.Type = PrefabType.Script;
+            dataPrefab.Collider = PrefabCollider.None;
+            dataPrefab[int3.Zero].Voxels = blockVoxels;
 
-            prefabs.AddPrefab(dataBlock);
-            level.Blocks.SetBlock(dataPos + new int3(dataBlockCount, 0, 0), (ushort)(RawGame.CurrentNumbStockPrefabs + prefabs.SegmentCount - 1)); // place the data block at 0, 0, 0
+            _prefabs.AddPrefab(dataPrefab);
+            firstDataPrefabId ??= dataPrefab.Id;
 
-            WriteDataToPrefab(dataBlock, blockData, dataPosInBlock, DataSize, ids);
+            _prefab.Blocks.SetBlock(_dataBlockPos + new int3(DataBlockCount, 0, 0), dataPrefab.Id);
+
+            WriteDataToPrefab(dataPrefab, blockData, dataPosInBlock, DataSize, _ids);
         }
+
+        Debug.Assert(firstDataPrefabId is not null);
+
+        return firstDataPrefabId.Value;
     }
 
-    public static unsafe void AddDataBlocks(PrefabList prefabs, Span<ushort> ids, bool optimizedModel)
+    private static unsafe void AddDataBlocks(PrefabList prefabs, Span<ushort> ids, bool optimizedModel)
     {
-        ThrowIfLessThan(ids.Length, MaxBlockValue);
+        Debug.Assert(ids.Length >= MaxBlockValue);
 
         int index = 0;
 
@@ -204,7 +222,7 @@ public static class FcDataWriter
         }
     }
 
-    private static void WriteDataToPrefab(Prefab prefab, Span<byte> data, int3 dataPos, int3 dataSize, Span<ushort> ids)
+    private static void WriteDataToPrefab(Prefab prefab, ReadOnlySpan<byte> data, int3 dataPos, int3 dataSize, ReadOnlySpan<ushort> ids)
     {
         prefab.Blocks.EnsureSize(dataPos + dataSize + int3.UnitY);
 

@@ -1,11 +1,9 @@
 ﻿using FancadeLoaderLib.Common;
 using Serilog;
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
-using System.Text;
+using static FancadeLoaderLib.Utils.ThrowHelper;
 
 using FcSound = FancadeLoaderLib.Editing.Scripting.Settings.FcSound;
 
@@ -95,7 +93,7 @@ public sealed class FcAudio
         /// <returns></returns>
         public bool TryPlaySound(TimeSpan time, byte note, double velocity, FcSound sound, out int fcChannel)
         {
-            byte soundByte= (byte)sound;
+            byte soundByte = (byte)sound;
 
             Debug.Assert(time.Ticks >= 0);
             Debug.Assert(velocity is >= 0d and <= 1d);
@@ -109,10 +107,10 @@ public sealed class FcAudio
             }
 
             // notes are in range 0-127, but fancade can only *really* play notes from 48, and it clamps pitch at 4, so the max value is 84
-            note = byte.Clamp(note, 48, 84);
+            note = Math.Clamp(note, (byte)48, (byte)84);
 
             // TODO: make this configurable
-            velocity = double.Pow(velocity, 1d);
+            velocity = Math.Pow(velocity, 1d);
 
             //Log.Debug($"PLAY [{fcChannel}] {time}");
             _channels[fcChannel].PlaySound(time, note, (byte)(velocity * FcAudioConstants.VelocityMaxValue));
@@ -121,8 +119,8 @@ public sealed class FcAudio
 
         public void StopSound(TimeSpan time, int fcChannel)
         {
-            ArgumentOutOfRangeException.ThrowIfLessThan(fcChannel, 0);
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(fcChannel, _channels.Length);
+            ThrowIfNegative(fcChannel);
+            ThrowIfGreaterThanOrEqual(fcChannel, _channels.Length);
 
             Debug.Assert(time.Ticks >= 0);
 
@@ -328,6 +326,7 @@ public sealed class FcAudio
             WriteBits(frames, 8);
         }
 
+#if NET7_0_OR_GREATER
         private void WriteBits<T>(T value, int numbBits) where T : IBinaryInteger<T>
         {
             Debug.Assert(numbBits <= int.CreateChecked(T.PopCount(T.AllBitsSet)));
@@ -342,5 +341,36 @@ public sealed class FcAudio
                 _data[_index++] = ((value >> i) & T.One) == T.One;
             }
         }
+#else
+        private void WriteBits(byte value, int numbBits)
+        {
+            Debug.Assert(numbBits <= sizeof(byte) * 8);
+
+            if (_index + numbBits > _data.Length)
+            {
+                _data.Length += AudioEvent.MaxSizeInBytes * 8 * 256;
+            }
+
+            for (int i = 0; i < numbBits; i++)
+            {
+                _data[_index++] = ((value >> i) & 1) == 1;
+            }
+        }
+
+        private void WriteBits(ulong value, int numbBits)
+        {
+            Debug.Assert(numbBits <= sizeof(ulong) * 8);
+
+            if (_index + numbBits > _data.Length)
+            {
+                _data.Length += AudioEvent.MaxSizeInBytes * 8 * 256;
+            }
+
+            for (int i = 0; i < numbBits; i++)
+            {
+                _data[_index++] = ((value >> i) & 1) == 1;
+            }
+        }
+#endif
     }
 }
