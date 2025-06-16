@@ -893,7 +893,7 @@ public sealed partial class CodeWriter
         /// </summary>
         /// <param name="value">The value to write.</param>
         public static IExpression Vector(Vector3 value)
-            => new LiteralExpression(value, SignalType.Vec3);
+            => new LiteralExpression(new float3(value.X, value.Y, value.Z), SignalType.Vec3);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Values.Rotation"/> block.
