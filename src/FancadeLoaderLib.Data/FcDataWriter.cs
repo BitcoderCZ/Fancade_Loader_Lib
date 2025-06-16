@@ -57,13 +57,13 @@ public class FcDataWriter
     /// </summary>
     /// <param name="data"></param>
     /// <param name="dataPosInBlock"></param>
-    /// <param name="ids">Ids of the data prefabs, initialized by <see cref="AddDataBlocks(PrefabList, Span{ushort}, bool)"/>.</param>
     /// <param name="prefabNameSuffix"></param>
     /// <returns>Id of the first data containing prefab or <see cref="ushort.MaxValue"/> if <paramref name="data"/> is empty.</returns>
-    public ushort WriteData(ReadOnlySpan<byte> data, int3 dataPosInBlock, string prefabNameSuffix)
+    public ushort WriteData(ReadOnlySpan<byte> data, int3 dataPosInBlock, string prefabNameSuffix, out int writtenBlockCount)
     {
         if (data.IsEmpty)
         {
+            writtenBlockCount = 0;
             return ushort.MaxValue;
         }
 
@@ -74,7 +74,8 @@ public class FcDataWriter
         var blockVoxels = BlockVoxelsGenerator.CreateScript(int2.One).First().Value;
 
         ushort? firstDataPrefabId = null;
-        for (int i = 0; i < data6Bit.Length; i += MaxBlocksPerPrefab, DataBlockCount++)
+        writtenBlockCount = 0;
+        for (int i = 0; i < data6Bit.Length; i += MaxBlocksPerPrefab, DataBlockCount++, writtenBlockCount++)
         {
             Span<byte> blockData = data6Bit[i..Math.Min(i + MaxBlocksPerPrefab, data6Bit.Length)];
 

@@ -51,7 +51,7 @@ public sealed class FcAudio
         }
     }
 
-    public Span<byte> ToData(out int eventCount, ILogger? logger = null)
+    public Span<byte> ToData(out int eventCount, out int frameLength, ILogger? logger = null)
     {
         Events.Sort();
 
@@ -62,6 +62,8 @@ public sealed class FcAudio
         {
             eventCount += builder.WriteEvent(Events[i]);
         }
+
+        frameLength = builder.FrameLength;
 
         return builder.Build();
     }
@@ -191,6 +193,8 @@ public sealed class FcAudio
             _data = new BitArray(initialCapacity * AudioEvent.MaxSizeInBytes * 8);
             _logger = logger;
         }
+
+        public int FrameLength => _lastFrame + 1;
 
         /// <returns>The number of additional events written (wait for example).</returns>
         public int WriteEvent(AudioEvent @event)
