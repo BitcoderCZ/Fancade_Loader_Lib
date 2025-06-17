@@ -65,7 +65,14 @@ public abstract class BlockBuilder
     /// <param name="from">The first <see cref="ITerminal"/>.</param>
     /// <param name="to">The second <see cref="ITerminal"/>.</param>
     public virtual void Connect(ITerminal from, ITerminal to)
-        => connections.Add(new ConnectionRecord(from, to));
+    {
+        if (from is NopTerminal || to is NopTerminal)
+        {
+            return;
+        }
+
+        connections.Add(new ConnectionRecord(from, to));
+    }
 
     /// <summary>
     /// Connects 2 <see cref="ITerminalStore"/>s together.
