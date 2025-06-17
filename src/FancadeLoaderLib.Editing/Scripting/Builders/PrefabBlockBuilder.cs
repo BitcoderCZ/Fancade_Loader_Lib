@@ -34,20 +34,11 @@ public sealed class PrefabBlockBuilder : BlockBuilder
     {
         Block[] blocks = PreBuild(buildPos, false);
 
-        PartialPrefabList stockPrefabs = StockBlocks.PartialPrefabList;
-
-        Dictionary<ushort, PartialPrefab> prefabCache = [];
-
         for (int i = 0; i < blocks.Length; i++)
         {
             Block block = blocks[i];
-            if (!prefabCache.TryGetValue(block.Type.Prefab.Id, out var stockPrefab))
-            {
-                stockPrefab = stockPrefabs.GetPrefab(block.Type.Prefab.Id);
-                prefabCache.Add(block.Type.Prefab.Id, stockPrefab);
-            }
 
-            _prefab.Blocks.SetPrefab(block.Position, stockPrefab);
+            _prefab.Blocks.SetPrefab(block.Position, block.Type.Prefab);
         }
 
         for (int i = 0; i < settings.Count; i++)
