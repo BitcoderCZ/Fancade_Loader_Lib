@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using FancadeLoaderLib.Editing.Scripting.Exceptions;
 using FancadeLoaderLib.Editing.Scripting.Placers;
 using FancadeLoaderLib.Editing.Scripting.Settings;
 using FancadeLoaderLib.Editing.Scripting.Terminals;
@@ -9,6 +10,8 @@ using FancadeLoaderLib.Editing.Scripting.TerminalStores;
 using FancadeLoaderLib.Editing.Scripting.Utils;
 using FancadeLoaderLib.Editing.Utils;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
 namespace FancadeLoaderLib.Editing.Scripting;
@@ -21,6 +24,10 @@ public sealed partial class CodeWriter
     private readonly IScopedCodePlacer _codePlacer;
 
     private readonly TerminalConnector _connector;
+
+    private readonly Dictionary<string, object?> _labels = [];
+    private readonly List<(ITerminalStore Store, string LabelName)> _gotos = [];
+    private readonly Queue<string> _labelsToProcess = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CodeWriter"/> class.
@@ -58,6 +65,45 @@ public sealed partial class CodeWriter
     /// <value>The underlying <see cref="ICodePlacer"/>.</value>
     public ICodePlacer Placer => _codePlacer;
 
+    /// <summary>
+    /// Gets the underlying <see cref="TerminalConnector"/>.
+    /// </summary>
+    /// <value>The underlying <see cref="TerminalConnector"/>.</value>
+    public TerminalConnector Connector => _connector;
+
+    /// <summary>
+    /// Marks the next statement with a name, execution can later be jumped to the label using <see cref="Goto(string)"/>.
+    /// </summary>
+    /// <param name="name">Name of the label, must be unique.</param>
+    /// <exception cref="InvalidOperationException">A label with same name as <paramref name="name"/> was already defined.</exception>
+    public void Label(string name)
+    {
+        if (!_labels.ContainsKey(name))
+        {
+            throw new InvalidOperationException($"Label '{name}' was already defined.");
+        }
+
+        _labels.Add(name, null);
+        _labelsToProcess.Enqueue(name);
+    }
+
+    /// <summary>
+    /// Jumps the current execution to a label. No statements besides labels should be placed after the goto.
+    /// </summary>
+    /// <param name="labelName">Name of the label to jump to.</param>
+    public void Goto(string labelName)
+    {
+        // TODO: is using .Store here ok, or should I expose LastStore
+        _gotos.Add((_connector.Store, labelName));
+
+        while (_labelsToProcess.TryDequeue(out string? label))
+        {
+            _labels[label] = labelName;
+        }
+
+        _connector.SetLast(NopTerminalStore.Instance);
+    }
+
     #region Statements
 
     /// <summary>
@@ -73,7 +119,7 @@ public sealed partial class CodeWriter
 
         _codePlacer.SetSetting(block, 0, (byte)delay);
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -89,7 +135,7 @@ public sealed partial class CodeWriter
 
         _codePlacer.SetSetting(block, 0, (byte)delay);
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -110,7 +156,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(coins.WriteTo(this), new BlockTerminal(block, "Coins"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -138,7 +184,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(range.WriteTo(this), new BlockTerminal(block, "Range"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -156,7 +202,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -186,7 +232,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(picture.WriteTo(this), new BlockTerminal(block, "Picture"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -206,7 +252,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -224,7 +270,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(visible.WriteTo(this), new BlockTerminal(block, "Visible"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -241,7 +287,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         return new BlockTerminal(block, "Copy");
     }
@@ -259,7 +305,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -281,7 +327,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(pitch.WriteTo(this), new BlockTerminal(block, "Pitch"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         return new BlockTerminal(block, "Channel");
     }
@@ -303,7 +349,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(pitch.WriteTo(this), new BlockTerminal(block, "Pitch"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -319,7 +365,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(channel.WriteTo(this), new BlockTerminal(block, "Channel"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -341,7 +387,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(torque.WriteTo(this), new BlockTerminal(block, "Torque"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -361,7 +407,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(spin.WriteTo(this), new BlockTerminal(block, "Spin"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -381,7 +427,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -399,7 +445,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(mass.WriteTo(this), new BlockTerminal(block, "Mass"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -417,7 +463,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(friction.WriteTo(this), new BlockTerminal(block, "Friction"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -435,7 +481,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(bounciness.WriteTo(this), new BlockTerminal(block, "Bounciness"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -451,7 +497,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(gravity.WriteTo(this), new BlockTerminal(block, "Gravity"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -472,7 +518,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(pivot.WriteTo(this), new BlockTerminal(block, "Pivot"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         return new BlockTerminal(block, "Constraint");
     }
@@ -494,7 +540,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(upper.WriteTo(this), new BlockTerminal(block, "Upper"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -514,7 +560,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(upper.WriteTo(this), new BlockTerminal(block, "Upper"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -534,7 +580,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(damping.WriteTo(this), new BlockTerminal(block, "Damping"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -554,7 +600,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(damping.WriteTo(this), new BlockTerminal(block, "Damping"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -574,7 +620,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(force.WriteTo(this), new BlockTerminal(block, "Force"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -594,7 +640,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(force.WriteTo(this), new BlockTerminal(block, "Force"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -612,7 +658,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(condition.WriteTo(this), new BlockTerminal(block, "Condition"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         ConnectOut(new BlockTerminal(block, "True"), @true);
         ConnectOut(new BlockTerminal(block, "False"), @false);
@@ -628,7 +674,7 @@ public sealed partial class CodeWriter
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.PlaySensor);
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         ConnectOut(new BlockTerminal(block, "On Play"), onPlay);
 
@@ -643,7 +689,7 @@ public sealed partial class CodeWriter
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.LateUpdate);
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         ConnectOut(new BlockTerminal(block, "After Physics"), afterPhysics);
 
@@ -658,7 +704,7 @@ public sealed partial class CodeWriter
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.BoxArtSensor);
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         ConnectOut(new BlockTerminal(block, "On Screenshot"), onScreenshot);
 
@@ -684,7 +730,7 @@ public sealed partial class CodeWriter
         _codePlacer.SetSetting(block, 0, (byte)touchState);
         _codePlacer.SetSetting(block, 1, (byte)touchFinger);
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         ConnectOut(new BlockTerminal(block, "Touched"), touched, new BlockTerminal(block, "Screen X"), new BlockTerminal(block, "Screen Y"));
 
@@ -702,7 +748,7 @@ public sealed partial class CodeWriter
     {
         Block block = _codePlacer.PlaceBlock(StockBlocks.Control.SwipeSensor);
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         ConnectOut(new BlockTerminal(block, "Swiped"), swiped, new BlockTerminal(block, "Direction"));
 
@@ -722,7 +768,7 @@ public sealed partial class CodeWriter
 
         _codePlacer.SetSetting(block, 0, (byte)buttonType);
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         ConnectOut(new BlockTerminal(block, "Button"), button);
 
@@ -744,7 +790,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(firstObject.WriteTo(this), new BlockTerminal(block, "1st Object"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         ConnectOut(new BlockTerminal(block, "Collided"), collided, new BlockTerminal(block, "2nd Object"), new BlockTerminal(block, "Impulse"), new BlockTerminal(block, "Normal"));
 
@@ -770,7 +816,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(stop.WriteTo(this), new BlockTerminal(block, "Stop"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
 
         ConnectOut(new BlockTerminal(block, "Do"), @do, new BlockTerminal(block, "Counter"));
 
@@ -792,7 +838,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(seed.WriteTo(this), new BlockTerminal(block, "Seed"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -834,7 +880,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(value.WriteTo(this), new BlockTerminal(block, 1));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -853,7 +899,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(value.WriteTo(this), new BlockTerminal(block, "Value"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -880,7 +926,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(value.WriteTo(this), new BlockTerminal(block, "Value"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -909,7 +955,7 @@ public sealed partial class CodeWriter
             {
                 Block setBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(signalType));
 
-                _connector.Add(new TerminalStore(setBlock));
+                ConnectorAdd(new TerminalStore(setBlock));
 
                 using (ExpressionBlock())
                 {
@@ -947,7 +993,7 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
 
     /// <summary>
@@ -963,15 +1009,59 @@ public sealed partial class CodeWriter
             _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
         }
 
-        _connector.Add(new TerminalStore(block));
+        ConnectorAdd(new TerminalStore(block));
     }
     #endregion
 
     /// <summary>
-    /// Calls <see cref="ICodePlacer.Flush"/> on the underlying <see cref="ICodePlacer"/>.
+    /// Flushes the <see cref="CodeWriter"/>.
     /// </summary>
+    /// <remarks>
+    /// Processes gotos and calls <see cref="ICodePlacer.Flush"/> on the underlying <see cref="ICodePlacer"/>.
+    /// </remarks>
+    /// <exception cref="KeyNotFoundException">Thrown when a goto targets a label that was not defined.</exception>
+    /// <exception cref="GotoRecursionException">Thrown when a recursive goto is encountered.</exception>
     public void Flush()
-        => _codePlacer.Flush();
+    {
+        // TODO: for stuff like if-true/false, return like a new scope or something, so that a label at the end of it does not get connected to something else, but ends up as null
+        HashSet<string> encounteredLabels = [];
+        foreach (var item in _gotos)
+        {
+            encounteredLabels.Clear();
+
+            var (store, gotoLabel) = item;
+
+            while (encounteredLabels.Add(gotoLabel))
+            {
+                if (!_labels.TryGetValue(gotoLabel, out object? labelTarget))
+                {
+                    throw new KeyNotFoundException($"A goto targets laabel '{gotoLabel}', but it was not defined.");
+                }
+
+                switch (labelTarget)
+                {
+                    case ITerminal terminal:
+                        _codePlacer.Connect(store, terminal);
+                        goto nextGoto;
+                    case string label:
+                        gotoLabel = label;
+                        break;
+                    case null:
+                        goto nextGoto; // a label was defined, but nothing was placed after it
+                    default:
+                        Debug.Fail($"Expected labelTarget to be {nameof(ITerminal)} or string, but it was: {labelTarget.GetType().FullName}");
+                        goto nextGoto;
+                }
+            }
+
+            throw new GotoRecursionException(item.LabelName, [.. encounteredLabels]);
+
+        nextGoto:;
+        }
+
+        _gotos.Clear();
+        _codePlacer.Flush();
+    }
 
     #region Blocks
 
@@ -1000,6 +1090,16 @@ public sealed partial class CodeWriter
 
     private static bool IsLiteralOfValue(IExpression expression, float value)
         => expression is Expressions.LiteralExpression literal && literal.Type == SignalType.Float && (float)literal._value == value;
+
+    private void ConnectorAdd(TerminalStore store)
+    {
+        _connector.Add(store);
+
+        while (_labelsToProcess.TryDequeue(out string? labelName))
+        {
+            _labels[labelName] = store.In;
+        }
+    }
 
     private void ConnectOut(ITerminal terminal, Action<CodeWriter>? writeFunc)
     {
