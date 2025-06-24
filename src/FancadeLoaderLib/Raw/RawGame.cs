@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using static FancadeLoaderLib.Utils.ThrowHelper;
 
@@ -24,7 +25,7 @@ public class RawGame
     public static readonly ushort CurrentFileVersion = 31;
 
     /// <summary>
-    /// The current ammount of stock/built in prefabs in fancade.
+    /// The current amount of stock/built in prefabs in fancade.
     /// </summary>
     public static readonly ushort CurrentNumbStockPrefabs = 597;
 
@@ -51,7 +52,7 @@ public class RawGame
     public string Description;
 
     /// <summary>
-    /// The id offset of prefabs in this game, specifies the amoung of stock prefabs at the time the game was save.
+    /// The id offset of prefabs in this game, specifies the amount of stock prefabs <b>at the time the game was save</b>.
     /// </summary>
     /// <remarks>
     /// Not used when saving, <see cref="CurrentNumbStockPrefabs"/> is used instead.
@@ -78,7 +79,7 @@ public class RawGame
     /// </summary>
     /// <param name="name">Name of this game.</param>
     /// <param name="author">Username of the author of this game.</param>
-    /// <param name="description">Decsription of this game.</param>
+    /// <param name="description">Description of this game.</param>
     /// <param name="idOffset">Id offset of this game.</param>
     /// <param name="prefabs">Prefabs of this game.</param>
     /// <exception cref="ArgumentNullException">Thrown when any of the arguments is null.</exception>
@@ -157,7 +158,7 @@ public class RawGame
         }
         else if (fileVersion == 26)
         {
-            ThrowNotImplementedException("Loading file verison 26 has not yet been implemented.");
+            ThrowNotImplementedException("Loading file version 26 has not yet been implemented.");
         }
 
         string name = reader.ReadString();
@@ -232,43 +233,78 @@ public class RawGame
 
         var prefabs = CollectionsMarshal.AsSpan(Prefabs);
 
-        Dictionary<ushort, ushort> idsMap = [];
+        List<(int Index, RawPrefab Prefab)> prefabWithOgIndex = new(Prefabs.Count);
+
         Dictionary<ushort, int3> mainMoveMap = [];
 
-        for (int i = 0; i < prefabs.Length; i++)
+        int randGroupId = -1; // makes sure prefabs not in group don't get grouped together
+        foreach (var group in Prefabs.Select((prefab, index) => (index, prefab)).GroupBy(item => item.prefab.IsInGroup ? item.prefab.GroupId : randGroupId--))
         {
-            if (!prefabs[i].IsInGroup)
+            if (group.Key < 0)
             {
+                prefabWithOgIndex.Add(group.First());
                 continue;
             }
 
-            int startIndex = i;
-            ushort groupId = prefabs[i].GroupId;
-
-            bool fix = false;
-
-            i++;
-            while (i < prefabs.Length && prefabs[i].GroupId == groupId)
+            RawPrefab? firstPrefab = null;
+            bool foundMain = false;
+            foreach (var item in group.OrderBy(item => item.prefab.PosInGroup, PositionComparer.Instance))
             {
-                if (prefabs[i].HasMainInfo || comparer.Compare(prefabs[i - 1].PosInGroup, prefabs[i].PosInGroup) >= 0)
+                var prefab = item.prefab;
+
+                if (firstPrefab is null)
                 {
-                    fix = true;
+                    firstPrefab = prefab;
+                }
+                else if (item.prefab.HasMainInfo)
+                {
+                    // wont happen in games from editor, but may happen if manually edited
+                    if (!foundMain)
+                    {
+                        mainMoveMap.Add((ushort)(item.index + IdOffset), -(int3)prefab.PosInGroup);
+                        foundMain = true;
+
+                        firstPrefab.Name = prefab.Name;
+                        firstPrefab.Blocks = prefab.Blocks;
+                        firstPrefab.Settings = prefab.Settings;
+                        firstPrefab.Connections = prefab.Connections;
+                    }
+
+                    prefab.Name = RawPrefab.DefaultName;
+                    prefab.Blocks = null;
+                    prefab.Settings = null;
+                    prefab.Connections = null;
                 }
 
-                i++;
+                prefabWithOgIndex.Add(item);
             }
-
-            if (fix)
-            {
-                FixPrefabOrder(prefabs[startIndex..i], (ushort)(startIndex + IdOffset), idsMap, mainMoveMap);
-            }
-
-            i--;
         }
 
-        if (idsMap.Count == 0 && mainMoveMap.Count == 0)
+        Dictionary<ushort, ushort> idsMap = [];
+        for (int i = 0; i < prefabWithOgIndex.Count; i++)
         {
-            return;
+            var (ogIndex, prefab) = prefabWithOgIndex[i];
+
+            idsMap.Add((ushort)(ogIndex + IdOffset), (ushort)(i + IdOffset)); 
+        }
+
+        // update group ids
+        Dictionary<ushort, ushort> groupIdUpdates = [];
+        for (int i = 0; i < prefabs.Length; i++)
+        {
+            ushort groupId = prefabs[i].GroupId;
+            if (groupId != 0)
+            {
+                groupIdUpdates.TryAdd(groupId, (ushort)(i + IdOffset));
+            }
+        }
+
+        foreach (var prefab in prefabs)
+        {
+            if (prefab.GroupId != 0)
+            {
+                prefab.GroupId = groupIdUpdates[prefab.GroupId];
+            }
         }
 
         foreach (var prefab in prefabs)
@@ -288,12 +324,6 @@ public class RawGame
 
                             if (id != 0)
                             {
-                                if (idsMap.TryGetValue(id, out ushort newId))
-                                {
-                                    blocks.SetUnchecked(pos, newId);
-                                    id = newId;
-                                }
-
                                 if (mainMoveMap.TryGetValue(id, out int3 move))
                                 {
                                     if (prefab.Settings is not null)
@@ -329,6 +359,12 @@ public class RawGame
                                         }
                                     }
                                 }
+
+                                if (idsMap.TryGetValue(id, out ushort newId))
+                                {
+                                    blocks.SetUnchecked(pos, newId);
+                                    id = newId;
+                                }
                             }
                         }
                     }
@@ -343,83 +379,4 @@ public class RawGame
     /// <returns>The string representation of the current instance.</returns>
     public override string ToString()
         => $"{{Name: {Name}, Author: {Author}, Description: {Description}}}";
-
-    private void FixPrefabOrder(Span<RawPrefab> prefabs, ushort groupId, Dictionary<ushort, ushort> idsMap, Dictionary<ushort, int3> mainMoveMap)
-    {
-        Debug.Assert(prefabs.Length > 1, $"{nameof(prefabs)} should be a group.");
-        Debug.Assert(prefabs.Length < Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize, $"{nameof(prefabs)}.Length should be less than max size.");
-
-        Span<byte3> originalPositions = stackalloc byte3[prefabs.Length];
-
-        for (int i = 0; i < prefabs.Length; i++)
-        {
-            originalPositions[i] = prefabs[i].PosInGroup;
-            prefabs[i].GroupId = groupId;
-        }
-
-        prefabs.Sort((a, b) => PositionComparer.Instance.Compare(a.PosInGroup, b.PosInGroup));
-
-        bool wasOutOfOrder = false;
-
-        for (int i = 0; i < prefabs.Length; i++)
-        {
-            if (originalPositions[i] != prefabs[i].PosInGroup)
-            {
-                wasOutOfOrder = true;
-                break;
-            }
-        }
-
-        if (wasOutOfOrder)
-        {
-            Span<byte3> newPositions = stackalloc byte3[prefabs.Length];
-
-            for (int i = 0; i < prefabs.Length; i++)
-            {
-                newPositions[i] = prefabs[i].PosInGroup;
-            }
-
-            for (int i = 0; i < prefabs.Length; i++)
-            {
-                int newIndex = newPositions.IndexOf(originalPositions[i]);
-                Debug.Assert(newIndex != -1, $"All positions in {nameof(originalPositions)} should be in {nameof(newPositions)}.");
-
-                if (newIndex != i)
-                {
-                    idsMap.Add((ushort)(groupId + i), (ushort)(groupId + newIndex));
-                }
-            }
-        }
-
-        for (int i = 1; i < prefabs.Length; i++)
-        {
-            if (prefabs[i].HasMainInfo)
-            {
-                mainMoveMap.Add((ushort)(groupId + i), -(int3)prefabs[i].PosInGroup);
-
-                var prefab = prefabs[i];
-                var mainPrefab = prefabs[0];
-
-                mainPrefab.NonDefaultName = prefab.NonDefaultName;
-                mainPrefab.Name = prefab.Name;
-                mainPrefab.HasBlocks = prefab.HasBlocks;
-                mainPrefab.Blocks = prefab.Blocks;
-                mainPrefab.HasSettings = prefab.HasSettings;
-                mainPrefab.Settings = prefab.Settings;
-                mainPrefab.HasConnections = prefab.HasConnections;
-                mainPrefab.Connections = prefab.Connections;
-
-                prefab.NonDefaultName = false;
-                prefab.Name = RawPrefab.DefaultName;
-                prefab.HasBlocks = false;
-                prefab.Blocks = null;
-                prefab.HasSettings = false;
-                prefab.Settings = null;
-                prefab.HasConnections = false;
-                prefab.Connections = null;
-
-                break;
-            }
-        }
-    }
 }

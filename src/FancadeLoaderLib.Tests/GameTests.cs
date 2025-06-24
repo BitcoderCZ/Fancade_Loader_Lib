@@ -72,6 +72,78 @@ public class GameTests
     }
 
     [Test]
+    public async Task FromRaw_MixedSegments()
+    {
+        var raw = new RawGame("a");
+        ushort idOff = raw.IdOffset;
+
+        var rawBlocks = new Array3D<ushort>(int3.One * 3);
+        // place A
+        rawBlocks.Set(new int3(0, 0, 0), (ushort)(idOff + 4));
+        rawBlocks.Set(new int3(1, 0, 0), (ushort)(idOff + 1));
+        rawBlocks.Set(new int3(2, 0, 0), (ushort)(idOff + 6));
+        // place B
+        rawBlocks.Set(new int3(0, 0, 1), (ushort)(idOff + 2));
+        rawBlocks.Set(new int3(1, 0, 1), (ushort)(idOff + 3));
+        // place "C"
+        rawBlocks.Set(new int3(0, 0, 2), (ushort)(idOff + 5));
+
+        /*
+         [index] group
+         [0] not-in-group,
+         [1] 0,
+         [2] 1,
+         [3] 1,
+         [4] 0,
+         [5] not-in-group,
+         [6] 0,
+         */
+        raw.Prefabs.AddRange([
+            new RawPrefab(false, false, false, false, false, 0, RawPrefab.DefaultName, 0, 0, (byte)FcColorUtils.DefaultBackgroundColor, 0, 0, new byte3(0, 0, 0), null, rawBlocks, null, null),
+            new RawPrefab(true, false, false, false, false, 0, RawPrefab.DefaultName, 0, 0, (byte)FcColorUtils.DefaultBackgroundColor, 0, idOff, new byte3(1, 0, 0), null, null, null, null),
+            new RawPrefab(true, false, false, false, false, 0, "B", 0, 0, (byte)FcColorUtils.DefaultBackgroundColor, 0, (ushort)(idOff + 3), byte3.Zero, null, null, null, null),
+            new RawPrefab(true, false, false, false, false, 0, RawPrefab.DefaultName, 0, 0, (byte)FcColorUtils.DefaultBackgroundColor, 0, (ushort)(idOff + 3), new byte3(1, 0, 0), null, null, null, null),
+            new RawPrefab(true, false, false, false, false, 0, RawPrefab.DefaultName, 0, 0, (byte)FcColorUtils.DefaultBackgroundColor, 0, idOff, byte3.Zero, null, null, null, null),
+            new RawPrefab(false, false, false, false, false, 0, RawPrefab.DefaultName, 0, 0, (byte)FcColorUtils.DefaultBackgroundColor, 0, 0, new byte3(0, 0, 0), null, null, null, null),
+            new RawPrefab(true, false, false, false, false, 0, "A", 0, 0, (byte)FcColorUtils.DefaultBackgroundColor, 0, idOff, new byte3(2, 0, 0), null, null, null, null),
+        ]);
+
+        var game = Game.FromRaw(raw, true);
+
+        await Assert.That(game.Prefabs.SegmentCount).IsEqualTo(7);
+        await Assert.That(game.Prefabs.PrefabCount).IsEqualTo(4);
+
+        var blocks = game.Prefabs.GetPrefab(idOff).Blocks;
+
+        await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)(idOff + 1));
+        await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)(idOff + 2));
+        await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)(idOff + 3));
+        await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)(idOff + 4));
+        await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)(idOff + 5));
+        await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)(idOff + 6));
+
+        var seg0 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(0, 0, 0)));
+        var seg1 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(1, 0, 0)));
+        var seg2 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(2, 0, 0)));
+        var seg3 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(0, 0, 1)));
+        var seg4 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(1, 0, 1)));
+        var seg5 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(0, 0, 2)));
+
+        await Assert.That(seg0.PrefabId).IsEqualTo((ushort)(idOff + 1));
+        await Assert.That(seg0.PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+        await Assert.That(seg1.PrefabId).IsEqualTo((ushort)(idOff + 1));
+        await Assert.That(seg1.PosInPrefab).IsEqualTo(new int3(1, 0, 0));
+        await Assert.That(seg2.PrefabId).IsEqualTo((ushort)(idOff + 1));
+        await Assert.That(seg2.PosInPrefab).IsEqualTo(new int3(2, 0, 0));
+        await Assert.That(seg3.PrefabId).IsEqualTo((ushort)(idOff + 4));
+        await Assert.That(seg3.PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+        await Assert.That(seg4.PrefabId).IsEqualTo((ushort)(idOff + 4));
+        await Assert.That(seg4.PosInPrefab).IsEqualTo(new int3(1, 0, 0));
+        await Assert.That(seg5.PrefabId).IsEqualTo((ushort)(idOff + 6));
+        await Assert.That(seg5.PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+    }
+
+    [Test]
     public async Task SaveLoad_PersistsAndRestoresData()
     {
         var game = new Game("A", "B", "C", new());

@@ -402,7 +402,9 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     {
         ThrowIfNull(rawPrefabs, nameof(rawPrefabs));
 
-        RawPrefab? rawPrefab = rawPrefabs.FirstOrDefault();
+        RawPrefab? rawPrefab = rawPrefabs.FirstOrDefault(prefab => prefab.HasMainInfo);
+
+        rawPrefab ??= rawPrefabs.FirstOrDefault();
 
         if (rawPrefab is null)
         {
@@ -544,19 +546,11 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
 
             yield return i == 0
                 ? new RawPrefab(
-                    hasConnections: Connections is not null && Connections.Count > 0,
-                    hasSettings: Settings is not null && Settings.Count > 0,
-                    hasBlocks: Blocks is not null && Blocks.Size != int3.Zero,
-                    hasVoxels: Type != PrefabType.Level && segment.Voxels is not null,
                     isInGroup: Count > 1,
-                    hasColliderByte: Collider != PrefabCollider.Box,
                     unEditable: !Editable,
                     unEditable2: !Editable,
-                    nonDefaultBackgroundColor: BackgroundColor != FcColorUtils.DefaultBackgroundColor,
                     hasData2: false,
                     hasData1: false,
-                    nonDefaultName: Name != "New Block",
-                    hasTypeByte: Type != 0,
                     typeByte: (byte)Type,
                     name: Name,
                     data1: 0,
@@ -570,19 +564,11 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
                     settings: clone && Settings is not null ? [.. Settings.Values.SelectMany(list => list)] : Settings?.Values.SelectMany(list => list).ToList(),
                     connections: clone && Connections is not null ? [.. Connections] : Connections)
                 : new RawPrefab(
-                    hasConnections: false,
-                    hasSettings: false,
-                    hasBlocks: false,
-                    hasVoxels: Type != PrefabType.Level && segment.Voxels is not null,
                     isInGroup: Count > 1,
-                    hasColliderByte: Collider != PrefabCollider.Box,
                     unEditable: !Editable,
                     unEditable2: !Editable,
-                    nonDefaultBackgroundColor: BackgroundColor != FcColorUtils.DefaultBackgroundColor,
                     hasData2: false,
                     hasData1: false,
-                    nonDefaultName: false,
-                    hasTypeByte: Type != 0,
                     typeByte: (byte)Type,
                     name: RawPrefab.DefaultName,
                     data1: 0,
@@ -768,7 +754,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         => _segments.TryGetValue(key, out value);
 
     /// <summary>
-    /// Determines the indes of a specified segment.
+    /// Determines the index of a specified segment.
     /// </summary>
     /// <param name="key">Position of the segment.</param>
     /// <returns>The index of the segment if found; otherwise, <c>-1</c>.</returns>
@@ -801,7 +787,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     }
 
     /// <summary>
-    /// Determines the indes of a segment, if it was at the specified position.
+    /// Determines the index of a segment, if it was at the specified position.
     /// </summary>
     /// <param name="key">Position of the segment.</param>
     /// <returns>The index of the segment if it is in bounds; otherwise, <c>-1</c>.</returns>

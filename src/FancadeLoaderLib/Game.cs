@@ -4,6 +4,7 @@
 
 using FancadeLoaderLib.Raw;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -152,24 +153,27 @@ public class Game : ICloneable
 
         short idOffsetAddition = (short)(-game.IdOffset + RawGame.CurrentNumbStockPrefabs);
 
+        HashSet<ushort> loadedGroups = [];
+
         for (int i = 0; i < game.Prefabs.Count; i++)
         {
-            if (game.Prefabs[i].IsInGroup)
+            var prefab = game.Prefabs[i];
+            if (prefab.IsInGroup)
             {
-                int startIndex = i;
-                ushort groupId = game.Prefabs[i].GroupId;
-                do
+                if (!loadedGroups.Add(prefab.GroupId))
                 {
-                    i++;
-                } while (i < game.Prefabs.Count && game.Prefabs[i].GroupId == groupId);
+                    continue; // already loaded this group
+                }
 
-                prefabs.AddPrefab(Prefab.FromRaw((ushort)(startIndex + RawGame.CurrentNumbStockPrefabs), game.Prefabs.Skip(startIndex).Take(i - startIndex), game.IdOffset, idOffsetAddition, clonePrefabs));
+                // not only can the main segment not be the first, there may even be segments of other prefab(s) between the segmetns of groups
+                var segments = game.Prefabs
+                    .Where(item => item.GroupId == prefab.GroupId);
 
-                i--; // incremented at the end of the loop
+                prefabs.AddPrefab(Prefab.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), segments, game.IdOffset, idOffsetAddition, clonePrefabs));
             }
             else
             {
-                prefabs.AddPrefab(Prefab.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [game.Prefabs[i]], game.IdOffset, idOffsetAddition, clonePrefabs));
+                prefabs.AddPrefab(Prefab.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [prefab], game.IdOffset, idOffsetAddition, clonePrefabs));
             }
         }
 

@@ -20,37 +20,10 @@ public class RawPrefab
     /// </summary>
     public static readonly string DefaultName = "New Block";
 
-    #region Header
-
-    /// <summary>
-    /// <see langword="true"/> if the prefab has connection/wires inside it; otherwise, <see langword="false"/>.
-    /// </summary>
-    public bool HasConnections;
-
-    /// <summary>
-    /// <see langword="true"/> if the prefab has settings inside it; otherwise, <see langword="false"/>.
-    /// </summary>
-    public bool HasSettings;
-
-    /// <summary>
-    /// <see langword="true"/> if the prefab has blocks inside it; otherwise, <see langword="false"/>.
-    /// </summary>
-    public bool HasBlocks;
-
-    /// <summary>
-    /// <see langword="true"/> if the prefab has a model (voxels), true of all prefabs that aren't a level; otherwise, <see langword="false"/>.
-    /// </summary>
-    public bool HasVoxels;
-
     /// <summary>
     /// <see langword="true"/> if the prefab is in a group; otherwise, <see langword="false"/>.
     /// </summary>
     public bool IsInGroup;
-
-    /// <summary>
-    /// <see langword="true"/> if the prefab writes an additional byte to store the collider, used when the collider isn't <see cref="PrefabCollider.Box"/>; otherwise, <see langword="false"/>.
-    /// </summary>
-    public bool HasColliderByte;
 
     /// <summary>
     /// <see langword="true"/> if the prefab is not editable; otherwise, <see langword="false"/>.
@@ -61,11 +34,6 @@ public class RawPrefab
     /// <see langword="true"/> if the prefab is not editable, the editability of a prefab is determined with <see cref="UnEditable"/> || <see cref="UnEditable2"/>, possibly true for stock prefabs; otherwise, <see langword="false"/>.
     /// </summary>
     public bool UnEditable2;
-
-    /// <summary>
-    /// <see langword="true"/> if the prefab has a background color that isn't <see cref="FcColor.Blue"/>; otherwise, <see langword="false"/>.
-    /// </summary>
-    public bool NonDefaultBackgroundColor;
 
     /// <summary>
     /// <see langword="true"/> if the prefab has <see cref="Data2"/>; otherwise, <see langword="false"/>.
@@ -82,17 +50,6 @@ public class RawPrefab
     /// Always <see langword="true"/> for the newest version.
     /// </remarks>
     public bool HasData1;
-
-    /// <summary>
-    /// <see langword="true"/> if the prefab's name isn't "New Block"; otherwise, <see langword="false"/>.
-    /// </summary>
-    public bool NonDefaultName;
-
-    /// <summary>
-    /// <see langword="true"/> if the prefab writes an additional byte to store it's type, used when the type isn't <see cref="PrefabType.Normal"/>; otherwise, <see langword="false"/>.
-    /// </summary>
-    public bool HasTypeByte;
-    #endregion
 
     /// <summary>
     /// The type of this prefab, see <see cref="PrefabType"/>.
@@ -128,7 +85,7 @@ public class RawPrefab
     public byte ColliderByte;
 
     /// <summary>
-    /// Group id of this prefab if it is in a group; otherwise, <see cref="ushort.MaxValue"/>.
+    /// Group id of this prefab if it is in a group; otherwise, 0.
     /// </summary>
     public ushort GroupId;
 
@@ -155,16 +112,12 @@ public class RawPrefab
     /// <summary>
     /// Settings of the blocks inside this prefab.
     /// </summary>
-#pragma warning disable CA1002 // Do not expose generic lists
     public List<PrefabSetting>? Settings;
-#pragma warning restore CA1002 // Do not expose generic lists
 
     /// <summary>
     /// Connections between blocks inside this prefab, block-block and block-outside of this prefab.
     /// </summary>
-#pragma warning disable CA1002 // Do not expose generic lists
     public List<Connection>? Connections;
-#pragma warning restore CA1002 // Do not expose generic lists
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RawPrefab"/> class.
@@ -178,19 +131,11 @@ public class RawPrefab
     /// <summary>
     /// Initializes a new instance of the <see cref="RawPrefab"/> class.
     /// </summary>
-    /// <param name="hasConnections"><see langword="true"/> if the prefab has connection/wires inside it; otherwise, <see langword="false"/>.</param>
-    /// <param name="hasSettings"><see langword="true"/> if the prefab has settings inside it; otherwise, <see langword="false"/>.</param>
-    /// <param name="hasBlocks"><see langword="true"/> if the prefab has blocks inside it; otherwise, <see langword="false"/>.</param>
-    /// <param name="hasVoxels"><see langword="true"/> if the prefab has a model (voxels), true of all prefabs that aren't a level; otherwise, <see langword="false"/>.</param>
     /// <param name="isInGroup"><see langword="true"/> if the prefab is in a group; otherwise, <see langword="false"/>.</param>
-    /// <param name="hasColliderByte"><see langword="true"/> if the prefab writes an additional byte to store the collider, used when the collider isn't <see cref="PrefabCollider.Box"/>; otherwise, <see langword="false"/>.</param>
     /// <param name="unEditable"><see langword="true"/> if the prefab is not editable; otherwise, <see langword="false"/>.</param>
     /// <param name="unEditable2"> <see langword="true"/> if the prefab is not editable, the editability of a prefab is determined with <see cref="UnEditable"/> || <see cref="UnEditable2"/>, possibly true for stock prefabs; otherwise, <see langword="false"/>.</param>
-    /// <param name="nonDefaultBackgroundColor"><see langword="true"/> if the prefab has a background color that isn't <see cref="FcColor.Blue"/>; otherwise, <see langword="false"/>.</param>
     /// <param name="hasData2">Always <see langword="true"/> for the newest version.</param>
     /// <param name="hasData1">Always <see langword="true"/> for the newest version.</param>
-    /// <param name="nonDefaultName"><see langword="true"/> if the prefab's name isn't "New Block"; otherwise, <see langword="false"/>.</param>
-    /// <param name="hasTypeByte"><see langword="true"/> if the prefab writes an additional byte to store it's type, used when the type isn't <see cref="PrefabType.Normal"/>; otherwise, <see langword="false"/>.</param>
     /// <param name="typeByte">The type of this prefab, see <see cref="PrefabType"/>.</param>
     /// <param name="name">The name of this prefab.</param>
     /// <param name="data1">Some data, unknown purpose.</param>
@@ -204,23 +149,15 @@ public class RawPrefab
     /// <param name="settings">Settings of the blocks inside this prefab.</param>
     /// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
 #pragma warning disable CA1002 // Do not expose generic lists
-    public RawPrefab(bool hasConnections, bool hasSettings, bool hasBlocks, bool hasVoxels, bool isInGroup, bool hasColliderByte, bool unEditable, bool unEditable2, bool nonDefaultBackgroundColor, bool hasData2, bool hasData1, bool nonDefaultName, bool hasTypeByte, byte typeByte, string name, byte data1, uint data2, byte backgroundColor, byte colliderByte, ushort groupId, byte3 posInGroup, byte[]? voxels, Array3D<ushort>? blocks, List<PrefabSetting>? settings, List<Connection>? connections)
+    public RawPrefab(bool isInGroup, bool unEditable, bool unEditable2, bool hasData2, bool hasData1, byte typeByte, string name, byte data1, uint data2, byte backgroundColor, byte colliderByte, ushort groupId, byte3 posInGroup, byte[]? voxels, Array3D<ushort>? blocks, List<PrefabSetting>? settings, List<Connection>? connections)
 #pragma warning restore CA1002 // Do not expose generic lists
 #pragma warning restore SA1625 // Element documentation should not be copied and pasted
     {
-        HasConnections = hasConnections;
-        HasSettings = hasSettings;
-        HasBlocks = hasBlocks;
-        HasVoxels = hasVoxels;
         IsInGroup = isInGroup;
-        HasColliderByte = hasColliderByte;
         UnEditable = unEditable;
         UnEditable2 = unEditable2;
-        NonDefaultBackgroundColor = nonDefaultBackgroundColor;
         HasData2 = hasData2;
         HasData1 = hasData1;
-        NonDefaultName = nonDefaultName;
-        HasTypeByte = hasTypeByte;
         TypeByte = typeByte;
         Name = name;
         Data1 = data1;
@@ -235,6 +172,58 @@ public class RawPrefab
         Connections = connections;
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the prefab has connections inside.
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab has connection/wires inside it; otherwise, <see langword="false"/>.</value>
+    public bool HasConnections => Connections is { Count: > 0 };
+
+    /// <summary>
+    /// Gets a value indicating whether the prefab has settings inside.
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab has settings inside it; otherwise, <see langword="false"/>.</value>
+    public bool HasSettings => Settings is { Count: > 0 };
+
+    /// <summary>
+    /// Gets a value indicating whether the prefab has blocks inside.
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab has blocks inside it; otherwise, <see langword="false"/>.</value>
+    public bool HasBlocks => Blocks is not null && Blocks.Size != int3.Zero;
+
+    /// <summary>
+    /// Gets a value indicating whether the prefab has a model (voxels).
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab has a model (voxels), true for all prefabs that aren't a level; otherwise, <see langword="false"/>.</value>
+    public bool HasVoxels => Voxels is not null;
+
+    /// <summary>
+    /// Gets a value indicating whether the prefab writes an additional byte to store the collider.
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab writes an additional byte to store the collider, used when the collider is not <see cref="PrefabCollider.Box"/>; otherwise, <see langword="false"/>.</value>
+    public bool HasColliderByte => ColliderByte != (byte)PrefabCollider.Box;
+
+    /// <summary>
+    /// Gets a value indicating whether the prefab writes an additional byte to store the background color.
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab writes an additional byte to store the background color, used when the color is not <see cref="FcColorUtils.DefaultBackgroundColor"/>; otherwise, <see langword="false"/>.</value>
+    public bool NonDefaultBackgroundColor => BackgroundColor != (byte)FcColorUtils.DefaultBackgroundColor;
+
+    /// <summary>
+    /// Gets a value indicating whether the prefab writes it's name.
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab writes it's name, used when the name is not <see cref="DefaultName"/>; otherwise, <see langword="false"/>.</value>
+    public bool NonDefaultName => Name != DefaultName;
+
+    /// <summary>
+    /// Gets a value indicating whether the prefab writes an additional byte to store the type.
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab writes an additional byte to store the type, used when the type is not <see cref="PrefabType.Normal"/>; otherwise, <see langword="false"/>.</value>
+    public bool HasTypeByte => TypeByte != (byte)PrefabType.Normal;
+
+    /// <summary>
+    /// Gets a value indicating whether the prefab <b>might</b> be the main prefab of it's group.
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab <b>might</b> be the main prefab of it's group; otherwise, <see langword="false"/>.</value>
     internal bool HasMainInfo => NonDefaultName || HasBlocks || HasSettings || HasConnections;
 
     /// <summary>
@@ -391,7 +380,7 @@ public class RawPrefab
             }
         }
 
-        return new RawPrefab(hasConnections, hasSettings, hasBlocks, hasVoxels, isInGroup, hasColliderByte, unEditable, unEditable2, nonDefaultBackgroundColor, hasData2, hasData1, nonDefaultName, hasTypeByte, typeByte, name, data1, data2, backgroundColor, colliderByte, groupId, posInGroup, voxels, blocks is null ? null : new Array3D<ushort>(blocks, insideSize), settings, connections);
+        return new RawPrefab(isInGroup, unEditable, unEditable2, hasData2, hasData1, typeByte, name, data1, data2, backgroundColor, colliderByte, groupId, posInGroup, voxels, blocks is null ? null : new Array3D<ushort>(blocks, insideSize), settings, connections);
     }
 
     /// <summary>
