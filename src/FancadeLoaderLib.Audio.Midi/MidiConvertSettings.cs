@@ -18,6 +18,11 @@ public sealed class MidiConvertSettings
     /// </summary>
     public DoubleNoteOnBehaviour DoubleNoteOn { get; set; } = DoubleNoteOnBehaviour.StopCurrent;
 
+    /// <summary>
+    /// The behaviour for when the note number is out of the range supported by Fancade (currently 48-84).
+    /// </summary>
+    public NoteOutOfRangeBehaviour NoteOutOfRange { get; set; } = NoteOutOfRangeBehaviour.ClampOctave;
+
     public MidiConvertSettings()
     {
         var mappingSpan = SoundMapping.AsSpan();
@@ -49,5 +54,17 @@ public sealed class MidiConvertSettings
         /// Ignores the new note, the current one continues playing.
         /// </summary>
         IgnoreNew,
+    }
+
+    public enum NoteOutOfRangeBehaviour
+    {
+        /// <summary>
+        /// Clamps the note number to the valid range.
+        /// </summary>
+        ClampNoteNumber = 0,
+        /// <summary>
+        /// Clamps the note's octave value to the valid range.
+        /// </summary>
+        ClampOctave,
     }
 }

@@ -11,6 +11,16 @@ namespace FancadeLoaderLib.Audio;
 
 public sealed class FcAudio
 {
+    /// <summary>
+    /// Gets the minimum note number that can currently be played.
+    /// </summary>
+    public static int MinNoteNumber => 48;
+
+    /// <summary>
+    /// Gets the maximum note number that can currently be played.
+    /// </summary>
+    public static int MaxNoteNumber => 84;
+
     public readonly List<AudioEvent> Events;
 
     public FcAudio()
@@ -109,7 +119,7 @@ public sealed class FcAudio
             }
 
             // notes are in range 0-127, but fancade can only *really* play notes from 48, and it clamps pitch at 4, so the max value is 84
-            note = Math.Clamp(note, (byte)48, (byte)84);
+            note = Math.Clamp(note, (byte)MinNoteNumber, (byte)MaxNoteNumber);
 
             // TODO: make this configurable
             velocity = Math.Pow(velocity, 1d);

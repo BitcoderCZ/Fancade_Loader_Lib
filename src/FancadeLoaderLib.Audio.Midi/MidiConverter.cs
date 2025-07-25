@@ -300,8 +300,40 @@ public sealed class MidiConverter
 #endif
         (_microsecondsPerQuarterNote / _ticksPerQuarterNote) * deltaTimeTicks);
 
-    private static byte NoteToNumb(Note note)
-        => note.NoteNumber;
+    private byte NoteToNumb(Note note)
+    {
+        switch (_settings.NoteOutOfRange)
+        {
+            case MidiConvertSettings.NoteOutOfRangeBehaviour.ClampNoteNumber:
+                return note.NoteNumber; // clamped by FcAudio.PlaySound
+            case MidiConvertSettings.NoteOutOfRangeBehaviour.ClampOctave:
+                {
+                    const int OctaveSize = 12;
+
+                    int noteNumber = note.NoteNumber;
+
+                    if (noteNumber < FcAudio.MinNoteNumber)
+                    {
+                        do
+                        {
+                            noteNumber += OctaveSize;
+                        } while (noteNumber < FcAudio.MinNoteNumber);
+                    }
+                    else if (noteNumber > FcAudio.MaxNoteNumber)
+                    {
+                        do
+                        {
+                            noteNumber -= OctaveSize;
+                        } while (noteNumber > FcAudio.MaxNoteNumber);
+                    }
+
+                    return (byte)noteNumber;
+                }
+
+            default:
+                return note.NoteNumber;
+        }
+    }
 
     private sealed class MidiChannel
     {
