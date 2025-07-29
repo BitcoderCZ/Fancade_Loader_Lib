@@ -1,9 +1,12 @@
 <Project>
-	<PropertyGroup>
-		<Authors>BitcoderCZ</Authors>
-	</PropertyGroup>
-	<PropertyGroup>
-		<TrimMode>partial</TrimMode>
-		<SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
-	</PropertyGroup>
+    <PropertyGroup>
+        <Authors>BitcoderCZ</Authors>
+        <RepositoryUrl>https://github.com/BitcoderCZ/Fancade_Loader_Lib</RepositoryUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>library;fancade</PackageTags>
+    </PropertyGroup>
+    <PropertyGroup>
+        <TrimMode>partial</TrimMode>
+        <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+    </PropertyGroup>
 </Project>
