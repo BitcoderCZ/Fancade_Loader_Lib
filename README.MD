@@ -1,10 +1,10 @@
-# Fancade Loader Lib
-C# lib for loading and saving games for [Fancade](https://www.fancade.com/)
+# BitcoderCZ.Fancade
+C# lib for loading, saving and modifying games for [Fancade](https://www.fancade.com/)
 
 ## Usage
 ```csharp
-using FancadeLoaderLib;
-using FancadeLoaderLib.Raw;
+using BitcoderCZ.Fancade;
+using BitcoderCZ.Fancade.Raw;
 
 // Load game
 Game game;
@@ -29,14 +29,14 @@ using (FileStream fs = File.OpenWrite("game.fcg"))
 
 ### CodeWriter
 ```csharp
-using FancadeLoaderLib;
-using FancadeLoaderLib.Editing;
-using FancadeLoaderLib.Editing.Scripting;
-using FancadeLoaderLib.Editing.Scripting.Builders;
-using FancadeLoaderLib.Editing.Scripting.Placers;
-using FancadeLoaderLib.Editing.Scripting.Utils;
+using BitcoderCZ.Fancade;
+using BitcoderCZ.Fancade.Editing;
+using BitcoderCZ.Fancade.Editing.Scripting;
+using BitcoderCZ.Fancade.Editing.Scripting.Builders;
+using BitcoderCZ.Fancade.Editing.Scripting.Placers;
+using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using MathUtils.Vectors;
-using static FancadeLoaderLib.Editing.Scripting.CodeWriter.Expressions;
+using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
 // calculate Fibonacci Sequence
 var builder = new GameFileBlockBuilder(null, "Level 1", PrefabType.Level);

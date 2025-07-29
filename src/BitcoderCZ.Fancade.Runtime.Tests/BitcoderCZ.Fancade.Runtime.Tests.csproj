@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" Version="0.21.16" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BitcoderCZ.Fancade.Editing\BitcoderCZ.Fancade.Editing.csproj" />
+    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Compiled\BitcoderCZ.Fancade.Runtime.Compiled.csproj" />
+    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime\BitcoderCZ.Fancade.Runtime.csproj" />
+    <ProjectReference Include="..\BitcoderCZ.Fancade\BitcoderCZ.Fancade.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MathUtils">
+      <HintPath>..\MathUtils.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
