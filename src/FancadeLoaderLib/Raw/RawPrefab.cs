@@ -223,7 +223,8 @@ public class RawPrefab
     /// <summary>
     /// Gets a value indicating whether the prefab <b>might</b> be the main prefab of it's group.
     /// </summary>
-    /// <value><see langword="true"/> if the prefab <b>might</b> be the main prefab of it's group; otherwise, <see langword="false"/>.</value>
+    /// <value>If <see langword="true"/>, the prefab is the main prefab of it's group.<para></para>
+    /// If <see langword="false"/>, the prefab may or may not be the main prefab of it's group.</value>
     internal bool HasMainInfo => NonDefaultName || HasBlocks || HasSettings || HasConnections;
 
     /// <summary>
