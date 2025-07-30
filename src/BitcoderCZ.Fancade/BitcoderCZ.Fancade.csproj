@@ -11,7 +11,7 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade</PackageId>
-    <Version>2.3.0</Version>
+    <Version>3.0.0</Version>
     <Description>C# lib for loading, saving and modifying games for Fancade.</Description>
   </PropertyGroup>
 

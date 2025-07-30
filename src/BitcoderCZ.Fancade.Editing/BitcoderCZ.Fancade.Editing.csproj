@@ -10,7 +10,7 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade.Editing</PackageId>
-    <Version>2.3.0</Version>
+      <Version>3.0.0</Version>
     <Description>Additional stuff for easier editing of fancade games.</Description>
   </PropertyGroup>
 
