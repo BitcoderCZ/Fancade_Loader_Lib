@@ -1,5 +1,16 @@
 # BitcoderCZ.Fancade
-C# lib for loading, saving and modifying games for [Fancade](https://www.fancade.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![NuGet Version](https://img.shields.io/nuget/v/BitcoderCZ.Fancade?label=Fancade%20nuget)](https://www.nuget.org/packages/BitcoderCZ.Fancade)
+[![NuGet Version](https://img.shields.io/nuget/v/BitcoderCZ.Fancade.Editing?label=Fancade.Editing%20nuget)](https://www.nuget.org/packages/BitcoderCZ.Fancade.Editing)
+
+C# library for loading, saving and modifying games for [Fancade](https://www.fancade.com/)
+
+## Installation
+The packages can be installed via NuGet:
+* [BitcoderCZ.Fancade](https://www.nuget.org/packages/BitcoderCZ.Fancade)
+* [BitcoderCZ.Fancade.Editing](https://www.nuget.org/packages/BitcoderCZ.Fancade.Editing)
+
+`.nupkg` files and release notes are located in the [Releases tab](https://github.com/BitcoderCZ/Fancade_Loader_Lib/releases)
 
 ## Usage
 ```csharp
