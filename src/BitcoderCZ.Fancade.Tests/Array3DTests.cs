@@ -1,4 +1,4 @@
-﻿using MathUtils.Vectors;
+﻿using BitcoderCZ.Maths.Vectors;
 using TUnit.Assertions.AssertConditions.Throws;
 using Array3D = BitcoderCZ.Fancade.Array3D<ushort>;
 

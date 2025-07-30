@@ -2,8 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using MathUtils.Vectors;
-using System.Collections.Generic;
+using BitcoderCZ.Maths.Vectors;
 using System.Runtime.CompilerServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

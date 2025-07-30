@@ -4,13 +4,10 @@
 
 using BitcoderCZ.Fancade.Exceptions;
 using BitcoderCZ.Fancade.Raw;
-using MathUtils.Vectors;
-using System;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

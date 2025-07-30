@@ -3,9 +3,7 @@
 // </copyright>
 
 using System.Buffers;
-using System.IO;
 using System.IO.Compression;
-using BitcoderCZ.Fancade;
 
 #if !NET6_0_OR_GREATER
 using ComponentAce.Compression.Libs.zlib;

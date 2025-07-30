@@ -3,7 +3,6 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Partial;
-using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;

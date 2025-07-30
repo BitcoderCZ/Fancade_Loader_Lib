@@ -3,10 +3,6 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Raw;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

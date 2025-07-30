@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using System;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 

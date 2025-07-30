@@ -1,10 +1,7 @@
 ﻿using BitcoderCZ.Fancade.Raw;
-using MathUtils.Vectors;
-using System;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace BitcoderCZ.Fancade.Editing;
 

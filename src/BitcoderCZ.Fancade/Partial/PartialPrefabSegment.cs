@@ -2,9 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.Fancade;
-using MathUtils.Vectors;
-using System;
+using BitcoderCZ.Maths.Vectors;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Partial;

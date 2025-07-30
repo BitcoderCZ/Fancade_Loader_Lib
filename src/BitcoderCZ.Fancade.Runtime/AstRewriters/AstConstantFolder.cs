@@ -6,7 +6,7 @@ using BitcoderCZ.Fancade.Runtime.Syntax.Objects;
 using BitcoderCZ.Fancade.Runtime.Syntax.Physics;
 using BitcoderCZ.Fancade.Runtime.Syntax.Values;
 using BitcoderCZ.Fancade.Runtime.Utils;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Runtime.Utils.SyntaxNodeFactory;

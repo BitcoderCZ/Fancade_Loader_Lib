@@ -1,5 +1,4 @@
-﻿using BitcoderCZ.Fancade;
-using MathUtils.Vectors;
+﻿using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;

@@ -1,6 +1,5 @@
-﻿using BitcoderCZ.Fancade;
-using BitcoderCZ.Fancade.Tests.Common;
-using MathUtils.Vectors;
+﻿using BitcoderCZ.Fancade.Tests.Common;
+using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using static BitcoderCZ.Fancade.Tests.Common.PrefabGenerator;
 

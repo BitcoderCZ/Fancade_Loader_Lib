@@ -4,9 +4,7 @@
 
 using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Partial;
-using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;

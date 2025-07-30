@@ -2,11 +2,8 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
+using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
-using System.Linq;
 
 namespace BitcoderCZ.Fancade.Editing.Utils;
 

@@ -2,16 +2,13 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using BitcoderCZ.Fancade.Collections;
 using BitcoderCZ.Fancade.Raw;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
+using System.Collections;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Text;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;

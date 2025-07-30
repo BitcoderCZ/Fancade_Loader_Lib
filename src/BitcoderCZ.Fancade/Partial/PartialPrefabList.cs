@@ -2,15 +2,11 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.Fancade;
 using BitcoderCZ.Fancade.Raw;
-using MathUtils.Vectors;
-using System;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 #pragma warning disable CA1716

@@ -1,4 +1,4 @@
-﻿using MathUtils.Vectors;
+﻿using BitcoderCZ.Maths.Vectors;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime.Compiled")]

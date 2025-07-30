@@ -1,5 +1,4 @@
-﻿using BitcoderCZ.Fancade;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace BitcoderCZ.Fancade.Tests.Common;
 

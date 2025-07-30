@@ -1,5 +1,5 @@
 ﻿using BitcoderCZ.Fancade.Partial;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 
 namespace BitcoderCZ.Fancade.Tests.Common;
 

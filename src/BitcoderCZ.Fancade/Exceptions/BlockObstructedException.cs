@@ -1,5 +1,4 @@
-﻿using MathUtils.Vectors;
-using System;
+﻿using BitcoderCZ.Maths.Vectors;
 
 namespace BitcoderCZ.Fancade.Exceptions;
 

@@ -1,7 +1,6 @@
-﻿using BitcoderCZ.Fancade;
-using BitcoderCZ.Fancade.Editing;
+﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections.Immutable;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

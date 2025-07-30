@@ -1,4 +1,4 @@
-﻿using MathUtils.Vectors;
+﻿using BitcoderCZ.Maths.Vectors;
 using System.ComponentModel;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

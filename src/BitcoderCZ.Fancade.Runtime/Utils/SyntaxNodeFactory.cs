@@ -1,7 +1,6 @@
-﻿using BitcoderCZ.Fancade;
-using BitcoderCZ.Fancade.Editing;
+﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Runtime.Syntax.Values;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime.Utils;

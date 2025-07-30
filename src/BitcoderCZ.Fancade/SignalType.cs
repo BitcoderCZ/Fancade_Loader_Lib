@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Frozen;
-using System.Collections.Generic;
+﻿using System.Collections.Frozen;
 using System.Numerics;
 
 namespace BitcoderCZ.Fancade;

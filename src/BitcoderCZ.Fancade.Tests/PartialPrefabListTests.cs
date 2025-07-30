@@ -1,6 +1,6 @@
 ﻿using BitcoderCZ.Fancade.Partial;
 using BitcoderCZ.Fancade.Tests.Common;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 using TUnit.Assertions.AssertConditions.Throws;
 using static BitcoderCZ.Fancade.Tests.Common.PartialPrefabGenerator;
 

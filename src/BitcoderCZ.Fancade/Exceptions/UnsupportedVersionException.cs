@@ -3,7 +3,6 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Raw;
-using System;
 
 namespace BitcoderCZ.Fancade.Exceptions;
 

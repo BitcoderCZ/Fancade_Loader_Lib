@@ -1,5 +1,5 @@
 ﻿using BitcoderCZ.Fancade.Runtime.Exceptions;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 

@@ -2,13 +2,9 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.Fancade.Partial;
 using BitcoderCZ.Fancade.Raw;
-using MathUtils.Vectors;
-using System.Collections.Generic;
+using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Builders;

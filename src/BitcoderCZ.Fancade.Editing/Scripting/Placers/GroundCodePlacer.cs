@@ -4,12 +4,9 @@
 
 using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
 using BitcoderCZ.Fancade.Editing.Utils;
-using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
+using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Placers;

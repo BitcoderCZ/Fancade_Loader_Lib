@@ -3,12 +3,7 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Utils;
-using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
+using BitcoderCZ.Maths.Vectors;
 using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
@@ -285,7 +280,7 @@ public class RawGame
         {
             var (ogIndex, prefab) = prefabWithOgIndex[i];
 
-            idsMap.Add((ushort)(ogIndex + IdOffset), (ushort)(i + IdOffset)); 
+            idsMap.Add((ushort)(ogIndex + IdOffset), (ushort)(i + IdOffset));
         }
 
         // update group ids

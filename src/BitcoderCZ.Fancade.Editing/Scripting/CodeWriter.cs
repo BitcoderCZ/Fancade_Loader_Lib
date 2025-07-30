@@ -9,8 +9,6 @@ using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
 using BitcoderCZ.Fancade.Editing.Scripting.TerminalStores;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Editing.Utils;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

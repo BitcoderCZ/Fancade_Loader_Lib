@@ -10,7 +10,7 @@ using BitcoderCZ.Fancade.Runtime.Syntax.Sound;
 using BitcoderCZ.Fancade.Runtime.Syntax.Values;
 using BitcoderCZ.Fancade.Runtime.Syntax.Variables;
 using BitcoderCZ.Fancade.Runtime.Utils;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;

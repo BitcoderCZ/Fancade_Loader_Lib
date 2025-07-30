@@ -1,5 +1,4 @@
-﻿using BitcoderCZ.Fancade;
-using MathUtils.Vectors;
+﻿using BitcoderCZ.Maths.Vectors;
 using System.Collections.Immutable;
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax;

@@ -1,12 +1,11 @@
-﻿using BitcoderCZ.Fancade;
-using BitcoderCZ.Fancade.Raw;
-using BitcoderCZ.Fancade.Editing;
+﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Editing.Scripting;
 using BitcoderCZ.Fancade.Editing.Scripting.Builders;
 using BitcoderCZ.Fancade.Editing.Scripting.Placers;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
+using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;

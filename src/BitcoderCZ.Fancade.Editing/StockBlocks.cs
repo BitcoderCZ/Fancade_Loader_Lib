@@ -4,12 +4,10 @@
 
 using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Partial;
-using MathUtils.Vectors;
-using System;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 
 namespace BitcoderCZ.Fancade.Editing;

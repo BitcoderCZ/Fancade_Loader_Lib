@@ -1,10 +1,9 @@
-﻿using BitcoderCZ.Fancade;
-using BitcoderCZ.Fancade.Collections;
-using BitcoderCZ.Fancade.Raw;
+﻿using BitcoderCZ.Fancade.Collections;
 using BitcoderCZ.Fancade.Editing;
+using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Utils;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;

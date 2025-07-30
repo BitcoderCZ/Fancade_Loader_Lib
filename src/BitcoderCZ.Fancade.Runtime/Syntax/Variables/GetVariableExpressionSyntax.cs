@@ -1,5 +1,5 @@
 ﻿using BitcoderCZ.Fancade.Editing;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Variables;
 

@@ -1,11 +1,10 @@
-﻿using BitcoderCZ.Fancade;
-using BitcoderCZ.Fancade.Editing;
+﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Fancade.Runtime.Compiled.Utils;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Syntax.Variables;
-using MathUtils.Vectors;
+using BitcoderCZ.Maths.Vectors;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
@@ -144,7 +143,7 @@ public sealed partial class AstCompiler
             using BitcoderCZ.Fancade.Editing;
             using BitcoderCZ.Fancade.Editing.Scripting.Settings;
             using BitcoderCZ.Fancade.Runtime;
-            using MathUtils.Vectors;
+            using BitcoderCZ.Maths.Vectors;
             using System;
             using System.Collections.Generic;
             using System.Diagnostics;

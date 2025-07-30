@@ -3,7 +3,6 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
-using System;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.TerminalStores;
 

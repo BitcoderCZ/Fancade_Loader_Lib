@@ -3,9 +3,7 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
-using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
+using BitcoderCZ.Maths.Vectors;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Placers;

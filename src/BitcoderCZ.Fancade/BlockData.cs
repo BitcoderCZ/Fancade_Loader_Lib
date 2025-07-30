@@ -3,8 +3,7 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Partial;
-using MathUtils.Vectors;
-using System;
+using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;

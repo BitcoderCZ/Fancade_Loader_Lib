@@ -1,12 +1,5 @@
 ﻿using BitcoderCZ.Fancade.Editing.Scripting;
 using BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
-using BitcoderCZ.Fancade.Runtime.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;

@@ -1,5 +1,4 @@
 ﻿using BitcoderCZ.Fancade.Editing.Scripting;
-using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;

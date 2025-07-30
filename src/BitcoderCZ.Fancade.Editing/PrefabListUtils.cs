@@ -3,12 +3,9 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Partial;
-using MathUtils.Vectors;
-using System;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace BitcoderCZ.Fancade.Editing;
 

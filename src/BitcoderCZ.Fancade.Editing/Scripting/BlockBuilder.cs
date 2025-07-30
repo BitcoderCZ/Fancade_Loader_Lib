@@ -5,9 +5,7 @@
 using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
 using BitcoderCZ.Fancade.Editing.Scripting.TerminalStores;
 using BitcoderCZ.Fancade.Editing.Utils;
-using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
+using BitcoderCZ.Maths.Vectors;
 using System.Collections.Immutable;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

@@ -1,10 +1,6 @@
-﻿using MathUtils.Vectors;
-using System;
+﻿using BitcoderCZ.Maths.Vectors;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;

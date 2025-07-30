@@ -1,5 +1,4 @@
-﻿using System;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+﻿using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Settings;
 

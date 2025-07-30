@@ -2,11 +2,9 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using MathUtils.Vectors;
-using System;
+using BitcoderCZ.Maths.Vectors;
 using System.Buffers.Binary;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

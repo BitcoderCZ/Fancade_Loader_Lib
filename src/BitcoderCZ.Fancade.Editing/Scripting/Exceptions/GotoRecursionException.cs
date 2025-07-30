@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BitcoderCZ.Fancade.Editing.Scripting.Exceptions;
+﻿namespace BitcoderCZ.Fancade.Editing.Scripting.Exceptions;
 
 /// <summary>
 /// An <see cref="Exception"/> thrown when goto recursion is encountered.

@@ -1,8 +1,6 @@
 ﻿using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Exceptions;
-using MathUtils.Vectors;
-using System;
-using System.Collections.Generic;
+using BitcoderCZ.Maths.Vectors;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing;

@@ -3,7 +3,6 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Editing.Scripting.TerminalStores;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

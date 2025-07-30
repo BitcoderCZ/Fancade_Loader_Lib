@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using System;
 using System.Runtime.CompilerServices;
 
 namespace BitcoderCZ.Fancade.Editing.Utils.NetStandardHacks;

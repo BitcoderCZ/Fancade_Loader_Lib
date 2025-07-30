@@ -2,8 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using System.Collections.Generic;
-
 namespace BitcoderCZ.Fancade.Editing.Utils;
 
 internal static class CollectionUtils

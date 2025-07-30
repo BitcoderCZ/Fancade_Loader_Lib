@@ -1,7 +1,4 @@
-﻿using BitcoderCZ.Fancade.Partial;
-using MathUtils.Vectors;
-using System.Collections.Generic;
-using System.IO;
+﻿using BitcoderCZ.Maths.Vectors;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Builders;
 

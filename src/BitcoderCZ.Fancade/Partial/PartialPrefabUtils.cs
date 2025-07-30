@@ -3,8 +3,6 @@
 // </copyright>
 
 #pragma warning disable CA1716
-using BitcoderCZ.Fancade;
-
 namespace BitcoderCZ.Fancade.Partial;
 #pragma warning restore CA1716
 

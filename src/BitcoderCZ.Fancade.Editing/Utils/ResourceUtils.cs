@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using System.IO;
 using System.Reflection;
 
 namespace BitcoderCZ.Fancade.Editing.Utils;

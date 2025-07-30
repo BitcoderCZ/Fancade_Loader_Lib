@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
