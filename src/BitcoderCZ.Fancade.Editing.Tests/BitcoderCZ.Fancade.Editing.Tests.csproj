@@ -8,23 +8,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BitcoderCZ.Maths" Version="1.0.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="TUnit" Version="0.21.16" />
+    <PackageReference Include="TUnit" Version="0.25.21" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BitcoderCZ.Fancade.Editing\BitcoderCZ.Fancade.Editing.csproj" />
     <ProjectReference Include="..\BitcoderCZ.Fancade.Tests.Common\BitcoderCZ.Fancade.Tests.Common.csproj" />
     <ProjectReference Include="..\BitcoderCZ.Fancade\BitcoderCZ.Fancade.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="MathUtils">
-      <HintPath>..\MathUtils.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

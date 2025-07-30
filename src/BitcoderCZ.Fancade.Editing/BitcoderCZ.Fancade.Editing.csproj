@@ -4,12 +4,14 @@
     <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>2.2.0</Version>
     <LangVersion>13</LangVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>BitcoderCZ.Fancade.Editing</PackageId>
+    <Version>2.3.0</Version>
+    <Description>Additional stuff for easier editing of fancade games.</Description>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -35,6 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BitcoderCZ.Maths" Version="1.0.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -50,17 +53,11 @@
   </ItemGroup>
 
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
-    <PackageReference Include="System.Collections.Immutable" Version="9.0.5" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.7" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BitcoderCZ.Fancade\BitcoderCZ.Fancade.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="MathUtils">
-      <HintPath>..\MathUtils.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

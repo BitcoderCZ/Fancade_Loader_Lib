@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BitcoderCZ.Maths" Version="1.0.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -35,14 +36,8 @@
   </ItemGroup>
 
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
-    <PackageReference Include="System.Collections.Immutable" Version="9.0.5" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.7" />
     <PackageReference Include="System.Memory" Version="4.6.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="MathUtils">
-      <HintPath>..\MathUtils.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

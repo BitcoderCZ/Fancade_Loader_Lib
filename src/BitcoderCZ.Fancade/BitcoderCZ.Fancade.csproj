@@ -7,10 +7,12 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <OutputType>Library</OutputType>
     <LangVersion>13</LangVersion>
-    <Version>2.2.0</Version>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>BitcoderCZ.Fancade</PackageId>
+    <Version>2.3.0</Version>
+    <Description>C# lib for loading, saving and modifying games for Fancade.</Description>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -30,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BitcoderCZ.Maths" Version="1.0.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -47,13 +50,7 @@
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageReference Include="zlib.net-mutliplatform" Version="1.0.8" />
-	<PackageReference Include="System.Collections.Immutable" Version="9.0.5" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="MathUtils">
-      <HintPath>..\MathUtils.dll</HintPath>
-    </Reference>
+	<PackageReference Include="System.Collections.Immutable" Version="9.0.7" />
   </ItemGroup>
 
 </Project>
