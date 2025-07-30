@@ -12,6 +12,8 @@
     <PackageId>BitcoderCZ.Fancade.Editing</PackageId>
       <Version>3.0.0</Version>
     <Description>Additional stuff for easier editing of fancade games.</Description>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

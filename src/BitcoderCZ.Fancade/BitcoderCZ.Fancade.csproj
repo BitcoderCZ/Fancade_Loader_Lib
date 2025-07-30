@@ -13,6 +13,8 @@
     <PackageId>BitcoderCZ.Fancade</PackageId>
     <Version>3.0.0</Version>
     <Description>C# lib for loading, saving and modifying games for Fancade.</Description>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
