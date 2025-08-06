@@ -16,12 +16,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BitcoderCZ.Maths" Version="1.0.0" />
+    <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="TUnit" Version="0.25.21" />
+    <PackageReference Include="TUnit" Version="0.52.22" />
   </ItemGroup>
 
   <ItemGroup>

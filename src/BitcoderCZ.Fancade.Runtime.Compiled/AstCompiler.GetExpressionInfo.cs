@@ -339,7 +339,7 @@ public partial class AstCompiler
 
                                 foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
                                 {
-                                    if (con.OutsidePosition == terminal.Position && conTerm is not null)
+                                    if (con.OutsideTerminal == terminal.Position && conTerm is not null)
                                     {
                                         return GetExpressionInfo(conTerm, asReference, customEnvironment);
                                     }

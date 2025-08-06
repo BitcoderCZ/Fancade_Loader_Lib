@@ -15,7 +15,7 @@ using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime;
 
-public sealed partial class AST
+public sealed partial class FcAST
 {
     private static class NodeCreation
     {
@@ -182,12 +182,12 @@ public sealed partial class AST
 
                 case 38: // vec3
                     {
-                        return new LiteralExpressionSyntax(id, pos, SignalType.Vec3, new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? (float3)value : float3.Zero));
+                        return new LiteralExpressionSyntax(id, pos, SignalType.Vec3, new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? (Vector3)value : Vector3.Zero));
                     }
 
                 case 42: // rot
                     {
-                        return new LiteralExpressionSyntax(id, pos, SignalType.Rot, new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? ((float3)value).ToQuatDeg() : Quaternion.Identity));
+                        return new LiteralExpressionSyntax(id, pos, SignalType.Rot, new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? ((Vector3)value).ToQuatDeg() : Quaternion.Identity));
                     }
 
                 case 449:

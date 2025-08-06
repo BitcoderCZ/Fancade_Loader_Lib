@@ -6,6 +6,7 @@ using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
 using BitcoderCZ.Maths.Vectors;
+using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
@@ -172,19 +173,19 @@ public partial class ExecutionTests
         return builder;
     }
 
-    private static AST Compile(CodeWriter writer)
+    private static FcAST Compile(CodeWriter writer)
     {
         writer.Flush();
         return Compile(writer.Placer.Builder);
     }
 
-    private static AST Compile(BlockBuilder builder)
+    private static FcAST Compile(BlockBuilder builder)
     {
         var prefabs = new PrefabList([(Prefab)builder.Build(int3.Zero)]);
 
         prefabs.AddImplicitConnections();
 
-        return AST.Parse(prefabs, RawGame.CurrentNumbStockPrefabs);
+        return FcAST.Parse(prefabs, RawGame.CurrentNumbStockPrefabs);
     }
 }
 
@@ -193,8 +194,8 @@ public static class ExecutionTestsDataSources
     public static IEnumerable<Func<ObjectWrapper>> InspectableLiterals()
     {
         yield return () => new(5.5f);
-        yield return () => new(new float3(1f, 2f, 3f));
-        yield return () => new(new Rotation(new float3(45f, 90f, 270f)));
+        yield return () => new(new Vector3(1f, 2f, 3f));
+        yield return () => new(new Rotation(new Vector3(45f, 90f, 270f)));
         yield return () => new(true);
     }
 }

@@ -4,10 +4,16 @@
     <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<LangVersion>13</LangVersion>
-	<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-	<EnableNETAnalyzers>True</EnableNETAnalyzers>
-	<AnalysisLevel>latest</AnalysisLevel>
+    <LangVersion>13</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>BitcoderCZ.Fancade.Runtime</PackageId>
+    <Version>1.0.0</Version>
+    <Description>Run fancade scripts.</Description>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,8 +25,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BitcoderCZ.Maths" Version="1.0.0" />
+    <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="PolySharp" Version="1.15.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -36,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
-    <PackageReference Include="System.Collections.Immutable" Version="9.0.7" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.8" />
     <PackageReference Include="System.Memory" Version="4.6.3" />
   </ItemGroup>
 

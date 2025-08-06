@@ -499,8 +499,9 @@ public partial class AstCompiler
                             break;
                         case 578:
                             outType = SignalType.Vec3;
+                            writer.Write("Vector3.Normalize(");
                             WriteExpressionOrDefault(unary.Input, SignalType.Vec3, environment, writer);
-                            writer.Write(".Normalized()");
+                            writer.Write(')');
 
                             break;
                         default:
@@ -574,9 +575,9 @@ public partial class AstCompiler
                             outType = SignalType.Vec3;
                             writer.Write("Vector3.Transform(");
                             WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
-                            writer.Write(".ToNumerics(), ");
+                            writer.Write(", ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Rot, environment, writer);
-                            writer.Write(").ToFloat3()");
+                            writer.Write(")");
                             break;
                         case 120:
                             outType = SignalType.Rot;
@@ -622,7 +623,7 @@ public partial class AstCompiler
                             WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" - ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
-                            writer.WriteInv($").LengthSquared < {Constants.EqualsVectorsMaxDiff}");
+                            writer.WriteInv($").LengthSquared() < {Constants.EqualsVectorsMaxDiff}");
                             break;
                         case 140:
                             // equals objects
@@ -684,7 +685,7 @@ public partial class AstCompiler
                             break;
                         case 570:
                             outType = SignalType.Float;
-                            writer.Write("float3.Dot(");
+                            writer.Write("Vector3.Dot(");
                             WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(", ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
@@ -692,7 +693,7 @@ public partial class AstCompiler
                             break;
                         case 574:
                             outType = SignalType.Vec3;
-                            writer.Write("float3.Cross(");
+                            writer.Write("Vector3.Cross(");
                             WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(", ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
@@ -704,13 +705,13 @@ public partial class AstCompiler
                             WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" - ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
-                            writer.Write(").Length");
+                            writer.Write(").Length()");
                             break;
                         case 200:
                             outType = SignalType.Rot;
                             writer.Write("QuaternionUtils.AxisAngle(");
                             WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
-                            writer.Write(".ToNumerics(), ");
+                            writer.Write(", ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
                             writer.Write(')');
                             break;
@@ -718,7 +719,7 @@ public partial class AstCompiler
                             outType = SignalType.Rot;
                             writer.Write("QuaternionUtils.LookRotation(");
                             WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
-                            writer.Write(".ToNumerics(), ");
+                            writer.Write(", ");
                             if (binary.Input2 is null)
                             {
                                 writer.Write("Vector3.UnitY");
@@ -726,7 +727,6 @@ public partial class AstCompiler
                             else
                             {
                                 WriteExpression(binary.Input2, false, environment, writer);
-                                writer.Write(".ToNumerics()");
                             }
 
                             writer.Write(')');
@@ -816,13 +816,13 @@ public partial class AstCompiler
 
                     writer.Write("VectorUtils.LineVsPlane(");
                     WriteExpressionOrDefault(lineVsPlane.LineFrom, SignalType.Vec3, environment, writer);
-                    writer.Write(".ToNumerics(), ");
+                    writer.Write(", ");
                     WriteExpressionOrDefault(lineVsPlane.LineTo, SignalType.Vec3, environment, writer);
-                    writer.Write(".ToNumerics(), ");
+                    writer.Write(", ");
                     WriteExpressionOrDefault(lineVsPlane.PlanePoint, SignalType.Vec3, environment, writer);
-                    writer.Write(".ToNumerics(), ");
+                    writer.Write(", ");
                     WriteExpressionOrDefault(lineVsPlane.PlaneNormal, SignalType.Vec3, environment, writer);
-                    writer.Write(".ToNumerics())");
+                    writer.Write(')');
 
                     return new ExpressionInfo(SignalType.Vec3);
                 }
@@ -836,7 +836,7 @@ public partial class AstCompiler
                     switch (makeVecRot.PrefabId)
                     {
                         case 150:
-                            writer.Write("new float3(");
+                            writer.Write("new Vector3(");
                             WriteExpressionOrDefault(makeVecRot.X, SignalType.Float, environment, writer);
                             writer.Write(", ");
                             WriteExpressionOrDefault(makeVecRot.Y, SignalType.Float, environment, writer);
@@ -926,7 +926,7 @@ public partial class AstCompiler
                             return new ExpressionInfo(SignalType.Float);
                         case 38:
                             var vec = literal.Value.Float3;
-                            writer.WriteInv($"new float3({vec.X}f, {vec.Y}f, {vec.Z}f)");
+                            writer.WriteInv($"new Vector3({vec.X}f, {vec.Y}f, {vec.Z}f)");
                             return new ExpressionInfo(SignalType.Vec3);
                         case 42:
                             var rot = literal.Value.Quaternion;
@@ -1072,7 +1072,7 @@ public partial class AstCompiler
 
                                 foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
                                 {
-                                    if (con.OutsidePosition == terminal.Position && conTerm is not null)
+                                    if (con.OutsideTerminal == terminal.Position && conTerm is not null)
                                     {
                                         return WriteExpression(conTerm, asReference, customEnvironment, writer);
                                     }

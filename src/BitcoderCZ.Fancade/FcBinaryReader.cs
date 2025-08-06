@@ -6,6 +6,7 @@ using BitcoderCZ.Maths.Vectors;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
@@ -300,12 +301,12 @@ public sealed class FcBinaryReader : IDisposable
         => new int3(ReadInt32(), ReadInt32(), ReadInt32());
 
     /// <summary>
-    /// Reads a float3 from the underlying stream.
+    /// Reads a Vector3 from the underlying stream.
     /// </summary>
-    /// <returns>A float3 read from the underlying stream.</returns>
+    /// <returns>A Vector3 read from the underlying stream.</returns>
     /// <exception cref="EndOfStreamException">Thrown when <see cref="BytesLeft"/> &lt; 12.</exception>
-    public float3 ReadVec3F()
-        => new float3(ReadFloat(), ReadFloat(), ReadFloat());
+    public Vector3 ReadVec3F()
+        => new Vector3(ReadFloat(), ReadFloat(), ReadFloat());
 
     /// <summary>
     /// Releases all the resources used by the <see cref="FcBinaryReader"/>.

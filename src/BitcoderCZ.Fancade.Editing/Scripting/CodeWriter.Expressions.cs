@@ -892,14 +892,14 @@ public sealed partial class CodeWriter
         /// </summary>
         /// <param name="value">The value to write.</param>
         public static IExpression Vector(Vector3 value)
-            => new LiteralExpression(new float3(value.X, value.Y, value.Z), SignalType.Vec3);
+            => new LiteralExpression(new Vector3(value.X, value.Y, value.Z), SignalType.Vec3);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Values.Rotation"/> block.
         /// </summary>
         /// <param name="value">The value to write.</param>
         public static IExpression Rotation(Vector3 value)
-            => new LiteralExpression(new Rotation(new float3(value.X, value.Y, value.Z)), SignalType.Rot);
+            => new LiteralExpression(new Rotation(new Vector3(value.X, value.Y, value.Z)), SignalType.Rot);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Values.True"/> or <see cref="StockBlocks.Values.False"/> block.
@@ -913,7 +913,7 @@ public sealed partial class CodeWriter
             {
                 float => SignalType.Float,
                 bool => SignalType.Bool,
-                float3 => SignalType.Vec3,
+                Vector3 => SignalType.Vec3,
                 BitcoderCZ.Fancade.Rotation => SignalType.Rot,
                 _ => throw new UnreachableException(),
             });

@@ -5,16 +5,16 @@ namespace BitcoderCZ.Fancade.Runtime.Syntax;
 
 public sealed class CustomStatementSyntax : StatementSyntax
 {
-    public CustomStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, AST ast, ImmutableArray<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)> connectedInputTerminals)
+    public CustomStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, FcAST ast, ImmutableArray<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)> connectedInputTerminals)
         : base(prefabId, position, outVoidConnections)
     {
         AST = ast;
         ConnectedInputTerminals = connectedInputTerminals;
     }
 
-    public AST AST { get; }
+    public FcAST AST { get; }
 
     public ImmutableArray<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)> ConnectedInputTerminals { get; }
 
-    public override IEnumerable<byte3> InputVoidTerminals => AST.VoidInputs.Select(con => con.OutsidePosition);
+    public override IEnumerable<byte3> InputVoidTerminals => AST.VoidInputs.Select(con => con.OutsideTerminal);
 }

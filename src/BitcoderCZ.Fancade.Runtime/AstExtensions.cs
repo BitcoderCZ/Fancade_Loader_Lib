@@ -1,7 +1,7 @@
 ﻿namespace BitcoderCZ.Fancade.Runtime;
 
-public static class AstExtensions
-{
+//public static class AstExtensions
+//{
     // Doesn't work and can't easily be made to work:
     // a lot of things rely on the positions of blocks and terminals
     // TODO: add some thing to remap connections in AstRewriter
@@ -11,4 +11,4 @@ public static class AstExtensions
 
     //    return rewriter.RewriteAst(ast);
     //}
-}
+//}

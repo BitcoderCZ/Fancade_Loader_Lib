@@ -5,6 +5,7 @@
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Builders;
@@ -137,7 +138,7 @@ public sealed class GameFileBlockBuilder : BlockBuilder
                     byte => SettingType.Byte,
                     ushort => SettingType.Ushort,
                     float => SettingType.Float,
-                    float3 => SettingType.Vec3,
+                    float3 or Vector3 => SettingType.Vec3,
                     Rotation => SettingType.Vec3,
                     string => SettingType.String,
                     _ => throw new InvalidDataException($"Unsupported type of value: '{set.Value.GetType()}'."),

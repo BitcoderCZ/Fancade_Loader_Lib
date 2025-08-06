@@ -10,7 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BitcoderCZ.Fancade.Runtime;
 
-public sealed partial class AST
+public sealed partial class FcAST
 {
     private sealed class GlobalParseContext
     {
@@ -88,7 +88,7 @@ public sealed partial class AST
             GlobalVariables = [.. variables];
         }
 
-        public AST Parse()
+        public FcAST Parse()
         {
             var ctx = PrefabInfos[MainId].ParseCtx;
 
@@ -117,7 +117,7 @@ public sealed partial class AST
 
         private bool _parsed;
 
-        private AST? _ast;
+        private FcAST? _ast;
 
         public ParseContext(GlobalParseContext globalCtx, Prefab prefab, bool isDummy)
         {
@@ -192,7 +192,7 @@ public sealed partial class AST
             }
         }
 
-        public AST AST
+        public FcAST AST
         {
             get
             {
@@ -215,7 +215,7 @@ public sealed partial class AST
                     connectionsTo.Add(connection.To, connection);
                 }
 
-                return _ast = new AST(Prefab.Id, _globalCtx.PrefabInfos[Prefab.Id].TerminalInfo, [.. _notConnectedVoidInputs], _nodes.Where(item => item.Value is StatementSyntax).Select(item => new KeyValuePair<ushort3, StatementSyntax>(item.Key, (StatementSyntax)item.Value)).ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs], connectionsFrom.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()), connectionsTo.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()));
+                return _ast = new FcAST(Prefab.Id, _globalCtx.PrefabInfos[Prefab.Id].TerminalInfo, [.. _notConnectedVoidInputs], _nodes.Where(item => item.Value is StatementSyntax).Select(item => new KeyValuePair<ushort3, StatementSyntax>(item.Key, (StatementSyntax)item.Value)).ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs], connectionsFrom.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()), connectionsTo.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()));
             }
         }
 

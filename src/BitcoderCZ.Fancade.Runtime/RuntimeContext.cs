@@ -10,7 +10,7 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract float2 ScreenSize { get; }
 
-    public abstract float3 Accelerometer { get; }
+    public abstract Vector3 Accelerometer { get; }
 
     public abstract long CurrentFrame { get; }
 
@@ -29,22 +29,22 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract void SetScore(float? score, float? coins, Ranking ranking);
 
-    public abstract void SetCamera(float3? position, Quaternion? rotation, float? range, bool perspective);
+    public abstract void SetCamera(Vector3? position, Quaternion? rotation, float? range, bool perspective);
 
-    public abstract void SetLight(float3? position, Quaternion? rotation);
+    public abstract void SetLight(Vector3? position, Quaternion? rotation);
 
     public abstract void MenuItem(VariableReference? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
 
     // **************************************** Objects ****************************************
     public abstract FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId);
 
-    public abstract (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object);
+    public abstract (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object);
 
-    public abstract void SetPosition(FcObject @object, float3? position, Quaternion? rotation);
+    public abstract void SetPosition(FcObject @object, Vector3? position, Quaternion? rotation);
 
-    public abstract (bool Hit, float3 HitPos, FcObject HitObj) Raycast(float3 from, float3 to);
+    public abstract (bool Hit, Vector3 HitPos, FcObject HitObj) Raycast(Vector3 from, Vector3 to);
 
-    public abstract (float3 Min, float3 Max) GetSize(FcObject @object);
+    public abstract (Vector3 Min, Vector3 Max) GetSize(FcObject @object);
 
     public abstract void SetVisible(FcObject @object, bool visible);
 
@@ -60,13 +60,13 @@ public abstract class RuntimeContext : IRuntimeContext
     public abstract void AdjustVolumePitch(float channel, float? volume, float? pitch);
 
     // **************************************** Physics ****************************************
-    public abstract void AddForce(FcObject @object, float3? force, float3? applyAt, float3? torque);
+    public abstract void AddForce(FcObject @object, Vector3? force, Vector3? applyAt, Vector3? torque);
 
-    public abstract (float3 Velocity, float3 Spin) GetVelocity(FcObject @object);
+    public abstract (Vector3 Velocity, Vector3 Spin) GetVelocity(FcObject @object);
 
-    public abstract void SetVelocity(FcObject @object, float3? velocity, float3? spin);
+    public abstract void SetVelocity(FcObject @object, Vector3? velocity, Vector3? spin);
 
-    public abstract void SetLocked(FcObject @object, float3? position, float3? rotation);
+    public abstract void SetLocked(FcObject @object, Vector3? position, Vector3? rotation);
 
     public abstract void SetMass(FcObject @object, float mass);
 
@@ -74,37 +74,37 @@ public abstract class RuntimeContext : IRuntimeContext
 
     public abstract void SetBounciness(FcObject @object, float bounciness);
 
-    public abstract void SetGravity(float3 gravity);
+    public abstract void SetGravity(Vector3 gravity);
 
-    public abstract FcConstraint AddConstraint(FcObject @base, FcObject part, float3? pivot);
+    public abstract FcConstraint AddConstraint(FcObject @base, FcObject part, Vector3? pivot);
 
-    public abstract void LinearLimits(FcConstraint constraint, float3? lower, float3? upper);
+    public abstract void LinearLimits(FcConstraint constraint, Vector3? lower, Vector3? upper);
 
-    public abstract void AngularLimits(FcConstraint constraint, float3? lower, float3? upper);
+    public abstract void AngularLimits(FcConstraint constraint, Vector3? lower, Vector3? upper);
 
-    public abstract void LinearSpring(FcConstraint constraint, float3? stiffness, float3? damping);
+    public abstract void LinearSpring(FcConstraint constraint, Vector3? stiffness, Vector3? damping);
 
-    public abstract void AngularSpring(FcConstraint constraint, float3? stiffness, float3? damping);
+    public abstract void AngularSpring(FcConstraint constraint, Vector3? stiffness, Vector3? damping);
 
-    public abstract void LinearMotor(FcConstraint constraint, float3? speed, float3? force);
+    public abstract void LinearMotor(FcConstraint constraint, Vector3? speed, Vector3? force);
 
-    public abstract void AngularMotor(FcConstraint constraint, float3? speed, float3? force);
+    public abstract void AngularMotor(FcConstraint constraint, Vector3? speed, Vector3? force);
 
     // **************************************** Control ****************************************
     public abstract bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos);
 
-    public abstract bool TryGetSwipe(out float3 direction);
+    public abstract bool TryGetSwipe(out Vector3 direction);
 
     public abstract bool GetButtonPressed(ButtonType type);
 
-    public abstract float3 GetJoystickDirection(JoystickType type);
+    public abstract Vector3 GetJoystickDirection(JoystickType type);
 
-    public abstract bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out float3 normal);
+    public abstract bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out Vector3 normal);
 
     // **************************************** Math ****************************************
-    public abstract (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
+    public abstract (Vector3 WorldNear, Vector3 WorldFar) ScreenToWorld(float2 screenPos);
 
-    public abstract float2 WorldToScreen(float3 worldPos);
+    public abstract float2 WorldToScreen(Vector3 worldPos);
 
     // **************************************** Values ****************************************
     public abstract void InspectValue(RuntimeValue value, SignalType type, string? variableName, ushort prefabId, ushort3 inspectBlockPosition);

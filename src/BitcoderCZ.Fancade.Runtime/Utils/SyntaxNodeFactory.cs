@@ -10,7 +10,7 @@ internal static class SyntaxNodeFactory
     public static (LiteralExpressionSyntax Node, byte3 TerminalPosition) Literal(ushort3 position, float value)
         => (new LiteralExpressionSyntax(36, position, SignalType.Float, new RuntimeValue(value)), TerminalDef.GetOutPosition(0, 2, 1));
 
-    public static (LiteralExpressionSyntax Node, byte3 TerminalPosition) Literal(ushort3 position, float3 value)
+    public static (LiteralExpressionSyntax Node, byte3 TerminalPosition) Literal(ushort3 position, Vector3 value)
         => (new LiteralExpressionSyntax(38, position, SignalType.Vec3, new RuntimeValue(value)), TerminalDef.GetOutPosition(0, 2, 2));
 
     public static (LiteralExpressionSyntax Node, byte3 TerminalPosition) Literal(ushort3 position, Quaternion value)

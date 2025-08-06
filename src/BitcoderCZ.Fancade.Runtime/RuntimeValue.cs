@@ -5,6 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace BitcoderCZ.Fancade.Runtime;
 
+/// <summary>
+/// Represents any runtime fancade value.
+/// </summary>
 [StructLayout(LayoutKind.Sequential, Size = 16)]
 public readonly struct RuntimeValue : IEquatable<RuntimeValue>
 {
@@ -12,12 +15,20 @@ public readonly struct RuntimeValue : IEquatable<RuntimeValue>
 
     private readonly DataArray _data;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RuntimeValue"/> struct for a float value.
+    /// </summary>
+    /// <param name="value">The value to assign to the <see cref="RuntimeValue"/>.</param>
     public RuntimeValue(float value)
     {
         Write(value);
     }
 
-    public RuntimeValue(float3 value)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RuntimeValue"/> struct for a float value.
+    /// </summary>
+    /// <param name="value">The value to assign to the <see cref="RuntimeValue"/>.</param>
+    public RuntimeValue(Vector3 value)
     {
         Write(value);
     }
@@ -39,7 +50,7 @@ public readonly struct RuntimeValue : IEquatable<RuntimeValue>
 
     public readonly float Float => Read<float>();
 
-    public readonly float3 Float3 => Read<float3>();
+    public readonly Vector3 Float3 => Read<Vector3>();
 
     public readonly Quaternion Quaternion => Read<Quaternion>();
 

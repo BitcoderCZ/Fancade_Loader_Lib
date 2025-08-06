@@ -14,6 +14,7 @@ using BitcoderCZ.Fancade.Runtime.Syntax.Variables;
 using BitcoderCZ.Maths.Vectors;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime.Compiled;
 
@@ -607,7 +608,7 @@ public partial class AstCompiler
                     var swipeSensor = (SwipeSensorStatementSyntax)statement;
 
                     string directionVarName = GetStateStoreVarName(environment.Index, swipeSensor.Position, "swipe_direction");
-                    _stateStoreVariables.Add((directionVarName, nameof(float3), null));
+                    _stateStoreVariables.Add((directionVarName, nameof(Vector3), null));
 
                     using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.TryGetSwipe)}(out var direction{_localVarCounter}))"))
                     {
@@ -638,7 +639,7 @@ public partial class AstCompiler
                     var joystick = (JoystickStatementSyntax)statement;
 
                     string directionVarName = GetStateStoreVarName(environment.Index, joystick.Position, "joystick_direction");
-                    _stateStoreVariables.Add((directionVarName, nameof(float3), null));
+                    _stateStoreVariables.Add((directionVarName, nameof(Vector3), null));
 
                     writer.WriteLineInv($"{directionVarName} = _ctx.{nameof(IRuntimeContext.GetJoystickDirection)}({nameof(JoystickType)}.{joystick.Type});");
                 }
@@ -656,12 +657,12 @@ public partial class AstCompiler
                         string normalVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_normal");
                         _stateStoreVariables.Add((secondObjectVarName, "int", null));
                         _stateStoreVariables.Add((impulseVarName, "float", null));
-                        _stateStoreVariables.Add((normalVarName, nameof(float3), null));
+                        _stateStoreVariables.Add((normalVarName, nameof(Vector3), null));
 
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.TryGetCollision)}(");
                         WriteExpression(collision.FirstObject, false, environment, writer);
 
-                        using (writer.CurlyIndent($", out int secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out float3 normal{_localVarCounter})"))
+                        using (writer.CurlyIndent($", out int secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out Vector3 normal{_localVarCounter})"))
                         {
                             writer.WriteLineInv($"{secondObjectVarName} = secondObject{_localVarCounter};");
                             writer.WriteLineInv($"{impulseVarName} = impulse{_localVarCounter};");
@@ -848,9 +849,9 @@ public partial class AstCompiler
 
                     foreach (var con in custom.AST.VoidInputs)
                     {
-                        if (con.OutsidePosition == terminalPos)
+                        if (con.OutsideTerminal == terminalPos)
                         {
-                            WriteEntryPoint(new EntryPoint(customEnvironment.Index, con.BlockPosition, con.TerminalPosition), false, writer);
+                            WriteEntryPoint(new EntryPoint(customEnvironment.Index, con.InsideBlock, con.InsideTerminal), false, writer);
                         }
                     }
                 }

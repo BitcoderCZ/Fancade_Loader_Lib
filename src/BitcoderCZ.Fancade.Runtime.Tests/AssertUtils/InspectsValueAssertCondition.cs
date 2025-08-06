@@ -10,7 +10,7 @@ using TUnit.Assertions.AssertConditions;
 namespace BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
 
 // TODO: allow using Bullet
-internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expected, int RunFor, TimeSpan Timeout, bool AllowOnlyExpectedInspects) : BaseAssertCondition<AST>
+internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expected, int RunFor, TimeSpan Timeout, bool AllowOnlyExpectedInspects) : BaseAssertCondition<FcAST>
 {
     protected override string GetExpectation()
     {
@@ -70,7 +70,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         return builder.ToString();
     }
 
-    protected override ValueTask<AssertionResult> GetResult(AST? actualValue, Exception? exception, AssertionMetadata assertionMetadata)
+    protected override ValueTask<AssertionResult> GetResult(FcAST? actualValue, Exception? exception, AssertionMetadata assertionMetadata)
     {
         if (actualValue is null)
         {
@@ -92,9 +92,9 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         }
     }
 
-    private AssertionResult Run(AST ast, bool boxArt = false)
+    private AssertionResult Run(FcAST ast, bool boxArt = false)
     {
-        IEnumerable<Func<AST, IRuntimeContext, IAstRunner>> runnerFactories = [(ast, ctx) => new Interpreter(ast, ctx, Timeout), (ast, ctx) => AstCompiler.Compile(AstCompiler.Parse(ast, Timeout), ctx)!];
+        IEnumerable<Func<FcAST, IRuntimeContext, IAstRunner>> runnerFactories = [(ast, ctx) => new Interpreter(ast, ctx, Timeout), (ast, ctx) => AstCompiler.Compile(AstCompiler.Parse(ast, Timeout), ctx)!];
 
         Queue<Inspect> inspectQueue = new();
 
@@ -180,7 +180,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                     string inspected = inspectVal switch
                     {
                         float f => f.ToString("0.###"),
-                        float3 f3 => f3.ToString("0.###"),
+                        Vector3 f3 => f3.ToString("0.###"),
                         Quaternion q => q.GetEuler().ToString("0.###"),
                         _ => inspectVal?.ToString() ?? "null",
                     };
@@ -231,7 +231,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         return type switch
         {
             SignalType.Float => MathF.Abs(a.Float - (float)b) < MaxDeltaNumber,
-            SignalType.Vec3 => (a.Float3 - (float3)b).LengthSquared < MaxDeltaVector,
+            SignalType.Vec3 => (a.Float3 - (Vector3)b).LengthSquared() < MaxDeltaVector,
             SignalType.Rot => Equals(a.Quaternion, ((Rotation)b).Value),
             SignalType.Bool => a.Bool == (bool)b,
             SignalType.Obj => (FcObject)a.Int == (FcObject)b,
@@ -240,7 +240,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         };
 
         // TODO: does this even work?
-        static bool Equals(Quaternion a, float3 bEuler)
+        static bool Equals(Quaternion a, Vector3 bEuler)
         {
             const float DegToRad = MathF.PI / 180f;
 
@@ -269,7 +269,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
 
         public float2 ScreenSize => new float2(1920f, 1080f);
 
-        public float3 Accelerometer => new float3(0f, -9.8f, 0f);
+        public Vector3 Accelerometer => new Vector3(0f, -9.8f, 0f);
 
         public long CurrentFrame { get; private set; }
 
@@ -281,10 +281,10 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public void InspectValue(RuntimeValue value, SignalType type, string? variableName, ushort prefabId, ushort3 inspectBlockPosition)
             => _inspectQueue.Enqueue(new(value, type, variableName, prefabId, inspectBlockPosition));
 
-        public FcConstraint AddConstraint(FcObject @base, FcObject part, float3? pivot)
+        public FcConstraint AddConstraint(FcObject @base, FcObject part, Vector3? pivot)
             => FcConstraint.Null;
 
-        public void AddForce(FcObject @object, float3? force, float3? applyAt, float3? torque)
+        public void AddForce(FcObject @object, Vector3? force, Vector3? applyAt, Vector3? torque)
         {
         }
 
@@ -292,15 +292,15 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void AngularLimits(FcConstraint constraint, float3? lower, float3? upper)
+        public void AngularLimits(FcConstraint constraint, Vector3? lower, Vector3? upper)
         {
         }
 
-        public void AngularMotor(FcConstraint constraint, float3? speed, float3? force)
+        public void AngularMotor(FcConstraint constraint, Vector3? speed, Vector3? force)
         {
         }
 
-        public void AngularSpring(FcConstraint constraint, float3? stiffness, float3? damping)
+        public void AngularSpring(FcConstraint constraint, Vector3? stiffness, Vector3? damping)
         {
         }
 
@@ -314,13 +314,13 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public bool GetButtonPressed(ButtonType type)
             => false;
 
-        public float3 GetJoystickDirection(JoystickType type)
+        public Vector3 GetJoystickDirection(JoystickType type)
             => default;
 
         public FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId)
             => default;
 
-        public (float3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object)
+        public (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object)
             => default;
 
         public float GetRandomValue(float min, float max)
@@ -329,21 +329,21 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
             return val;
         }
 
-        public (float3 Min, float3 Max) GetSize(FcObject @object)
+        public (Vector3 Min, Vector3 Max) GetSize(FcObject @object)
             => default;
 
-        public (float3 Velocity, float3 Spin) GetVelocity(FcObject @object)
+        public (Vector3 Velocity, Vector3 Spin) GetVelocity(FcObject @object)
             => default;
 
-        public void LinearLimits(FcConstraint constraint, float3? lower, float3? upper)
+        public void LinearLimits(FcConstraint constraint, Vector3? lower, Vector3? upper)
         {
         }
 
-        public void LinearMotor(FcConstraint constraint, float3? speed, float3? force)
+        public void LinearMotor(FcConstraint constraint, Vector3? speed, Vector3? force)
         {
         }
 
-        public void LinearSpring(FcConstraint constraint, float3? stiffness, float3? damping)
+        public void LinearSpring(FcConstraint constraint, Vector3? stiffness, Vector3? damping)
         {
         }
 
@@ -358,17 +358,17 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public float PlaySound(float volume, float pitch, FcSound sound)
             => 0f;
 
-        public (bool Hit, float3 HitPos, FcObject HitObj) Raycast(float3 from, float3 to)
+        public (bool Hit, Vector3 HitPos, FcObject HitObj) Raycast(Vector3 from, Vector3 to)
             => default;
 
-        public (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos)
+        public (Vector3 WorldNear, Vector3 WorldFar) ScreenToWorld(float2 screenPos)
             => default;
 
         public void SetBounciness(FcObject @object, float bounciness)
         {
         }
 
-        public void SetCamera(float3? position, Quaternion? rotation, float? range, bool perspective)
+        public void SetCamera(Vector3? position, Quaternion? rotation, float? range, bool perspective)
         {
         }
 
@@ -376,15 +376,15 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void SetGravity(float3 gravity)
+        public void SetGravity(Vector3 gravity)
         {
         }
 
-        public void SetLight(float3? position, Quaternion? rotation)
+        public void SetLight(Vector3? position, Quaternion? rotation)
         {
         }
 
-        public void SetLocked(FcObject @object, float3? position, float3? rotation)
+        public void SetLocked(FcObject @object, Vector3? position, Vector3? rotation)
         {
         }
 
@@ -392,7 +392,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void SetPosition(FcObject @object, float3? position, Quaternion? rotation)
+        public void SetPosition(FcObject @object, Vector3? position, Quaternion? rotation)
         {
         }
 
@@ -403,7 +403,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void SetVelocity(FcObject @object, float3? velocity, float3? spin)
+        public void SetVelocity(FcObject @object, Vector3? velocity, Vector3? spin)
         {
         }
 
@@ -415,7 +415,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out float3 normal)
+        public bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out Vector3 normal)
         {
             secondObject = default;
             impulse = default;
@@ -423,7 +423,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
             return false;
         }
 
-        public bool TryGetSwipe(out float3 direction)
+        public bool TryGetSwipe(out Vector3 direction)
         {
             direction = default;
             return false;
@@ -439,7 +439,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public float2 WorldToScreen(float3 worldPos)
+        public float2 WorldToScreen(Vector3 worldPos)
             => default;
     }
 }

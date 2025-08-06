@@ -40,7 +40,7 @@ public sealed partial class AstCompiler
 
     private int _localVarCounter = 0;
 
-    private AstCompiler(AST ast, TimeSpan timeout, int maxDepth)
+    private AstCompiler(FcAST ast, TimeSpan timeout, int maxDepth)
     {
         _timeout = timeout;
 
@@ -60,13 +60,13 @@ public sealed partial class AstCompiler
         _writer = new IndentedTextWriter(new StringWriter(_writerBuilder));
     }
 
-    public static string Parse(AST ast)
+    public static string Parse(FcAST ast)
         => Parse(ast, TimeSpan.FromSeconds(3));
 
-    public static string Parse(AST ast, TimeSpan timeout)
+    public static string Parse(FcAST ast, TimeSpan timeout)
         => Parse(ast, timeout, 4);
 
-    public static string Parse(AST ast, TimeSpan timeout, int maxDepth)
+    public static string Parse(FcAST ast, TimeSpan timeout, int maxDepth)
     {
         // TODO: constant fold
 
@@ -426,11 +426,11 @@ public sealed partial class AstCompiler
                             result[i] = new RuntimeValue((float)(object)_items[i]);
                         }
                     }
-                    else if (typeof(T) == typeof(float3))
+                    else if (typeof(T) == typeof(Vector3))
                     {
                         for (int i = 0; i < _count; i++)
                         {
-                            result[i] = new RuntimeValue((float3)(object)_items[i]);
+                            result[i] = new RuntimeValue((Vector3)(object)_items[i]);
                         }
                     }
                     else if (typeof(T) == typeof(Quaternion))
@@ -507,19 +507,13 @@ public sealed partial class AstCompiler
             {
                 private const float DegToRad = MathF.PI / 180f;
 
-                public static Vector3 ToNumerics(this float3 value)
-                    => new Vector3(value.X, value.Y, value.Z);
-
-                public static float3 ToFloat3(this Vector3 value)
-                    => new float3(value.X, value.Y, value.Z);
-
-                public static Quaternion ToQuatDeg(this float3 value)
+                public static Quaternion ToQuatDeg(this Vector3 value)
                     => Quaternion.CreateFromYawPitchRoll(value.Y * DegToRad, value.X * DegToRad, value.Z * DegToRad);
 
-                public static float3 LineVsPlane(Vector3 lineFrom, Vector3 lineTo, Vector3 planePoint, Vector3 planeNormal)
+                public static Vector3 LineVsPlane(Vector3 lineFrom, Vector3 lineTo, Vector3 planePoint, Vector3 planeNormal)
                 {
                     float t = Vector3.Dot(planePoint - lineFrom, planeNormal) / Vector3.Dot(lineTo - lineFrom, planeNormal);
-                    return (lineFrom + (t * (lineTo - lineFrom))).ToFloat3();
+                    return (lineFrom + (t * (lineTo - lineFrom)));
                 }
             }
 
@@ -830,8 +824,8 @@ public sealed partial class AstCompiler
             SignalType.Void => "void",
             SignalType.Float => "float",
             SignalType.FloatPtr => "FcList<float>.Ref",
-            SignalType.Vec3 => nameof(float3),
-            SignalType.Vec3Ptr => $"FcList<{nameof(float3)}>.Ref",
+            SignalType.Vec3 => nameof(Vector3),
+            SignalType.Vec3Ptr => $"FcList<{nameof(Vector3)}>.Ref",
             SignalType.Rot => nameof(Quaternion),
             SignalType.RotPtr => $"FcList<{nameof(Quaternion)}>.Ref",
             SignalType.Bool => "bool",
@@ -848,8 +842,8 @@ public sealed partial class AstCompiler
         {
             SignalType.Float => "0f",
             SignalType.FloatPtr => "new FcList<float>.Ref(null, 0)",
-            SignalType.Vec3 => $"{nameof(float3)}.{nameof(float3.Zero)}",
-            SignalType.Vec3Ptr => $"new FcList<{nameof(float3)}>.Ref(null, 0)",
+            SignalType.Vec3 => $"{nameof(Vector3)}.{nameof(Vector3.Zero)}",
+            SignalType.Vec3Ptr => $"new FcList<{nameof(Vector3)}>.Ref(null, 0)",
             SignalType.Rot => $"{nameof(Quaternion)}.{nameof(Quaternion.Identity)}",
             SignalType.RotPtr => $"new FcList<{nameof(Quaternion)}>.Ref(null, 0)",
             SignalType.Bool => "false",
@@ -895,7 +889,7 @@ public sealed partial class AstCompiler
 
     private sealed class Environment
     {
-        public Environment(AST ast, int index, int outerEnvironmentIndex, ushort3 outerPosition)
+        public Environment(FcAST ast, int index, int outerEnvironmentIndex, ushort3 outerPosition)
         {
             Index = index;
             OuterEnvironmentIndex = outerEnvironmentIndex;
@@ -903,7 +897,7 @@ public sealed partial class AstCompiler
             OuterPosition = outerPosition;
         }
 
-        public AST AST { get; }
+        public FcAST AST { get; }
 
         public int Index { get; }
 

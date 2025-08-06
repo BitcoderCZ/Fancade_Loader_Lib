@@ -5,6 +5,7 @@
 using BitcoderCZ.Fancade.Partial;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
+using System.Numerics;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing;
@@ -41,6 +42,7 @@ public static partial class PlaceBlockHelper
                 block = StockBlocks.Values.Number.Prefab;
                 break;
             case float3:
+            case Vector3:
                 block = StockBlocks.Values.Vector.Prefab;
                 break;
             case Rotation:
@@ -61,7 +63,7 @@ public static partial class PlaceBlockHelper
                 case float:
                     settingType = SettingType.Float;
                     break;
-                case float3 or Rotation:
+                case float3 or Vector3 or Rotation:
                     settingType = SettingType.Vec3;
                     break;
                 default:

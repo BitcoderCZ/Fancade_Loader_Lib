@@ -1,5 +1,6 @@
 ﻿using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
 
@@ -10,7 +11,7 @@ internal readonly struct InspectAssertExpected : ISpanFormattable
         : this(value, value switch
         {
             float => SignalType.Float,
-            float3 => SignalType.Vec3,
+            Vector3 => SignalType.Vec3,
             Rotation => SignalType.Rot,
             bool => SignalType.Bool,
             FcObject => SignalType.Obj,

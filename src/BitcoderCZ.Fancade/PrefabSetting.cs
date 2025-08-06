@@ -123,7 +123,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
             SettingType.Ushort => value is ushort,
             SettingType.Int => value is int,
             SettingType.Float => value is float,
-            SettingType.Vec3 => value is float3,
+            SettingType.Vec3 => value is Vector3,
             _ => value is string,
         };
 
@@ -139,7 +139,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
             SettingType.Ushort => default(ushort),
             SettingType.Int => default(int),
             SettingType.Float => default(float),
-            SettingType.Vec3 => default(float3),
+            SettingType.Vec3 => default(Vector3),
             _ => string.Empty,
         };
 
@@ -178,7 +178,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
             SettingType.Ushort => reader.ReadUInt16(),
             SettingType.Int => reader.ReadInt32(),
             SettingType.Float => reader.ReadFloat(),
-            SettingType.Vec3 => new float3(reader.ReadFloat(), reader.ReadFloat(), reader.ReadFloat()), // vec3 or rot (euler angles)
+            SettingType.Vec3 => new Vector3(reader.ReadFloat(), reader.ReadFloat(), reader.ReadFloat()), // vec3 or rot (euler angles)
             _ => reader.ReadString(), // string (string value (6) or terminal name (7+))
         };
 
@@ -212,7 +212,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
                 writer.WriteFloat((float)Value);
                 break;
             case SettingType.Vec3: // vec3 or rot (euler angles)
-                writer.WriteFloat3((float3)Value);
+                writer.WriteFloat3((Vector3)Value);
                 break;
             case SettingType.String:
             default: // string (string value (6) or terminal name (7+))

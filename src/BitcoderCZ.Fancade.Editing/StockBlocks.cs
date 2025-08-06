@@ -8,6 +8,7 @@ using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Reflection;
 
 namespace BitcoderCZ.Fancade.Editing;
@@ -730,6 +731,7 @@ public static class StockBlocks
                 float => Number,
                 bool b => b ? True : False,
                 float3 => Vector,
+                Vector3 => Vector,
                 BitcoderCZ.Fancade.Rotation => Rotation,
                 _ => throw new ArgumentException($"No literal exists for type '{value.GetType().FullName}',", nameof(value)),
             };

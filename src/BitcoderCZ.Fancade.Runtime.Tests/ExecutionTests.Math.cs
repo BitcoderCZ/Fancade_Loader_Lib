@@ -12,6 +12,7 @@ public partial class ExecutionTests
     [Arguments(-7f)]
     public Task Negate_ProducesCorrectOutput(float input)
         => TestExpression(Negate(Number(input)), -input);
+
     [Test]
     [Arguments(true)]
     [Arguments(false)]

@@ -6,6 +6,7 @@ using BitcoderCZ.Maths.Vectors;
 using System.Buffers.Binary;
 using System.ComponentModel;
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
@@ -211,6 +212,7 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
                 float f => f.ToString(CultureInfo.InvariantCulture),
                 string s => $"\"{s}\"",
                 float3 v => $"[{v.X.ToString(CultureInfo.InvariantCulture)},{v.Y.ToString(CultureInfo.InvariantCulture)},{v.Z.ToString(CultureInfo.InvariantCulture)}]",
+                Vector3 v => $"[{v.X.ToString(CultureInfo.InvariantCulture)},{v.Y.ToString(CultureInfo.InvariantCulture)},{v.Z.ToString(CultureInfo.InvariantCulture)}]",
                 Rotation r => $"[{r.Value.X.ToString(CultureInfo.InvariantCulture)},{r.Value.Y.ToString(CultureInfo.InvariantCulture)},{r.Value.Z.ToString(CultureInfo.InvariantCulture)}]",
                 _ => throw new InvalidDataException($"Object of type '{set.Value.GetType()}' isn't a valid setting value."),
             };
@@ -300,7 +302,14 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
                     writer.WriteInt32(1);
                     writer.WriteString(s);
                 }
-                else if (set.Value is float3 v3)
+                else if (set.Value is float3 v3f)
+                {
+                    writer.WriteInt32(2);
+                    writer.WriteSingle(v3f.X);
+                    writer.WriteSingle(v3f.Y);
+                    writer.WriteSingle(v3f.Z);
+                }
+                else if (set.Value is Vector3 v3)
                 {
                     writer.WriteInt32(2);
                     writer.WriteSingle(v3.X);

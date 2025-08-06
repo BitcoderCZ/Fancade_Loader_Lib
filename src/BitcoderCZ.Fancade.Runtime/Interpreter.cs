@@ -43,17 +43,17 @@ public sealed class Interpreter : IAstRunner
     private readonly TimeSpan _timeout;
     private readonly Stopwatch? _timeoutWatch;
 
-    public Interpreter(AST ast, IRuntimeContext ctx)
+    public Interpreter(FcAST ast, IRuntimeContext ctx)
         : this(ast, ctx, TimeSpan.FromSeconds(3))
     {
     }
 
-    public Interpreter(AST ast, IRuntimeContext ctx, TimeSpan timeout)
+    public Interpreter(FcAST ast, IRuntimeContext ctx, TimeSpan timeout)
         : this(ast, ctx, timeout, 4)
     {
     }
 
-    public Interpreter(AST ast, IRuntimeContext ctx, TimeSpan timeout, int maxDepth)
+    public Interpreter(FcAST ast, IRuntimeContext ctx, TimeSpan timeout, int maxDepth)
     {
         ThrowIfNull(ast, nameof(ast));
         ThrowIfNull(ast, nameof(ctx));
@@ -610,7 +610,7 @@ public sealed class Interpreter : IAstRunner
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var collision = (CollisionStatementSyntax)statement;
 
-                        if (collision.FirstObject is not null && _ctx.TryGetCollision((FcObject)GetValue(collision.FirstObject, environment).Int, out FcObject secondObject, out float impulse, out float3 normal))
+                        if (collision.FirstObject is not null && _ctx.TryGetCollision((FcObject)GetValue(collision.FirstObject, environment).Int, out FcObject secondObject, out float impulse, out Vector3 normal))
                         {
                             environment.BlockData[collision.Position] = (secondObject, impulse, normal);
                             executeNextSpan[nextCount++] = PosOut04;
@@ -748,9 +748,9 @@ public sealed class Interpreter : IAstRunner
 
                         foreach (var con in custom.AST.VoidInputs)
                         {
-                            if (con.OutsidePosition == terminalPos)
+                            if (con.OutsideTerminal == terminalPos)
                             {
-                                Execute(new EntryPoint(customEnvironment.Index, con.BlockPosition, con.TerminalPosition), lateUpdateQueue);
+                                Execute(new EntryPoint(customEnvironment.Index, con.InsideBlock, con.InsideTerminal), lateUpdateQueue);
                             }
                         }
                     }
@@ -852,7 +852,7 @@ public sealed class Interpreter : IAstRunner
                     {
                         if (terminal.Position == PosOut02)
                         {
-                            val = new(float3.Zero);
+                            val = new(Vector3.Zero);
                         }
                         else if (terminal.Position == PosOut12)
                         {
@@ -915,12 +915,12 @@ public sealed class Interpreter : IAstRunner
                 {
                     var getSize = (GetSizeExpressionSyntax)terminal.Node;
 
-                    float3 val;
+                    Vector3 val;
                     if (getSize.Object is null)
                     {
                         if (terminal.Position == PosOut02 || terminal.Position == PosOut12)
                         {
-                            val = float3.Zero;
+                            val = Vector3.Zero;
                         }
                         else
                         {
@@ -970,12 +970,12 @@ public sealed class Interpreter : IAstRunner
                 {
                     var getVelocity = (GetVelocityExpressionSyntax)terminal.Node;
 
-                    float3 val;
+                    Vector3 val;
                     if (getVelocity.Object is null)
                     {
                         if (terminal.Position == PosOut02 || terminal.Position == PosOut12)
                         {
-                            val = float3.Zero;
+                            val = Vector3.Zero;
                         }
                         else
                         {
@@ -1042,7 +1042,7 @@ public sealed class Interpreter : IAstRunner
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var swipeSensor = (SwipeSensorStatementSyntax)terminal.Node;
 
-                    var direction = (float3)environment.BlockData.GetValueOrDefault(swipeSensor.Position, float3.Zero);
+                    var direction = (Vector3)environment.BlockData.GetValueOrDefault(swipeSensor.Position, Vector3.Zero);
 
                     return new TerminalOutput(new RuntimeValue(direction));
                 }
@@ -1052,7 +1052,7 @@ public sealed class Interpreter : IAstRunner
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var joystick = (JoystickStatementSyntax)terminal.Node;
 
-                    var direction = (float3)environment.BlockData.GetValueOrDefault(joystick.Position, float3.Zero);
+                    var direction = (Vector3)environment.BlockData.GetValueOrDefault(joystick.Position, Vector3.Zero);
 
                     return new TerminalOutput(new RuntimeValue(direction));
                 }
@@ -1061,7 +1061,7 @@ public sealed class Interpreter : IAstRunner
                 {
                     var collision = (CollisionStatementSyntax)terminal.Node;
 
-                    var (otherObject, impulse, normal) = ((FcObject, float, float3))environment.BlockData.GetValueOrDefault(collision.Position, (FcObject.Null, 0f, float3.Zero));
+                    var (otherObject, impulse, normal) = ((FcObject, float, Vector3))environment.BlockData.GetValueOrDefault(collision.Position, (FcObject.Null, 0f, Vector3.Zero));
 
                     RuntimeValue val;
                     if (terminal.Position == PosOut14)
@@ -1113,7 +1113,7 @@ public sealed class Interpreter : IAstRunner
                         186 => new(MathF.Floor(input.Float)),
                         188 => new(MathF.Ceiling(input.Float)),
                         455 => new(MathF.Abs(input.Float)),
-                        578 => new(input.Float3.Normalized()),
+                        578 => new(Vector3.Normalize(input.Float3)),
                         _ => throw new UnreachableException(),
                     };
 
@@ -1154,7 +1154,7 @@ public sealed class Interpreter : IAstRunner
                         172 => new(FcMod(input1.Float, input2.Float)),
                         457 => new(MathF.Pow(input1.Float, input2.Float)),
                         132 => new(MathF.Abs(input1.Float - input2.Float) < Constants.EqualsNumbersMaxDiff),
-                        136 => new((input1.Float3 - input2.Float3).LengthSquared < Constants.EqualsVectorsMaxDiff),
+                        136 => new((input1.Float3 - input2.Float3).LengthSquared() < Constants.EqualsVectorsMaxDiff),
                         140 => new(input1.Int == input2.Int),
                         421 => new(input1.Bool == input2.Bool),
                         128 => new(input1.Float < input2.Float),
@@ -1163,9 +1163,9 @@ public sealed class Interpreter : IAstRunner
                         176 => new(MathF.Min(input1.Float, input2.Float)),
                         180 => new(MathF.Max(input1.Float, input2.Float)),
                         580 => new(MathF.Log(input1.Float, input2.Float)),
-                        570 => new(float3.Dot(input1.Float3, input2.Float3)),
-                        574 => new(float3.Cross(input1.Float3, input2.Float3)),
-                        190 => new((input1.Float3 - input2.Float3).Length),
+                        570 => new(Vector3.Dot(input1.Float3, input2.Float3)),
+                        574 => new(Vector3.Cross(input1.Float3, input2.Float3)),
+                        190 => new((input1.Float3 - input2.Float3).Length()),
                         200 => new(QuaternionUtils.AxisAngle(input1.Float3.ToNumerics(), input2.Float)),
                         204 => new(QuaternionUtils.LookRotation(input1.Float3.ToNumerics(), binary.Input2 is null ? Vector3.UnitY : input2.Float3.ToNumerics())),
                         _ => throw new UnreachableException(),
@@ -1195,7 +1195,7 @@ public sealed class Interpreter : IAstRunner
 
                     var (near, far) = _ctx.ScreenToWorld(new float2(GetValue(screenToWorld.ScreenX, environment).Float, GetValue(screenToWorld.ScreenY, environment).Float));
 
-                    float3 val = default;
+                    Vector3 val = default;
                     if (terminal.Position == PosOut02)
                     {
                         val = near;
@@ -1260,7 +1260,7 @@ public sealed class Interpreter : IAstRunner
 
                     return new TerminalOutput(makeVecRot.PrefabId switch
                     {
-                        150 => new RuntimeValue(new float3(x, y, z)),
+                        150 => new RuntimeValue(new Vector3(x, y, z)),
                         162 => new RuntimeValue(Quaternion.CreateFromYawPitchRoll(y, x, z)),
                         _ => throw new UnreachableException(),
                     });
@@ -1406,7 +1406,7 @@ public sealed class Interpreter : IAstRunner
 
                                 foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
                                 {
-                                    if (con.OutsidePosition == terminal.Position)
+                                    if (con.OutsideTerminal == terminal.Position)
                                     {
                                         return GetOutput(conTerm, customEnvironment);
                                     }
@@ -1494,7 +1494,7 @@ public sealed class Interpreter : IAstRunner
 
     private sealed class Environment
     {
-        public Environment(AST ast, int index, int outerEnvironmentIndex, ushort3 outerPosition)
+        public Environment(FcAST ast, int index, int outerEnvironmentIndex, ushort3 outerPosition)
         {
             Index = index;
             OuterEnvironmentIndex = outerEnvironmentIndex;
@@ -1502,7 +1502,7 @@ public sealed class Interpreter : IAstRunner
             OuterPosition = outerPosition;
         }
 
-        public AST AST { get; }
+        public FcAST AST { get; }
 
         public int Index { get; }
 

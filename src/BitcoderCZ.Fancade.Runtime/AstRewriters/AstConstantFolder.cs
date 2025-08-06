@@ -22,7 +22,7 @@ internal sealed class AstConstantFolder : AstRewriter
         return !IsNullOrZero(newNode.Object)
             ? (newNode, terminalPos)
             : terminalPos == TerminalDef.GetOutPosition(0, 2, 2)
-            ? Literal(node.Position, float3.Zero)
+            ? Literal(node.Position, Vector3.Zero)
             : terminalPos == TerminalDef.GetOutPosition(1, 2, 2)
             ? Literal(node.Position, Quaternion.Identity)
             : throw new InvalidTerminalException(terminalPos);
@@ -46,7 +46,7 @@ internal sealed class AstConstantFolder : AstRewriter
         return !IsNullOrZero(newNode.Object)
           ? (newNode, terminalPos)
           : terminalPos == TerminalDef.GetOutPosition(0, 2, 2) || terminalPos == TerminalDef.GetOutPosition(1, 2, 2)
-          ? Literal(node.Position, float3.Zero)
+          ? Literal(node.Position, Vector3.Zero)
           : throw new InvalidTerminalException(terminalPos);
     }
 
@@ -67,7 +67,7 @@ internal sealed class AstConstantFolder : AstRewriter
                 186 => Literal(newNode.Position, MathF.Floor(input.Float)),
                 188 => Literal(newNode.Position, MathF.Ceiling(input.Float)),
                 455 => Literal(newNode.Position, MathF.Abs(input.Float)),
-                578 => Literal(newNode.Position, input.Float3.Normalized()),
+                578 => Literal(newNode.Position, Vector3.Normalize(input.Float3)),
                 _ => throw new UnreachableException(),
             };
     }
@@ -105,8 +105,8 @@ internal sealed class AstConstantFolder : AstRewriter
             176 => Literal(newNode.Position, MathF.Min(input1.Float, input2.Float)),
             180 => Literal(newNode.Position, MathF.Max(input1.Float, input2.Float)),
             580 => Literal(newNode.Position, MathF.Log(input1.Float, input2.Float)),
-            570 => Literal(newNode.Position, float3.Dot(input1.Float3, input2.Float3)),
-            574 => Literal(newNode.Position, float3.Cross(input1.Float3, input2.Float3)),
+            570 => Literal(newNode.Position, Vector3.Dot(input1.Float3, input2.Float3)),
+            574 => Literal(newNode.Position, Vector3.Cross(input1.Float3, input2.Float3)),
             190 => Literal(newNode.Position, (input1.Float3 - input2.Float3).Length),
             200 => Literal(newNode.Position, QuaternionUtils.AxisAngle(input1.Float3.ToNumerics(), input2.Float)),
             204 => Literal(newNode.Position, QuaternionUtils.LookRotation(input1.Float3.ToNumerics(), newNode.Input2 is null ? Vector3.UnitY : input2.Float3.ToNumerics())),
@@ -157,7 +157,7 @@ internal sealed class AstConstantFolder : AstRewriter
         return TryGetValue(newNode.X, out var x) && TryGetValue(newNode.Y, out var y) && TryGetValue(newNode.Z, out var z)
             ? newNode.PrefabId switch
             {
-                150 => Literal(newNode.Position, new float3(x.Float, y.Float, z.Float)),
+                150 => Literal(newNode.Position, new Vector3(x.Float, y.Float, z.Float)),
                 162 => Literal(newNode.Position, Quaternion.CreateFromYawPitchRoll(x.Float, y.Float, z.Float)),
                 _ => throw new UnreachableException(),
             }

@@ -4,6 +4,7 @@
 
 using BitcoderCZ.Maths.Vectors;
 using System.ComponentModel;
+using System.Numerics;
 
 namespace BitcoderCZ.Fancade;
 
@@ -37,7 +38,7 @@ public enum SettingType : byte
     Float = 4,
 
     /// <summary>
-    /// The type of this setting's value is <see cref="float3"/> (vector or rotation).
+    /// The type of this setting's value is <see cref="Vector3"/> (vector or rotation).
     /// </summary>
     Vec3 = 5,
 

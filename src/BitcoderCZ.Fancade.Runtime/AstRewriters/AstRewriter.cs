@@ -17,9 +17,9 @@ namespace BitcoderCZ.Fancade.Runtime.AstRewriters;
 
 internal abstract class AstRewriter
 {
-    protected readonly Dictionary<ushort, AST> RewrittenAsts = [];
+    protected readonly Dictionary<ushort, FcAST> RewrittenAsts = [];
 
-    public virtual AST RewriteAst(AST ast)
+    public virtual FcAST RewriteAst(FcAST ast)
     {
         if (RewrittenAsts.TryGetValue(ast.PrefabId, out var rewritten))
         {
@@ -27,7 +27,7 @@ internal abstract class AstRewriter
         }
 
         Dictionary<ushort3, StatementSyntax> statements = new(ast.Statements.Count);
-        var nonVoidOutputs = ImmutableArray.CreateBuilder<(AST.OutsideConnection Connection, SyntaxTerminal? InsideTerminal)>(ast.NonVoidOutputs.Length);
+        var nonVoidOutputs = ImmutableArray.CreateBuilder<(FcAST.OutsideConnection Connection, SyntaxTerminal? InsideTerminal)>(ast.NonVoidOutputs.Length);
 
         foreach (var (_, statement) in ast.Statements)
         {
@@ -43,7 +43,7 @@ internal abstract class AstRewriter
             nonVoidOutputs.Add((connection, newTerminal));
         }
 
-        rewritten = new AST(ast.PrefabId, ast.TerminalInfo, ast.NotConnectedVoidInputs, statements.ToFrozenDictionary(), ast.GlobalVariables, ast.Variables, ast.VoidInputs, nonVoidOutputs.DrainToImmutable(), ast.ConnectionsFrom, ast.ConnectionsTo);
+        rewritten = new FcAST(ast.PrefabId, ast.TerminalInfo, ast.NotConnectedVoidInputs, statements.ToFrozenDictionary(), ast.GlobalVariables, ast.Variables, ast.VoidInputs, nonVoidOutputs.DrainToImmutable(), ast.ConnectionsFrom, ast.ConnectionsTo);
 
         RewrittenAsts[ast.PrefabId] = rewritten;
 

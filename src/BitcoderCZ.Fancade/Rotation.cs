@@ -3,42 +3,43 @@
 // </copyright>
 
 using BitcoderCZ.Maths.Vectors;
+using System.Numerics;
 
 namespace BitcoderCZ.Fancade;
 
 /// <summary>
-/// Wrapper over <see cref="float3"/> to represent rotation.
+/// Wrapper over <see cref="Vector3"/> to represent rotation.
 /// </summary>
 public readonly struct Rotation : IEquatable<Rotation>
 {
     /// <summary>
     /// The value of this rotation.
     /// </summary>
-    public readonly float3 Value;
+    public readonly Vector3 Value;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Rotation"/> struct.
     /// </summary>
     /// <param name="value">Value of this rotation.</param>
-    public Rotation(float3 value)
+    public Rotation(Vector3 value)
     {
         Value = value;
     }
 
     /// <summary>
-    /// Converts a <see cref="Rotation"/> to a <see cref="float3"/>.
+    /// Converts a <see cref="Rotation"/> to a <see cref="Vector3"/>.
     /// </summary>
     /// <param name="value">The <see cref="Rotation"/> to convert.</param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "Use the value field.")]
-    public static explicit operator float3(Rotation value)
+    public static explicit operator Vector3(Rotation value)
         => value.Value;
 
     /// <summary>
-    /// Converts a <see cref="float3"/> to a <see cref="Rotation"/>.
+    /// Converts a <see cref="Vector3"/> to a <see cref="Rotation"/>.
     /// </summary>
-    /// <param name="value">The <see cref="float3"/> to convert.</param>
+    /// <param name="value">The <see cref="Vector3"/> to convert.</param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2225:Operator overloads have named alternates", Justification = "Use the constructor.")]
-    public static explicit operator Rotation(float3 value)
+    public static explicit operator Rotation(Vector3 value)
         => new Rotation(value);
 
     /// <summary>Returns a value that indicates whether the 2 <see cref="Rotation"/>s are equal.</summary>

@@ -5,6 +5,7 @@
 using BitcoderCZ.Maths.Vectors;
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Numerics;
 using System.Text;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
@@ -275,10 +276,10 @@ public sealed class FcBinaryWriter : IDisposable
     }
 
     /// <summary>
-    /// Writes a float3 to the underlying stream.
+    /// Writes a Vector3 to the underlying stream.
     /// </summary>
     /// <param name="value">The value to write.</param>
-    public void WriteFloat3(float3 value)
+    public void WriteFloat3(Vector3 value)
     {
         WriteFloat(value.X);
         WriteFloat(value.Y);
