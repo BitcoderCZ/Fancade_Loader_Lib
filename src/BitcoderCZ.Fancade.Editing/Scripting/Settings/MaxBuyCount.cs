@@ -47,7 +47,7 @@ public readonly struct MaxBuyCount : IEquatable<MaxBuyCount>
     /// <summary>
     /// Converts a <see cref="MaxBuyCount"/> to <see langword="int"/>.
     /// </summary>
-    /// <param name="value">The <see langword="MaxBuyCount"/> to convert.</param>
+    /// <param name="value">The <see cref="MaxBuyCount"/> to convert.</param>
     public static explicit operator int(MaxBuyCount value)
         => value.Value;
 

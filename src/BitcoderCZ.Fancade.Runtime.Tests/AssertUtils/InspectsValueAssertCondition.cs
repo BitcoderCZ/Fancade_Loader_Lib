@@ -231,7 +231,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         return type switch
         {
             SignalType.Float => MathF.Abs(a.Float - (float)b) < MaxDeltaNumber,
-            SignalType.Vec3 => (a.Float3 - (Vector3)b).LengthSquared() < MaxDeltaVector,
+            SignalType.Vec3 => (a.Vector3 - (Vector3)b).LengthSquared() < MaxDeltaVector,
             SignalType.Rot => Equals(a.Quaternion, ((Rotation)b).Value),
             SignalType.Bool => a.Bool == (bool)b,
             SignalType.Obj => (FcObject)a.Int == (FcObject)b,
@@ -267,7 +267,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
             _inspectQueue = inspectQueue;
         }
 
-        public float2 ScreenSize => new float2(1920f, 1080f);
+        public Vector2 ScreenSize => new Vector2(1920f, 1080f);
 
         public Vector3 Accelerometer => new Vector3(0f, -9.8f, 0f);
 
@@ -361,7 +361,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public (bool Hit, Vector3 HitPos, FcObject HitObj) Raycast(Vector3 from, Vector3 to)
             => default;
 
-        public (Vector3 WorldNear, Vector3 WorldFar) ScreenToWorld(float2 screenPos)
+        public (Vector3 WorldNear, Vector3 WorldFar) ScreenToWorld(Vector2 screenPos)
             => default;
 
         public void SetBounciness(FcObject @object, float bounciness)
@@ -429,7 +429,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
             return false;
         }
 
-        public bool TryGetTouch(TouchState state, int fingerIndex, out float2 touchPos)
+        public bool TryGetTouch(TouchState state, int fingerIndex, out Vector2 touchPos)
         {
             touchPos = default;
             return false;
@@ -439,7 +439,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public float2 WorldToScreen(Vector3 worldPos)
+        public Vector2 WorldToScreen(Vector3 worldPos)
             => default;
     }
 }

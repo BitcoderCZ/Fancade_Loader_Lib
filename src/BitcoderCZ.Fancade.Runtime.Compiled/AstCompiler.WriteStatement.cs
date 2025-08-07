@@ -589,7 +589,7 @@ public partial class AstCompiler
                     var touchSensor = (TouchSensorStatementSyntax)statement;
 
                     string touchPosVarName = GetStateStoreVarName(environment.Index, touchSensor.Position, "touch_pos");
-                    _stateStoreVariables.Add((touchPosVarName, nameof(float2), null));
+                    _stateStoreVariables.Add((touchPosVarName, nameof(Vector2), null));
 
                     using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.TryGetTouch)}({nameof(TouchState)}.{touchSensor.State}, {touchSensor.FingerIndex}, out var touchPos{_localVarCounter}))"))
                     {

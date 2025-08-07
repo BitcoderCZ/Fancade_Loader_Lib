@@ -222,7 +222,7 @@ public sealed partial class AstCompiler
 
                 foreach (var environment in _environments)
                 {
-                    foreach (var entryPoint in environment.AST.NotConnectedVoidInputs)
+                    foreach (var entryPoint in environment.AST.EntryPointTerminals)
                     {
                         WriteEntryPoint(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false, _writer);
                     }

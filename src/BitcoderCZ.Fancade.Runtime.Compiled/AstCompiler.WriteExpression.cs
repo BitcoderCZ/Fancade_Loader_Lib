@@ -761,7 +761,7 @@ public partial class AstCompiler
                     Debug.Assert(!asReference);
                     var screenToWorld = (ScreenToWorldExpressionSyntax)terminal.Node;
 
-                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.ScreenToWorld)}(new float2(");
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.ScreenToWorld)}(new Vector2(");
                     WriteExpressionOrDefault(screenToWorld.ScreenX, SignalType.Float, environment, writer);
                     writer.Write(", ");
                     WriteExpressionOrDefault(screenToWorld.ScreenY, SignalType.Float, environment, writer);
@@ -925,7 +925,7 @@ public partial class AstCompiler
                             writer.WriteInv($"{literal.Value.Float}f");
                             return new ExpressionInfo(SignalType.Float);
                         case 38:
-                            var vec = literal.Value.Float3;
+                            var vec = literal.Value.Vector3;
                             writer.WriteInv($"new Vector3({vec.X}f, {vec.Y}f, {vec.Z}f)");
                             return new ExpressionInfo(SignalType.Vec3);
                         case 42:

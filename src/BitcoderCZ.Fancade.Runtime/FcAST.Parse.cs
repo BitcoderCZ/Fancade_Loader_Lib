@@ -397,7 +397,7 @@ public sealed partial class FcAST
                 {
                     if (connection.IsFromOutside)
                     {
-                        return (SyntaxTerminal?)new SyntaxTerminal(new OuterExpressionSyntax(Prefab.Id, ushort3.One * Connection.IsFromToOutsideValue), (byte3)connection.FromVoxel);
+                        return new SyntaxTerminal(new OuterExpressionSyntax(Prefab.Id), (byte3)connection.FromVoxel);
                     }
                     else
                     {

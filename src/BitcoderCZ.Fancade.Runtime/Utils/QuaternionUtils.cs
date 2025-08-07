@@ -2,8 +2,17 @@
 
 namespace BitcoderCZ.Fancade.Runtime.Utils;
 
+/// <summary>
+/// Utils for <see cref="Quaternion"/>.
+/// </summary>
 public static class QuaternionUtils
 {
+    /// <summary>
+    /// Creates a <see cref="Quaternion"/> from a unit vector and an angle to rotate around the vector.
+    /// </summary>
+    /// <param name="axis">The unit vector to rotate around.</param>
+    /// <param name="angle">The angle, in degrees, to rotate around the vector.</param>
+    /// <returns>The newly created <see cref="Quaternion"/>.</returns>
     public static Quaternion AxisAngle(Vector3 axis, float angle)
     {
         angle = angle * (MathF.PI / 180f);
@@ -14,10 +23,16 @@ public static class QuaternionUtils
         float sin = MathF.Sin(angle * 0.5f);
         float cos = MathF.Cos(angle * 0.5f);
 #endif
-
+        Quaternion.CreateFromAxisAngle(axis, angle);
         return Quaternion.Normalize(new Quaternion(axis.X * sin, axis.Y * sin, axis.Z * sin, cos));
     }
 
+    /// <summary>
+    /// Creates a <see cref="Quaternion"/> from forward and up vectors.
+    /// </summary>
+    /// <param name="forward">The forward vector.</param>
+    /// <param name="up">The up vector.</param>
+    /// <returns>The newly created <see cref="Quaternion"/>.</returns>
     public static Quaternion LookRotation(Vector3 forward, Vector3 up)
     {
         if (forward == Vector3.Zero)
@@ -51,9 +66,23 @@ public static class QuaternionUtils
         return Quaternion.CreateFromRotationMatrix(rotationMatrix);
     }
 
+    /// <summary>
+    /// Converts a <see cref="Quaternion"/> to Euler angles (in degrees).
+    /// </summary>
+    /// <param name="rot">The <see cref="Quaternion"/> to convert.</param>
+    /// <returns>
+    /// A <see cref="Vector3"/> representing the Euler angles in degrees.
+    /// </returns>
     public static Vector3 GetEuler(this Quaternion rot)
         => new Vector3(rot.GetEulerX(), rot.GetEulerY(), rot.GetEulerZ());
 
+    /// <summary>
+    /// Calculates the pitch in degrees from a <see cref="Quaternion"/>.
+    /// </summary>
+    /// <param name="rot">The <see cref="Quaternion"/> to extract the pitch from.</param>
+    /// <returns>
+    /// The pitch angle in degrees.
+    /// </returns>
     public static float GetEulerX(this Quaternion rot)
     {
         float pitchSin = 2.0f * ((rot.W * rot.Y) - (rot.Z * rot.X));
@@ -61,6 +90,13 @@ public static class QuaternionUtils
         return pitchSin > 1.0f ? 90f : pitchSin < -1.0f ? -90f : MathF.Asin(pitchSin) * (180f / MathF.PI);
     }
 
+    /// <summary>
+    /// Calculates the yaw in degrees from a <see cref="Quaternion"/>.
+    /// </summary>
+    /// <param name="rot">The <see cref="Quaternion"/> to extract the yaw from.</param>
+    /// <returns>
+    /// The yaw angle in degrees.
+    /// </returns>
     public static float GetEulerY(this Quaternion rot)
     {
         float xx = rot.X * rot.X;
@@ -71,6 +107,13 @@ public static class QuaternionUtils
         return MathF.Atan2(2.0f * ((rot.Y * rot.Z) + (rot.W * rot.X)), ww + xx - yy - zz) * (180f / MathF.PI);
     }
 
+    /// <summary>
+    /// Calculates the roll in degrees from a <see cref="Quaternion"/>.
+    /// </summary>
+    /// <param name="rot">The <see cref="Quaternion"/> to extract the roll from.</param>
+    /// <returns>
+    /// The roll angle in degrees.
+    /// </returns>
     public static float GetEulerZ(this Quaternion rot)
     {
         float xx = rot.X * rot.X;

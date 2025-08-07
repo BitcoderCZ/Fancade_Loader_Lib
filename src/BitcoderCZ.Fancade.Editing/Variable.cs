@@ -15,7 +15,8 @@ public readonly struct Variable : IEquatable<Variable>
     /// </summary>
     /// <param name="name">Name of the variable.</param>
     /// <param name="type">Type of the variable.</param>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="name"/> is too long or <paramref name="type"/> is pointer.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="name"/> is too long.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="type"/> is pointer.</exception>
     public Variable(string name, SignalType type)
     {
         ThrowIfGreaterThan(name.Length, FancadeConstants.MaxVariableNameLength);

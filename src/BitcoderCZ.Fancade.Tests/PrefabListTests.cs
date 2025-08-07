@@ -2,7 +2,6 @@
 using BitcoderCZ.Fancade.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
-using TUnit.Assertions.AssertConditions.Throws;
 using static BitcoderCZ.Fancade.Tests.Common.PrefabGenerator;
 
 namespace BitcoderCZ.Fancade.Tests;

@@ -265,7 +265,7 @@ public sealed class FcBinaryWriter : IDisposable
     }
 
     /// <summary>
-    /// Writes a int3 to the underlying stream.
+    /// Writes an int3 to the underlying stream.
     /// </summary>
     /// <param name="value">The value to write.</param>
     public void WriteInt3(int3 value)
@@ -279,7 +279,19 @@ public sealed class FcBinaryWriter : IDisposable
     /// Writes a Vector3 to the underlying stream.
     /// </summary>
     /// <param name="value">The value to write.</param>
+    [Obsolete($"Use {nameof(WriteVector3)} instead.")]
     public void WriteFloat3(Vector3 value)
+    {
+        WriteFloat(value.X);
+        WriteFloat(value.Y);
+        WriteFloat(value.Z);
+    }
+
+    /// <summary>
+    /// Writes a Vector3 to the underlying stream.
+    /// </summary>
+    /// <param name="value">The value to write.</param>
+    public void WriteVector3(Vector3 value)
     {
         WriteFloat(value.X);
         WriteFloat(value.Y);

@@ -5,7 +5,6 @@ using BitcoderCZ.Fancade.Runtime.Syntax.Math;
 using BitcoderCZ.Fancade.Runtime.Syntax.Objects;
 using BitcoderCZ.Fancade.Runtime.Syntax.Physics;
 using BitcoderCZ.Fancade.Runtime.Syntax.Values;
-using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Numerics;
@@ -67,7 +66,7 @@ internal sealed class AstConstantFolder : AstRewriter
                 186 => Literal(newNode.Position, MathF.Floor(input.Float)),
                 188 => Literal(newNode.Position, MathF.Ceiling(input.Float)),
                 455 => Literal(newNode.Position, MathF.Abs(input.Float)),
-                578 => Literal(newNode.Position, Vector3.Normalize(input.Float3)),
+                578 => Literal(newNode.Position, Vector3.Normalize(input.Vector3)),
                 _ => throw new UnreachableException(),
             };
     }
@@ -135,14 +134,14 @@ internal sealed class AstConstantFolder : AstRewriter
 
         if (TryGetValue(newNode.LineFrom, out var lineFromVal) && TryGetValue(newNode.LineTo, out var lineToVal) && TryGetValue(newNode.PlanePoint, out var planePointVal) && TryGetValue(newNode.PlaneNormal, out var planeNormalVal))
         {
-            var lineFrom = lineFromVal.Float3.ToNumerics();
-            var lineTo = lineToVal.Float3.ToNumerics();
-            var planePoint = planePointVal.Float3.ToNumerics();
-            var planeNormal = planeNormalVal.Float3.ToNumerics();
+            var lineFrom = lineFromVal.Vector3;
+            var lineTo = lineToVal.Vector3;
+            var planePoint = planePointVal.Vector3;
+            var planeNormal = planeNormalVal.Vector3;
 
             float t = Vector3.Dot(planePoint - lineFrom, planeNormal) / Vector3.Dot(lineTo - lineFrom, planeNormal);
 
-            return Literal(newNode.Position, (lineFrom + (t * (lineTo - lineFrom))).ToFloat3());
+            return Literal(newNode.Position, lineFrom + (t * (lineTo - lineFrom)));
         }
         else
         {
@@ -174,7 +173,7 @@ internal sealed class AstConstantFolder : AstRewriter
             switch (newNode.PrefabId)
             {
                 case 156:
-                    var vec = vecRot.Float3;
+                    var vec = vecRot.Vector3;
                     if (terminalPos == TerminalDef.GetOutPosition(0, 2, 3))
                     {
                         val = vec.X;

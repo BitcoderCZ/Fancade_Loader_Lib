@@ -212,7 +212,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
                 writer.WriteFloat((float)Value);
                 break;
             case SettingType.Vec3: // vec3 or rot (euler angles)
-                writer.WriteFloat3((Vector3)Value);
+                writer.WriteVector3((Vector3)Value);
                 break;
             case SettingType.String:
             default: // string (string value (6) or terminal name (7+))

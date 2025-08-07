@@ -12,44 +12,28 @@ namespace BitcoderCZ.Fancade.Runtime;
 /// </summary>
 public sealed partial class FcAST
 {
-    public readonly ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> NotConnectedVoidInputs;
-
-    public readonly ImmutableArray<OutsideConnection> VoidInputs;
-    public readonly ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> NonVoidOutputs;
-
-    public readonly FrozenDictionary<ushort3, StatementSyntax> Statements;
-
-    public readonly ImmutableArray<Variable> GlobalVariables;
-
-    public readonly ImmutableArray<Variable> Variables;
-
-    public readonly FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsFrom;
-
-    public readonly FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsTo;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="FcAST"/> class.
     /// </summary>
-    /// <param name="prefabId">The prefab this AST represents.</param>
+    /// <param name="prefabId">Id of the prefab this AST represents.</param>
     /// <param name="terminalInfo"><see cref="PrefabTerminalInfo"/> for the prefab.</param>
-    /// <param name="notConnectedVoidInputs"></param>
-    /// <param name="statements"></param>
-    /// <param name="globalVariables"></param>
-    /// <param name="variables"></param>
-    /// <param name="voidInputs"></param>
-    /// <param name="nonVoidOutputs"></param>
-    /// <param name="connectionsFrom"></param>
-    /// <param name="connectionsTo"></param>
-    public FcAST(ushort prefabId, PrefabTerminalInfo terminalInfo, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> notConnectedVoidInputs, FrozenDictionary<ushort3, StatementSyntax> statements, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> nonVoidOutputs, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsTo)
+    /// <param name="entryPointTerminals">Positions of input void terminals, that are not connected.</param>
+    /// <param name="statements">Map of positions to statements.</param>
+    /// <param name="globalVariables">All global variables.</param>
+    /// <param name="variables">Local variable of the <see cref="FcAST"/>.</param>
+    /// <param name="voidInputs">Void inputs to the <see cref="FcAST"/>.</param>
+    /// <param name="nonVoidOutputs">Inputs of type other than <see cref="SignalType.Void"/> of the <see cref="FcAST"/>.</param>
+    /// <param name="connectionsFrom">A map of connections by the block they originate from.</param>
+    /// <param name="connectionsTo">A map of connections by the block they end on.</param>
+    public FcAST(ushort prefabId, PrefabTerminalInfo terminalInfo, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPointTerminals, FrozenDictionary<ushort3, StatementSyntax> statements, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> nonVoidOutputs, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsTo)
     {
-        ThrowIfNull(notConnectedVoidInputs, nameof(notConnectedVoidInputs));
-        ThrowIfNull(statements, nameof(statements));
-        ThrowIfNull(globalVariables, nameof(globalVariables));
-        ThrowIfNull(variables, nameof(variables));
+        ThrowIfNull(statements);
+        ThrowIfNull(connectionsFrom);
+        ThrowIfNull(connectionsTo);
 
         PrefabId = prefabId;
         TerminalInfo = terminalInfo;
-        NotConnectedVoidInputs = notConnectedVoidInputs;
+        EntryPointTerminals = entryPointTerminals;
         Statements = statements;
         GlobalVariables = globalVariables;
         Variables = variables;
@@ -59,9 +43,65 @@ public sealed partial class FcAST
         ConnectionsTo = connectionsTo;
     }
 
+    /// <summary>
+    /// Gets the id of the prefab this AST represents.
+    /// </summary>
+    /// <value>Id of the prefab this AST represents.</value>
     public ushort PrefabId { get; }
 
+    /// <summary>
+    /// Gets the <see cref="PrefabTerminalInfo"/> for the prefab.
+    /// </summary>
+    /// <value><see cref="PrefabTerminalInfo"/> for the prefab.</value>
     public PrefabTerminalInfo TerminalInfo { get; }
+
+    /// <summary>
+    /// Gets the positions of input void terminals, that are not connected.
+    /// </summary>
+    /// <value>Positions of input void terminals, that are not connected.</value>
+    public ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> EntryPointTerminals { get; }
+
+    /// <summary>
+    /// Gets a map of positions to statements.
+    /// </summary>
+    /// <value>Map of positions to statements.</value>
+    public FrozenDictionary<ushort3, StatementSyntax> Statements { get; }
+
+    /// <summary>
+    /// Gets all global variables.
+    /// </summary>
+    /// <value>All global variables.</value>
+    public ImmutableArray<Variable> GlobalVariables { get; }
+
+    /// <summary>
+    /// Gets the local variable of the <see cref="FcAST"/>.
+    /// </summary>
+    /// <value>Local variable of the <see cref="FcAST"/>.</value>
+    public ImmutableArray<Variable> Variables { get; }
+
+    /// <summary>
+    /// Gets the void inputs to the <see cref="FcAST"/>.
+    /// </summary>
+    /// <value>Void inputs to the <see cref="FcAST"/>.</value>
+    public ImmutableArray<OutsideConnection> VoidInputs { get; }
+
+    /// <summary>
+    /// Gets the inputs of type other than <see cref="SignalType.Void"/> of the <see cref="FcAST"/>.
+    /// </summary>
+    /// <value>Inputs of type other than <see cref="SignalType.Void"/> of the <see cref="FcAST"/>.</value>
+    public ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> NonVoidOutputs { get; }
+
+    /// <summary>
+    /// Gets a map of connections by the block they originate from.
+    /// </summary>
+    /// <value>A map of connections by the block they originate from.</value>
+    public FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsFrom { get; }
+
+    /// <summary>
+    /// Gets a map of connections by the block they end on.
+    /// </summary>
+    /// <value>A map of connections by the block they end on.</value>
+    public FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsTo { get; }
 
     /// <summary>
     /// Creates a new <see cref="FcAST"/> instance from a <see cref="PrefabList"/>.

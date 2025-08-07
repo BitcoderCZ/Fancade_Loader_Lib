@@ -3,14 +3,24 @@ using System.Runtime.InteropServices;
 
 namespace BitcoderCZ.Fancade.Runtime;
 
+/// <summary>
+/// Represents the output of a terminal, <see cref="RuntimeValue"/> or <see cref="VariableReference"/>.
+/// </summary>
 public readonly struct TerminalOutput
 {
+    /// <summary>
+    /// Represents a null terminal.
+    /// </summary>
     public static readonly TerminalOutput Disconnected = default;
 
     private readonly Flags _flags;
 
     private readonly DataArray _data;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TerminalOutput"/> struct for <see cref="RuntimeValue"/>.
+    /// </summary>
+    /// <param name="value">The value to assign to the <see cref="TerminalOutput"/>.</param>
     public TerminalOutput(RuntimeValue value)
     {
         _flags = Flags.IsConnected;
@@ -18,6 +28,10 @@ public readonly struct TerminalOutput
         Write(value);
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TerminalOutput"/> struct for <see cref="VariableReference"/>.
+    /// </summary>
+    /// <param name="reference">The value to assign to the <see cref="TerminalOutput"/>.</param>
     public TerminalOutput(VariableReference reference)
     {
         _flags = Flags.IsReference | Flags.IsConnected;
@@ -32,14 +46,38 @@ public readonly struct TerminalOutput
         IsConnected = 1 << 1,
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the <see cref="TerminalOutput"/> is a reference to a variable.
+    /// </summary>
+    /// <value>If <see langword="true"/>, the <see cref="TerminalOutput"/> contains a <see cref="VariableReference"/>.
+    /// <para>If <see langword="false"/>, the <see cref="TerminalOutput"/> contains a <see cref="RuntimeValue"/>.</para></value>
     public readonly bool IsReference => (_flags & Flags.IsReference) == Flags.IsReference;
 
+    /// <summary>
+    /// Gets a value indicating whether the <see cref="TerminalOutput"/> is connected.
+    /// </summary>
+    /// <value><see langword="true"/> if the <see cref="TerminalOutput"/> is connected; otherwise, <see langword="false"/>.</value>
     public readonly bool IsConnected => (_flags & Flags.IsConnected) == Flags.IsConnected;
 
+    /// <summary>
+    /// Gets the <see cref="RuntimeValue"/> stored in the <see cref="TerminalOutput"/>.
+    /// Should only be called when <see cref="IsReference"/> is <see langword="false"/>. 
+    /// </summary>
+    /// <value>The <see cref="RuntimeValue"/> stored in the <see cref="TerminalOutput"/>.</value>
     public readonly RuntimeValue Value => Read<RuntimeValue>();
 
+    /// <summary>
+    /// Gets the <see cref="VariableReference"/> stored in the <see cref="TerminalOutput"/>.
+    /// Should only be called when <see cref="IsReference"/> is <see langword="true"/>. 
+    /// </summary>
+    /// <value>The <see cref="VariableReference"/> stored in the <see cref="TerminalOutput"/>.</value>
     public readonly VariableReference Reference => Read<VariableReference>();
 
+    /// <summary>
+    /// Gets the <see cref="RuntimeValue"/>, regardless of <see cref="IsReference"/>.
+    /// </summary>
+    /// <param name="variableAccessor">The <see cref="IVariableAccessor"/> used to resolve the value when <see cref="IsReference"/> is <see langword="true"/>.</param>
+    /// <returns>The stored <see cref="RuntimeValue"/>, or the resolved value from the <see cref="VariableReference"/>.</returns>
     public readonly RuntimeValue GetValue(IVariableAccessor variableAccessor)
         => IsReference ? Reference.GetValue(variableAccessor) : Value;
 

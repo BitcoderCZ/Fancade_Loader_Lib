@@ -1,7 +1,6 @@
 ﻿using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
-using TUnit.Assertions.AssertConditions.Throws;
 
 namespace BitcoderCZ.Fancade.Tests;
 

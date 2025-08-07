@@ -1,5 +1,4 @@
 ﻿using BitcoderCZ.Maths.Vectors;
-using TUnit.Assertions.AssertConditions.Throws;
 
 namespace BitcoderCZ.Fancade.Tests;
 

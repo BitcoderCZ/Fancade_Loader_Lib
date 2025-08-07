@@ -29,7 +29,7 @@ public readonly struct FcObject : IEquatable<FcObject>
     }
 
     /// <summary>
-    /// Converts an <see langword="int"/> to <see cref="MaxBuyCount"/>.
+    /// Converts an <see langword="int"/> to <see cref="FcObject"/>.
     /// </summary>
     /// <param name="value">The <see langword="int"/> to convert.</param>
     public static explicit operator FcObject(int value)
@@ -38,7 +38,7 @@ public readonly struct FcObject : IEquatable<FcObject>
     /// <summary>
     /// Converts a <see cref="FcObject"/> to <see langword="int"/>.
     /// </summary>
-    /// <param name="value">The <see langword="FcObject"/> to convert.</param>
+    /// <param name="value">The <see cref="FcObject"/> to convert.</param>
     public static explicit operator int(FcObject value)
         => value.Value;
 

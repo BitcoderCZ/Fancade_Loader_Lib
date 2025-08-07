@@ -29,7 +29,7 @@ public readonly struct FcConstraint : IEquatable<FcConstraint>
     }
 
     /// <summary>
-    /// Converts an <see langword="int"/> to <see cref="MaxBuyCount"/>.
+    /// Converts an <see langword="int"/> to <see cref="FcConstraint"/>.
     /// </summary>
     /// <param name="value">The <see langword="int"/> to convert.</param>
     public static implicit operator FcConstraint(int value)
@@ -38,7 +38,7 @@ public readonly struct FcConstraint : IEquatable<FcConstraint>
     /// <summary>
     /// Converts a <see cref="FcConstraint"/> to <see langword="int"/>.
     /// </summary>
-    /// <param name="value">The <see langword="FcConstraint"/> to convert.</param>
+    /// <param name="value">The <see cref="FcConstraint"/> to convert.</param>
     public static explicit operator int(FcConstraint value)
         => value.Value;
 

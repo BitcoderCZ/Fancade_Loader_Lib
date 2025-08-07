@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.Maths.Vectors;
 using System.ComponentModel;
 using System.Numerics;
 

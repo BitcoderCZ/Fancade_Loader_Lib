@@ -21,6 +21,9 @@ using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime;
 
+/// <summary>
+/// <see cref="FcAST"/> interpreter.
+/// </summary>
 public sealed class Interpreter : IAstRunner
 {
     private static readonly byte3 PosOut02 = TerminalDef.GetOutPosition(0, 2, 2);
@@ -43,16 +46,37 @@ public sealed class Interpreter : IAstRunner
     private readonly TimeSpan _timeout;
     private readonly Stopwatch? _timeoutWatch;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Interpreter"/> class, with timeout of 3 seconds and maximum depth 4.
+    /// </summary>
+    /// <param name="ast">The <see cref="FcAST"/> to interpret.</param>
+    /// <param name="ctx">The <see cref="IRuntimeContext"/> to use.</param>
+    /// <exception cref="EnvironmentDepthLimitReachedException">Thrown when max depth is exceeded.</exception>
     public Interpreter(FcAST ast, IRuntimeContext ctx)
         : this(ast, ctx, TimeSpan.FromSeconds(3))
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Interpreter"/> class, with maximum depth 4.
+    /// </summary>
+    /// <param name="ast">The <see cref="FcAST"/> to interpret.</param>
+    /// <param name="ctx">The <see cref="IRuntimeContext"/> to use.</param>
+    /// <param name="timeout">The time after which <see cref="TimeoutException"/> will be thrown.</param>
+    /// <exception cref="EnvironmentDepthLimitReachedException">Thrown when max depth is exceeded.</exception>
     public Interpreter(FcAST ast, IRuntimeContext ctx, TimeSpan timeout)
         : this(ast, ctx, timeout, 4)
     {
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Interpreter"/> class.
+    /// </summary>
+    /// <param name="ast">The <see cref="FcAST"/> to interpret.</param>
+    /// <param name="ctx">The <see cref="IRuntimeContext"/> to use.</param>
+    /// <param name="timeout">The time after which <see cref="TimeoutException"/> will be thrown.</param>
+    /// <param name="maxDepth">The maximum environment depth (blocks inside blocks).</param>
+    /// <exception cref="EnvironmentDepthLimitReachedException">Thrown when <paramref name="maxDepth"/> is exceeded.</exception>
     public Interpreter(FcAST ast, IRuntimeContext ctx, TimeSpan timeout, int maxDepth)
     {
         ThrowIfNull(ast, nameof(ast));
@@ -81,10 +105,21 @@ public sealed class Interpreter : IAstRunner
         }
     }
 
+    /// <summary>
+    /// Gets the <see cref="IVariableAccessor"/> of the <see cref="Interpreter"/>.
+    /// </summary>
+    /// <value><see cref="IVariableAccessor"/> of the <see cref="Interpreter"/>.</value>
     public IVariableAccessor VariableAccessor => _variableAccessor;
 
+    /// <inheritdoc/>
     public IEnumerable<Variable> GlobalVariables => _variableAccessor.GlobalVariables.Select(item => item.Key);
 
+    /// <summary>
+    /// Runs a single frame.
+    /// </summary>
+    /// <returns>An <see cref="Action"/>, that when executed, runs the "Late Update" blocks.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when <see cref="RunFrame"/> or it's result is running when this method executes.</exception>
+    /// <exception cref="TimeoutException">Thrown if the execution takes too long.</exception>
     public Action RunFrame()
     {
         if (_timeoutWatch is not null)
@@ -101,7 +136,7 @@ public sealed class Interpreter : IAstRunner
 
         foreach (var environment in _environments)
         {
-            foreach (var entryPoint in environment.AST.NotConnectedVoidInputs)
+            foreach (var entryPoint in environment.AST.EntryPointTerminals)
             {
                 Execute(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), lateUpdateQueue);
             }
@@ -128,6 +163,7 @@ public sealed class Interpreter : IAstRunner
         };
     }
 
+    /// <inheritdoc/>
     public Span<RuntimeValue> GetGlobalVariableValue(Variable variable)
     {
         if (!variable.IsGlobal)
@@ -214,7 +250,7 @@ public sealed class Interpreter : IAstRunner
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
                         var setCamera = (SetCameraStatementSyntax)statement;
 
-                        _ctx.SetCamera(setCamera.PositionTerminal is null ? null : GetValue(setCamera.PositionTerminal, environment).Float3, setCamera.RotationTerminal is null ? null : GetValue(setCamera.RotationTerminal, environment).Quaternion, setCamera.RangeTerminal is null ? null : GetValue(setCamera.RangeTerminal, environment).Float, setCamera.Perspective);
+                        _ctx.SetCamera(setCamera.PositionTerminal is null ? null : GetValue(setCamera.PositionTerminal, environment).Vector3, setCamera.RotationTerminal is null ? null : GetValue(setCamera.RotationTerminal, environment).Quaternion, setCamera.RangeTerminal is null ? null : GetValue(setCamera.RangeTerminal, environment).Float, setCamera.Perspective);
                     }
 
                     break;
@@ -223,7 +259,7 @@ public sealed class Interpreter : IAstRunner
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var setLight = (SetLightStatementSyntax)statement;
 
-                        _ctx.SetLight(setLight.PositionTerminal is null ? null : GetValue(setLight.PositionTerminal, environment).Float3, setLight.RotationTerminal is null ? null : GetValue(setLight.RotationTerminal, environment).Quaternion);
+                        _ctx.SetLight(setLight.PositionTerminal is null ? null : GetValue(setLight.PositionTerminal, environment).Vector3, setLight.RotationTerminal is null ? null : GetValue(setLight.RotationTerminal, environment).Quaternion);
                     }
 
                     break;
@@ -245,7 +281,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setPosition.ObjectTerminal is not null)
                         {
-                            _ctx.SetPosition((FcObject)GetValue(setPosition.ObjectTerminal, environment).Int, setPosition.PositionTerminal is null ? null : GetValue(setPosition.PositionTerminal, environment).Float3, setPosition.RotationTerminal is null ? null : GetValue(setPosition.RotationTerminal, environment).Quaternion);
+                            _ctx.SetPosition((FcObject)GetValue(setPosition.ObjectTerminal, environment).Int, setPosition.PositionTerminal is null ? null : GetValue(setPosition.PositionTerminal, environment).Vector3, setPosition.RotationTerminal is null ? null : GetValue(setPosition.RotationTerminal, environment).Quaternion);
                         }
                     }
 
@@ -334,7 +370,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (addForce.Object is not null)
                         {
-                            _ctx.AddForce((FcObject)GetValue(addForce.Object, environment).Int, addForce.Force is null ? null : GetValue(addForce.Force, environment).Float3, addForce.ApplyAt is null ? null : GetValue(addForce.ApplyAt, environment).Float3, addForce.Torque is null ? null : GetValue(addForce.Torque, environment).Float3);
+                            _ctx.AddForce((FcObject)GetValue(addForce.Object, environment).Int, addForce.Force is null ? null : GetValue(addForce.Force, environment).Vector3, addForce.ApplyAt is null ? null : GetValue(addForce.ApplyAt, environment).Vector3, addForce.Torque is null ? null : GetValue(addForce.Torque, environment).Vector3);
                         }
                     }
 
@@ -346,7 +382,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setVelocity.Object is not null)
                         {
-                            _ctx.SetVelocity((FcObject)GetValue(setVelocity.Object, environment).Int, setVelocity.Velocity is null ? null : GetValue(setVelocity.Velocity, environment).Float3, setVelocity.Spin is null ? null : GetValue(setVelocity.Spin, environment).Float3);
+                            _ctx.SetVelocity((FcObject)GetValue(setVelocity.Object, environment).Int, setVelocity.Velocity is null ? null : GetValue(setVelocity.Velocity, environment).Vector3, setVelocity.Spin is null ? null : GetValue(setVelocity.Spin, environment).Vector3);
                         }
                     }
 
@@ -358,7 +394,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setLocked.Object is not null)
                         {
-                            _ctx.SetLocked((FcObject)GetValue(setLocked.Object, environment).Int, setLocked.PositionTerminal is null ? null : GetValue(setLocked.PositionTerminal, environment).Float3, setLocked.RotationTerminal is null ? null : GetValue(setLocked.RotationTerminal, environment).Float3);
+                            _ctx.SetLocked((FcObject)GetValue(setLocked.Object, environment).Int, setLocked.PositionTerminal is null ? null : GetValue(setLocked.PositionTerminal, environment).Vector3, setLocked.RotationTerminal is null ? null : GetValue(setLocked.RotationTerminal, environment).Vector3);
                         }
                     }
 
@@ -406,7 +442,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setGravity.Gravity is not null)
                         {
-                            _ctx.SetGravity(GetValue(setGravity.Gravity, environment).Float3);
+                            _ctx.SetGravity(GetValue(setGravity.Gravity, environment).Vector3);
                         }
                     }
 
@@ -418,7 +454,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (addConstraint.Base is not null && addConstraint.Part is not null)
                         {
-                            environment.BlockData[addConstraint.Position] = _ctx.AddConstraint((FcObject)GetValue(addConstraint.Base, environment).Int, (FcObject)GetValue(addConstraint.Part, environment).Int, addConstraint.Pivot is null ? null : GetValue(addConstraint.Pivot, environment).Float3);
+                            environment.BlockData[addConstraint.Position] = _ctx.AddConstraint((FcObject)GetValue(addConstraint.Base, environment).Int, (FcObject)GetValue(addConstraint.Part, environment).Int, addConstraint.Pivot is null ? null : GetValue(addConstraint.Pivot, environment).Vector3);
                         }
                     }
 
@@ -430,7 +466,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (linearLimits.Constraint is not null)
                         {
-                            _ctx.LinearLimits((FcConstraint)GetValue(linearLimits.Constraint, environment).Int, linearLimits.Lower is null ? null : GetValue(linearLimits.Lower, environment).Float3, linearLimits.Upper is null ? null : GetValue(linearLimits.Upper, environment).Float3);
+                            _ctx.LinearLimits((FcConstraint)GetValue(linearLimits.Constraint, environment).Int, linearLimits.Lower is null ? null : GetValue(linearLimits.Lower, environment).Vector3, linearLimits.Upper is null ? null : GetValue(linearLimits.Upper, environment).Vector3);
                         }
                     }
 
@@ -442,7 +478,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (angularLimits.Constraint is not null)
                         {
-                            _ctx.AngularLimits((FcConstraint)GetValue(angularLimits.Constraint, environment).Int, angularLimits.Lower is null ? null : GetValue(angularLimits.Lower, environment).Float3, angularLimits.Upper is null ? null : GetValue(angularLimits.Upper, environment).Float3);
+                            _ctx.AngularLimits((FcConstraint)GetValue(angularLimits.Constraint, environment).Int, angularLimits.Lower is null ? null : GetValue(angularLimits.Lower, environment).Vector3, angularLimits.Upper is null ? null : GetValue(angularLimits.Upper, environment).Vector3);
                         }
                     }
 
@@ -454,7 +490,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (linearSpring.Constraint is not null)
                         {
-                            _ctx.LinearSpring((FcConstraint)GetValue(linearSpring.Constraint, environment).Int, linearSpring.Stiffness is null ? null : GetValue(linearSpring.Stiffness, environment).Float3, linearSpring.Damping is null ? null : GetValue(linearSpring.Damping, environment).Float3);
+                            _ctx.LinearSpring((FcConstraint)GetValue(linearSpring.Constraint, environment).Int, linearSpring.Stiffness is null ? null : GetValue(linearSpring.Stiffness, environment).Vector3, linearSpring.Damping is null ? null : GetValue(linearSpring.Damping, environment).Vector3);
                         }
                     }
 
@@ -466,7 +502,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (angularSpring.Constraint is not null)
                         {
-                            _ctx.AngularSpring((FcConstraint)GetValue(angularSpring.Constraint, environment).Int, angularSpring.Stiffness is null ? null : GetValue(angularSpring.Stiffness, environment).Float3, angularSpring.Damping is null ? null : GetValue(angularSpring.Damping, environment).Float3);
+                            _ctx.AngularSpring((FcConstraint)GetValue(angularSpring.Constraint, environment).Int, angularSpring.Stiffness is null ? null : GetValue(angularSpring.Stiffness, environment).Vector3, angularSpring.Damping is null ? null : GetValue(angularSpring.Damping, environment).Vector3);
                         }
                     }
 
@@ -478,7 +514,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (linearMotor.Constraint is not null)
                         {
-                            _ctx.LinearMotor((FcConstraint)GetValue(linearMotor.Constraint, environment).Int, linearMotor.Speed is null ? null : GetValue(linearMotor.Speed, environment).Float3, linearMotor.Force is null ? null : GetValue(linearMotor.Force, environment).Float3);
+                            _ctx.LinearMotor((FcConstraint)GetValue(linearMotor.Constraint, environment).Int, linearMotor.Speed is null ? null : GetValue(linearMotor.Speed, environment).Vector3, linearMotor.Force is null ? null : GetValue(linearMotor.Force, environment).Vector3);
                         }
                     }
 
@@ -490,7 +526,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (angularMotor.Constraint is not null)
                         {
-                            _ctx.AngularMotor((FcConstraint)GetValue(angularMotor.Constraint, environment).Int, angularMotor.Speed is null ? null : GetValue(angularMotor.Speed, environment).Float3, angularMotor.Force is null ? null : GetValue(angularMotor.Force, environment).Float3);
+                            _ctx.AngularMotor((FcConstraint)GetValue(angularMotor.Constraint, environment).Int, angularMotor.Speed is null ? null : GetValue(angularMotor.Speed, environment).Vector3, angularMotor.Force is null ? null : GetValue(angularMotor.Force, environment).Vector3);
                         }
                     }
 
@@ -888,7 +924,7 @@ public sealed class Interpreter : IAstRunner
                 {
                     var raycast = (RaycastExpressionSyntax)terminal.Node;
 
-                    var (hit, hitPos, hitObj) = _ctx.Raycast(GetValue(raycast.From, environment).Float3, GetValue(raycast.To, environment).Float3);
+                    var (hit, hitPos, hitObj) = _ctx.Raycast(GetValue(raycast.From, environment).Vector3, GetValue(raycast.To, environment).Vector3);
 
                     RuntimeValue val;
                     if (terminal.Position == PosOut03)
@@ -1018,7 +1054,7 @@ public sealed class Interpreter : IAstRunner
                 {
                     var touchSensor = (TouchSensorStatementSyntax)terminal.Node;
 
-                    var touchPos = (float2)environment.BlockData.GetValueOrDefault(touchSensor.Position, float2.Zero);
+                    var touchPos = (Vector2)environment.BlockData.GetValueOrDefault(touchSensor.Position, Vector2.Zero);
 
                     float val;
                     if (terminal.Position == PosOut13)
@@ -1113,7 +1149,7 @@ public sealed class Interpreter : IAstRunner
                         186 => new(MathF.Floor(input.Float)),
                         188 => new(MathF.Ceiling(input.Float)),
                         455 => new(MathF.Abs(input.Float)),
-                        578 => new(Vector3.Normalize(input.Float3)),
+                        578 => new(Vector3.Normalize(input.Vector3)),
                         _ => throw new UnreachableException(),
                     };
 
@@ -1143,18 +1179,18 @@ public sealed class Interpreter : IAstRunner
                     value = terminal.Node.PrefabId switch
                     {
                         92 => new(input1.Float + input2.Float),
-                        96 => new(input1.Float3 + input2.Float3),
+                        96 => new(input1.Vector3 + input2.Vector3),
                         100 => new(input1.Float - input2.Float),
-                        104 => new(input1.Float3 - input2.Float3),
+                        104 => new(input1.Vector3 - input2.Vector3),
                         108 => new(input1.Float * input2.Float),
-                        112 => new(input1.Float3 * input2.Float),
-                        116 => new(Vector3.Transform(input1.Float3.ToNumerics(), input2.Quaternion).ToFloat3()),
+                        112 => new(input1.Vector3 * input2.Float),
+                        116 => new(Vector3.Transform(input1.Vector3, input2.Quaternion)),
                         120 => new(input1.Quaternion * input2.Quaternion),
                         124 => new(input1.Float / input2.Float),
                         172 => new(FcMod(input1.Float, input2.Float)),
                         457 => new(MathF.Pow(input1.Float, input2.Float)),
                         132 => new(MathF.Abs(input1.Float - input2.Float) < Constants.EqualsNumbersMaxDiff),
-                        136 => new((input1.Float3 - input2.Float3).LengthSquared() < Constants.EqualsVectorsMaxDiff),
+                        136 => new((input1.Vector3 - input2.Vector3).LengthSquared() < Constants.EqualsVectorsMaxDiff),
                         140 => new(input1.Int == input2.Int),
                         421 => new(input1.Bool == input2.Bool),
                         128 => new(input1.Float < input2.Float),
@@ -1163,11 +1199,11 @@ public sealed class Interpreter : IAstRunner
                         176 => new(MathF.Min(input1.Float, input2.Float)),
                         180 => new(MathF.Max(input1.Float, input2.Float)),
                         580 => new(MathF.Log(input1.Float, input2.Float)),
-                        570 => new(Vector3.Dot(input1.Float3, input2.Float3)),
-                        574 => new(Vector3.Cross(input1.Float3, input2.Float3)),
-                        190 => new((input1.Float3 - input2.Float3).Length()),
-                        200 => new(QuaternionUtils.AxisAngle(input1.Float3.ToNumerics(), input2.Float)),
-                        204 => new(QuaternionUtils.LookRotation(input1.Float3.ToNumerics(), binary.Input2 is null ? Vector3.UnitY : input2.Float3.ToNumerics())),
+                        570 => new(Vector3.Dot(input1.Vector3, input2.Vector3)),
+                        574 => new(Vector3.Cross(input1.Vector3, input2.Vector3)),
+                        190 => new((input1.Vector3 - input2.Vector3).Length()),
+                        200 => new(QuaternionUtils.AxisAngle(input1.Vector3, input2.Float)),
+                        204 => new(QuaternionUtils.LookRotation(input1.Vector3, binary.Input2 is null ? Vector3.UnitY : input2.Vector3)),
                         _ => throw new UnreachableException(),
                     };
 
@@ -1193,7 +1229,7 @@ public sealed class Interpreter : IAstRunner
                 {
                     var screenToWorld = (ScreenToWorldExpressionSyntax)terminal.Node;
 
-                    var (near, far) = _ctx.ScreenToWorld(new float2(GetValue(screenToWorld.ScreenX, environment).Float, GetValue(screenToWorld.ScreenY, environment).Float));
+                    var (near, far) = _ctx.ScreenToWorld(new Vector2(GetValue(screenToWorld.ScreenX, environment).Float, GetValue(screenToWorld.ScreenY, environment).Float));
 
                     Vector3 val = default;
                     if (terminal.Position == PosOut02)
@@ -1216,7 +1252,7 @@ public sealed class Interpreter : IAstRunner
                 {
                     var worldToScreen = (WorldToScreenExpressionSyntax)terminal.Node;
 
-                    var screenPos = _ctx.WorldToScreen(GetValue(worldToScreen.WorldPos, environment).Float3);
+                    var screenPos = _ctx.WorldToScreen(GetValue(worldToScreen.WorldPos, environment).Vector3);
 
                     float val = default;
                     if (terminal.Position == PosOut02)
@@ -1240,13 +1276,13 @@ public sealed class Interpreter : IAstRunner
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 4), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     var lineVsPlane = (LineVsPlaneExpressionSyntax)terminal.Node;
 
-                    Vector3 lineFrom = GetValue(lineVsPlane.LineFrom, environment).Float3.ToNumerics();
-                    Vector3 lineTo = GetValue(lineVsPlane.LineTo, environment).Float3.ToNumerics();
-                    Vector3 planePoint = GetValue(lineVsPlane.PlanePoint, environment).Float3.ToNumerics();
-                    Vector3 planeNormal = GetValue(lineVsPlane.PlaneNormal, environment).Float3.ToNumerics();
+                    Vector3 lineFrom = GetValue(lineVsPlane.LineFrom, environment).Vector3;
+                    Vector3 lineTo = GetValue(lineVsPlane.LineTo, environment).Vector3;
+                    Vector3 planePoint = GetValue(lineVsPlane.PlanePoint, environment).Vector3;
+                    Vector3 planeNormal = GetValue(lineVsPlane.PlaneNormal, environment).Vector3;
 
                     float t = Vector3.Dot(planePoint - lineFrom, planeNormal) / Vector3.Dot(lineTo - lineFrom, planeNormal);
-                    return new TerminalOutput(new RuntimeValue((lineFrom + (t * (lineTo - lineFrom))).ToFloat3()));
+                    return new TerminalOutput(new RuntimeValue(lineFrom + (t * (lineTo - lineFrom))));
                 }
 
             case 150 or 162:
@@ -1276,7 +1312,7 @@ public sealed class Interpreter : IAstRunner
                     switch (breakVecRot.PrefabId)
                     {
                         case 156:
-                            var vec = vecRot.Float3;
+                            var vec = vecRot.Vector3;
                             if (terminal.Position == PosOut03)
                             {
                                 val = vec.X;
