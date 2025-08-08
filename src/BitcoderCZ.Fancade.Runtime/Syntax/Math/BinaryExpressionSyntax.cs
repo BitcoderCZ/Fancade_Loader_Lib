@@ -3,6 +3,10 @@
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Math;
 
 // the opeation is determined by PrefabId
+
+/// <summary>
+/// A <see cref="SyntaxNode"/> for any binary math prefab.
+/// </summary>
 public sealed class BinaryExpressionSyntax : SyntaxNode
 {
     public BinaryExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? input1, SyntaxTerminal? input2)

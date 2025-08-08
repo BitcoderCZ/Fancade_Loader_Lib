@@ -2,6 +2,9 @@
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Math;
 
+/// <summary>
+/// A <see cref="SyntaxNode"/> for the line vs plane prefab.
+/// </summary>
 public sealed class LineVsPlaneExpressionSyntax : SyntaxNode
 {
     public LineVsPlaneExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? lineFrom, SyntaxTerminal? lineTo, SyntaxTerminal? planePoint, SyntaxTerminal? planeNormal)

@@ -2,6 +2,9 @@
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Math;
 
+/// <summary>
+/// A <see cref="SyntaxNode"/> for the screen to world prefab.
+/// </summary>
 public sealed class ScreenToWorldExpressionSyntax : SyntaxNode
 {
     public ScreenToWorldExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? screenX, SyntaxTerminal? screenY)

@@ -2,6 +2,9 @@
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Math;
 
+/// <summary>
+/// A <see cref="SyntaxNode"/> for the make vector/rotation prefab.
+/// </summary>
 public sealed class MakeVecRotExpressionSyntax : SyntaxNode
 {
     public MakeVecRotExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? x, SyntaxTerminal? y, SyntaxTerminal? z)

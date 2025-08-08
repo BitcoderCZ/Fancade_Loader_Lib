@@ -111,7 +111,7 @@ internal abstract class AstRewriter
             InspectStatementSyntax inspect => RewriteInspectStatement(inspect),
 
             // **************************************** Variables ****************************************
-            SetVaribleStatementSyntax setVariable => RewriteSetVaribleStatement(setVariable),
+            SetVariableStatementSyntax setVariable => RewriteSetVaribleStatement(setVariable),
             SetPointerStatementSyntax setPointer => RewriteSetPointerStatement(setPointer),
             IncDecNumberStatementSyntax incDecNumber => RewriteIncDecNumberStatement(incDecNumber),
 
@@ -463,13 +463,13 @@ internal abstract class AstRewriter
 
     #endregion
     #region Variables
-    protected virtual StatementSyntax RewriteSetVaribleStatement(SetVaribleStatementSyntax node)
+    protected virtual StatementSyntax RewriteSetVaribleStatement(SetVariableStatementSyntax node)
     {
         var value = RewriteExpression(node.Value);
 
         return value == node.Value
             ? node
-            : new SetVaribleStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, node.Variable, value);
+            : new SetVariableStatementSyntax(node.PrefabId, node.Position, node.OutVoidConnections, node.Variable, value);
     }
 
     protected virtual StatementSyntax RewriteSetPointerStatement(SetPointerStatementSyntax node)

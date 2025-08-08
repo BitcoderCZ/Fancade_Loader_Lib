@@ -8,6 +8,12 @@ namespace BitcoderCZ.Fancade.Runtime.Syntax;
 /// </summary>
 public abstract class StatementSyntax : SyntaxNode
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StatementSyntax"/> class.
+    /// </summary>
+    /// <param name="prefabId">Id of the prefab this node represents.</param>
+    /// <param name="position">Position of the prefab this node represents.</param>
+    /// <param name="outVoidConnections">Output void connections from this node.</param>
     private protected StatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
         : base(prefabId, position)
     {

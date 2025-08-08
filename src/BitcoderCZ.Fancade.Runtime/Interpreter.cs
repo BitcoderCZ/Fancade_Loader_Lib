@@ -731,7 +731,7 @@ public sealed class Interpreter : IAstRunner
                 case 428 or 430 or 432 or 434 or 436 or 438:
                     {
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(1), $"{nameof(terminalPos)} should be valid.");
-                        var setVar = (SetVaribleStatementSyntax)statement;
+                        var setVar = (SetVariableStatementSyntax)statement;
 
                         if (setVar.Value is not null)
                         {

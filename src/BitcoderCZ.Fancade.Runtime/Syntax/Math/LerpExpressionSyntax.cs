@@ -2,6 +2,9 @@
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Math;
 
+/// <summary>
+/// A <see cref="SyntaxNode"/> for the lerp prefab.
+/// </summary>
 public sealed class LerpExpressionSyntax : SyntaxNode
 {
     public LerpExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? from, SyntaxTerminal? to, SyntaxTerminal? amount)

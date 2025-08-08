@@ -228,32 +228,32 @@ public sealed partial class FcAST
 
                 case 428:
                     {
-                        return new SetVaribleStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Float), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Float), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 430:
                     {
-                        return new SetVaribleStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Vec3), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Vec3), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 432:
                     {
-                        return new SetVaribleStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Rot), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Rot), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 434:
                     {
-                        return new SetVaribleStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Bool), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Bool), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 436:
                     {
-                        return new SetVaribleStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Obj), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Obj), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 438:
                     {
-                        return new SetVaribleStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 58 or 62 or 66 or 70 or 74 or 78:

@@ -2,6 +2,9 @@
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Variables;
 
+/// <summary>
+/// A <see cref="SyntaxNode"/> for any list prefab.
+/// </summary>
 public sealed class ListExpressionSyntax : SyntaxNode
 {
     public ListExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? variable, SyntaxTerminal? index)

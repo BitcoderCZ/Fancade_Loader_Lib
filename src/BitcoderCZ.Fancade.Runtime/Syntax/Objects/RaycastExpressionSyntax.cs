@@ -2,6 +2,9 @@
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Objects;
 
+/// <summary>
+/// A <see cref="SyntaxNode"/> for the raycast prefab.
+/// </summary>
 public sealed class RaycastExpressionSyntax : SyntaxNode
 {
     public RaycastExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? from, SyntaxTerminal? to)
