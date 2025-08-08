@@ -15,8 +15,9 @@ public sealed class LinearMotorStatementSyntax : StatementSyntax
     /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
-    /// <param name="variable"></param>
-    /// <param name="value">The value terminal; or <see langword="null"/>, if it is not connected.</param>
+    /// <param name="constraint">The constraint terminal; or <see langword="null"/>, if it is not connected.</param>
+    /// <param name="speed">The speed terminal; or <see langword="null"/>, if it is not connected.</param>
+    /// <param name="force">The force terminal; or <see langword="null"/>, if it is not connected.</param>
     public LinearMotorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? speed, SyntaxTerminal? force)
         : base(prefabId, position, outVoidConnections)
     {

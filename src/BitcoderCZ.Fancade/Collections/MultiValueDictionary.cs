@@ -58,6 +58,7 @@ public sealed class MultiValueDictionary<TKey, TValue> : IDictionary<TKey, List<
     /// <inheritdoc/>
     public int Count => _dict.Count;
 
+    /// <inheritdoc/>
     bool ICollection<KeyValuePair<TKey, List<TValue>>>.IsReadOnly => false;
 
     /// <inheritdoc/>

@@ -52,7 +52,7 @@ public sealed class MenuItemStatementSyntax : StatementSyntax
     /// <summary>
     /// Gets the maximum number of times the item can be bought.
     /// </summary>
-    /// <value>The maximum number of times the item can be bought.<</value>
+    /// <value>The maximum number of times the item can be bought.</value>
     public MaxBuyCount MaxBuyCount { get; }
 
     /// <summary>

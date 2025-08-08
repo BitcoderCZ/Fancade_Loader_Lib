@@ -15,7 +15,7 @@ public readonly struct TerminalOutput
 
     private readonly Flags _flags;
 
-    private readonly DataArray _data;
+    private readonly DataArray _data = default;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TerminalOutput"/> struct for <see cref="RuntimeValue"/>.

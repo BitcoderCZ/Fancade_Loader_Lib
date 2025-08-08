@@ -23,7 +23,7 @@ csharp_style_expression_bodied_properties = true:warning
 csharp_style_expression_bodied_indexers = true:warning
 csharp_style_expression_bodied_accessors = true:warning
 csharp_style_allow_embedded_statements_on_same_line_experimental = true:silent
-dotnet_diagnostic.SA1600.severity = suggestion
+dotnet_diagnostic.SA1600.severity = warning
 dotnet_diagnostic.SA1601.severity = suggestion
 dotnet_diagnostic.SA1602.severity = suggestion
 dotnet_diagnostic.SA1611.severity = warning
@@ -110,6 +110,7 @@ dotnet_diagnostic.HAM0003.severity = warning
 
 # CA1051: Do not declare visible instance fields
 dotnet_diagnostic.CA1051.severity = silent
+dotnet_diagnostic.CA1200.severity = suggestion
 
 [*.{cs,vb}]
 #### Naming styles ####

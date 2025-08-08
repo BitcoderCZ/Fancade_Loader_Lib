@@ -20,10 +20,24 @@ public sealed partial class CodeWriter
     /// </summary>
     public static class Expressions
     {
+        /// <summary>
+        /// <see cref="IExpression"/> with multiple outputs.
+        /// </summary>
         private interface IMultiOutputExpression
         {
+            /// <summary>
+            /// Gets the type of an output terminal.
+            /// </summary>
+            /// <param name="outputIndex">Index of the terminal.</param>
+            /// <returns>Type of the specified terminal.</returns>
             SignalType GetType(int outputIndex);
 
+            /// <summary>
+            /// Writes the expression to <paramref name="writer"/>, if not done already, and returns the terminal at the specified index.
+            /// </summary>
+            /// <param name="writer">The <see cref="CodeWriter"/> to write to.</param>
+            /// <param name="outputIndex">Index to the terminal to get.</param>
+            /// <returns>The specified terminal.</returns>
             ITerminal WriteTo(CodeWriter writer, int outputIndex);
         }
 
