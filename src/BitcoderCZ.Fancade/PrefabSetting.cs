@@ -3,7 +3,10 @@
 // </copyright>
 
 using BitcoderCZ.Maths.Vectors;
+using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;
@@ -222,6 +225,58 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     }
 
     /// <summary>
+    /// Gets the value as <typeparamref name="T"/>.
+    /// </summary>
+    /// <remarks>
+    /// If <typeparamref name="T"/> is not the corresponding <see cref="SettingType"/> of <see cref="Type"/>, <see cref="Value"/> is bitcasted to <typeparamref name="T"/>.
+    /// </remarks>
+    /// <typeparam name="T">The type to get the value as.</typeparam>
+    /// <returns><see cref="Value"/> as <typeparamref name="T"/>.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when <see cref="Value"/> is a string.</exception>
+    public T GetValue<T>() 
+        where T : unmanaged
+    {
+        if (Value is string)
+        {
+            throw new InvalidOperationException($"{nameof(GetValue)} cannot be used to get a string value.");
+        }
+
+        if (typeof(T) == GetTypeForSettingType(Type))
+        {
+            return (T)Value;
+        }
+
+        // largest value type is 12 bytes (Vector3)
+        Span<byte> buffer = stackalloc byte[12];
+
+#pragma warning disable CS9191 // The 'ref' modifier for an argument corresponding to 'in' parameter is equivalent to 'in'. Consider using 'in' instead.
+        switch (Value)
+        {
+            case byte b:
+                buffer[0] = b;
+                break;
+            case ushort us:
+                MemoryMarshal.Write(buffer, ref us);
+                break;
+            case int i:
+                MemoryMarshal.Write(buffer, ref i);
+                break;
+            case float f:
+                MemoryMarshal.Write(buffer, ref f);
+                break;
+            case Vector3 v:
+                MemoryMarshal.Write(buffer, ref v);
+                break;
+            default:
+                Debug.Fail($"{nameof(Value)} has an invalid type: {Value.GetType()}");
+                break;
+        }
+#pragma warning restore CS9191 // The 'ref' modifier for an argument corresponding to 'in' parameter is equivalent to 'in'. Consider using 'in' instead.
+
+        return MemoryMarshal.Read<T>(buffer);
+    }
+
+    /// <summary>
     /// Sets the value and type of this setting.
     /// </summary>
     /// <param name="type">The new type of this setting.</param>
@@ -256,4 +311,15 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     /// <inheritdoc/>
     public readonly override int GetHashCode()
         => HashCode.Combine(Index, Position, Type, Value);
+
+    internal static Type GetTypeForSettingType(SettingType type)
+        => type switch
+        {
+            SettingType.Byte => typeof(byte),
+            SettingType.Ushort => typeof(ushort),
+            SettingType.Int => typeof(int),
+            SettingType.Float => typeof(float),
+            SettingType.Vec3 => typeof(Vector3),
+            _ => typeof(string),
+        };
 }
