@@ -55,9 +55,9 @@ public sealed partial class FcAST
                             if (id is 46 or 48 or 50 or 52 or 54 or 56)
                             {
                                 // get variable
-                                if (ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? variableNameObj))
+                                if (ctx.TryGetSetting(pos, 0, out var variableNameObj))
                                 {
-                                    string varName = (string)variableNameObj;
+                                    string varName = (string)variableNameObj.Value;
 
                                     if (varName.StartsWith('$') || varName.StartsWith('!'))
                                     {
@@ -68,9 +68,9 @@ public sealed partial class FcAST
                             else if (id is 428 or 430 or 432 or 434 or 436 or 438)
                             {
                                 // set variable
-                                if (ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? variableNameObj))
+                                if (ctx.TryGetSetting(pos, 0, out var variableNameObj))
                                 {
-                                    string varName = (string)variableNameObj;
+                                    string varName = (string)variableNameObj.Value;
 
                                     if (varName.StartsWith('$') || varName.StartsWith('!'))
                                     {
@@ -144,9 +144,9 @@ public sealed partial class FcAST
                             {
                                 // get variable
                                 string varName;
-                                if (TryGetSettingOfType(pos, 0, SettingType.String, out object? variableNameObj))
+                                if (TryGetSetting(pos, 0, out var variableNameObj))
                                 {
-                                    varName = (string)variableNameObj;
+                                    varName = (string)variableNameObj.Value;
 
                                     if (varName.StartsWith('$') || varName.StartsWith('!'))
                                     {
@@ -164,9 +164,9 @@ public sealed partial class FcAST
                             {
                                 // set variable
                                 string varName;
-                                if (TryGetSettingOfType(pos, 0, SettingType.String, out object? variableNameObj))
+                                if (TryGetSetting(pos, 0, out var variableNameObj))
                                 {
-                                    varName = (string)variableNameObj;
+                                    varName = (string)variableNameObj.Value;
 
                                     if (varName.StartsWith('$') || varName.StartsWith('!'))
                                     {
@@ -421,21 +421,14 @@ public sealed partial class FcAST
             return null;
         }
 
-        public bool TryGetSettingOfType(ushort3 pos, int index, SettingType type, [MaybeNullWhen(false)] out object value)
+        public bool TryGetSetting(ushort3 pos, int index, out PrefabSetting setting)
         {
             if (Prefab.Settings.TryGetValue(pos, out var settings))
             {
-                foreach (var setting in settings)
-                {
-                    if (setting.Index == index && setting.Type == type)
-                    {
-                        value = setting.Value;
-                        return true;
-                    }
-                }
+                return settings.TryGetValue(index, out setting);
             }
 
-            value = null;
+            setting = default;
             return false;
         }
 

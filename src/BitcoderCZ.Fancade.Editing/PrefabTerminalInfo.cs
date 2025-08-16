@@ -60,8 +60,13 @@ public readonly struct PrefabTerminalInfo
                 continue;
             }
 
-            foreach (var setting in settings)
+            foreach (var item in settings)
             {
+                if (item is not { } setting)
+                {
+                    continue;
+                }
+
                 if (setting.Type < SettingType.VoidTerminal)
                 {
                     continue;

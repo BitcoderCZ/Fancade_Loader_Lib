@@ -62,11 +62,9 @@ public static class StockBlocks
                     {
                         foreach (var terminal in def.Terminals)
                         {
-                            prefab.Settings.Add((ushort3)terminal.Position, new PrefabSetting(
-                                0,
+                            prefab.Settings.Add((ushort3)terminal.Position, new PrefabSettings(new PrefabSetting(
                                 SettingTypeUtils.FromTerminalSignalType(terminal.SignalType, terminal.Type == TerminalType.In),
-                                (ushort3)terminal.Position,
-                                terminal.Name ?? TerminalDef.GetDefaultName(terminal.SignalType)));
+                                terminal.Name ?? TerminalDef.GetDefaultName(terminal.SignalType))));
                         }
                     }
                 }

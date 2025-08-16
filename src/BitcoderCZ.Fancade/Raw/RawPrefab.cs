@@ -110,7 +110,7 @@ public class RawPrefab
     /// <summary>
     /// Settings of the blocks inside this prefab.
     /// </summary>
-    public List<PrefabSetting>? Settings;
+    public List<RawPrefabSetting>? Settings;
 
     /// <summary>
     /// Connections between blocks inside this prefab, block-block and block-outside of this prefab.
@@ -147,7 +147,7 @@ public class RawPrefab
     /// <param name="settings">Settings of the blocks inside this prefab.</param>
     /// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
 #pragma warning disable CA1002 // Do not expose generic lists
-    public RawPrefab(bool isInGroup, bool unEditable, bool unEditable2, bool hasData2, bool hasData1, byte typeByte, string name, byte data1, uint data2, byte backgroundColor, byte colliderByte, ushort groupId, byte3 posInGroup, byte[]? voxels, Array3D<ushort>? blocks, List<PrefabSetting>? settings, List<Connection>? connections)
+    public RawPrefab(bool isInGroup, bool unEditable, bool unEditable2, bool hasData2, bool hasData1, byte typeByte, string name, byte data1, uint data2, byte backgroundColor, byte colliderByte, ushort groupId, byte3 posInGroup, byte[]? voxels, Array3D<ushort>? blocks, List<RawPrefabSetting>? settings, List<Connection>? connections)
 #pragma warning restore CA1002 // Do not expose generic lists
 #pragma warning restore SA1625 // Element documentation should not be copied and pasted
     {
@@ -338,7 +338,7 @@ public class RawPrefab
         }
 
         ushort numbSettings = 0;
-        List<PrefabSetting>? settings = null;
+        List<RawPrefabSetting>? settings = null;
         if (hasSettings)
         {
             numbSettings = reader.ReadUInt16();
@@ -349,11 +349,11 @@ public class RawPrefab
             }
             else
             {
-                settings = new List<PrefabSetting>(numbSettings);
+                settings = new List<RawPrefabSetting>(numbSettings);
 
                 for (int i = 0; i < numbSettings; i++)
                 {
-                    settings.Add(PrefabSetting.Load(reader));
+                    settings.Add(RawPrefabSetting.Load(reader));
                 }
             }
         }

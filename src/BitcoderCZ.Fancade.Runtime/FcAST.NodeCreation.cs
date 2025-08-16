@@ -26,22 +26,22 @@ public sealed partial class FcAST
                 // **************************************** Game ****************************************
                 case 252:
                     {
-                        return new WinStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? delay) ? (byte)delay : 0);
+                        return new WinStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSetting(pos, 0, out var delay) ? delay.GetValue<byte>() : 0);
                     }
 
                 case 256:
                     {
-                        return new LoseStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? delay) ? (byte)delay : 0);
+                        return new LoseStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSetting(pos, 0, out var delay) ? delay.GetValue<byte>() : 0);
                     }
 
                 case 260:
                     {
-                        return new SetScoreStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? delay) ? (Ranking)(byte)delay : Ranking.MostPoints);
+                        return new SetScoreStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSetting(pos, 0, out var delay) ? (Ranking)delay.GetValue<byte>() : Ranking.MostPoints);
                     }
 
                 case 268:
                     {
-                        return new SetCameraStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 3)), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? delay) && (byte)delay != 0);
+                        return new SetCameraStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 3)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(2, 3)), ctx.TryGetSetting(pos, 0, out var delay) && delay.GetValue<byte>() != 0);
                     }
 
                 case 274:
@@ -54,7 +54,7 @@ public sealed partial class FcAST
                     return new CurrentFrameExpressionSyntax(id, pos);
                 case 584:
                     {
-                        return new MenuItemStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? name) ? (string)name : string.Empty, ctx.TryGetSettingOfType(pos, 1, SettingType.Byte, out object? maxItems) ? new MaxBuyCount((byte)maxItems) : MaxBuyCount.OnOff, ctx.TryGetSettingOfType(pos, 2, SettingType.Byte, out object? priceIncrease) ? (PriceIncrease)(byte)priceIncrease : PriceIncrease.Fixed10);
+                        return new MenuItemStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSetting(pos, 0, out var name) ? (string)name.Value : string.Empty, ctx.TryGetSetting(pos, 1, out var maxItems) ? new MaxBuyCount(maxItems.GetValue<byte>()) : MaxBuyCount.OnOff, ctx.TryGetSetting(pos, 2, out var priceIncrease) ? (PriceIncrease)priceIncrease.GetValue<byte>() : PriceIncrease.Fixed10);
                     }
 
                 // **************************************** Objects ****************************************
@@ -76,7 +76,7 @@ public sealed partial class FcAST
                 // **************************************** Sound ****************************************
                 case 264:
                     {
-                        return new PlaySoundStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSettingOfType(pos, 2, SettingType.Byte, out object? sound) ? (FcSound)(byte)sound : FcSound.Chirp);
+                        return new PlaySoundStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSetting(pos, 2, out var sound) ? (FcSound)sound.GetValue<byte>() : FcSound.Chirp);
                     }
 
                 case 397:
@@ -127,19 +127,19 @@ public sealed partial class FcAST
                     return new BoxArtStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos));
                 case 242:
                     {
-                        return new TouchSensorStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (TouchState)(byte)state : TouchState.Touching, ctx.TryGetSettingOfType(pos, 1, SettingType.Byte, out object? fingerIndex) ? (byte)fingerIndex : 0);
+                        return new TouchSensorStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSetting(pos, 0, out var state) ? (TouchState)state.GetValue<byte>() : TouchState.Touching, ctx.TryGetSetting(pos, 1, out var fingerIndex) ? fingerIndex.GetValue<byte>() : 0);
                     }
 
                 case 248:
                     return new SwipeSensorStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos));
                 case 588:
                     {
-                        return new ButtonStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (ButtonType)(byte)state : ButtonType.Direction);
+                        return new ButtonStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSetting(pos, 0, out var state) ? (ButtonType)state.GetValue<byte>() : ButtonType.Direction);
                     }
 
                 case 592:
                     {
-                        return new JoystickStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSettingOfType(pos, 0, SettingType.Byte, out object? state) ? (JoystickType)(byte)state : JoystickType.XZ);
+                        return new JoystickStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), ctx.TryGetSetting(pos, 0, out var state) ? (JoystickType)state.GetValue<byte>() : JoystickType.XZ);
                     }
 
                 case 401:
@@ -177,17 +177,17 @@ public sealed partial class FcAST
                     return new InspectStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), (SignalType)(((id - 16) / 2) + 2), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)));
                 case 36:
                     {
-                        return new LiteralExpressionSyntax(id, pos, SignalType.Float, new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Float, out object? value) ? (float)value : 0f));
+                        return new LiteralExpressionSyntax(id, pos, SignalType.Float, new RuntimeValue(ctx.TryGetSetting(pos, 0, out var value) ? value.GetValue<float>() : 0f));
                     }
 
                 case 38: // vec3
                     {
-                        return new LiteralExpressionSyntax(id, pos, SignalType.Vec3, new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? (Vector3)value : Vector3.Zero));
+                        return new LiteralExpressionSyntax(id, pos, SignalType.Vec3, new RuntimeValue(ctx.TryGetSetting(pos, 0, out var value) ? value.GetValue<Vector3>() : Vector3.Zero));
                     }
 
                 case 42: // rot
                     {
-                        return new LiteralExpressionSyntax(id, pos, SignalType.Rot, new RuntimeValue(ctx.TryGetSettingOfType(pos, 0, SettingType.Vec3, out object? value) ? ((Vector3)value).ToQuatDeg() : Quaternion.Identity));
+                        return new LiteralExpressionSyntax(id, pos, SignalType.Rot, new RuntimeValue(ctx.TryGetSetting(pos, 0, out var value) ? value.GetValue<Vector3>().ToQuaternionDegrees() : Quaternion.Identity));
                     }
 
                 case 449:
@@ -198,62 +198,62 @@ public sealed partial class FcAST
                 // **************************************** Variables ****************************************
                 case 46:
                     {
-                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Float));
+                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Float));
                     }
 
                 case 48:
                     {
-                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Vec3));
+                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Vec3));
                     }
 
                 case 50:
                     {
-                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Rot));
+                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Rot));
                     }
 
                 case 52:
                     {
-                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Bool));
+                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Bool));
                     }
 
                 case 54:
                     {
-                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Obj));
+                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Obj));
                     }
 
                 case 56:
                     {
-                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con));
+                        return new GetVariableExpressionSyntax(id, pos, new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Con));
                     }
 
                 case 428:
                     {
-                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Float), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Float), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 430:
                     {
-                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Vec3), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Vec3), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 432:
                     {
-                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Rot), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Rot), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 434:
                     {
-                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Bool), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Bool), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 436:
                     {
-                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Obj), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Obj), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 438:
                     {
-                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSettingOfType(pos, 0, SettingType.String, out object? varName) ? (string)varName : string.Empty, SignalType.Con), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
+                        return new SetVariableStatementSyntax(id, pos, ctx.GetOutVoidConnections(pos), new Variable(ctx.TryGetSetting(pos, 0, out var varName) ? (string)varName.Value : string.Empty, SignalType.Con), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 1)));
                     }
 
                 case 58 or 62 or 66 or 70 or 74 or 78:

@@ -71,7 +71,7 @@ public static partial class PlaceBlockHelper
                     return;
             }
 
-            prefab.Settings.Add((ushort3)pos, new PrefabSetting(0, settingType, (ushort3)pos, value));
+            prefab.Settings[(ushort3)pos] = new PrefabSettings(new PrefabSetting(settingType, value));
         }
     }
 }

@@ -42,20 +42,20 @@ public sealed class PrefabBlockBuilder : BlockBuilder
         for (int i = 0; i < settings.Count; i++)
         {
             SettingRecord set = settings[i];
-            _prefab.Settings.Add((ushort3)set.Block.Position, new PrefabSetting(
-                index: (byte)set.SettingIndex,
-                type: set.Value switch
-                {
-                    byte => SettingType.Byte,
-                    ushort => SettingType.Ushort,
-                    float => SettingType.Float,
-                    float3 or Vector3 => SettingType.Vec3,
-                    Rotation => SettingType.Vec3,
-                    string => SettingType.String,
-                    _ => throw new InvalidDataException($"Unsupported type of value: '{set.Value.GetType()}'."),
-                },
-                pos: (ushort3)set.Block.Position,
-                value: set.Value is Rotation rot ? rot.Value : set.Value));
+            _prefab.Settings[(ushort3)set.Block.Position] = _prefab.Settings
+                .GetValueOrDefault((ushort3)set.Block.Position, PrefabSettings.Empty)
+                .WithValueAt(set.SettingIndex, new PrefabSetting(
+                    set.Value switch
+                    {
+                        byte => SettingType.Byte,
+                        ushort => SettingType.Ushort,
+                        float => SettingType.Float,
+                        float3 or Vector3 => SettingType.Vec3,
+                        Rotation => SettingType.Vec3,
+                        string => SettingType.String,
+                        _ => throw new InvalidDataException($"Unsupported type of value: '{set.Value.GetType()}'."),
+                    },
+                    value: set.Value is Rotation rot ? rot.Value : set.Value));
         }
 
         for (int i = 0; i < connections.Count; i++)

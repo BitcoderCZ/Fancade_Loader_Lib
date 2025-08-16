@@ -2,7 +2,6 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.Fancade.Collections;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections;
@@ -42,7 +41,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// <param name="settings">The settings applied to blocks in this prefab.</param>
     /// <param name="connections">The connections between blocks in this prefab.</param>
     /// <param name="segments">The segments to be placed in this prefab, all of which must have the same ID.</param>
-    public Prefab(ushort id, string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, IEnumerable<PrefabSetting>? settings, List<Connection>? connections, IEnumerable<PrefabSegment> segments)
+    public Prefab(ushort id, string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, IEnumerable<KeyValuePair<ushort3, PrefabSettings>>? settings, List<Connection>? connections, IEnumerable<PrefabSegment> segments)
     {
         if (!segments.Any())
         {
@@ -62,7 +61,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         BackgroundColor = backgroundColor;
         Editable = editable;
         Blocks = blocks ?? new BlockData();
-        Settings = settings?.ToMultiValueDictionary(setting => setting.Position) ?? [];
+        Settings = settings is null ? [] : new Dictionary<ushort3, PrefabSettings>(settings);
         Connections = connections ?? [];
 
         _segments = new(segments.Select(segment =>
@@ -96,7 +95,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// <param name="settings">Settings of the blocks inside this prefab.</param>
     /// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
     /// <param name="segments">The prefabs to be placed in this prefab, must all have the same id.</param>
-    public Prefab(string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, IEnumerable<PrefabSetting>? settings, List<Connection>? connections, IEnumerable<PrefabSegment> segments)
+    public Prefab(string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, IEnumerable<KeyValuePair<ushort3, PrefabSettings>>? settings, List<Connection>? connections, IEnumerable<PrefabSegment> segments)
     {
         if (!segments.Any())
         {
@@ -115,7 +114,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         BackgroundColor = backgroundColor;
         Editable = editable;
         Blocks = blocks ?? new BlockData();
-        Settings = settings?.ToMultiValueDictionary(setting => setting.Position) ?? [];
+        Settings = settings is null ? [] : new Dictionary<ushort3, PrefabSettings>(settings);
         Connections = connections ?? [];
 
         ushort? id = null;
@@ -232,7 +231,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// Gets the settings applied to the blocks in this prefab.
     /// </summary>
     /// <value>The settings applied to the blocks in this prefab.</value>
-    public MultiValueDictionary<ushort3, PrefabSetting> Settings { get; }
+    public Dictionary<ushort3, PrefabSettings> Settings { get; }
 
     /// <summary>
     /// Gets the connections between blocks inside this prefab and connections to inputs/outputs of this prefab.
@@ -453,12 +452,15 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
             blockData.Trim(false);
         }
 
-        List<PrefabSetting>? settings = null;
+        Dictionary<ushort3, PrefabSettings>? settings = null;
         if (rawPrefab.HasSettings && rawPrefab.Settings is not null)
         {
-            settings = clone
-                ? [.. rawPrefab.Settings]
-                : rawPrefab.Settings;
+            settings = new(rawPrefab.Settings.Count);
+
+            foreach (var item in rawPrefab.Settings.GroupBy(setting => setting.Position))
+            {
+                settings.Add(item.Key, PrefabSettings.FromRaw(item));
+            }
         }
 
         // add settings to stock prefabs
@@ -483,12 +485,10 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
                         {
                             ushort3 pos = (ushort3)blockData.Index(i);
 
-                            PrefabSetting setting = settings.FirstOrDefault(s => s.Index == setI && s.Position == pos);
-
-                            if (setting == default)
+                            if (!settings.TryGetValue(pos, out var prefabSettings) || !prefabSettings.Contains(setI))
                             {
                                 // Wasn't found
-                                // TODO: settings.Add(getStockSetting(id, setI));
+                                // TODO: settings.Add(getStockSetting(id, setI))
                             }
                         }
                     }
@@ -523,7 +523,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     }
 
     /// <summary>
-    /// Converts this <see cref="Prefab"/> into <see cref="RawPrefab"/>s.
+    /// Converts the <see cref="Prefab"/> into <see cref="RawPrefab"/>s.
     /// </summary>
     /// <param name="clone">If the prefabs should be copied, if <see langword="true"/>, this <see cref="RawPrefab"/> instance shouldn't be used anymore.</param>
     /// <returns>A new instance of the <see cref="RawPrefab"/> class from this <see cref="Prefab"/>.</returns>
@@ -558,7 +558,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
                     posInGroup: (byte3)posInGroup,
                     voxels: voxels,
                     blocks: Blocks is null ? null : clone ? Blocks.Array.Clone() : Blocks.Array,
-                    settings: clone && Settings is not null ? [.. Settings.Values.SelectMany(list => list)] : Settings?.Values.SelectMany(list => list).ToList(),
+                    settings: [.. Settings.SelectMany(item => item.Value.ToRaw(item.Key))],
                     connections: clone && Connections is not null ? [.. Connections] : Connections)
                 : new RawPrefab(
                     isInGroup: Count > 1,
