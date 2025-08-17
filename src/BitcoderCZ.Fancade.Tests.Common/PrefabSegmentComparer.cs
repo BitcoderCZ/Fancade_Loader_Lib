@@ -29,6 +29,6 @@ public sealed class PrefabSegmentComparer : IEqualityComparer<PrefabSegment>
     public int GetHashCode([DisallowNull] PrefabSegment obj)
         => throw new InvalidOperationException();
 
-    private static bool EqualsVoxels(Voxel[]? a, Voxel[]? b)
-        => ReferenceEquals(a, b) || (a is not null && b is not null && a.SequenceEqual(b));
+    private static bool EqualsVoxels(Voxels a, Voxels b)
+        => a.Data.SequenceEqual(b.Data);
 }

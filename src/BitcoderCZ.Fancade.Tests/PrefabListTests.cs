@@ -1365,9 +1365,8 @@ public class PrefabListTests
         var prefab3 = CreatePrefab(28, 3);
 
         var segment = prefab3[new int3(1, 0, 0)];
-        segment.Voxels = new Voxel[8 * 8 * 8];
-        segment.Voxels[0].Colors[0] = (byte)FcColor.Brown;
-        segment.Voxels[0].Attribs[0] = true;
+        segment.Voxels = new Voxels();
+        segment.Voxels.GetVoxelRef(int3.Zero)[0] = new VoxelFace(FcColor.Brown, true);
 
         prefabList.AddPrefab(prefab1);
         prefabList.AddPrefab(prefab2);

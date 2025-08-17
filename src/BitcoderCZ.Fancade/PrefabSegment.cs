@@ -15,19 +15,28 @@ public class PrefabSegment : ICloneable
     /// <summary>
     /// The number of voxels in a segment.
     /// </summary>
+    [Obsolete($"Use {nameof(Fancade.Voxels)}.{nameof(Fancade.Voxels.VoxelCount)}")]
     public const int NumbVoxels = 8 * 8 * 8;
 
     /// <summary>
     /// A mask to get the color from a voxel side.
     /// </summary>
+    [Obsolete($"Use {nameof(VoxelFace)} to extract color and glue info.")]
     public const byte ColorMask = 0b_0111_1111;
 
     /// <summary>
     /// A mask to get the attribs from a voxel side.
     /// </summary>
+    [Obsolete($"Use {nameof(VoxelFace)} to extract color and glue info.")]
     public const byte AttribsMask = 0b_1000_0000;
 
-    private Voxel[]? _voxels;
+    // ideally would be a property, but .Voxels[...] = ... wouldn't work
+
+    /// <summary>
+    /// Gets or sets the voxels/model of the <see cref="PrefabSegment"/>.
+    /// </summary>
+    /// <value>Voxels/model of the <see cref="PrefabSegment"/>.</value>
+    public Voxels Voxels;
 
     private int3 _posInPrefab;
 
@@ -48,7 +57,7 @@ public class PrefabSegment : ICloneable
     /// <param name="prefabId">Id of the prefab this segment is in.</param>
     /// <param name="posInPrefab">Position of this segment in prefab.</param>
     /// <param name="voxels">Voxels/model of this prefab.</param>
-    public PrefabSegment(ushort prefabId, int3 posInPrefab, Voxel[]? voxels)
+    public PrefabSegment(ushort prefabId, int3 posInPrefab, Voxels voxels)
     {
         PrefabId = prefabId;
         PosInPrefab = posInPrefab;
@@ -60,7 +69,7 @@ public class PrefabSegment : ICloneable
     /// </summary>
     /// <param name="other">The segment to copy.</param>
     public PrefabSegment(PrefabSegment other)
-        : this(other.PrefabId, other.PosInPrefab, other.Voxels is null ? null : (Voxel[])other.Voxels.Clone())
+        : this(other.PrefabId, other.PosInPrefab, other.Voxels.IsEmpty ? Voxels.Empty : other.Voxels.Clone())
     {
     }
 
@@ -93,51 +102,10 @@ public class PrefabSegment : ICloneable
     }
 
     /// <summary>
-    /// Gets or sets the voxels/model of this segment.
+    /// Gets a value indicating whether the <see cref="PrefabSegment"/> is empty.
     /// </summary>
-    /// <remarks>
-    /// <para>Must be 8*8*8 (512) long.</para>
-    /// <para>The voxels are in XYZ order.</para>
-    /// </remarks>
-    /// <value>Voxels/model of this segment.</value>
-    public Voxel[]? Voxels
-    {
-        get => _voxels;
-        set
-        {
-            if (value is not null && value.Length != NumbVoxels)
-            {
-                ThrowArgumentException($"{nameof(Voxels)} must be {NumbVoxels} long, but {nameof(value)}.Length is {value.Length}.", nameof(value));
-            }
-
-            _voxels = value;
-        }
-    }
-
-    /// <summary>
-    /// Gets a value indicating whether this <see cref="PrefabSegment"/> is empty.
-    /// </summary>
-    /// <value><see langword="true"/> if <see cref="Voxels"/> is null or <see cref="Voxel.IsEmpty"/> is true for all of the voxels; otherwise, <see langword="false"/>.</value>
-    public bool IsEmpty
-    {
-        get
-        {
-            if (Voxels is null)
-            {
-                return true;
-            }
-
-            for (int i = 0; i < Voxels.Length; i++)
-            {
-                if (!Voxels[i].IsEmpty)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-    }
+    /// <value><see cref="Fancade.Voxels.AreVoxelsEmpty"/>.</value>
+    public bool IsEmpty => Voxels.AreVoxelsEmpty;
 
     /// <summary>
     /// Converts a 3D index into a 1D index, used to índex into <see cref="Voxels"/>.
@@ -147,155 +115,50 @@ public class PrefabSegment : ICloneable
     /// </remarks>
     /// <param name="pos">The 3D index.</param>
     /// <returns>The converted 1D index.</returns>
+    [Obsolete]
     public static int IndexVoxels(int3 pos)
         => pos.ToIndex(8, 8);
 
     /// <summary>
-    /// Converts raw voxel data to <see cref="Voxel"/>s.
+    /// Converts raw voxel data to <see cref="Voxels"/>.
     /// </summary>
     /// <param name="voxels">The voxel data to convert.</param>
-    /// <returns>The converted <see cref="Voxel"/>s.</returns>
-    public static unsafe Voxel[] VoxelsFromRaw(byte[] voxels)
+    /// <returns>The converted <see cref="Voxels"/>.</returns>
+    public static unsafe Voxels VoxelsFromRaw(ReadOnlySpan<byte> voxels)
     {
-        ThrowIfNull(voxels, nameof(voxels));
-
-        if (voxels.Length < NumbVoxels * 6)
+        if (voxels.Length < Voxels.VoxelCount * 6)
         {
-            ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels * 6}.", nameof(voxels));
+            ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {Voxels.VoxelCount * 6}.", nameof(voxels));
         }
 
-        Voxel[] result = new Voxel[NumbVoxels];
-
-        for (int i = 0; i < NumbVoxels; i++)
-        {
-            Voxel voxel = default;
-            byte s0 = voxels[i + (NumbVoxels * 0)];
-            byte s1 = voxels[i + (NumbVoxels * 1)];
-            byte s2 = voxels[i + (NumbVoxels * 2)];
-            byte s3 = voxels[i + (NumbVoxels * 3)];
-            byte s4 = voxels[i + (NumbVoxels * 4)];
-            byte s5 = voxels[i + (NumbVoxels * 5)];
-
-            voxel.Colors[0] = (byte)(s0 & ColorMask);
-            voxel.Colors[1] = (byte)(s1 & ColorMask);
-            voxel.Colors[2] = (byte)(s2 & ColorMask);
-            voxel.Colors[3] = (byte)(s3 & ColorMask);
-            voxel.Colors[4] = (byte)(s4 & ColorMask);
-            voxel.Colors[5] = (byte)(s5 & ColorMask);
-            voxel.Attribs[0] = UnsafeUtils.BitCast<byte, bool>((byte)((s0 & AttribsMask) >> 7));
-            voxel.Attribs[1] = UnsafeUtils.BitCast<byte, bool>((byte)((s1 & AttribsMask) >> 7));
-            voxel.Attribs[2] = UnsafeUtils.BitCast<byte, bool>((byte)((s2 & AttribsMask) >> 7));
-            voxel.Attribs[3] = UnsafeUtils.BitCast<byte, bool>((byte)((s3 & AttribsMask) >> 7));
-            voxel.Attribs[4] = UnsafeUtils.BitCast<byte, bool>((byte)((s4 & AttribsMask) >> 7));
-            voxel.Attribs[5] = UnsafeUtils.BitCast<byte, bool>((byte)((s5 & AttribsMask) >> 7));
-
-            result[i] = voxel;
-        }
-
-        return result;
+        return new Voxels(voxels.ToArray());
     }
 
     /// <summary>
-    /// Converts raw voxel data to <see cref="Voxel"/>s.
+    /// Converts <see cref="Voxels"/> to raw voxel data.
     /// </summary>
-    /// <param name="voxels">The voxel data to convert.</param>
-    /// <param name="destination">The destination span.</param>
-    public static unsafe void VoxelsFromRaw(ReadOnlySpan<byte> voxels, Span<Voxel> destination)
-    {
-        if (voxels.Length < NumbVoxels * 6)
-        {
-            ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels * 6}.", nameof(voxels));
-        }
-
-        if (destination.Length < NumbVoxels)
-        {
-            ThrowArgumentException($"{nameof(destination)}'s length must be greater than or equal to {NumbVoxels}.", nameof(voxels));
-        }
-
-        for (int i = 0; i < NumbVoxels; i++)
-        {
-            Voxel voxel = default;
-            byte s0 = voxels[i + (NumbVoxels * 0)];
-            byte s1 = voxels[i + (NumbVoxels * 1)];
-            byte s2 = voxels[i + (NumbVoxels * 2)];
-            byte s3 = voxels[i + (NumbVoxels * 3)];
-            byte s4 = voxels[i + (NumbVoxels * 4)];
-            byte s5 = voxels[i + (NumbVoxels * 5)];
-
-            voxel.Colors[0] = (byte)(s0 & ColorMask);
-            voxel.Colors[1] = (byte)(s1 & ColorMask);
-            voxel.Colors[2] = (byte)(s2 & ColorMask);
-            voxel.Colors[3] = (byte)(s3 & ColorMask);
-            voxel.Colors[4] = (byte)(s4 & ColorMask);
-            voxel.Colors[5] = (byte)(s5 & ColorMask);
-            voxel.Attribs[0] = UnsafeUtils.BitCast<byte, bool>((byte)((s0 & AttribsMask) >> 7));
-            voxel.Attribs[1] = UnsafeUtils.BitCast<byte, bool>((byte)((s1 & AttribsMask) >> 7));
-            voxel.Attribs[2] = UnsafeUtils.BitCast<byte, bool>((byte)((s2 & AttribsMask) >> 7));
-            voxel.Attribs[3] = UnsafeUtils.BitCast<byte, bool>((byte)((s3 & AttribsMask) >> 7));
-            voxel.Attribs[4] = UnsafeUtils.BitCast<byte, bool>((byte)((s4 & AttribsMask) >> 7));
-            voxel.Attribs[5] = UnsafeUtils.BitCast<byte, bool>((byte)((s5 & AttribsMask) >> 7));
-
-            destination[i] = voxel;
-        }
-    }
-
-    /// <summary>
-    /// Converts <see cref="Voxel"/>s to raw voxel data.
-    /// </summary>
-    /// <param name="voxels">The <see cref="Voxel"/>s to convert.</param>
+    /// <param name="voxels">The <see cref="Voxels"/> to convert.</param>
     /// <returns>The converted raw voxel data.</returns>
-    public static unsafe byte[] VoxelsToRaw(Voxel[] voxels)
+    public static unsafe byte[] VoxelsToRaw(Voxels voxels)
     {
         ThrowIfNull(voxels, nameof(voxels));
 
-        if (voxels.Length < NumbVoxels)
-        {
-            ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels}.", nameof(voxels));
-        }
-
-        byte[] result = new byte[NumbVoxels * 6];
-
-        for (int i = 0; i < NumbVoxels; i++)
-        {
-            Voxel voxel = voxels[i];
-            result[i + (NumbVoxels * 0)] = (byte)(voxel.Colors[0] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[0]) << 7);
-            result[i + (NumbVoxels * 1)] = (byte)(voxel.Colors[1] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[1]) << 7);
-            result[i + (NumbVoxels * 2)] = (byte)(voxel.Colors[2] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[2]) << 7);
-            result[i + (NumbVoxels * 3)] = (byte)(voxel.Colors[3] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[3]) << 7);
-            result[i + (NumbVoxels * 4)] = (byte)(voxel.Colors[4] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[4]) << 7);
-            result[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[5]) << 7);
-        }
-
-        return result;
+        return voxels._data is null ? new byte[Voxels.VoxelCount * 6] : (byte[])voxels._data.Clone();
     }
 
     /// <summary>
-    /// Converts <see cref="Voxel"/>s to raw voxel data.
+    /// Converts <see cref="Voxels"/> to raw voxel data.
     /// </summary>
-    /// <param name="voxels">The <see cref="Voxel"/>s to convert.</param>
+    /// <param name="voxels">The <see cref="Voxels"/> to convert.</param>
     /// <param name="destination">The destination span.</param>
-    public static unsafe void VoxelsToRaw(ReadOnlySpan<Voxel> voxels, Span<byte> destination)
+    public static unsafe void VoxelsToRaw(Voxels voxels, Span<byte> destination)
     {
-        if (voxels.Length < NumbVoxels)
+        if (destination.Length < Voxels.VoxelCount * 6)
         {
-            ThrowArgumentException($"{nameof(voxels)}'s length must be greater than or equal to {NumbVoxels}.", nameof(voxels));
+            ThrowArgumentException($"{nameof(destination)}'s length must be greater than or equal to {Voxels.VoxelCount * 6}.", nameof(destination));
         }
 
-        if (destination.Length < NumbVoxels * 6)
-        {
-            ThrowArgumentException($"{nameof(destination)}'s length must be greater than or equal to {NumbVoxels * 6}.", nameof(destination));
-        }
-
-        for (int i = 0; i < NumbVoxels; i++)
-        {
-            Voxel voxel = voxels[i];
-            destination[i + (NumbVoxels * 0)] = (byte)(voxel.Colors[0] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[0]) << 7);
-            destination[i + (NumbVoxels * 1)] = (byte)(voxel.Colors[1] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[1]) << 7);
-            destination[i + (NumbVoxels * 2)] = (byte)(voxel.Colors[2] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[2]) << 7);
-            destination[i + (NumbVoxels * 3)] = (byte)(voxel.Colors[3] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[3]) << 7);
-            destination[i + (NumbVoxels * 4)] = (byte)(voxel.Colors[4] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[4]) << 7);
-            destination[i + (NumbVoxels * 5)] = (byte)(voxel.Colors[5] | UnsafeUtils.BitCast<bool, byte>(voxel.Attribs[5]) << 7);
-        }
+        voxels._data.CopyTo(destination);
     }
 
     /// <summary>

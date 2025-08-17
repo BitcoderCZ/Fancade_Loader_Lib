@@ -84,9 +84,9 @@ public static class PrefabUtils
                 {
                     for (int x = fromVoxel.X; x <= toVoxel.X; x++)
                     {
-                        if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && segment.Voxels is not null)
+                        if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && !segment.Voxels.IsEmpty)
                         {
-                            segment.Voxels[PrefabSegment.IndexVoxels(new int3(x, y, z) % 8)] = value;
+                            segment.Voxels[new int3(x, y, z) % 8] = value;
                         }
                     }
                 }
@@ -100,12 +100,11 @@ public static class PrefabUtils
                 {
                     for (int x = fromVoxel.X; x <= toVoxel.X; x++)
                     {
-                        if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && segment.Voxels is not null)
+                        if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && !segment.Voxels.IsEmpty)
                         {
-                            int index = PrefabSegment.IndexVoxels(new int3(x, y, z) % 8);
-                            if (segment.Voxels[index].IsEmpty)
+                            if (segment.Voxels[new int3(x, y, z)].IsEmpty)
                             {
-                                segment.Voxels[index] = value;
+                                segment.Voxels[new int3(x, y, z)] = value;
                             }
                         }
                     }
@@ -200,9 +199,9 @@ public static class PrefabUtils
                 {
                     for (int x = fromVoxel.X; x <= toVoxel.X; x++)
                     {
-                        if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && segment.Voxels is not null)
+                        if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && !segment.Voxels.IsEmpty)
                         {
-                            segment.Voxels[PrefabSegment.IndexVoxels(new int3(x, y, z) % 8)] = value;
+                            segment.Voxels[new int3(x, y, z) % 8] = value;
                         }
                     }
                 }
@@ -216,12 +215,12 @@ public static class PrefabUtils
                 {
                     for (int x = fromVoxel.X; x <= toVoxel.X; x++)
                     {
-                        if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && segment.Voxels is not null)
+                        if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && !segment.Voxels.IsEmpty)
                         {
-                            int index = PrefabSegment.IndexVoxels(new int3(x, y, z) % 8);
-                            if (segment.Voxels[index].IsEmpty)
+                            var pos = new int3(x, y, z) % 8;
+                            if (segment.Voxels[pos].IsEmpty)
                             {
-                                segment.Voxels[index] = value;
+                                segment.Voxels[pos] = value;
                             }
                         }
                     }
@@ -266,20 +265,18 @@ public static class PrefabUtils
         fromVoxel = ClampVoxelToPrefab(fromVoxel);
         toVoxel = ClampVoxelToPrefab(toVoxel);
 
-        byte colorByte = (byte)color;
-
         for (int z = fromVoxel.Z; z <= toVoxel.Z; z++)
         {
             for (int y = fromVoxel.Y; y <= toVoxel.Y; y++)
             {
                 for (int x = fromVoxel.X; x <= toVoxel.X; x++)
                 {
-                    if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && segment.Voxels is not null)
+                    if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && !segment.Voxels.IsEmpty)
                     {
-                        int index = PrefabSegment.IndexVoxels(new int3(x, y, z) % 8);
-                        if (!segment.Voxels[index].IsEmpty)
+                        var pos = new int3(x, y, z) % 8;
+                        if (!segment.Voxels[pos].IsEmpty)
                         {
-                            segment.Voxels[index].Colors[sideIndex] = colorByte;
+                            segment.Voxels.SetColorUnchecked(pos, sideIndex, color);
                         }
                     }
                 }
@@ -291,8 +288,8 @@ public static class PrefabUtils
     /// Makes sure that <paramref name="prefab"/> contains segments with <see cref="PrefabSegment.Voxels"/> in a specified region.
     /// </summary>
     /// <param name="prefab">The prefab to add the segments to.</param>
-    /// <param name="from">The start position of regiom, inclusive.</param>
-    /// <param name="to">The end position of regiom, inclusive.</param>
+    /// <param name="from">The start position of region, inclusive.</param>
+    /// <param name="to">The end position of region, inclusive.</param>
     /// <param name="overwriteBlocks">
     /// If <see langword="true"/>, blocks will be overwritten (if segments get added to the prefab),
     /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, <see cref="BlockObstructedException"/> is thrown.
@@ -311,8 +308,8 @@ public static class PrefabUtils
     /// Makes sure that <paramref name="prefab"/> contains segments with <see cref="PrefabSegment.Voxels"/> in a specified region.
     /// </summary>
     /// <param name="prefab">The prefab to add the segments to.</param>
-    /// <param name="from">The start position of regiom, inclusive.</param>
-    /// <param name="to">The end position of regiom, inclusive.</param>
+    /// <param name="from">The start position of region, inclusive.</param>
+    /// <param name="to">The end position of region, inclusive.</param>
     /// <param name="addSegment">An <see cref="Action{T}"/> that adds a segment to <paramref name="prefab"/>.</param>
     /// <returns><see langword="true"/> if segments were added; otherwise, <see langword="false"/>.</returns>
     public static bool EnsureSegmentVoxels(this Prefab prefab, int3 from, int3 to, Action<PrefabSegment> addSegment)
@@ -338,16 +335,16 @@ public static class PrefabUtils
                     int3 pos = new int3(x, y, z);
                     if (prefab.TryGetValue(pos, out var segment))
                     {
-                        if (segment.Voxels is null)
+                        if (segment.Voxels.IsEmpty)
                         {
-                            segment.Voxels = new Voxel[8 * 8 * 8];
+                            segment.Voxels = new Voxels();
                         }
                     }
                     else
                     {
                         added = true;
 
-                        addSegment(new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]));
+                        addSegment(new PrefabSegment(prefab.Id, pos, new Voxels()));
                     }
                 }
             }
@@ -360,8 +357,8 @@ public static class PrefabUtils
     /// Makes sure that <paramref name="prefab"/> contains segments with <see cref="PrefabSegment.Voxels"/> in a specified region.
     /// </summary>
     /// <param name="prefab">The prefab to add the segments to.</param>
-    /// <param name="from">The start position of regiom, inclusive.</param>
-    /// <param name="to">The end position of regiom, inclusive.</param>
+    /// <param name="from">The start position of region, inclusive.</param>
+    /// <param name="to">The end position of region, inclusive.</param>
     /// <param name="overwriteBlocks">
     /// If <see langword="true"/>, blocks will be overwritten (if segments get added to the prefab),
     /// if <see langword="false"/>, if a added segment would be placed at a position that is already occupied, <see langword="false"/> is returned.
@@ -383,8 +380,8 @@ public static class PrefabUtils
     /// Makes sure that <paramref name="prefab"/> contains segments with <see cref="PrefabSegment.Voxels"/> in a specified region.
     /// </summary>
     /// <param name="prefab">The prefab to add the segments to.</param>
-    /// <param name="from">The start position of regiom, inclusive.</param>
-    /// <param name="to">The end position of regiom, inclusive.</param>
+    /// <param name="from">The start position of region, inclusive.</param>
+    /// <param name="to">The end position of region, inclusive.</param>
     /// <param name="canAddSegment">A <see cref="Func{T, TResult}"/> that gets if a segment at the specified position can be added.</param>
     /// <param name="addSegment">An <see cref="Action{T}"/> that adds a segment to <paramref name="prefab"/>.</param>
     /// <param name="segmentsAdded"><see langword="true"/> if segments were added; otherwise, <see langword="false"/>.</param>
@@ -414,9 +411,9 @@ public static class PrefabUtils
                     int3 pos = new int3(x, y, z);
                     if (prefab.TryGetValue(pos, out var segment))
                     {
-                        if (segment.Voxels is null)
+                        if (segment.Voxels.IsEmpty)
                         {
-                            segment.Voxels = new Voxel[8 * 8 * 8];
+                            segment.Voxels = new Voxels();
                         }
                     }
                     else
@@ -439,7 +436,7 @@ public static class PrefabUtils
 
         foreach (var pos in segmentsToAdd)
         {
-            addSegment(new PrefabSegment(prefab.Id, pos, new Voxel[8 * 8 * 8]));
+            addSegment(new PrefabSegment(prefab.Id, pos, new Voxels()));
         }
 
         return true;
@@ -473,7 +470,7 @@ public static class PrefabUtils
     /// Converts a voxel position to a segment position.
     /// </summary>
     /// <param name="pos">The position to convert.</param>
-    /// <returns>The converted postition.</returns>
+    /// <returns>The converted position.</returns>
     public static int3 VoxelToSegment(int3 pos)
         => pos / 8;
 

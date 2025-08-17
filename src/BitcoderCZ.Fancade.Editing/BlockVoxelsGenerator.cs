@@ -3,7 +3,6 @@
 // </copyright>
 
 using BitcoderCZ.Maths.Vectors;
-using System.Runtime.CompilerServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing;
@@ -13,13 +12,13 @@ namespace BitcoderCZ.Fancade.Editing;
 /// </summary>
 public sealed class BlockVoxelsGenerator
 {
-    private readonly Dictionary<int3, Voxel[]> _blocks = [];
+    private readonly Dictionary<int3, Voxels> _blocks = [];
 
     private BlockVoxelsGenerator()
     {
     }
 
-    private delegate void LoopDelegate(ref Voxel voxel);
+    private delegate void LoopDelegate(Voxels.Ref voxel);
 
     /// <summary>
     /// Generates the voxels for a script block.
@@ -30,9 +29,9 @@ public sealed class BlockVoxelsGenerator
     /// <param name="sizeInBlocks">The X and Z size of the prefab in blocks.</param>
     /// <returns>The generated voxels.</returns>
 #if NET8_0_OR_GREATER
-    public static IEnumerable<KeyValuePair<int3, Voxel[]>> CreateScript(int2 sizeInBlocks)
+    public static IEnumerable<KeyValuePair<int3, Voxels>> CreateScript(int2 sizeInBlocks)
 #else
-    public static unsafe IEnumerable<KeyValuePair<int3, Voxel[]>> CreateScript(int2 sizeInBlocks)
+    public static unsafe IEnumerable<KeyValuePair<int3, Voxels>> CreateScript(int2 sizeInBlocks)
 #endif
     {
         if (sizeInBlocks.X < 1 || sizeInBlocks.Y < 1)
@@ -42,60 +41,49 @@ public sealed class BlockVoxelsGenerator
 
         int3 sizeInVoxels = new int3((sizeInBlocks.X * 8) - 1, 3, (sizeInBlocks.Y * 8) - 1);
 
-        byte gray4 = (byte)FcColor.Gray4;
-        byte gray3 = (byte)FcColor.Gray3;
-
         BlockVoxelsGenerator generator = new BlockVoxelsGenerator();
 
         generator.Fill(int3.Zero, sizeInVoxels, FcColor.Black);
 
-        generator.Loop(new int3(1, 2, 1), new int3(sizeInVoxels.X - 1, 3, sizeInVoxels.Z - 1), (ref Voxel voxel) =>
+        generator.Loop(new int3(1, 2, 1), new int3(sizeInVoxels.X - 1, 3, sizeInVoxels.Z - 1), (Voxels.Ref voxel) =>
         {
-            voxel.Colors[2] = gray4;
+            voxel.SetColor(2, FcColor.Gray4);
         });
 
-        generator.GetVoxel(new int3(sizeInVoxels.X - 1, 2, 0)).Colors[2] = gray4;
-        generator.GetVoxel(new int3(0, 2, sizeInVoxels.Z - 1)).Colors[2] = gray4;
+        generator.GetVoxelRef(new int3(sizeInVoxels.X - 1, 2, 0)).SetColor(2, FcColor.Gray4);
+        generator.GetVoxelRef(new int3(0, 2, sizeInVoxels.Z - 1)).SetColor(2, FcColor.Gray4);
 
-        generator.Loop(new int3(1, 2, sizeInVoxels.Z - 1), new int3(sizeInVoxels.X, 3, sizeInVoxels.Z), (ref Voxel voxel) =>
+        generator.Loop(new int3(1, 2, sizeInVoxels.Z - 1), new int3(sizeInVoxels.X, 3, sizeInVoxels.Z), (Voxels.Ref voxel) =>
         {
-            voxel.Colors[2] = gray3;
+            voxel.SetColor(2, FcColor.Gray3);
         });
 
-        generator.Loop(new int3(sizeInVoxels.X - 1, 2, 1), new int3(sizeInVoxels.X, 3, sizeInVoxels.Z), (ref Voxel voxel) =>
+        generator.Loop(new int3(sizeInVoxels.X - 1, 2, 1), new int3(sizeInVoxels.X, 3, sizeInVoxels.Z), (Voxels.Ref voxel) =>
         {
-            voxel.Colors[2] = gray3;
+            voxel.SetColor(2, FcColor.Gray3);
         });
 
         return generator._blocks;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Index(int3 pos)
-        => Index(pos.X, pos.Y, pos.Z);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Index(int x, int y, int z)
-        => x + (y * 8) + (z * 8 * 8);
-
-    private Voxel[] GetBlock(int3 pos)
+    private Voxels GetBlock(int3 pos)
     {
-        if (!_blocks.TryGetValue(pos, out Voxel[]? voxels))
+        if (!_blocks.TryGetValue(pos, out Voxels voxels))
         {
-            voxels = new Voxel[PrefabSegment.NumbVoxels];
+            voxels = new Voxels();
             _blocks.Add(pos, voxels);
         }
 
         return voxels;
     }
 
-    private ref Voxel GetVoxel(int3 pos)
+    private Voxels.Ref GetVoxelRef(int3 pos)
     {
         int3 blockPos = pos / 8;
         int3 voxelBlockPos = blockPos * 8;
         int3 inBlockPos = pos - voxelBlockPos;
 
-        return ref GetBlock(blockPos)[Index(inBlockPos)];
+        return GetBlock(blockPos).GetVoxelRef(inBlockPos);
     }
 
     private unsafe void Fill(int3 from, int3 to, FcColor color)
@@ -146,7 +134,7 @@ public sealed class BlockVoxelsGenerator
                 {
                     int3 blockPos = new int3(bx, by, bz);
                     int3 voxelPos = blockPos * 8;
-                    Voxel[] block = GetBlock(blockPos);
+                    Voxels block = GetBlock(blockPos);
 
                     int3 min = int3.Max(int3.Zero, from - voxelPos);
                     int3 max = int3.Min(new int3(8, 8, 8), to - voxelPos);
@@ -157,7 +145,7 @@ public sealed class BlockVoxelsGenerator
                         {
                             for (int x = min.X; x < max.X; x++)
                             {
-                                block[Index(x, y, z)] = voxel;
+                                block[new int3(x, y, z)] = voxel;
                             }
                         }
                     }
@@ -200,7 +188,7 @@ public sealed class BlockVoxelsGenerator
                 {
                     int3 blockPos = new int3(bx, by, bz);
                     int3 voxelPos = blockPos * 8;
-                    Voxel[] block = GetBlock(blockPos);
+                    Voxels block = GetBlock(blockPos);
 
                     int3 min = int3.Max(int3.Zero, from - voxelPos);
                     int3 max = int3.Min(new int3(8, 8, 8), to - voxelPos);
@@ -211,7 +199,7 @@ public sealed class BlockVoxelsGenerator
                         {
                             for (int x = min.X; x < max.X; x++)
                             {
-                                action(ref block[Index(x, y, z)]);
+                                action(block.GetVoxelRef(new(x, y, z)));
                             }
                         }
                     }

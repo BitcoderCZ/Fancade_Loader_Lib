@@ -58,8 +58,8 @@ public class PrefabTests
     {
         Prefab prefab = CreatePrefab(1, Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize);
 
-        var voxels = new Voxel[8 * 8 * 8];
-        voxels[0] = new Voxel(FcColor.Blue, false);
+        var voxels = new Voxels();
+        voxels[int3.Zero] = new Voxel(FcColor.Blue, false);
 
         prefab[int3.One * Prefab.MaxSize - 1].Voxels = voxels;
 

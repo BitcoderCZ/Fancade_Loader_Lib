@@ -90,8 +90,29 @@ public unsafe struct Voxel : IEquatable<Voxel>
     /// <summary>
     /// Gets a value indicating whether this voxel is empty.
     /// </summary>
+    /// <remarks>
+    /// Determined in the same way as in Fancade: checks only the first face (+X).
+    /// </remarks>
     /// <value><see langword="true"/> if this voxel is empty; otherwise, <see langword="false"/>.</value>
-    public readonly bool IsEmpty => Colors[0] == 0;
+    public readonly bool IsEmpty => Colors[0] == 0 && Attribs[0] == false;
+
+    /// <summary>
+    /// Gets or sets the face of the voxel at the specified index (sets both color and glue).
+    /// </summary>
+    /// <remarks>
+    /// In the same order as <see cref="Colors"/>.
+    /// </remarks>
+    /// <param name="faceIndex">Index of the face to get/set.</param>
+    /// <returns>The face at <paramref name="faceIndex"/>.</returns>
+    public VoxelFace this[int faceIndex]
+    {
+        readonly get => new VoxelFace((FcColor)Colors[faceIndex], !Attribs[faceIndex]);
+        set
+        {
+            Colors[faceIndex] = (byte)value.Color;
+            Attribs[faceIndex] = !value.HasGlue;
+        }
+    }
 
     /// <summary>Returns a value that indicates whether the 2 <see cref="Voxel"/>s are equal.</summary>
     /// <param name="left">The first <see cref="Voxel"/> to compare.</param>
@@ -116,18 +137,7 @@ public unsafe struct Voxel : IEquatable<Voxel>
     /// <param name="right">The second <see cref="Voxel"/> to compare.</param>
     /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are not equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator !=(Voxel left, Voxel right)
-        => left.Colors[0] != right.Colors[0] ||
-           left.Colors[1] != right.Colors[1] ||
-           left.Colors[2] != right.Colors[2] ||
-           left.Colors[3] != right.Colors[3] ||
-           left.Colors[4] != right.Colors[4] ||
-           left.Colors[5] != right.Colors[5] ||
-           left.Attribs[0] != right.Attribs[0] ||
-           left.Attribs[1] != right.Attribs[1] ||
-           left.Attribs[2] != right.Attribs[2] ||
-           left.Attribs[3] != right.Attribs[3] ||
-           left.Attribs[4] != right.Attribs[4] ||
-           left.Attribs[5] != right.Attribs[5];
+        => !(left == right);
 
     /// <inheritdoc/>
     public readonly override int GetHashCode()

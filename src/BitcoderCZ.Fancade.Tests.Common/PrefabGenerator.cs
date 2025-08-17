@@ -11,8 +11,8 @@ public static class PrefabGenerator
     public static Prefab CreatePrefab(ushort id, int segmentCount, string? name = null, bool initVoxels = false)
         => CreatePrefab(id, CreateSegments(id, segmentCount, initVoxels), name);
 
-    public static Prefab CreatePrefab(ushort id, int3[] posititons, string? name = null, bool initVoxels = false)
-        => CreatePrefab(id, CreateSegments(id, posititons, initVoxels), name);
+    public static Prefab CreatePrefab(ushort id, int3[] positions, string? name = null, bool initVoxels = false)
+        => CreatePrefab(id, CreateSegments(id, positions, initVoxels), name);
 
     public static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count, bool initVoxels = false)
     {
@@ -25,7 +25,7 @@ public static class PrefabGenerator
             int y = (i / 4) % 4;
             int z = i / (4 * 4);
 
-            yield return new PrefabSegment(id, new int3(x, y, z), initVoxels ? new Voxel[8 * 8 * 8] : null);
+            yield return new PrefabSegment(id, new int3(x, y, z), initVoxels ? new Voxels() : Voxels.Empty);
         }
     }
 
@@ -37,7 +37,7 @@ public static class PrefabGenerator
         for (int i = positions.Length - 1; i >= 0; i--)
         {
             int3 pos = positions[i];
-            yield return new PrefabSegment(id, pos, initVoxels ? new Voxel[8 * 8 * 8] : null);
+            yield return new PrefabSegment(id, pos, initVoxels ? new Voxels() : Voxels.Empty);
         }
     }
 }

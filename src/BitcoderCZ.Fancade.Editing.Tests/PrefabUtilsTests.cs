@@ -107,8 +107,8 @@ public class PrefabUtilsTests
         var prefab = CreatePrefab(1, 1, initVoxels: true);
         prefabList.AddPrefab(prefab);
 
-        var voxels = prefab[int3.Zero].Voxels!;
-        voxels[1] = new Voxel(FcColor.Black, true);
+        var voxels = prefab[int3.Zero].Voxels;
+        voxels[new int3(1, 0, 0)] = new Voxel(FcColor.Black, true);
 
         var voxel = new Voxel(FcColor.Blue, false);
 
@@ -134,19 +134,19 @@ public class PrefabUtilsTests
         var prefab = CreatePrefab(1, 1, initVoxels: true);
         prefabList.AddPrefab(prefab);
 
-        var voxels = prefab[int3.Zero].Voxels!;
+        var voxels = prefab[int3.Zero].Voxels;
 
         var voxel1 = new Voxel(FcColor.Black, true);
         var voxel2 = new Voxel(FcColor.Blue, false);
 
-        voxels[1] = voxel1;
+        voxels[new int3(1, 0, 0)] = voxel1;
 
         prefab.Fill(new int3(0, 0, 0), new int3(1, 0, 0), voxel2, false, false, true, prefabList, cache ? new BlockInstancesCache(prefabList.Prefabs, prefab.Id) : null);
 
         using (Assert.Multiple())
         {
-            await Assert.That(voxels[0]).IsEqualTo(voxel2);
-            await Assert.That(voxels[1]).IsEqualTo(voxel1);
+            await Assert.That(voxels[int3.Zero]).IsEqualTo(voxel2);
+            await Assert.That(voxels[new int3(1, 0, 0)]).IsEqualTo(voxel1);
             await AssertVoxelRegionInverted(prefab, new int3(0, 0, 0), new int3(1, 0, 0), default);
         }
     }
@@ -308,25 +308,33 @@ public class PrefabUtilsTests
         var voxels = prefab[int3.Zero].Voxels!;
 
         Voxel voxel = new Voxel(FcColor.White, false);
-        voxels[1] = voxel;
-        voxels[2] = voxel;
+        voxels[new int3(1, 0, 0)] = voxel;
+        voxels[new int3(2, 0, 0)] = voxel;
 
         prefab.FillColor(new int3(0, 0, 0), int3.One * 8 * Prefab.MaxSize - 1, 2, FcColor.Black);
 
         using (Assert.Multiple())
         {
-            for (int i = 0; i < 8 * 8 * 8; i++)
+            for (int z = 0; z < Voxels.Size; z++)
             {
-                if (i is 1 or 2)
+                for (int y = 0; y < Voxels.Size; y++)
                 {
-                    for (int j = 0; j < 6; j++)
+                    for (int x = 0; x < Voxels.Size; x++)
                     {
-                        await Assert.That(voxels[i].Colors[j]).IsEqualTo((byte)(j is 2 ? FcColor.Black : FcColor.White));
+                        var pos = new int3(x, y, z);
+
+                        if (pos == new int3(1, 0, 0) || pos == new int3(2, 0, 0))
+                        {
+                            for (int j = 0; j < 6; j++)
+                            {
+                                await Assert.That(voxels[pos].Colors[j]).IsEqualTo((byte)(j is 2 ? FcColor.Black : FcColor.White));
+                            }
+                        }
+                        else
+                        {
+                            await Assert.That(voxels[pos]).IsEqualTo(default);
+                        }
                     }
-                }
-                else
-                {
-                    await Assert.That(voxels[i]).IsEqualTo(default);
                 }
             }
         }
@@ -361,7 +369,7 @@ public class PrefabUtilsTests
                     for (int x = 0; x < 2; x++)
                     {
                         await Assert.That(prefab.ContainsKey(new int3(x, y, z))).IsTrue();
-                        await Assert.That(prefab[new int3(x, y, z)].Voxels).IsNotNull();
+                        await Assert.That(prefab[new int3(x, y, z)].Voxels.IsEmpty).IsFalse();
                     }
                 }
             }
@@ -391,7 +399,7 @@ public class PrefabUtilsTests
             await Assert.That(prefab.Size).IsEqualTo(new int3(1, 1, 1));
 
             await Assert.That(prefab.ContainsKey(new int3(0, 0, 0))).IsTrue();
-            await Assert.That(prefab[new int3(0, 0, 0)].Voxels).IsNotNull();
+            await Assert.That(prefab[new int3(0, 0, 0)].Voxels.IsEmpty).IsFalse();
         }
     }
 
@@ -511,9 +519,9 @@ public class PrefabUtilsTests
                 for (int x = fromVoxel.X; x <= toVoxel.X; x++)
                 {
                     int3 pos = new int3(x, y, z);
-                    if (prefab.TryGetValue(PrefabUtils.VoxelToSegment(pos), out var segment) && segment.Voxels is not null)
+                    if (prefab.TryGetValue(PrefabUtils.VoxelToSegment(pos), out var segment) && !segment.Voxels.IsEmpty)
                     {
-                        await Assert.That(segment.Voxels[PrefabSegment.IndexVoxels(pos % 8)]).IsEqualTo(expected);
+                        await Assert.That(segment.Voxels[pos % 8]).IsEqualTo(expected);
                     }
                     else if (expected != default)
                     {
@@ -539,9 +547,9 @@ public class PrefabUtilsTests
                     if ((x < fromVoxel.X || x > toVoxel.X) && (y < fromVoxel.Y || y > toVoxel.Y) && (z < fromVoxel.Z || z > toVoxel.Z))
                     {
                         int3 pos = new int3(x, y, z);
-                        if (prefab.TryGetValue(PrefabUtils.VoxelToSegment(pos), out var segment) && segment.Voxels is not null)
+                        if (prefab.TryGetValue(PrefabUtils.VoxelToSegment(pos), out var segment) && !segment.Voxels.IsEmpty)
                         {
-                            await Assert.That(segment.Voxels[PrefabSegment.IndexVoxels(pos % 8)]).IsEqualTo(expected);
+                            await Assert.That(segment.Voxels[pos % 8]).IsEqualTo(expected);
                         }
                         else if (expected != default)
                         {

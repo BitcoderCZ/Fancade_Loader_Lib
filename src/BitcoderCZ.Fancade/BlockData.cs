@@ -90,9 +90,9 @@ public class BlockData
     /// <summary>
     /// Determines if the specified position is inside the bounds of this data.
     /// </summary>
-    /// <param name="x">The x postition.</param>
-    /// <param name="y">The y postition.</param>
-    /// <param name="z">The z postition.</param>
+    /// <param name="x">The x positition.</param>
+    /// <param name="y">The y positition.</param>
+    /// <param name="z">The z positition.</param>
     /// <returns><see langword="true"/> if the position is inside the bounds of this data; otherwise, <see langword="false"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool InBounds(int x, int y, int z)
@@ -119,9 +119,9 @@ public class BlockData
     /// <summary>
     /// Converts a position into an index.
     /// </summary>
-    /// <param name="x">The x postition.</param>
-    /// <param name="y">The y postition.</param>
-    /// <param name="z">The z postition.</param>
+    /// <param name="x">The x positition.</param>
+    /// <param name="y">The y positition.</param>
+    /// <param name="z">The z positition.</param>
     /// <returns>Index into <see cref="Array"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Index(int x, int y, int z)
@@ -130,9 +130,9 @@ public class BlockData
     #region SetPrefab
 
     /// <summary>
-    /// "Places" a prefab at the specified postion.
+    /// "Places" a prefab at the specified position.
     /// </summary>
-    /// <param name="pos">The postition to place the prefab at.</param>
+    /// <param name="pos">The positition to place the prefab at.</param>
     /// <param name="prefab">The prefab to place.</param>
     public void SetPrefab(int3 pos, Prefab prefab)
     {
@@ -156,9 +156,9 @@ public class BlockData
     }
 
     /// <summary>
-    /// "Places" a partial prefab at the specified postion.
+    /// "Places" a partial prefab at the specified position.
     /// </summary>
-    /// <param name="pos">The postition to place the prefab at.</param>
+    /// <param name="pos">The positition to place the prefab at.</param>
     /// <param name="prefab">The prefab to place.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetPrefab(int3 pos, PartialPrefab prefab)
@@ -186,9 +186,9 @@ public class BlockData
     #region SetBlock
 
     /// <summary>
-    /// "Places" a single block at the specified postion.
+    /// "Places" a single block at the specified position.
     /// </summary>
-    /// <param name="pos">The postition to place the block at.</param>
+    /// <param name="pos">The positition to place the block at.</param>
     /// <param name="id">Id of the block to place.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetBlock(int3 pos, ushort id)
@@ -199,9 +199,9 @@ public class BlockData
     }
 
     /// <summary>
-    /// "Places" a single block at the specified postion without resizing the underlying array or bounds checking.
+    /// "Places" a single block at the specified position without resizing the underlying array or bounds checking.
     /// </summary>
-    /// <param name="pos">The postition to place the block at.</param>
+    /// <param name="pos">The positition to place the block at.</param>
     /// <param name="id">Id of the block to place.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetBlockUnchecked(int3 pos, ushort id)

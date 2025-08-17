@@ -23,8 +23,8 @@ public class PrefabListUtilsTests
 
         foreach (var segment in prefab.Values)
         {
-            Debug.Assert(segment.Voxels is not null);
-            segment.Voxels[0] = new Voxel(FcColor.Blue, false);
+            Debug.Assert(!segment.Voxels.IsEmpty);
+            segment.Voxels[int3.Zero] = new Voxel(FcColor.Blue, false);
         }
 
         var prefabClone = prefab.Clone(true);
@@ -37,7 +37,7 @@ public class PrefabListUtilsTests
     [Test]
     [Arguments(false)]
     [Arguments(true)]
-    public async Task RemovesEmptySegments_RemovesEmptyVoxels(bool cache)
+    public async Task RemoveEmptySegments_RemovesEmptyVoxels(bool cache)
     {
         var prefabList = new PrefabList()
         {
@@ -66,12 +66,12 @@ public class PrefabListUtilsTests
         var prefab = CreatePrefab(1, [new int3(0, 0, 0), new int3(1, 0, 0), new int3(0, 0, 1), new int3(1, 0, 1), new int3(0, 0, 2), new int3(1, 0, 2)], initVoxels: true);
 
         var seg1 = prefab[new int3(0, 0, 2)];
-        seg1.Voxels![0] = new Voxel(FcColor.Blue, false);
+        seg1.Voxels[int3.Zero] = new Voxel(FcColor.Blue, false);
 
         var seg1Clone = seg1.Clone();
 
         var seg2 = prefab[new int3(1, 0, 2)];
-        seg2.Voxels![1] = new Voxel(FcColor.Green, true);
+        seg2.Voxels[new int3(1, 0, 0)] = new Voxel(FcColor.Green, true);
 
         var seg2Clone = seg2.Clone();
 
@@ -89,8 +89,8 @@ public class PrefabListUtilsTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(seg1.Voxels).IsEquivalentTo(seg1Clone.Voxels);
-            await Assert.That(seg2.Voxels).IsEquivalentTo(seg2Clone.Voxels);
+            await Assert.That(seg1.Voxels.Data.SequenceEqual(seg1Clone.Voxels.Data)).IsTrue();
+            await Assert.That(seg2.Voxels.Data.SequenceEqual(seg2Clone.Voxels.Data)).IsTrue();
         }
     }
 }

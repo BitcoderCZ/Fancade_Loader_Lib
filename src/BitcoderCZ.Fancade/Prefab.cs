@@ -366,7 +366,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// <param name="name">Name of the prefab.</param>
     /// <returns>The new instance of <see cref="Prefab"/>.</returns>
     public static Prefab CreateBlock(ushort id, string name)
-        => new Prefab(id, name, PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, new(), [], [], [new PrefabSegment(id, int3.Zero, new Voxel[8 * 8 * 8])]);
+        => new Prefab(id, name, PrefabCollider.Box, PrefabType.Normal, FcColorUtils.DefaultBackgroundColor, true, new(), [], [], [new PrefabSegment(id, int3.Zero, new Voxels())]);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Prefab"/> class, with the default values for a level.
@@ -512,7 +512,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
 
         return new Prefab(id, name, collider, type, backgroundColor, editable, blockData, settings, connections, rawPrefabs.Select(prefab =>
         {
-            Voxel[]? voxels = null;
+            Voxels voxels = Voxels.Empty;
             if (prefab.HasVoxels && prefab.Voxels is not null)
             {
                 voxels = PrefabSegment.VoxelsFromRaw(prefab.Voxels);
@@ -536,7 +536,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         {
             byte[]? voxels = null;
 
-            if (segment.Voxels is not null)
+            if (!segment.Voxels.IsEmpty)
             {
                 voxels = PrefabSegment.VoxelsToRaw(segment.Voxels);
             }
@@ -839,8 +839,8 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     public Voxel GetVoxel(int3 position)
         => position.X < 0 || position.X >= MaxSize * 8 || position.Y < 0 || position.Y >= MaxSize * 8 || position.Z < 0 || position.Z >= MaxSize * 8
             ? default
-            : _segments.TryGetValue(position / 8, out var segment) && segment.Voxels is not null
-            ? segment.Voxels[PrefabSegment.IndexVoxels(position % 8)]
+            : _segments.TryGetValue(position / 8, out var segment) && !segment.Voxels.IsEmpty
+            ? segment.Voxels[position % 8]
             : default;
 
     /// <inheritdoc/>
