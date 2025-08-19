@@ -56,20 +56,19 @@ public readonly struct PrefabSetting : IEquatable<PrefabSetting>
         => left.Type != right.Type || !Equals(left.Value, right.Value);
 
     /// <summary>
-    /// Gets the value as <typeparamref name="T"/>.
+    /// Gets the value as <typeparamref name="T"/>. If <see cref="Value"/> is a <see cref="string"/> returns <see langword="default"/>.
     /// </summary>
     /// <remarks>
     /// If <typeparamref name="T"/> is not the corresponding <see cref="SettingType"/> of <see cref="Type"/>, <see cref="Value"/> is bitcasted to <typeparamref name="T"/>.
     /// </remarks>
     /// <typeparam name="T">The type to get the value as.</typeparam>
     /// <returns><see cref="Value"/> as <typeparamref name="T"/>.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when <see cref="Value"/> is a string.</exception>
     public T GetValue<T>()
         where T : unmanaged
     {
         if (Value is string)
         {
-            throw new InvalidOperationException($"{nameof(GetValue)} cannot be used to get a string value.");
+            return default;
         }
 
         if (typeof(T) == RawPrefabSetting.GetTypeForSettingType(Type))
