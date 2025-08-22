@@ -92,7 +92,7 @@ public static class Zlib
         from.CopyTo(zlib);
 #else
 #pragma warning disable CA2000 // ZOutputStream always disposes the underlying stream, which isn't desirelable, so dispose isn't called on it
-        ZOutputStream zlib = new ZOutputStream(to, 9);
+        ZOutputStream zlib = new ZOutputStream(to, compressionLevel);
 #pragma warning restore CA2000
 
         byte[] buffer = ArrayPool<byte>.Shared.Rent(1024 * 8);
