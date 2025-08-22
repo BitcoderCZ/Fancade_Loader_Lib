@@ -387,6 +387,84 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
     public override bool Equals([NotNullWhen(true)] object? obj)
         => obj is PrefabSettings settings && Equals(settings);
 
+    /// <summary>
+    /// A builder for <see cref="PrefabSettings"/>.
+    /// </summary>
+    public struct Builder
+    {
+        private PrefabSetting? _firstSetting;
+
+        private PrefabSetting?[]? _settings;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Builder"/> struct.
+        /// </summary>
+        /// <param name="initialCapacity">The initial capacity of the <see cref="Builder"/>.</param>
+        public Builder(int initialCapacity)
+        {
+            if (initialCapacity < 0)
+            {
+                ThrowArgumentOutOfRangeException(nameof(initialCapacity), $"{nameof(initialCapacity)} must be non-negative.");
+            }
+
+            if (initialCapacity > 1)
+            {
+                _settings = new PrefabSetting?[initialCapacity - 1];
+            }
+        }
+
+        /// <summary>
+        /// Sets the setting at the specified index.
+        /// </summary>
+        /// <param name="index">Index of the setting to set.</param>
+        /// <param name="value">The new setting.</param>
+        public void SetValueAt(int index, PrefabSetting value)
+        {
+            if (index < 0)
+            {
+                ThrowArgumentOutOfRangeException(nameof(index), $"{nameof(index)} must be non-negative.");
+            }
+
+            if (index == 0)
+            {
+                _firstSetting = value;
+                return;
+            }
+
+            int settingsIndex = index - 1;
+            if (_settings is null)
+            {
+                _settings = new PrefabSetting?[settingsIndex + 1];
+            }
+            else if (_settings.Length <= settingsIndex)
+            {
+                Array.Resize(ref _settings, settingsIndex + 1);
+            }
+
+            _settings[settingsIndex] = value;
+        }
+
+        /// <summary>
+        /// Builds the <see cref="PrefabSettings"/> from the contents of the <see cref="Builder"/> and clears the contents of the <see cref="Builder"/>.
+        /// </summary>
+        /// <returns>The built <see cref="PrefabSettings"/>.</returns>
+        public PrefabSettings BuildAndClear()
+        {
+            var settings = new PrefabSettings(_firstSetting, _settings);
+            Clear();
+            return settings;
+        }
+
+        /// <summary>
+        /// Clears the contents of the <see cref="Builder"/>.
+        /// </summary>
+        public void Clear()
+        {
+            _firstSetting = null;
+            _settings = null;
+        }
+    }
+
     private struct Enumerator : IEnumerator<PrefabSetting?>
     {
         private readonly PrefabSettings _settings;
