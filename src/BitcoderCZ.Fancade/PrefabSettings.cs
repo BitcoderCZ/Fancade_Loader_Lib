@@ -99,7 +99,7 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
             {
                 _settings = new PrefabSetting?[index + 1];
             }
-            else
+            else if (_settings.Length < index + 1)
             {
                 Array.Resize(ref _settings, index + 1);
             }
