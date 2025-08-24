@@ -867,7 +867,7 @@ public static class StockBlocks
         /// <summary>
         /// The List Vector block.
         /// </summary>
-        public static readonly BlockDef List_Vec = new BlockDef("List Vector", 461, ScriptBlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(SignalType.ObjPtr, TerminalType.Out, "Element").Add(SignalType.Float, TerminalType.In, "Index").Add(SignalType.ObjPtr, TerminalType.In, "Variable"));
+        public static readonly BlockDef List_Vec = new BlockDef("List Vector", 461, ScriptBlockType.Pasive, PrefabType.Script, new int3(2, 1, 2), TerminalBuilder.Create().Add(SignalType.Vec3Ptr, TerminalType.Out, "Element").Add(SignalType.Float, TerminalType.In, "Index").Add(SignalType.Vec3Ptr, TerminalType.In, "Variable"));
 
         /// <summary>
         /// The List Rotation block.
