@@ -214,6 +214,12 @@ public readonly struct Voxels : ICloneable
     #region Write
 
     /// <summary>
+    /// Makes all voxels empty.
+    /// </summary>
+    public void Clear()
+        => Data.Clear();
+
+    /// <summary>
     /// Sets the face at the specified position and face index.
     /// </summary>
     /// <param name="position">Position of the voxel to set.</param>
