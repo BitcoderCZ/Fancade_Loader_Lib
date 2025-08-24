@@ -89,7 +89,10 @@ public readonly struct PrefabTerminalInfo
                     }
                 }
 
-                infoBuilder.Add(new TerminalInfo((byte3)pos, type, dir, isInput));
+                infoBuilder.Add(new TerminalInfo((byte3)pos, type, dir, isInput)
+                {
+                    Name = setting.Value as string,
+                });
             }
         }
 

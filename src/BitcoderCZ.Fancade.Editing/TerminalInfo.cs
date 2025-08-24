@@ -35,6 +35,12 @@ public readonly struct TerminalInfo : IEquatable<TerminalInfo>
     public readonly SignalType Type { get; }
 
     /// <summary>
+    /// Gets the name of the terminal.
+    /// </summary>
+    /// <value>Name of the terminal.</value>
+    public readonly string? Name { get; init; }
+
+    /// <summary>
     /// Gets the direction of the terminal.
     /// </summary>
     /// <value>Direction of the terminal.</value>
@@ -51,14 +57,14 @@ public readonly struct TerminalInfo : IEquatable<TerminalInfo>
     /// <param name="right">The second <see cref="TerminalInfo"/> to compare.</param>
     /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator ==(TerminalInfo left, TerminalInfo right)
-        => left.Position == right.Position && left.Type == right.Type && left.Direction == right.Direction;
+        => left.Position == right.Position && left.Type == right.Type && left.Name == right.Name && left.Direction == right.Direction && left.IsInput == right.IsInput;
 
     /// <summary>Returns a value that indicates whether the 2 <see cref="TerminalInfo"/>s are not equal.</summary>
     /// <param name="left">The first <see cref="TerminalInfo"/> to compare.</param>
     /// <param name="right">The second <see cref="TerminalInfo"/> to compare.</param>
     /// <returns><see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> are not equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator !=(TerminalInfo left, TerminalInfo right)
-        => left.Position != right.Position || left.Type != right.Type || left.Direction != right.Direction;
+        => !(left == right);
 
     /// <inheritdoc/>
     public bool Equals(TerminalInfo other)
