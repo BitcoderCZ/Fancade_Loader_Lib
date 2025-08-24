@@ -11,7 +11,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade.Editing</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>4.0.0-develop.4</Version>
+    <Version>4.0.0-develop.5</Version>
     <Description>Additional stuff for easier editing of fancade games.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
