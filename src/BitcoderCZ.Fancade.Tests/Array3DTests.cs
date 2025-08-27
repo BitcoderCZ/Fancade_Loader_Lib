@@ -7,7 +7,7 @@ namespace BitcoderCZ.Fancade.Tests;
 public class Array3DTests
 {
     [Test]
-    [MethodDataSource("GetInvalidSizes")]
+    [MethodDataSource(nameof(GetInvalidSizes))]
     public async Task Constructor_Size_InvalidSize_Throws(int3 size)
     {
         await Assert.That(() => new Array3D(size)).Throws<ArgumentOutOfRangeException>();
@@ -272,15 +272,15 @@ public class Array3DTests
     #region Data Sources
     public static IEnumerable<int3> GetInvalidSizes()
     {
-        for (int x = -1; x <= 1; x++)
+        for (int x = -1; x <= 2; x++)
         {
-            for (int y = -1; y <= 1; y++)
+            for (int y = -1; y <= 2; y++)
             {
-                for (int z = -1; z <= 1; z++)
+                for (int z = -1; z <= 2; z++)
                 {
                     int3 size = new int3(x, y, z);
 
-                    if (size != int3.Zero && size != int3.One)
+                    if (size.LengthSquared > 0 && (size.X == 0 || size.Y == 0 || size.Z == 0))
                     {
                         yield return size;
                     }

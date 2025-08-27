@@ -5,7 +5,6 @@
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
@@ -233,7 +232,7 @@ public struct PrefabSetting : IEquatable<PrefabSetting>
     /// <typeparam name="T">The type to get the value as.</typeparam>
     /// <returns><see cref="Value"/> as <typeparamref name="T"/>.</returns>
     /// <exception cref="InvalidOperationException">Thrown when <see cref="Value"/> is a string.</exception>
-    public T GetValue<T>() 
+    public T GetValue<T>()
         where T : unmanaged
     {
         if (Value is string)

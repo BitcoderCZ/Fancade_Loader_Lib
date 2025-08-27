@@ -28,7 +28,7 @@ public class Array3D<T> : IEnumerable<T>
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
-        else if ((size.X == 1 || size.Y == 1 || size.Z == 1) && (size.X == 0 || size.Y == 0 || size.Z == 0))
+        else if ((size.X > 0 || size.Y > 0 || size.Z > 0) && (size.X == 0 || size.Y == 0 || size.Z == 0))
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
@@ -50,7 +50,7 @@ public class Array3D<T> : IEnumerable<T>
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
-        else if ((size.X == 1 || size.Y == 1 || size.Z == 1) && (size.X == 0 || size.Y == 0 || size.Z == 0))
+        else if ((size.X > 0 || size.Y > 0 || size.Z > 0) && (size.X == 0 || size.Y == 0 || size.Z == 0))
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
@@ -79,7 +79,7 @@ public class Array3D<T> : IEnumerable<T>
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
-        else if ((size.X == 1 || size.Y == 1 || size.Z == 1) && (size.X == 0 || size.Y == 0 || size.Z == 0))
+        else if ((size.X > 0 || size.Y > 0 || size.Z > 0) && (size.X == 0 || size.Y == 0 || size.Z == 0))
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
@@ -276,7 +276,7 @@ public class Array3D<T> : IEnumerable<T>
         {
             return; // same length
         }
-        else if ((newSize.X == 1 || newSize.Y == 1 || newSize.Z == 1) && (newSize.X == 0 || newSize.Y == 0 || newSize.Z == 0))
+        else if ((newSize.X > 0 || newSize.Y > 0 || newSize.Z > 0) && (newSize.X == 0 || newSize.Y == 0 || newSize.Z == 0))
         {
             ThrowArgumentOutOfRangeException(nameof(newSize));
         }
