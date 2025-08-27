@@ -211,6 +211,22 @@ public class Array3D<T> : IEnumerable<T>
     }
 
     /// <summary>
+    /// Gets reference to the item at the specified position.
+    /// </summary>
+    /// <param name="pos">Position of the item.</param>
+    /// <returns>Reference to the item at the specified position.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref T GetRef(int3 pos)
+    {
+        if (!InBounds(pos))
+        {
+            ThrowArgumentOutOfRangeException(nameof(pos));
+        }
+
+        return ref _array[Index(pos)];
+    }
+
+    /// <summary>
     /// Gets the item at the specified position without bounds checking.
     /// </summary>
     /// <param name="pos">Position of the item.</param>
@@ -218,6 +234,15 @@ public class Array3D<T> : IEnumerable<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetUnchecked(int3 pos)
         => _array[Index(pos)];
+
+    /// <summary>
+    /// Gets reference to the item at the specified position without bounds checking.
+    /// </summary>
+    /// <param name="pos">Position of the item.</param>
+    /// <returns>Reference to the item at the specified position.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref T GetRefUnchecked(int3 pos)
+        => ref _array[Index(pos)];
 
     /// <summary>
     /// Sets the item at the specified position.
