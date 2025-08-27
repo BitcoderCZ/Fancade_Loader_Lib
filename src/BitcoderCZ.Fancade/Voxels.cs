@@ -64,7 +64,7 @@ public readonly struct Voxels : ICloneable
     /// Gets a value indicating whether all voxels in the <see cref="Voxels"/> instance are empty.
     /// </summary>
     /// <value><see langword="true"/> if <see cref="IsEmpty"/> is <see langword="true"/> or all of the voxels are empty; otherwise, <see langword="false"/>.</value>
-    public bool AreVoxelsEmpty
+    public bool AllVoxelsEmpty
     {
         get
         {

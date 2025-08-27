@@ -104,8 +104,8 @@ public class PrefabSegment : ICloneable
     /// <summary>
     /// Gets a value indicating whether the <see cref="PrefabSegment"/> is empty.
     /// </summary>
-    /// <value><see cref="Fancade.Voxels.AreVoxelsEmpty"/>.</value>
-    public bool IsEmpty => Voxels.AreVoxelsEmpty;
+    /// <value><see cref="Fancade.Voxels.AllVoxelsEmpty"/>.</value>
+    public bool IsEmpty => Voxels.AllVoxelsEmpty;
 
     /// <summary>
     /// Converts a 3D index into a 1D index, used to índex into <see cref="Voxels"/>.
