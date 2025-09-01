@@ -39,7 +39,21 @@ public sealed partial class FcAST
                         prefab,
                         prefab.Id < RawGame.CurrentNumbStockPrefabs || (prefab.Type == PrefabType.Level && prefab.Id != MainId));
 
-                prefabInfos.Add(prefab.Id, new(PrefabTerminalInfo.Create(prefab), ctx));
+#pragma warning disable SA1116 // Split parameters should start on line after declaration
+                prefabInfos.Add(prefab.Id, new(PrefabTerminalInfo.Create(prefab, id =>
+#pragma warning disable SA1117 // Parameters should be on same line or separate lines
+                {
+                    if (id < RawGame.CurrentNumbStockPrefabs)
+                    {
+                        return StockPrefabs.TryGetSegments(id, out var segment) && StockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+                    }
+                    else
+                    {
+                        return prefabs.TryGetSegments(id, out var segment) && prefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+                    }
+                }), ctx));
+#pragma warning restore SA1117 // Parameters should be on same line or separate lines
+#pragma warning restore SA1116 // Split parameters should start on line after declaration
 
                 var blocks = prefab.Blocks;
                 for (int z = blocks.Size.Z - 1; z >= 0; z--)

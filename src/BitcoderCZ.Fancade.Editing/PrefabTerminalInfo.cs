@@ -205,6 +205,26 @@ public readonly struct PrefabTerminalInfo
         return terminalInfos.ToFrozenDictionary();
     }
 
+    /// <summary>
+    /// Creates a <see cref="FrozenDictionary{TKey, TValue}"/> of prefab id to <see cref="PrefabTerminalInfo"/> for <see cref="IEnumerable{T}"/> of <see cref="Prefab"/>s.
+    /// </summary>
+    /// <param name="prefabs">The <see cref="Prefab"/>s to create the <see cref="FrozenDictionary{TKey, TValue}"/> from.</param>
+    /// <param name="getPrefab">Gets a <see cref="Prefab"/>, from a segment id.</param>
+    /// <returns>The <see cref="FrozenDictionary{TKey, TValue}"/> created from <paramref name="prefabs"/>.</returns>
+    public static FrozenDictionary<ushort, PrefabTerminalInfo> Create(IEnumerable<Prefab> prefabs, Func<ushort, Prefab?> getPrefab)
+    {
+        Dictionary<ushort, PrefabTerminalInfo> terminalInfos = prefabs.TryGetNonEnumeratedCount(out int count)
+            ? new(count)
+            : new();
+
+        foreach (var prefab in prefabs)
+        {
+            terminalInfos.Add(prefab.Id, Create(prefab, getPrefab));
+        }
+
+        return terminalInfos.ToFrozenDictionary();
+    }
+
     private static SignalType ResolveBlockTerminalType(Prefab prefab, byte3 terminalPos, Func<ushort, Prefab?> getPrefab, int depth = 0)
     {
         if (depth > 6)

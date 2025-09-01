@@ -3,6 +3,7 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Partial;
+using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
 using System.Diagnostics;
@@ -103,7 +104,17 @@ public static class PrefabListUtils
     {
         var stockPrefabs = StockBlocks.PrefabList;
 
-        terminalInfos ??= PrefabTerminalInfo.Create(stockPrefabs.Concat(list));
+        terminalInfos ??= PrefabTerminalInfo.Create(stockPrefabs.Concat(list), id =>
+        {
+            if (id < RawGame.CurrentNumbStockPrefabs)
+            {
+                return stockPrefabs.TryGetSegments(id, out var segment) && stockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+            }
+            else
+            {
+                return list.TryGetSegments(id, out var segment) && list.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+            }
+        });
 
         HashSet<(ushort3, byte3)> connectionsFrom = [];
         HashSet<(ushort3, byte3)> connectionsTo = [];
