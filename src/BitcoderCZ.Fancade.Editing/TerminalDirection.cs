@@ -42,13 +42,13 @@ public static class TerminalDirectionUtils
     /// <param name="direction">The <see cref="TerminalDirection"/> to get the offset for.</param>
     /// <returns>The offset for <paramref name="direction"/>.</returns>
     /// <exception cref="InvalidEnumArgumentException">Thrown whem <paramref name="direction"/> is not a valid <see cref="TerminalDirection"/>.</exception>
-    public static ushort3 GetOffset(this TerminalDirection direction)
+    public static int3 GetOffset(this TerminalDirection direction)
         => direction switch
         {
-            TerminalDirection.PositiveX => new ushort3(1, 0, 0),
-            TerminalDirection.PositiveZ => new ushort3(0, 0, 1),
-            TerminalDirection.NegativeX => new ushort3(-1, 0, 0),
-            TerminalDirection.NegativeZ => new ushort3(0, 0, -1),
+            TerminalDirection.PositiveX => new int3(1, 0, 0),
+            TerminalDirection.PositiveZ => new int3(0, 0, 1),
+            TerminalDirection.NegativeX => new int3(-1, 0, 0),
+            TerminalDirection.NegativeZ => new int3(0, 0, -1),
             _ => throw new InvalidEnumArgumentException($"{nameof(direction)}", (int)direction, typeof(TerminalDirection)),
         };
 

@@ -100,7 +100,7 @@ public static class PrefabListUtils
     /// </summary>
     /// <param name="list">The list to operate on.</param>
     /// <param name="terminalInfos"><see cref="PrefabTerminalInfo"/>s for <paramref name="list"/> <b>AND</b> <see cref="StockBlocks.PrefabList"/>.</param>
-    public static void AddImplicitConnections(this PrefabList list, FrozenDictionary<ushort, PrefabTerminalInfo>? terminalInfos = null)
+    public static void AddImplicitConnections(this PrefabList list, FrozenDictionary<ushort, PrefabTerminalInfo>? terminalInfos = null) // TODO: add tests
     {
         var stockPrefabs = StockBlocks.PrefabList;
 
@@ -108,11 +108,11 @@ public static class PrefabListUtils
         {
             if (id < RawGame.CurrentNumbStockPrefabs)
             {
-                return stockPrefabs.TryGetSegments(id, out var segment) && stockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+                return stockPrefabs.TryGetSegment(id, out var segment) && stockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
             }
             else
             {
-                return list.TryGetSegments(id, out var segment) && list.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+                return list.TryGetSegment(id, out var segment) && list.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
             }
         });
 
@@ -179,9 +179,10 @@ public static class PrefabListUtils
             connectionsTo.Clear();
         }
 
-        bool TryGetImplicitlyConnectedTerminalPos(ushort3 pos, TerminalInfo info, BlockData blocks, out ushort3 otherBlockPos, out byte3 otherTerminalPos)
+        bool TryGetImplicitlyConnectedTerminalPos(ushort3 pos, TerminalInfo terminal, BlockData blocks, out ushort3 otherBlockPos, out byte3 otherTerminalPos)
         {
-            ushort3 otherPos = pos + (info.Position / 8) + info.Direction.GetOffset();
+            var otherPosVoxel = (pos * Voxels.Size) + terminal.Position + (terminal.Direction.GetOffset() * 2);
+            var otherPos = VoxelToBlock(otherPosVoxel);
 
             ushort otherId = blocks.GetBlockOrDefault(otherPos);
             if (otherId == 0)
@@ -191,23 +192,24 @@ public static class PrefabListUtils
                 return false;
             }
 
-            if (stockPrefabs.TryGetSegments(otherId, out var segment) || list.TryGetSegments(otherId, out segment))
+            if (stockPrefabs.TryGetSegment(otherId, out var segment) || list.TryGetSegment(otherId, out segment))
             {
-                otherBlockPos = (ushort3)(otherPos - segment.PosInPrefab);
-                otherTerminalPos = info.Direction switch
+                var otherBlockPosLocal = otherPos - segment.PosInPrefab;
+                if (otherBlockPosLocal.X < 0 || otherBlockPosLocal.Y < 0 || otherBlockPosLocal.Z < 0)
                 {
-                    TerminalDirection.PositiveX => new byte3(0, info.Position.Y, (segment.PosInPrefab.Z * 8) + (info.Position.Z % 8)),
-                    TerminalDirection.PositiveZ => new byte3((segment.PosInPrefab.X * 8) + (info.Position.X % 8), info.Position.Y, 0),
-                    TerminalDirection.NegativeX => new byte3(((segment.PosInPrefab.X + 1) * 8) - 2, info.Position.Y, (segment.PosInPrefab.Z * 8) + (info.Position.Z % 8)),
-                    TerminalDirection.NegativeZ => new byte3((segment.PosInPrefab.X * 8) + (info.Position.X % 8), info.Position.Y, ((segment.PosInPrefab.Z + 1) * 8) - 2),
-                    _ => throw new UnreachableException(),
-                };
+                    otherBlockPos = default;
+                    otherTerminalPos = default;
+                    return false;
+                }
 
-                var otherInfos = terminalInfos[segment.PrefabId];
+                var otherTerminalPosLocal = otherPosVoxel - (otherBlockPosLocal * 8);
 
-                byte3 otherTerminalPosLocal = otherTerminalPos;
-                if (otherInfos.Terminals.Any(item => item.Position == otherTerminalPosLocal && item.Type == info.Type))
+                var otherTerminals = terminalInfos[segment.PrefabId];
+
+                if (otherTerminals.Terminals.Any(item => item.Position == otherTerminalPosLocal && item.IsInput != terminal.IsInput && SignalTypeUtils.CanConnect(terminal.Type, item.Type, terminal.IsInput)))
                 {
+                    otherBlockPos = (ushort3)otherBlockPosLocal;
+                    otherTerminalPos = (byte3)otherTerminalPosLocal;
                     return true;
                 }
             }
@@ -215,6 +217,11 @@ public static class PrefabListUtils
             otherBlockPos = default;
             otherTerminalPos = default;
             return false;
+
+            static int3 VoxelToBlock(int3 voxel)
+            {
+                return new int3(voxel.X >> 3, voxel.Y >> 3, voxel.Z >> 3);
+            }
         }
     }
 }

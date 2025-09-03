@@ -107,7 +107,7 @@ public readonly struct PrefabTerminalInfo
     /// <param name="prefabList">A <see cref="PrefabList"/> used to resolve a terminal's type.</param>
     /// <returns>The <see cref="PrefabTerminalInfo"/> created from <paramref name="prefab"/>.</returns>
     public static PrefabTerminalInfo Create(Prefab prefab, PrefabList prefabList)
-        => Create(prefab, id => prefabList.TryGetSegments(id, out var segment) && prefabList.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null);
+        => Create(prefab, id => prefabList.TryGetSegment(id, out var segment) && prefabList.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrefabTerminalInfo"/> struct from a <see cref="Prefab"/>.

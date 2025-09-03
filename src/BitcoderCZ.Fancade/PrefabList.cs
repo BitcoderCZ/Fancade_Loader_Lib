@@ -243,7 +243,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
     /// <param name="id">Id of the segment to get.</param>
     /// <param name="value">The segment with the specified id.</param>
     /// <returns><see langword="true"/> if the <see cref="PrefabList"/> contains the specified segment; otherwise <see langword="false"/>.</returns>
-    public bool TryGetSegments(ushort id, [MaybeNullWhen(false)] out PrefabSegment value)
+    public bool TryGetSegment(ushort id, [MaybeNullWhen(false)] out PrefabSegment value)
     {
         id -= IdOffset;
 

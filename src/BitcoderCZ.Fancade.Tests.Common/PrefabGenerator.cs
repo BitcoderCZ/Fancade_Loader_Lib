@@ -14,6 +14,9 @@ public static class PrefabGenerator
     public static Prefab CreatePrefab(ushort id, int3[] positions, string? name = null, bool initVoxels = false)
         => CreatePrefab(id, CreateSegments(id, positions, initVoxels), name);
 
+    public static Prefab CreatePrefab(ushort id, int3 size, string? name = null, bool initVoxels = false)
+        => CreatePrefab(id, CreateSegments(id, size, initVoxels), name);
+
     public static IEnumerable<PrefabSegment> CreateSegments(ushort id, int count, bool initVoxels = false)
     {
         Debug.Assert(count <= 4 * 4 * 4);
@@ -38,6 +41,24 @@ public static class PrefabGenerator
         {
             int3 pos = positions[i];
             yield return new PrefabSegment(id, pos, initVoxels ? new Voxels() : Voxels.Empty);
+        }
+    }
+
+    public static IEnumerable<PrefabSegment> CreateSegments(ushort id, int3 size, bool initVoxels = false)
+    {
+        Debug.Assert(size.X is > 0 and < 4);
+        Debug.Assert(size.Y is > 0 and < 4);
+        Debug.Assert(size.Z is > 0 and < 4);
+
+        for (int z = 0; z < size.Z; z++)
+        {
+            for (int y = 0; y < size.Y; y++)
+            {
+                for (int x = 0; x < size.X; x++)
+                {
+                    yield return new PrefabSegment(id, new int3(x, y, z), initVoxels ? new Voxels() : Voxels.Empty);
+                }
+            }
         }
     }
 }

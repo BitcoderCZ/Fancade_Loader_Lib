@@ -45,11 +45,11 @@ public sealed partial class FcAST
                 {
                     if (id < RawGame.CurrentNumbStockPrefabs)
                     {
-                        return StockPrefabs.TryGetSegments(id, out var segment) && StockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+                        return StockPrefabs.TryGetSegment(id, out var segment) && StockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
                     }
                     else
                     {
-                        return prefabs.TryGetSegments(id, out var segment) && prefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+                        return prefabs.TryGetSegment(id, out var segment) && prefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
                     }
                 }), ctx));
 #pragma warning restore SA1117 // Parameters should be on same line or separate lines

@@ -26,13 +26,13 @@ public readonly struct TerminalInfo : IEquatable<TerminalInfo>
     /// Gets the position of the terminal.
     /// </summary>
     /// <value>Position of the terminal.</value>
-    public readonly byte3 Position { get; }
+    public readonly byte3 Position { get; init; }
 
     /// <summary>
     /// Gets the type of the terminal.
     /// </summary>
     /// <value>Type of the terminal.</value>
-    public readonly SignalType Type { get; }
+    public readonly SignalType Type { get; init; }
 
     /// <summary>
     /// Gets the name of the terminal.
@@ -44,13 +44,13 @@ public readonly struct TerminalInfo : IEquatable<TerminalInfo>
     /// Gets the direction of the terminal.
     /// </summary>
     /// <value>Direction of the terminal.</value>
-    public readonly TerminalDirection Direction { get; }
+    public readonly TerminalDirection Direction { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether the terminal is input.
     /// </summary>
     /// <value><see langword="true"/> if the terminal is input; <see langword="false"/> if the terminal is output.</value>
-    public readonly bool IsInput { get; }
+    public readonly bool IsInput { get; init; }
 
     /// <summary>Returns a value that indicates whether the 2 <see cref="TerminalInfo"/>s are equal.</summary>
     /// <param name="left">The first <see cref="TerminalInfo"/> to compare.</param>

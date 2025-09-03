@@ -1,4 +1,5 @@
-﻿using System.Collections.Frozen;
+﻿using BitcoderCZ.Maths.Vectors;
+using System.Collections.Frozen;
 using System.Numerics;
 
 namespace BitcoderCZ.Fancade;
@@ -88,15 +89,21 @@ public static class SignalTypeUtils
 {
     private static readonly FrozenDictionary<Type, SignalType> TypeToSignalType = new Dictionary<Type, SignalType>()
     {
+        [typeof(void)] = SignalType.Void,
         [typeof(float)] = SignalType.Float,
+        [typeof(float3)] = SignalType.Vec3,
         [typeof(Vector3)] = SignalType.Vec3,
         [typeof(Rotation)] = SignalType.Rot,
+        [typeof(Quaternion)] = SignalType.Rot,
         [typeof(bool)] = SignalType.Bool,
     }.ToFrozenDictionary();
 
     /// <summary>
     /// Gets the corresponding <see cref="SignalType"/> for a <see cref="Type"/>.
     /// </summary>
+    /// <remarks>
+    /// <see cref="Void"/> to <see cref="SignalType.Void"/>, <see cref="float"/> to <see cref="SignalType.Float"/>, <see cref="Vector3"/> and <see cref="float3"/> to <see cref="SignalType.Vec3"/>, <see cref="Rotation"/> and <see cref="Quaternion"/> to <see cref="SignalType.Rot"/>, <see cref="bool"/> to <see cref="SignalType.Bool"/>.
+    /// </remarks>
     /// <param name="type">The <see cref="Type"/> to get the <see cref="SignalType"/> for.</param>
     /// <returns>The <see cref="SignalType"/> corresponding to <paramref name="type"/>.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="type"/> doesn't correspond to any <see cref="SignalType"/>.</exception>
@@ -128,4 +135,35 @@ public static class SignalTypeUtils
     /// <returns><see langword="true"/> if <paramref name="signalType"/> is a pointer; otherwise, <see langword="false"/>.</returns>
     public static bool IsPointer(this SignalType signalType)
         => ((int)signalType & 1) == 1;
+
+    /// <summary>
+    /// Gets if 2 terminals of the specified types can be connected.
+    /// </summary>
+    /// <param name="a">Type of the first terminal.</param>
+    /// <param name="b">Type of the second terminal.</param>
+    /// <param name="isAInput"><see langword="true"/> if <paramref name="a"/> is an input terminal;
+    /// <see langword="false"/> if <paramref name="a"/> is an output terminal.</param>
+    /// <returns><see langword="true"/> if the terminals can be connected; otherwise, <see langword="false"/>.</returns>
+    public static bool CanConnect(SignalType a, SignalType b, bool isAInput)
+        => isAInput ? CanConnect(b, a) : CanConnect(a, b);
+
+    /// <summary>
+    /// Gets if 2 terminals of the specified types can be connected.
+    /// </summary>
+    /// <param name="from">Type of the first terminal.</param>
+    /// <param name="to">Type of the second terminal.</param>
+    /// <returns><see langword="true"/> if the terminals can be connected; otherwise, <see langword="false"/>.</returns>
+    public static bool CanConnect(SignalType from, SignalType to)
+    {
+        if (from.ToPointer() != to.ToPointer())
+        {
+            return false; // different types
+        }
+
+        // 0, 0 -> 1
+        // 0, 1 -> 0 - non pointer to pointer, disallowed
+        // 1, 0 -> 1
+        // 1, 1 -> 1
+        return from.IsPointer() || !to.IsPointer();
+    }
 }
