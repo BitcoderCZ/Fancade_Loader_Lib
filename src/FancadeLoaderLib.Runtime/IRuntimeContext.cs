@@ -9,6 +9,7 @@ public interface IRuntimeContext : IRuntimeContextBase
     long CurrentFrame { get; }
 
     // **************************************** Game ****************************************
+    // TODO: move to base
     void SetCamera(float3? position, Quaternion? rotation, float? range, bool perspective);
 
     // **************************************** Objects ****************************************
@@ -63,11 +64,15 @@ public interface IRuntimeContext : IRuntimeContextBase
     bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out float3 normal);
 
     // **************************************** Math ****************************************
+    // TODO: remove
     void SetRandomSeed(float seed);
 
+    // TODO: remove
     float GetRandomValue(float min, float max);
 
+    // TODO: move to base
     (float3 WorldNear, float3 WorldFar) ScreenToWorld(float2 screenPos);
 
+    // TODO: move to base
     float2 WorldToScreen(float3 worldPos);
 }
