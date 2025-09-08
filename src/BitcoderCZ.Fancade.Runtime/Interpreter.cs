@@ -1150,7 +1150,7 @@ public sealed class Interpreter : IAstRunner
                     }
 
                     var input2Out = GetOutput(binary.Input2, environment);
-                    var input2 = input1Out.GetValue(_variableAccessor);
+                    var input2 = input2Out.GetValue(_variableAccessor);
                     RuntimeValue value;
 
                     value = terminal.Node.PrefabId switch
