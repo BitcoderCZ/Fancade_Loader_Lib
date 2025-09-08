@@ -13,12 +13,11 @@ public sealed class JoystickStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="JoystickStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="type">Type of the joystick.</param>
-    public JoystickStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, JoystickType type)
-        : base(prefabId, position, outVoidConnections)
+    public JoystickStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, JoystickType type)
+        : base(592, position, outVoidConnections)
     {
         Type = type;
     }

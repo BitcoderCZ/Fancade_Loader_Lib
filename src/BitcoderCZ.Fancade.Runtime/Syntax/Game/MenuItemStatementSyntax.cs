@@ -13,7 +13,6 @@ public sealed class MenuItemStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="MenuItemStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="variable">The variable terminal; or <see langword="null"/>, if it is not connected.</param>
@@ -21,8 +20,8 @@ public sealed class MenuItemStatementSyntax : StatementSyntax
     /// <param name="name">Name of the item or section.</param>
     /// <param name="maxBuyCount">The maximum number of times the item can be bought.</param>
     /// <param name="priceIncrease">Determines how the price of the item increases.</param>
-    public MenuItemStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? variable, SyntaxTerminal? picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease)
-        : base(prefabId, position, outVoidConnections)
+    public MenuItemStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? variable, SyntaxTerminal? picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease)
+        : base(584, position, outVoidConnections)
     {
         Variable = variable;
         Picture = picture;

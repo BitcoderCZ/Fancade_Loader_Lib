@@ -12,12 +12,11 @@ public sealed class WinStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="WinStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="delay">Time, in frames, before the game is won.</param>
-    public WinStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, int delay)
-        : base(prefabId, position, outVoidConnections)
+    public WinStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, int delay)
+        : base(252, position, outVoidConnections)
     {
         Delay = delay;
     }

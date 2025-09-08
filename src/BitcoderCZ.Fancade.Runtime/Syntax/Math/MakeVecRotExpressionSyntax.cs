@@ -1,4 +1,5 @@
 ﻿using BitcoderCZ.Maths.Vectors;
+using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Math;
 
@@ -15,9 +16,14 @@ public sealed class MakeVecRotExpressionSyntax : SyntaxNode
     /// <param name="x">The x terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="y">The y terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="z">The z terminal; or <see langword="null"/>, if it is not connected.</param>
-    public MakeVecRotExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? x, SyntaxTerminal? y, SyntaxTerminal? z)
+    public MakeVecRotExpressionSyntax(ushort prefabId, int3 position, SyntaxTerminal? x, SyntaxTerminal? y, SyntaxTerminal? z)
         : base(prefabId, position)
     {
+        if (prefabId is not (150 or 162))
+        {
+            ThrowArgumentOutOfRangeException(nameof(prefabId), $"{nameof(prefabId)} must be 150 or 162.");
+        }
+
         X = x;
         Y = y;
         Z = z;

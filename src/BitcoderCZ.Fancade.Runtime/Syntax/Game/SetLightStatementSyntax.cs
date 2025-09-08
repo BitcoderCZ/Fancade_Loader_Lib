@@ -12,13 +12,12 @@ public sealed class SetLightStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="SetLightStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="positionTerminal">The position terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="rotationTerminal">The rotation terminal; or <see langword="null"/>, if it is not connected.</param>
-    public SetLightStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal)
-        : base(prefabId, position, outVoidConnections)
+    public SetLightStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? positionTerminal, SyntaxTerminal? rotationTerminal)
+        : base(274, position, outVoidConnections)
     {
         PositionTerminal = positionTerminal;
         RotationTerminal = rotationTerminal;

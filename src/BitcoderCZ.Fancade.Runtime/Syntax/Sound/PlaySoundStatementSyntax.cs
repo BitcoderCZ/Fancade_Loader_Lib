@@ -13,14 +13,13 @@ public sealed class PlaySoundStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="PlaySoundStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="volume">The volume terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="pitch">The pitch terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="sound">The sound to play.</param>
-    public PlaySoundStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? volume, SyntaxTerminal? pitch, FcSound sound)
-        : base(prefabId, position, outVoidConnections)
+    public PlaySoundStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? volume, SyntaxTerminal? pitch, FcSound sound)
+        : base(264, position, outVoidConnections)
     {
         Volume = volume;
         Pitch = pitch;

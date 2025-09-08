@@ -12,14 +12,13 @@ public sealed class VolumePitchStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="VolumePitchStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="channel">The channel terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="volume">The volume terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="pitch">The pitch terminal; or <see langword="null"/>, if it is not connected.</param>
-    public VolumePitchStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? channel, SyntaxTerminal? volume, SyntaxTerminal? pitch)
-        : base(prefabId, position, outVoidConnections)
+    public VolumePitchStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? channel, SyntaxTerminal? volume, SyntaxTerminal? pitch)
+        : base(391, position, outVoidConnections)
     {
         Channel = channel;
         Volume = volume;

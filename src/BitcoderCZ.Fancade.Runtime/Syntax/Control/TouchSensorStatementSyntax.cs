@@ -14,13 +14,12 @@ public sealed class TouchSensorStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="TouchSensorStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="state">State of the touch to detect.</param>
     /// <param name="fingerIndex">The finger whose touch should be detected.</param>
-    public TouchSensorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, TouchState state, int fingerIndex)
-        : base(prefabId, position, outVoidConnections)
+    public TouchSensorStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, TouchState state, int fingerIndex)
+        : base(242, position, outVoidConnections)
     {
         if (fingerIndex < 0 || fingerIndex > 2)
         {

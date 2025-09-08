@@ -6,6 +6,7 @@ using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace BitcoderCZ.Fancade.Runtime;
@@ -34,10 +35,7 @@ public sealed partial class FcAST
 
             foreach (var prefab in StockPrefabs.Concat(prefabs))
             {
-                var ctx = new ParseContext(
-                        this,
-                        prefab,
-                        prefab.Id < RawGame.CurrentNumbStockPrefabs || (prefab.Type == PrefabType.Level && prefab.Id != MainId));
+                var ctx = new ParseContext(this, prefab, isDummy: prefab.Type == PrefabType.Level && prefab.Id != MainId);
 
                 prefabInfos.Add(prefab.Id, new(PrefabTerminalInfo.Create(prefab), ctx));
 
@@ -48,7 +46,7 @@ public sealed partial class FcAST
                     {
                         for (int x = 0; x < blocks.Size.X; x++)
                         {
-                            ushort3 pos = new ushort3(x, y, z);
+                            var pos = new int3(x, y, z);
 
                             ushort id = blocks.GetBlockUnchecked(pos);
 
@@ -102,12 +100,12 @@ public sealed partial class FcAST
     {
         public readonly Prefab Prefab;
 
-        internal readonly List<(ushort3 BlockPosition, byte3 TerminalPosition)> _notConnectedVoidInputs = [];
+        internal readonly List<(int3 BlockPosition, byte3 TerminalPosition)> _notConnectedVoidInputs = [];
 
         internal readonly List<OutsideConnection> _voidInputs = [];
         internal readonly List<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> _nonVoidOutputs = [];
 
-        internal readonly Dictionary<ushort3, SyntaxNode> _nodes = [];
+        internal readonly Dictionary<int3, SyntaxNode> _nodes = [];
 
         internal readonly ImmutableArray<Variable> _variables;
 
@@ -136,7 +134,7 @@ public sealed partial class FcAST
                     {
                         for (int x = 0; x < blocks.Size.X; x++)
                         {
-                            ushort3 pos = new ushort3(x, y, z);
+                            var pos = new int3(x, y, z);
 
                             ushort id = blocks.GetBlockUnchecked(pos);
 
@@ -206,8 +204,8 @@ public sealed partial class FcAST
                     ParseAll();
                 }
 
-                MultiValueDictionary<ushort3, Connection> connectionsFrom = [];
-                MultiValueDictionary<ushort3, Connection> connectionsTo = [];
+                MultiValueDictionary<int3, Connection> connectionsFrom = [];
+                MultiValueDictionary<int3, Connection> connectionsTo = [];
 
                 foreach (var connection in Prefab.Connections)
                 {
@@ -215,7 +213,7 @@ public sealed partial class FcAST
                     connectionsTo.Add(connection.To, connection);
                 }
 
-                return _ast = new FcAST(Prefab.Id, _globalCtx.PrefabInfos[Prefab.Id].TerminalInfo, [.. _notConnectedVoidInputs], _nodes.Where(item => item.Value is StatementSyntax).Select(item => new KeyValuePair<ushort3, StatementSyntax>(item.Key, (StatementSyntax)item.Value)).ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs], connectionsFrom.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()), connectionsTo.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()));
+                return _ast = new FcAST(Prefab.Id, _globalCtx.PrefabInfos[Prefab.Id].TerminalInfo, [.. _notConnectedVoidInputs], _nodes.Where(item => item.Value is StatementSyntax).Select(item => new KeyValuePair<int3, StatementSyntax>(item.Key, (StatementSyntax)item.Value)).ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs], connectionsFrom.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()), connectionsTo.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()));
             }
         }
 
@@ -292,6 +290,12 @@ public sealed partial class FcAST
             {
                 if (_globalCtx.StockPrefabs.TryGetPrefab(id, out var stockPrefab) && stockPrefab.Settings.Count > 0)
                 {
+                    if (stockPrefab.Blocks.Size != int3.Zero)
+                    {
+                        ParseCustom(stockPrefab, out node);
+                        return true;
+                    }
+
                     node = NodeCreation.CreateNode(id, pos, this);
 
                     if (node is not null)
@@ -331,44 +335,7 @@ public sealed partial class FcAST
             {
                 if (_globalCtx.Prefabs.TryGetPrefab(id, out var prefab) && prefab.Blocks.Size != int3.Zero)
                 {
-                    var infos = _globalCtx.PrefabInfos[id].TerminalInfo;
-
-                    var connectedInputTerminals = ImmutableArray.CreateBuilder<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)>(2);
-
-                    foreach (var info in infos.InputTerminals)
-                    {
-                        if (info.Type != SignalType.Void)
-                        {
-                            connectedInputTerminals.Add((info.Position, GetConnectedTerminal(pos, info.Position)));
-                        }
-                    }
-
-                    var customStatement = new CustomStatementSyntax(id, pos, GetOutVoidConnections(pos), _globalCtx.PrefabInfos[id].ParseCtx.AST, connectedInputTerminals.DrainToImmutable());
-                    node = customStatement;
-
-                    _nodes.Add(pos, node);
-
-                    foreach (var termPos in customStatement.InputVoidTerminals)
-                    {
-                        bool foundConnection = false;
-                        foreach (var connection in GetConnectionsTo(Prefab.Connections, pos))
-                        {
-                            if (connection.ToVoxel == termPos)
-                            {
-                                foundConnection = true;
-
-                                if (connection.IsFromOutside)
-                                {
-                                    _voidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, pos, termPos));
-                                }
-                            }
-                        }
-
-                        if (!foundConnection)
-                        {
-                            _notConnectedVoidInputs.Add((pos, termPos));
-                        }
-                    }
+                    ParseCustom(prefab, out node);
 
                     return true;
                 }
@@ -376,6 +343,50 @@ public sealed partial class FcAST
 
             node = null;
             return false;
+
+            void ParseCustom(Prefab prefab, out SyntaxNode node)
+            {
+                Debug.Assert(prefab.Blocks.Size != int3.Zero, $"{nameof(prefab)} shoudn't be empty.");
+
+                var infos = _globalCtx.PrefabInfos[id].TerminalInfo;
+
+                var connectedInputTerminals = ImmutableArray.CreateBuilder<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)>(2);
+
+                foreach (var info in infos.InputTerminals)
+                {
+                    if (info.Type != SignalType.Void)
+                    {
+                        connectedInputTerminals.Add((info.Position, GetConnectedTerminal(pos, info.Position)));
+                    }
+                }
+
+                var customStatement = new CustomStatementSyntax(id, pos, GetOutVoidConnections(pos), _globalCtx.PrefabInfos[id].ParseCtx.AST, connectedInputTerminals.DrainToImmutable());
+                node = customStatement;
+
+                _nodes.Add(pos, node);
+
+                foreach (var termPos in customStatement.InputVoidTerminals)
+                {
+                    bool foundConnection = false;
+                    foreach (var connection in GetConnectionsTo(Prefab.Connections, pos))
+                    {
+                        if (connection.ToVoxel == termPos)
+                        {
+                            foundConnection = true;
+
+                            if (connection.IsFromOutside)
+                            {
+                                _voidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, pos, termPos));
+                            }
+                        }
+                    }
+
+                    if (!foundConnection)
+                    {
+                        _notConnectedVoidInputs.Add((pos, termPos));
+                    }
+                }
+            }
         }
 
         public bool TryGetOrCreateNode(ushort3 pos, [MaybeNullWhen(false)] out SyntaxNode node)
@@ -385,9 +396,11 @@ public sealed partial class FcAST
             => TryGetOrCreateNode(pos, out var node) ? node : null;
 
         public SyntaxTerminal? GetTerminal(ushort3 pos, byte3 voxelPos)
-            => TryGetOrCreateNode(pos, out var node)
-            ? new SyntaxTerminal(node, voxelPos)
-            : null;
+             => _globalCtx.PrefabInfos.TryGetValue(Prefab.Blocks.GetBlockOrDefault(pos), out var info) && !info.TerminalInfo.Terminals.Any(terminal => terminal.Position == voxelPos)
+                ? null
+                : TryGetOrCreateNode(pos, out var node)
+                ? new SyntaxTerminal(node, voxelPos)
+                : null;
 
         public SyntaxTerminal? GetConnectedTerminal(ushort3 pos, byte3 voxelPos)
         {
@@ -421,9 +434,9 @@ public sealed partial class FcAST
             return null;
         }
 
-        public bool TryGetSettingOfType(ushort3 pos, int index, SettingType type, [MaybeNullWhen(false)] out object value)
+        public bool TryGetSettingOfType(int3 pos, int index, SettingType type, [MaybeNullWhen(false)] out object value)
         {
-            if (Prefab.Settings.TryGetValue(pos, out var settings))
+            if (Prefab.Settings.TryGetValue((ushort3)pos, out var settings))
             {
                 foreach (var setting in settings)
                 {
@@ -439,7 +452,7 @@ public sealed partial class FcAST
             return false;
         }
 
-        public ImmutableArray<Connection> GetOutVoidConnections(ushort3 pos)
+        public ImmutableArray<Connection> GetOutVoidConnections(int3 pos)
         {
             var builder = ImmutableArray.CreateBuilder<Connection>(1);
 

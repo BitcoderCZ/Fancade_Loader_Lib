@@ -10,12 +10,11 @@ public sealed class RaycastExpressionSyntax : SyntaxNode
     /// <summary>
     /// Initializes a new instance of the <see cref="RaycastExpressionSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="from">The from terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="to">The to terminal; or <see langword="null"/>, if it is not connected.</param>
-    public RaycastExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? from, SyntaxTerminal? to)
-        : base(prefabId, position)
+    public RaycastExpressionSyntax(int3 position, SyntaxTerminal? from, SyntaxTerminal? to)
+        : base(228, position)
     {
         From = from;
         To = to;

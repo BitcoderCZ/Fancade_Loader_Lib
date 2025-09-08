@@ -239,7 +239,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
             _ => throw new UnreachableException(),
         };
 
-        // TODO: does this even work?
+        // TODO: does not work, find some better way to do equals rotation
         static bool Equals(Quaternion a, Vector3 bEuler)
         {
             const float DegToRad = MathF.PI / 180f;
@@ -253,7 +253,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         }
     }
 
-    private record struct Inspect(RuntimeValue Value, SignalType Type, string? VariableName, ushort PrefabId, ushort3 InspectBlockPosition);
+    private record struct Inspect(RuntimeValue Value, SignalType Type, string? VariableName, ushort PrefabId, int3 InspectBlockPosition);
 
     private sealed class InspectRuntimeContext : IRuntimeContext
     {
@@ -278,7 +278,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public void StepFrame()
             => CurrentFrame++;
 
-        public void InspectValue(RuntimeValue value, SignalType type, string? variableName, ushort prefabId, ushort3 inspectBlockPosition)
+        public void InspectValue(RuntimeValue value, SignalType type, string? variableName, ushort prefabId, int3 inspectBlockPosition)
             => _inspectQueue.Enqueue(new(value, type, variableName, prefabId, inspectBlockPosition));
 
         public FcConstraint AddConstraint(FcObject @base, FcObject part, Vector3? pivot)
@@ -292,15 +292,15 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void AngularLimits(FcConstraint constraint, Vector3? lower, Vector3? upper)
+        public void AngularLimits(FcConstraint constraint, Vector3 lower, Vector3 upper)
         {
         }
 
-        public void AngularMotor(FcConstraint constraint, Vector3? speed, Vector3? force)
+        public void AngularSpring(FcConstraint constraint, Vector3 stiffness, Vector3 damping)
         {
         }
 
-        public void AngularSpring(FcConstraint constraint, Vector3? stiffness, Vector3? damping)
+        public void AngularMotor(FcConstraint constraint, Vector3 speed, Vector3 force)
         {
         }
 
@@ -320,7 +320,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId)
             => default;
 
-        public (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object)
+        public (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, IFcEnvironment environment, int3 blockPosition)
             => default;
 
         public float GetRandomValue(float min, float max)
@@ -335,15 +335,15 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public (Vector3 Velocity, Vector3 Spin) GetVelocity(FcObject @object)
             => default;
 
-        public void LinearLimits(FcConstraint constraint, Vector3? lower, Vector3? upper)
+        public void LinearLimits(FcConstraint constraint, Vector3 lower, Vector3 upper)
         {
         }
 
-        public void LinearMotor(FcConstraint constraint, Vector3? speed, Vector3? force)
+        public void LinearMotor(FcConstraint constraint, Vector3 speed, Vector3 force)
         {
         }
 
-        public void LinearSpring(FcConstraint constraint, Vector3? stiffness, Vector3? damping)
+        public void LinearSpring(FcConstraint constraint, Vector3 stiffness, Vector3 damping)
         {
         }
 

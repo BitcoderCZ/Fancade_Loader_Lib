@@ -13,14 +13,13 @@ public sealed class SetScoreStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="SetScoreStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="score">The score terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="coins">The coins terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="ranking">The new ranking mode.</param>
-    public SetScoreStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? score, SyntaxTerminal? coins, Ranking ranking)
-        : base(prefabId, position, outVoidConnections)
+    public SetScoreStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? score, SyntaxTerminal? coins, Ranking ranking)
+        : base(260, position, outVoidConnections)
     {
         Score = score;
         Coins = coins;

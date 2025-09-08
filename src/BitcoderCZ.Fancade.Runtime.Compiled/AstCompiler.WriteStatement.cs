@@ -20,7 +20,7 @@ namespace BitcoderCZ.Fancade.Runtime.Compiled;
 
 public partial class AstCompiler
 {
-    private StatementSyntax WriteStatement(ushort3 pos, byte3 terminalPos, Environment environment, out byte3 executeNext, IndentedTextWriter writer)
+    private StatementSyntax WriteStatement(int3 pos, byte3 terminalPos, FcEnvironment environment, out byte3 executeNext, IndentedTextWriter writer)
     {
         var statement = environment.AST.Statements[pos];
 
@@ -67,7 +67,7 @@ public partial class AstCompiler
                     var setCamera = (SetCameraStatementSyntax)statement;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetCamera)}(");
-                    WriteExpressionOrNull(setCamera.PositionTerminal, SignalType.Vec3Ptr, environment, writer);
+                    WriteExpressionOrNull(setCamera.PositionTerminal, SignalType.Vec3, environment, writer);
                     writer.Write(", ");
                     WriteExpressionOrNull(setCamera.RotationTerminal, SignalType.Rot, environment, writer);
                     writer.Write(", ");
@@ -153,7 +153,7 @@ public partial class AstCompiler
                     if (createObject.Original is not null)
                     {
                         string objectVarName = GetStateStoreVarName(environment.Index, createObject.Position, "create_object_object");
-                        _stateStoreVariables.Add((objectVarName, "int", null));
+                        _stateStoreVariables.Add((objectVarName, nameof(FcObject), null));
 
                         writer.WriteInv($"{objectVarName} = _ctx.{nameof(IRuntimeContext.CreateObject)}(");
 
@@ -233,7 +233,7 @@ public partial class AstCompiler
                 break;
             case 391:
                 {
-                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
                     var volumePitch = (VolumePitchStatementSyntax)statement;
 
                     if (volumePitch.Channel is not null)
@@ -377,6 +377,7 @@ public partial class AstCompiler
                     if (addConstraint.Base is not null && addConstraint.Part is not null)
                     {
                         string constraintVarName = GetStateStoreVarName(environment.Index, addConstraint.Position, "add_constraint_constraint");
+                        _stateStoreVariables.Add((constraintVarName, nameof(FcConstraint), null));
 
                         writer.WriteInv($"{constraintVarName} = _ctx.{nameof(IRuntimeContext.AddConstraint)}(");
                         WriteExpression(addConstraint.Base, false, environment, writer);
@@ -399,9 +400,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.LinearLimits)}(");
                         WriteExpression(linearLimits.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearLimits.Lower, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearLimits.Lower, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearLimits.Upper, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearLimits.Upper, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -417,9 +418,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AngularLimits)}(");
                         WriteExpression(angularLimits.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularLimits.Lower, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularLimits.Lower, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularLimits.Upper, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularLimits.Upper, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -435,9 +436,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.LinearSpring)}(");
                         WriteExpression(linearSpring.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearSpring.Stiffness, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearSpring.Stiffness, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearSpring.Damping, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearSpring.Damping, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -453,9 +454,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AngularSpring)}(");
                         WriteExpression(angularSpring.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularSpring.Stiffness, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularSpring.Stiffness, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularSpring.Damping, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularSpring.Damping, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -471,9 +472,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.LinearMotor)}(");
                         WriteExpression(linearMotor.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearMotor.Speed, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearMotor.Speed, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(linearMotor.Force, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(linearMotor.Force, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -489,9 +490,9 @@ public partial class AstCompiler
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.AngularMotor)}(");
                         WriteExpression(angularMotor.Constraint, false, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularMotor.Speed, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularMotor.Speed, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
-                        WriteExpressionOrNull(angularMotor.Force, SignalType.Vec3, environment, writer);
+                        WriteExpressionOrDefault(angularMotor.Force, SignalType.Vec3, environment, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -585,7 +586,7 @@ public partial class AstCompiler
                 break;
             case 242:
                 {
-                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
                     var touchSensor = (TouchSensorStatementSyntax)statement;
 
                     string touchPosVarName = GetStateStoreVarName(environment.Index, touchSensor.Position, "touch_pos");
@@ -647,7 +648,7 @@ public partial class AstCompiler
                 break;
             case 401:
                 {
-                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                    Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(4), $"{nameof(terminalPos)} should be valid.");
                     var collision = (CollisionStatementSyntax)statement;
 
                     if (collision.FirstObject is not null)
@@ -655,14 +656,14 @@ public partial class AstCompiler
                         string secondObjectVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_second_object");
                         string impulseVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_impulse");
                         string normalVarName = GetStateStoreVarName(environment.Index, collision.Position, "collision_normal");
-                        _stateStoreVariables.Add((secondObjectVarName, "int", null));
+                        _stateStoreVariables.Add((secondObjectVarName, nameof(FcObject), null));
                         _stateStoreVariables.Add((impulseVarName, "float", null));
                         _stateStoreVariables.Add((normalVarName, nameof(Vector3), null));
 
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.TryGetCollision)}(");
+                        writer.WriteInv($"if (_ctx.{nameof(IRuntimeContext.TryGetCollision)}(");
                         WriteExpression(collision.FirstObject, false, environment, writer);
 
-                        using (writer.CurlyIndent($", out int secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out Vector3 normal{_localVarCounter})"))
+                        using (writer.CurlyIndent($", out {nameof(FcObject)} secondObject{_localVarCounter}, out float impulse{_localVarCounter}, out {nameof(Vector3)} normal{_localVarCounter}))"))
                         {
                             writer.WriteLineInv($"{secondObjectVarName} = secondObject{_localVarCounter};");
                             writer.WriteLineInv($"{impulseVarName} = impulse{_localVarCounter};");
@@ -741,7 +742,7 @@ public partial class AstCompiler
                     var randomSeed = (RandomSeedStatementSyntax)statement;
                     if (randomSeed.Seed is not null)
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetRandomSeed)}(");
+                        writer.Write("_rng.SetSeed(");
                         WriteExpression(randomSeed.Seed, false, environment, writer);
                         writer.WriteLine(");");
                     }
@@ -761,7 +762,7 @@ public partial class AstCompiler
                         var info = WriteExpression(inspect.Input, false, environment, writer);
 
                         writer.WriteLineInv($"""
-                            ), SignalType.{info.Type}, {(info.VariableName is null ? "null" : $"\"{info.VariableName}\"")}, {environment.AST.PrefabId}, new ushort3({pos.X}, {pos.Y}, {pos.Z}));
+                            ), SignalType.{info.Type}, {(info.VariableName is null ? "null" : $"\"{info.VariableName}\"")}, {environment.AST.PrefabId}, new {nameof(int3)}({pos.X}, {pos.Y}, {pos.Z}));
                             """);
                     }
                 }
@@ -845,7 +846,7 @@ public partial class AstCompiler
 
                     executeNext = new byte3(255, 255, 255);
 
-                    var customEnvironment = (Environment)environment.BlockData[custom.Position];
+                    var customEnvironment = (FcEnvironment)environment.BlockData[custom.Position];
 
                     foreach (var con in custom.AST.VoidInputs)
                     {

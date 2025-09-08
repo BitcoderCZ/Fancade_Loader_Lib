@@ -1,6 +1,7 @@
 ﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections.Immutable;
+using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Variables;
 
@@ -17,9 +18,14 @@ public sealed class SetPointerStatementSyntax : StatementSyntax
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="variable">The variable terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="value">The value terminal; or <see langword="null"/>, if it is not connected.</param>
-    public SetPointerStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? variable, SyntaxTerminal? value)
+    public SetPointerStatementSyntax(ushort prefabId, int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? variable, SyntaxTerminal? value)
         : base(prefabId, position, outVoidConnections)
     {
+        if (prefabId is not (58 or 62 or 66 or 70 or 74 or 78))
+        {
+            ThrowArgumentOutOfRangeException(nameof(prefabId), $"{nameof(prefabId)} must be 58 or 62 or 66 or 70 or 74 or 78.");
+        }
+
         Variable = variable;
         Value = value;
     }

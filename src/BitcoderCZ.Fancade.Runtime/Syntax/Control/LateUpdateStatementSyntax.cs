@@ -12,9 +12,9 @@ public sealed class LateUpdateStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="LateUpdateStatementSyntax"/> class.
     /// </summary>
-    /// <inheritdoc cref="StatementSyntax(ushort, ushort3, ImmutableArray{Connection})"/>
-    public LateUpdateStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
-        : base(prefabId, position, outVoidConnections)
+    /// <inheritdoc cref="StatementSyntax(ushort, int3, ImmutableArray{Connection})"/>
+    public LateUpdateStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections)
+        : base(566, position, outVoidConnections)
     {
     }
 

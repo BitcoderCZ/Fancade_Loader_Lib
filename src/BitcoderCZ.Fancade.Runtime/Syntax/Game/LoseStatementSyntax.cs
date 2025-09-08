@@ -12,12 +12,11 @@ public sealed class LoseStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="LoseStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="delay">Time, in frames, before the game is won.</param>
-    public LoseStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, int delay)
-        : base(prefabId, position, outVoidConnections)
+    public LoseStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, int delay)
+        : base(256, position, outVoidConnections)
     {
         Delay = delay;
     }

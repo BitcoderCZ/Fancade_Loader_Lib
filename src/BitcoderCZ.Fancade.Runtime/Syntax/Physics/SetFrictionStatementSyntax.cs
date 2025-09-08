@@ -12,13 +12,12 @@ public sealed class SetFrictionStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="SetFrictionStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="object">The object terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="friction">The friction terminal; or <see langword="null"/>, if it is not connected.</param>
-    public SetFrictionStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? friction)
-        : base(prefabId, position, outVoidConnections)
+    public SetFrictionStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? friction)
+        : base(332, position, outVoidConnections)
     {
         Object = @object;
         Friction = friction;

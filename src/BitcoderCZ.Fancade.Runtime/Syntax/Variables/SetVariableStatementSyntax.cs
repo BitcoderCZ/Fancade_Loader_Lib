@@ -1,6 +1,7 @@
 ﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections.Immutable;
+using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Variables;
 
@@ -17,9 +18,14 @@ public sealed class SetVariableStatementSyntax : StatementSyntax
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="variable">The variable to be set.</param>
     /// <param name="value">The value terminal; or <see langword="null"/>, if it is not connected.</param>
-    public SetVariableStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, Variable variable, SyntaxTerminal? value)
+    public SetVariableStatementSyntax(ushort prefabId, int3 position, ImmutableArray<Connection> outVoidConnections, Variable variable, SyntaxTerminal? value)
         : base(prefabId, position, outVoidConnections)
     {
+        if (prefabId is not (428 or 430 or 432 or 434 or 436 or 438))
+        {
+            ThrowArgumentOutOfRangeException(nameof(prefabId), $"{nameof(prefabId)} must be 428 or 430 or 432 or 434 or 436 or 438.");
+        }
+
         Variable = variable;
         Value = value;
     }

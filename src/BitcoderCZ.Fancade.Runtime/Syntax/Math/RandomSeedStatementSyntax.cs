@@ -12,12 +12,11 @@ public sealed class RandomSeedStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="RandomSeedStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="seed">The seed terminal; or <see langword="null"/>, if it is not connected.</param>
-    public RandomSeedStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? seed)
-        : base(prefabId, position, outVoidConnections)
+    public RandomSeedStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? seed)
+        : base(485, position, outVoidConnections)
     {
         Seed = seed;
     }

@@ -16,7 +16,7 @@ public sealed class CustomStatementSyntax : StatementSyntax
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="ast"><see cref="FcAST"/> representing the prefab.</param>
     /// <param name="connectedInputTerminals">Input connections to this node.</param>
-    public CustomStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, FcAST ast, ImmutableArray<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)> connectedInputTerminals)
+    public CustomStatementSyntax(ushort prefabId, int3 position, ImmutableArray<Connection> outVoidConnections, FcAST ast, ImmutableArray<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)> connectedInputTerminals)
         : base(prefabId, position, outVoidConnections)
     {
         AST = ast;

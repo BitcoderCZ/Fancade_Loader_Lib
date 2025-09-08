@@ -13,12 +13,11 @@ public sealed class ButtonStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="ButtonStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="type">Type of the button.</param>
-    public ButtonStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, ButtonType type)
-        : base(prefabId, position, outVoidConnections)
+    public ButtonStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, ButtonType type)
+        : base(588, position, outVoidConnections)
     {
         Type = type;
     }

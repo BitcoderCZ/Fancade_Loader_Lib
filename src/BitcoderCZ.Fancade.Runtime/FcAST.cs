@@ -25,7 +25,7 @@ public sealed partial class FcAST
     /// <param name="nonVoidOutputs">Inputs of type other than <see cref="SignalType.Void"/> of the <see cref="FcAST"/>.</param>
     /// <param name="connectionsFrom">A map of connections by the block they originate from.</param>
     /// <param name="connectionsTo">A map of connections by the block they end on.</param>
-    public FcAST(ushort prefabId, PrefabTerminalInfo terminalInfo, ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> entryPointTerminals, FrozenDictionary<ushort3, StatementSyntax> statements, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> nonVoidOutputs, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<ushort3, ImmutableArray<Connection>> connectionsTo)
+    public FcAST(ushort prefabId, PrefabTerminalInfo terminalInfo, ImmutableArray<(int3 BlockPosition, byte3 TerminalPosition)> entryPointTerminals, FrozenDictionary<int3, StatementSyntax> statements, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> nonVoidOutputs, FrozenDictionary<int3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<int3, ImmutableArray<Connection>> connectionsTo)
     {
         ThrowIfNull(statements);
         ThrowIfNull(connectionsFrom);
@@ -59,13 +59,13 @@ public sealed partial class FcAST
     /// Gets the positions of input void terminals, that are not connected.
     /// </summary>
     /// <value>Positions of input void terminals, that are not connected.</value>
-    public ImmutableArray<(ushort3 BlockPosition, byte3 TerminalPosition)> EntryPointTerminals { get; }
+    public ImmutableArray<(int3 BlockPosition, byte3 TerminalPosition)> EntryPointTerminals { get; }
 
     /// <summary>
     /// Gets a map of positions to statements.
     /// </summary>
     /// <value>Map of positions to statements.</value>
-    public FrozenDictionary<ushort3, StatementSyntax> Statements { get; }
+    public FrozenDictionary<int3, StatementSyntax> Statements { get; }
 
     /// <summary>
     /// Gets all global variables.
@@ -95,13 +95,13 @@ public sealed partial class FcAST
     /// Gets a map of connections by the block they originate from.
     /// </summary>
     /// <value>A map of connections by the block they originate from.</value>
-    public FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsFrom { get; }
+    public FrozenDictionary<int3, ImmutableArray<Connection>> ConnectionsFrom { get; }
 
     /// <summary>
     /// Gets a map of connections by the block they end on.
     /// </summary>
     /// <value>A map of connections by the block they end on.</value>
-    public FrozenDictionary<ushort3, ImmutableArray<Connection>> ConnectionsTo { get; }
+    public FrozenDictionary<int3, ImmutableArray<Connection>> ConnectionsTo { get; }
 
     /// <summary>
     /// Creates a new <see cref="FcAST"/> instance from a <see cref="PrefabList"/>.

@@ -12,13 +12,12 @@ public sealed class SetMassStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="SetMassStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="object">The object terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="mass">The mass terminal; or <see langword="null"/>, if it is not connected.</param>
-    public SetMassStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? mass)
-        : base(prefabId, position, outVoidConnections)
+    public SetMassStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? mass)
+        : base(328, position, outVoidConnections)
     {
         Object = @object;
         Mass = mass;

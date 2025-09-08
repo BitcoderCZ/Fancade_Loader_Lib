@@ -7,7 +7,7 @@ namespace BitcoderCZ.Fancade.Runtime.Syntax;
 /// </summary>
 public abstract class SyntaxNode
 {
-    private protected SyntaxNode(ushort prefabId, ushort3 position)
+    private protected SyntaxNode(ushort prefabId, int3 position)
     {
         PrefabId = prefabId;
         Position = position;
@@ -23,5 +23,5 @@ public abstract class SyntaxNode
     /// Gets the position of the prefab this node represents.
     /// </summary>
     /// <value>Position of the prefab this node represents.</value>
-    public ushort3 Position { get; }
+    public int3 Position { get; }
 }

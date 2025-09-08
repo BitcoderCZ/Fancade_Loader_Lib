@@ -12,15 +12,14 @@ public sealed class AddForceStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="AddForceStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="object">The object terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="force">The force terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="applyAt">The applyAt terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="torque">The torque terminal; or <see langword="null"/>, if it is not connected.</param>
-    public AddForceStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? force, SyntaxTerminal? applyAt, SyntaxTerminal? torque)
-        : base(prefabId, position, outVoidConnections)
+    public AddForceStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? force, SyntaxTerminal? applyAt, SyntaxTerminal? torque)
+        : base(298, position, outVoidConnections)
     {
         Object = @object;
         Force = force;
