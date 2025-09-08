@@ -1,5 +1,6 @@
 ﻿using BitcoderCZ.Fancade.Editing.Scripting;
 using BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
+using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
@@ -27,6 +28,23 @@ public partial class ExecutionTests
 
     //    return TestExpression(Inverse(CodeWriter.Expressions.Rotation(input.GetEuler())), Quaternion.Inverse(input).GetEuler().ToFloat3());
     //}
+
+    [Test]
+    [Arguments(1, 2)]
+    [Arguments(-1, -2)]
+    public Task Add_Number_ProducesCorrectOutput(float value1, float value2)
+        => TestExpression(AddNumbers(Literal(value1), Literal(value2)), value1  + value2);
+
+    [Test]
+    [Arguments(1, 2, 3, 4, 5, 6)]
+    [Arguments(-1, -2, -3, -4, -5, -6)]
+    public async Task Add_Vector_ProducesCorrectOutput(float value1X, float value1Y, float value1Z, float value2X, float value2Y, float value2Z)
+    {
+        var value1 = new Vector3(value1X, value1Y, value1Z);
+        var value2 = new Vector3(value2X, value2Y, value2Z);
+
+        await TestExpression(AddVectors(Literal(value1), Literal(value2)), value1 + value2);
+    }
 
     private static async Task TestExpression(CodeWriter.IExpression expression, object expected)
     {
