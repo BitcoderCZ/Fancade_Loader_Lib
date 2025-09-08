@@ -12,12 +12,11 @@ public sealed class CreateObjectStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="CreateObjectStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="original">The original terminal; or <see langword="null"/>, if it is not connected.</param>
-    public CreateObjectStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? original)
-        : base(prefabId, position, outVoidConnections)
+    public CreateObjectStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? original)
+        : base(316, position, outVoidConnections)
     {
         Original = original;
     }

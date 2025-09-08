@@ -21,14 +21,14 @@ public class Array3D<T> : IEnumerable<T>
     /// <summary>
     /// Initializes a new instance of the <see cref="Array3D{T}"/> class.
     /// </summary>
-    /// <param name="size">Size of the array.</param>
+    /// <param name="size">Size of the array, must be either <see cref="int3.Zero"/> or all positive.</param>
     public Array3D(int3 size)
     {
         if (size.X < 0 || size.Y < 0 || size.Z < 0)
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
-        else if ((size.X == 1 || size.Y == 1 || size.Z == 1) && (size.X == 0 || size.Y == 0 || size.Z == 0))
+        else if ((size.X > 0 || size.Y > 0 || size.Z > 0) && (size.X == 0 || size.Y == 0 || size.Z == 0))
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
@@ -42,15 +42,15 @@ public class Array3D<T> : IEnumerable<T>
     /// <summary>
     /// Initializes a new instance of the <see cref="Array3D{T}"/> class.
     /// </summary>
-    /// <param name="collection">The collection to contruct the array from.</param>
-    /// <param name="size">Size of the array.</param>
+    /// <param name="collection">The collection to construct the array from.</param>
+    /// <param name="size">Size of the array, must match size of <paramref name="collection"/>.</param>
     public Array3D(IEnumerable<T> collection, int3 size)
     {
         if (size.X < 0 || size.Y < 0 || size.Z < 0)
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
-        else if ((size.X == 1 || size.Y == 1 || size.Z == 1) && (size.X == 0 || size.Y == 0 || size.Z == 0))
+        else if ((size.X > 0 || size.Y > 0 || size.Z > 0) && (size.X == 0 || size.Y == 0 || size.Z == 0))
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
@@ -69,8 +69,8 @@ public class Array3D<T> : IEnumerable<T>
     /// <summary>
     /// Initializes a new instance of the <see cref="Array3D{T}"/> class.
     /// </summary>
-    /// <param name="array">The array to contruct this <see cref="Array3D{T}"/> from.</param>
-    /// <param name="size">Size of the array.</param>
+    /// <param name="array">The array to construct this <see cref="Array3D{T}"/> from.</param>
+    /// <param name="size">Size of the array, must match the length of <paramref name="array"/>.</param>
     public Array3D(T[] array, int3 size)
     {
         ThrowIfNull(array, nameof(array));
@@ -79,7 +79,7 @@ public class Array3D<T> : IEnumerable<T>
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
-        else if ((size.X == 1 || size.Y == 1 || size.Z == 1) && (size.X == 0 || size.Y == 0 || size.Z == 0))
+        else if ((size.X > 0 || size.Y > 0 || size.Z > 0) && (size.X == 0 || size.Y == 0 || size.Z == 0))
         {
             ThrowArgumentOutOfRangeException(nameof(size));
         }
@@ -272,7 +272,7 @@ public class Array3D<T> : IEnumerable<T>
     /// <summary>
     /// Changes the size of this array.
     /// </summary>
-    /// <param name="newSize">The new size.</param>
+    /// <param name="newSize">The new size, must be either <see cref="int3.Zero"/> or all positive.</param>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="newSize"/> is negative.</exception>
     public void Resize(int3 newSize)
     {
@@ -301,7 +301,7 @@ public class Array3D<T> : IEnumerable<T>
         {
             return; // same length
         }
-        else if ((newSize.X == 1 || newSize.Y == 1 || newSize.Z == 1) && (newSize.X == 0 || newSize.Y == 0 || newSize.Z == 0))
+        else if ((newSize.X > 0 || newSize.Y > 0 || newSize.Z > 0) && (newSize.X == 0 || newSize.Y == 0 || newSize.Z == 0))
         {
             ThrowArgumentOutOfRangeException(nameof(newSize));
         }

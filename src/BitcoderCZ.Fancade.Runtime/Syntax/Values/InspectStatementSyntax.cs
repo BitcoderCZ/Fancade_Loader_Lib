@@ -1,6 +1,7 @@
 ﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections.Immutable;
+using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Values;
 
@@ -17,9 +18,14 @@ public sealed class InspectStatementSyntax : StatementSyntax
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="type">Type of the inspect block.</param>
     /// <param name="input">The input terminal; or <see langword="null"/>, if it is not connected.</param>
-    public InspectStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SignalType type, SyntaxTerminal? input)
+    public InspectStatementSyntax(ushort prefabId, int3 position, ImmutableArray<Connection> outVoidConnections, SignalType type, SyntaxTerminal? input)
         : base(prefabId, position, outVoidConnections)
     {
+        if (prefabId is not (16 or 20 or 24 or 28 or 32))
+        {
+            ThrowArgumentOutOfRangeException(nameof(prefabId), $"{nameof(prefabId)} must be 16 or 20 or 24 or 28 or 32.");
+        }
+
         Type = type;
         Input = input;
     }

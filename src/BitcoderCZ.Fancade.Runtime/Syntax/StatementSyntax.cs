@@ -14,7 +14,7 @@ public abstract class StatementSyntax : SyntaxNode
     /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
-    private protected StatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
+    private protected StatementSyntax(ushort prefabId, int3 position, ImmutableArray<Connection> outVoidConnections)
         : base(prefabId, position)
     {
         OutVoidConnections = outVoidConnections;

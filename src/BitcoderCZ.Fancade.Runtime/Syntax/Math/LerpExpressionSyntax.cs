@@ -10,13 +10,12 @@ public sealed class LerpExpressionSyntax : SyntaxNode
     /// <summary>
     /// Initializes a new instance of the <see cref="LerpExpressionSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="from">The from terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="to">The to terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="amount">The amount terminal; or <see langword="null"/>, if it is not connected.</param>
-    public LerpExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? from, SyntaxTerminal? to, SyntaxTerminal? amount)
-        : base(prefabId, position)
+    public LerpExpressionSyntax(int3 position, SyntaxTerminal? from, SyntaxTerminal? to, SyntaxTerminal? amount)
+        : base(194, position)
     {
         From = from;
         To = to;

@@ -38,13 +38,15 @@ public sealed class Interpreter : IAstRunner
     private static readonly byte3 PosOut24 = TerminalDef.GetOutPosition(2, 2, 4);
     private static readonly byte3 PosOut34 = TerminalDef.GetOutPosition(3, 2, 4);
 
-    private readonly Environment[] _environments;
+    private readonly FcEnvironment[] _environments;
     private readonly IRuntimeContext _ctx;
 
     private readonly InterpreterVariableAccessor _variableAccessor;
 
     private readonly TimeSpan _timeout;
     private readonly Stopwatch? _timeoutWatch;
+
+    private readonly FcRandom _rng = new FcRandom();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Interpreter"/> class, with timeout of 3 seconds and maximum depth 4.
@@ -84,10 +86,10 @@ public sealed class Interpreter : IAstRunner
 
         _ctx = ctx;
 
-        List<Environment> environments = [];
+        List<FcEnvironment> environments = [];
         List<ImmutableArray<Variable>> variables = [];
 
-        var mainEnvironment = new Environment(ast, 0, -1, ushort3.Zero);
+        var mainEnvironment = new FcEnvironment(ast, 0, -1, int3.Zero);
         environments.Add(mainEnvironment);
         variables.Add(mainEnvironment.AST.Variables);
 
@@ -113,6 +115,9 @@ public sealed class Interpreter : IAstRunner
 
     /// <inheritdoc/>
     public IEnumerable<Variable> GlobalVariables => _variableAccessor.GlobalVariables.Select(item => item.Key);
+
+    /// <inheritdoc/>
+    public int EnvironmentCount => _environments.Length;
 
     /// <summary>
     /// Runs a single frame.
@@ -174,7 +179,11 @@ public sealed class Interpreter : IAstRunner
         return _variableAccessor.GetVariableValues(_variableAccessor.GetVariableId(_environments[0], variable));
     }
 
-    private static void InitEnvironments(Environment outer, List<Environment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
+    /// <inheritdoc/>
+    public IFcEnvironment GetEnvironment(int index)
+        => _environments[index];
+
+    private static void InitEnvironments(FcEnvironment outer, List<FcEnvironment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
     {
         if (depth > maxDepth)
         {
@@ -185,7 +194,7 @@ public sealed class Interpreter : IAstRunner
         {
             if (node is CustomStatementSyntax customStatement)
             {
-                var environment = new Environment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
+                var environment = new FcEnvironment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
                 environments.Add(environment);
                 variables.Add(environment.AST.Variables);
                 outer.BlockData[customStatement.Position] = environment;
@@ -466,7 +475,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (linearLimits.Constraint is not null)
                         {
-                            _ctx.LinearLimits((FcConstraint)GetValue(linearLimits.Constraint, environment).Int, linearLimits.Lower is null ? null : GetValue(linearLimits.Lower, environment).Vector3, linearLimits.Upper is null ? null : GetValue(linearLimits.Upper, environment).Vector3);
+                            _ctx.LinearLimits((FcConstraint)GetValue(linearLimits.Constraint, environment).Int, GetValue(linearLimits.Lower, environment).Vector3, GetValue(linearLimits.Upper, environment).Vector3);
                         }
                     }
 
@@ -478,7 +487,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (angularLimits.Constraint is not null)
                         {
-                            _ctx.AngularLimits((FcConstraint)GetValue(angularLimits.Constraint, environment).Int, angularLimits.Lower is null ? null : GetValue(angularLimits.Lower, environment).Vector3, angularLimits.Upper is null ? null : GetValue(angularLimits.Upper, environment).Vector3);
+                            _ctx.AngularLimits((FcConstraint)GetValue(angularLimits.Constraint, environment).Int, GetValue(angularLimits.Lower, environment).Vector3, GetValue(angularLimits.Upper, environment).Vector3);
                         }
                     }
 
@@ -490,7 +499,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (linearSpring.Constraint is not null)
                         {
-                            _ctx.LinearSpring((FcConstraint)GetValue(linearSpring.Constraint, environment).Int, linearSpring.Stiffness is null ? null : GetValue(linearSpring.Stiffness, environment).Vector3, linearSpring.Damping is null ? null : GetValue(linearSpring.Damping, environment).Vector3);
+                            _ctx.LinearSpring((FcConstraint)GetValue(linearSpring.Constraint, environment).Int, GetValue(linearSpring.Stiffness, environment).Vector3, GetValue(linearSpring.Damping, environment).Vector3);
                         }
                     }
 
@@ -502,7 +511,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (angularSpring.Constraint is not null)
                         {
-                            _ctx.AngularSpring((FcConstraint)GetValue(angularSpring.Constraint, environment).Int, angularSpring.Stiffness is null ? null : GetValue(angularSpring.Stiffness, environment).Vector3, angularSpring.Damping is null ? null : GetValue(angularSpring.Damping, environment).Vector3);
+                            _ctx.AngularSpring((FcConstraint)GetValue(angularSpring.Constraint, environment).Int, GetValue(angularSpring.Stiffness, environment).Vector3, GetValue(angularSpring.Damping, environment).Vector3);
                         }
                     }
 
@@ -514,7 +523,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (linearMotor.Constraint is not null)
                         {
-                            _ctx.LinearMotor((FcConstraint)GetValue(linearMotor.Constraint, environment).Int, linearMotor.Speed is null ? null : GetValue(linearMotor.Speed, environment).Vector3, linearMotor.Force is null ? null : GetValue(linearMotor.Force, environment).Vector3);
+                            _ctx.LinearMotor((FcConstraint)GetValue(linearMotor.Constraint, environment).Int, GetValue(linearMotor.Speed, environment).Vector3, GetValue(linearMotor.Force, environment).Vector3);
                         }
                     }
 
@@ -526,7 +535,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (angularMotor.Constraint is not null)
                         {
-                            _ctx.AngularMotor((FcConstraint)GetValue(angularMotor.Constraint, environment).Int, angularMotor.Speed is null ? null : GetValue(angularMotor.Speed, environment).Vector3, angularMotor.Force is null ? null : GetValue(angularMotor.Force, environment).Vector3);
+                            _ctx.AngularMotor((FcConstraint)GetValue(angularMotor.Constraint, environment).Int, GetValue(angularMotor.Speed, environment).Vector3, GetValue(angularMotor.Force, environment).Vector3);
                         }
                     }
 
@@ -596,7 +605,7 @@ public sealed class Interpreter : IAstRunner
                     break;
                 case 242:
                     {
-                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
                         var touchSensor = (TouchSensorStatementSyntax)statement;
 
                         if (_ctx.TryGetTouch(touchSensor.State, touchSensor.FingerIndex, out var touchPos))
@@ -643,7 +652,7 @@ public sealed class Interpreter : IAstRunner
                     break;
                 case 401:
                     {
-                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(4), $"{nameof(terminalPos)} should be valid.");
                         var collision = (CollisionStatementSyntax)statement;
 
                         if (collision.FirstObject is not null && _ctx.TryGetCollision((FcObject)GetValue(collision.FirstObject, environment).Int, out FcObject secondObject, out float impulse, out Vector3 normal))
@@ -706,7 +715,7 @@ public sealed class Interpreter : IAstRunner
                         var randomSeed = (RandomSeedStatementSyntax)statement;
                         if (randomSeed.Seed is not null)
                         {
-                            _ctx.SetRandomSeed(GetValue(randomSeed.Seed, environment).Float);
+                            _rng.SetSeed(GetValue(randomSeed.Seed, environment).Float);
                         }
                     }
 
@@ -780,7 +789,7 @@ public sealed class Interpreter : IAstRunner
                             throw new InvalidNodePrefabIdException(statement.PrefabId);
                         }
 
-                        var customEnvironment = (Environment)environment.BlockData[custom.Position];
+                        var customEnvironment = (FcEnvironment)environment.BlockData[custom.Position];
 
                         foreach (var con in custom.AST.VoidInputs)
                         {
@@ -801,7 +810,7 @@ public sealed class Interpreter : IAstRunner
         }
     }
 
-    private void PushAfter(StatementSyntax statement, byte3 terminalPos, Environment environment, Stack<EntryPoint> stack)
+    private void PushAfter(StatementSyntax statement, byte3 terminalPos, FcEnvironment environment, Stack<EntryPoint> stack)
     {
         for (int i = statement.OutVoidConnections.Length - 1; i >= 0; i--)
         {
@@ -823,10 +832,10 @@ public sealed class Interpreter : IAstRunner
         }
     }
 
-    private RuntimeValue GetValue(SyntaxTerminal? terminal, Environment environment)
+    private RuntimeValue GetValue(SyntaxTerminal? terminal, FcEnvironment environment)
         => GetOutput(terminal, environment).GetValue(_variableAccessor);
 
-    private TerminalOutput GetOutput(SyntaxTerminal? terminal, Environment environment)
+    private TerminalOutput GetOutput(SyntaxTerminal? terminal, FcEnvironment environment)
     {
         if (terminal is null)
         {
@@ -884,37 +893,19 @@ public sealed class Interpreter : IAstRunner
                     var getPosition = (GetPositionExpressionSyntax)terminal.Node;
 
                     RuntimeValue val;
-                    if (getPosition.Object is null)
+                    var (position, rotation) = _ctx.GetObjectPosition((FcObject)GetValue(getPosition.Object, environment).Int, environment, terminal.Node.Position);
+
+                    if (terminal.Position == PosOut02)
                     {
-                        if (terminal.Position == PosOut02)
-                        {
-                            val = new(Vector3.Zero);
-                        }
-                        else if (terminal.Position == PosOut12)
-                        {
-                            val = new(Quaternion.Identity);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        val = new(position);
+                    }
+                    else if (terminal.Position == PosOut12)
+                    {
+                        val = new(rotation);
                     }
                     else
                     {
-                        var (position, rotation) = _ctx.GetObjectPosition((FcObject)GetValue(getPosition.Object, environment).Int);
-
-                        if (terminal.Position == PosOut02)
-                        {
-                            val = new(position);
-                        }
-                        else if (terminal.Position == PosOut12)
-                        {
-                            val = new(rotation);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        throw new InvalidTerminalException(terminal.Position);
                     }
 
                     return new TerminalOutput(val);
@@ -952,33 +943,19 @@ public sealed class Interpreter : IAstRunner
                     var getSize = (GetSizeExpressionSyntax)terminal.Node;
 
                     Vector3 val;
-                    if (getSize.Object is null)
+                    var (min, max) = _ctx.GetSize((FcObject)GetValue(getSize.Object, environment).Int);
+
+                    if (terminal.Position == PosOut02)
                     {
-                        if (terminal.Position == PosOut02 || terminal.Position == PosOut12)
-                        {
-                            val = Vector3.Zero;
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        val = min;
+                    }
+                    else if (terminal.Position == PosOut12)
+                    {
+                        val = max;
                     }
                     else
                     {
-                        var (min, max) = _ctx.GetSize((FcObject)GetValue(getSize.Object, environment).Int);
-
-                        if (terminal.Position == PosOut02)
-                        {
-                            val = min;
-                        }
-                        else if (terminal.Position == PosOut12)
-                        {
-                            val = max;
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        throw new InvalidTerminalException(terminal.Position);
                     }
 
                     return new TerminalOutput(new RuntimeValue(val));
@@ -1195,7 +1172,7 @@ public sealed class Interpreter : IAstRunner
                         421 => new(input1.Bool == input2.Bool),
                         128 => new(input1.Float < input2.Float),
                         481 => new(input1.Float > input2.Float),
-                        168 => new(_ctx.GetRandomValue(input1.Float, input2Out.IsConnected ? input2.Float : 1f)),
+                        168 => new(_rng.NextSingle(input1.Float, input2Out.IsConnected ? input2.Float : 1f)),
                         176 => new(MathF.Min(input1.Float, input2.Float)),
                         180 => new(MathF.Max(input1.Float, input2.Float)),
                         580 => new(MathF.Log(input1.Float, input2.Float)),
@@ -1433,12 +1410,12 @@ public sealed class Interpreter : IAstRunner
                                     }
                                 }
 
-                                return TerminalOutput.Disconnected;
+                                return new TerminalOutput(new RuntimeValue(_ctx.GetObject(environment.OuterPosition, terminal.Position, outerEnvironment.AST.PrefabId).Value));
                             }
 
                         case CustomStatementSyntax custom:
                             {
-                                var customEnvironment = (Environment)environment.BlockData[custom.Position];
+                                var customEnvironment = (FcEnvironment)environment.BlockData[custom.Position];
 
                                 foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
                                 {
@@ -1512,7 +1489,7 @@ public sealed class Interpreter : IAstRunner
 
         public IEnumerable<KeyValuePair<Variable, int>> GlobalVariables => _globalVariableToId;
 
-        public int GetVariableId(Environment environment, Variable variable)
+        public int GetVariableId(FcEnvironment environment, Variable variable)
             => variable.IsGlobal ? _globalVariableToId[variable] : _variableToId[(environment.Index, variable)];
 
         public (int EnvironmentIndex, Variable Variable) GetVariable(int variableId)
@@ -1526,26 +1503,5 @@ public sealed class Interpreter : IAstRunner
 
         public Span<RuntimeValue> GetVariableValues(int variableId)
             => _variableManager.GetVariableValues(variableId);
-    }
-
-    private sealed class Environment
-    {
-        public Environment(FcAST ast, int index, int outerEnvironmentIndex, ushort3 outerPosition)
-        {
-            Index = index;
-            OuterEnvironmentIndex = outerEnvironmentIndex;
-            AST = ast;
-            OuterPosition = outerPosition;
-        }
-
-        public FcAST AST { get; }
-
-        public int Index { get; }
-
-        public int OuterEnvironmentIndex { get; }
-
-        public ushort3 OuterPosition { get; }
-
-        public Dictionary<ushort3, object> BlockData { get; } = [];
     }
 }

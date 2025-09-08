@@ -12,14 +12,13 @@ public sealed class LinearMotorStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="LinearMotorStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="constraint">The constraint terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="speed">The speed terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="force">The force terminal; or <see langword="null"/>, if it is not connected.</param>
-    public LinearMotorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? speed, SyntaxTerminal? force)
-        : base(prefabId, position, outVoidConnections)
+    public LinearMotorStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? speed, SyntaxTerminal? force)
+        : base(370, position, outVoidConnections)
     {
         Constraint = constraint;
         Speed = speed;

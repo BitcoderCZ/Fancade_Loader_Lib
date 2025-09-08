@@ -12,14 +12,13 @@ public sealed class SetVelocityStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="SetVelocityStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="object">The object terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="velocity">The velocity terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="spin">The spin terminal; or <see langword="null"/>, if it is not connected.</param>
-    public SetVelocityStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? velocity, SyntaxTerminal? spin)
-        : base(prefabId, position, outVoidConnections)
+    public SetVelocityStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? @object, SyntaxTerminal? velocity, SyntaxTerminal? spin)
+        : base(292, position, outVoidConnections)
     {
         Object = @object;
         Velocity = velocity;

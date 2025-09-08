@@ -12,7 +12,7 @@ public sealed class ObjectExpressionSyntax : SyntaxNode
     /// </summary>
     /// <param name="prefabId">Id of the prefab.</param>
     /// <param name="position">Position of the prefab.</param>
-    public ObjectExpressionSyntax(ushort prefabId, ushort3 position)
+    public ObjectExpressionSyntax(ushort prefabId, int3 position)
         : base(prefabId, position)
     {
     }

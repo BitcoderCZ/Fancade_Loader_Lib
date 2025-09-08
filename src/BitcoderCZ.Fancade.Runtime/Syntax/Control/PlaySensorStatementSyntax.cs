@@ -12,9 +12,9 @@ public sealed class PlaySensorStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="PlaySensorStatementSyntax"/> class.
     /// </summary>
-    /// <inheritdoc cref="StatementSyntax(ushort, ushort3, ImmutableArray{Connection})"/>
-    public PlaySensorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
-        : base(prefabId, position, outVoidConnections)
+    /// <inheritdoc cref="StatementSyntax(ushort, int3, ImmutableArray{Connection})"/>
+    public PlaySensorStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections)
+        : base(238, position, outVoidConnections)
     {
     }
 

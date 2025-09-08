@@ -12,14 +12,13 @@ public sealed class AngularLimitsStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="AngularLimitsStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="constraint">The constraint terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="lower">The lower terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="upper">The upper terminal; or <see langword="null"/>, if it is not connected.</param>
-    public AngularLimitsStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? lower, SyntaxTerminal? upper)
-        : base(prefabId, position, outVoidConnections)
+    public AngularLimitsStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? constraint, SyntaxTerminal? lower, SyntaxTerminal? upper)
+        : base(352, position, outVoidConnections)
     {
         Constraint = constraint;
         Lower = lower;

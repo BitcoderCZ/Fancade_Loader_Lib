@@ -117,7 +117,7 @@ internal static class ThrowHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfLessThan(int value, int other, [CallerArgumentExpression("value")] string paramName = "")
     {
-        if (value.CompareTo(other) < 0)
+        if (value < other)
         {
             ThrowArgumentOutOfRangeException(paramName, $"{paramName} ({value}) must be greater than or equal {other}.");
         }
@@ -126,7 +126,7 @@ internal static class ThrowHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfGreaterThan(int value, int other, [CallerArgumentExpression("value")] string paramName = "")
     {
-        if (value.CompareTo(other) > 0)
+        if (value > other)
         {
             ThrowArgumentOutOfRangeException(paramName, $"{paramName} ({value}) must be less than or equal to {other}.");
         }

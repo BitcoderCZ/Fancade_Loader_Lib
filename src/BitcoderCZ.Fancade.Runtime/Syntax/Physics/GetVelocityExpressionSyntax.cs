@@ -10,11 +10,10 @@ public sealed class GetVelocityExpressionSyntax : SyntaxNode
     /// <summary>
     /// Initializes a new instance of the <see cref="GetVelocityExpressionSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="object">The object terminal; or <see langword="null"/>, if it is not connected.</param>
-    public GetVelocityExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? @object)
-        : base(prefabId, position)
+    public GetVelocityExpressionSyntax(int3 position, SyntaxTerminal? @object)
+        : base(288, position)
     {
         Object = @object;
     }

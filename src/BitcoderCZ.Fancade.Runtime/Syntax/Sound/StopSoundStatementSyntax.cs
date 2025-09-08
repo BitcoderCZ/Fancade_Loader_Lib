@@ -12,12 +12,11 @@ public sealed class StopSoundStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="StopSoundStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="channel">The channel terminal; or <see langword="null"/>, if it is not connected.</param>
-    public StopSoundStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? channel)
-        : base(prefabId, position, outVoidConnections)
+    public StopSoundStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? channel)
+        : base(397, position, outVoidConnections)
     {
         Channel = channel;
     }

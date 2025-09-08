@@ -12,9 +12,9 @@ public sealed class SwipeSensorStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="SwipeSensorStatementSyntax"/> class.
     /// </summary>
-    /// <inheritdoc cref="StatementSyntax(ushort, ushort3, ImmutableArray{Connection})"/>
-    public SwipeSensorStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
-        : base(prefabId, position, outVoidConnections)
+    /// <inheritdoc cref="StatementSyntax(ushort, int3, ImmutableArray{Connection})"/>
+    public SwipeSensorStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections)
+        : base(248, position, outVoidConnections)
     {
     }
 

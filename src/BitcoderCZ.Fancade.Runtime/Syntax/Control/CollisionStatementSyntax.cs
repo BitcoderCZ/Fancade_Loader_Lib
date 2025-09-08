@@ -12,12 +12,11 @@ public sealed class CollisionStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="CollisionStatementSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="firstObject">The first object terminal; or <see langword="null"/>, if it is not connected.</param>
-    public CollisionStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? firstObject)
-        : base(prefabId, position, outVoidConnections)
+    public CollisionStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? firstObject)
+        : base(401, position, outVoidConnections)
     {
         FirstObject = firstObject;
     }

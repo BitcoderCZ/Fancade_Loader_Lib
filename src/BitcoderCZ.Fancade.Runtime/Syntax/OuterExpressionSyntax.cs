@@ -12,7 +12,7 @@ public sealed class OuterExpressionSyntax : SyntaxNode
     /// </summary>
     /// <param name="prefabId">Id of the prefab.</param>
     public OuterExpressionSyntax(ushort prefabId)
-        : base(prefabId, ushort3.One * Connection.IsFromToOutsideValue)
+        : base(prefabId, int3.One * Connection.IsFromToOutsideValue)
     {
     }
 }

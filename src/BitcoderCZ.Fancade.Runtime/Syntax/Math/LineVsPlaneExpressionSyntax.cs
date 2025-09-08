@@ -10,14 +10,13 @@ public sealed class LineVsPlaneExpressionSyntax : SyntaxNode
     /// <summary>
     /// Initializes a new instance of the <see cref="LineVsPlaneExpressionSyntax"/> class.
     /// </summary>
-    /// <param name="prefabId">Id of the prefab this node represents.</param>
     /// <param name="position">Position of the prefab this node represents.</param>
     /// <param name="lineFrom">The line from terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="lineTo">The line to terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="planePoint">The plane point terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="planeNormal">The plane normal terminal; or <see langword="null"/>, if it is not connected.</param>
-    public LineVsPlaneExpressionSyntax(ushort prefabId, ushort3 position, SyntaxTerminal? lineFrom, SyntaxTerminal? lineTo, SyntaxTerminal? planePoint, SyntaxTerminal? planeNormal)
-        : base(prefabId, position)
+    public LineVsPlaneExpressionSyntax(int3 position, SyntaxTerminal? lineFrom, SyntaxTerminal? lineTo, SyntaxTerminal? planePoint, SyntaxTerminal? planeNormal)
+        : base(208, position)
     {
         LineFrom = lineFrom;
         LineTo = lineTo;

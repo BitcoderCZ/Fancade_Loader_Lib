@@ -21,7 +21,7 @@ namespace BitcoderCZ.Fancade.Runtime.Compiled;
 
 public sealed partial class AstCompiler
 {
-    private readonly Environment[] _environments;
+    private readonly FcEnvironment[] _environments;
     private readonly StringBuilder _writerBuilder;
     private readonly IndentedTextWriter _writer;
 
@@ -44,10 +44,10 @@ public sealed partial class AstCompiler
     {
         _timeout = timeout;
 
-        List<Environment> environments = [];
+        List<FcEnvironment> environments = [];
         List<ImmutableArray<Variable>> variables = [];
 
-        var mainEnvironment = new Environment(ast, 0, -1, ushort3.Zero);
+        var mainEnvironment = new FcEnvironment(ast, 0, -1, int3.Zero);
         environments.Add(mainEnvironment);
         variables.Add(mainEnvironment.AST.Variables);
 
@@ -95,10 +95,10 @@ public sealed partial class AstCompiler
         ];
 
         CSharpCompilation compilation = CSharpCompilation.Create(
-               assemblyName,
-               syntaxTrees: [tree],
-               references: references,
-               options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            assemblyName,
+            syntaxTrees: [tree],
+            references: references,
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
         using (var ms = new MemoryStream())
         {
@@ -159,9 +159,23 @@ public sealed partial class AstCompiler
             _writer.WriteLineAll("""
                 private readonly TRuntimeContext _ctx;
                 
+                private readonly FcRandom _rng = new FcRandom();
+
                 private Queue<Action>? lateUpdateQueue = new();
-                
+
+                private readonly CompFcEnvironment[] _environments = new CompFcEnvironment[]
+                {
                 """);
+
+            _writer.Indent++;
+            foreach (var env in _environments)
+            {
+                _writer.WriteLineInv($"new CompFcEnvironment({env.PrefabId}, {env.Index}, {env.OuterEnvironmentIndex}, new {nameof(int3)}({env.OuterPosition.X}, {env.OuterPosition.Y}, {env.OuterPosition.Z})),");
+            }
+
+            _writer.Indent--;
+            _writer.WriteLine("};");
+            _writer.WriteLine();
 
             if (_timeout != Timeout.InfiniteTimeSpan)
             {
@@ -194,9 +208,12 @@ public sealed partial class AstCompiler
 
             _writer.Indent--;
 
-            _writer.WriteLine("];");
+            _writer.WriteLineAll("""
+                ];
+                            
+                public int EnvironmentCount => _environments.Length;
 
-            _writer.WriteLine();
+                """);
 
             using (_writer.CurlyIndent("public CompiledAST(TRuntimeContext ctx)"))
             {
@@ -305,6 +322,11 @@ public sealed partial class AstCompiler
                 }
 
                 _writer.WriteLine("return [];");
+            }
+
+            using (_writer.CurlyIndent("public IFcEnvironment GetEnvironment(int index)"))
+            {
+                _writer.WriteLine("return _environments[index];");
             }
 
             if (_timeout != Timeout.InfiniteTimeSpan)
@@ -486,6 +508,21 @@ public sealed partial class AstCompiler
                 }
             }
 
+            internal sealed class CompFcEnvironment : IFcEnvironment
+            {
+                public CompFcEnvironment(ushort prefabId, int index, int outerEnvironmentIndex, int3 outerPosition)
+                {
+                    PrefabId = prefabId;
+                    Index = index;
+                    OuterEnvironmentIndex = outerEnvironmentIndex;
+                    OuterPosition = outerPosition;
+                }
+                public ushort PrefabId { get; }
+                public int Index { get; }
+                public int OuterEnvironmentIndex { get; }
+                public int3 OuterPosition { get; }
+            }
+
             internal static class NumberUtils
             {
                 public static float FcMod(float a, float b)
@@ -609,7 +646,7 @@ public sealed partial class AstCompiler
         return _writerBuilder.ToString()!;
     }
 
-    private static void InitEnvironments(Environment outer, List<Environment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
+    private static void InitEnvironments(FcEnvironment outer, List<FcEnvironment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
     {
         if (depth > maxDepth)
         {
@@ -620,7 +657,7 @@ public sealed partial class AstCompiler
         {
             if (statement is CustomStatementSyntax customStatement)
             {
-                var environment = new Environment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
+                var environment = new FcEnvironment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
                 environments.Add(environment);
                 variables.Add(environment.AST.Variables);
                 outer.BlockData[customStatement.Position] = environment;
@@ -673,10 +710,10 @@ public sealed partial class AstCompiler
         }
     }
 
-    private void WriteConnected(StatementSyntax statement, byte3 terminalPos, Environment environment, IndentedTextWriter writer)
+    private void WriteConnected(StatementSyntax statement, byte3 terminalPos, FcEnvironment environment, IndentedTextWriter writer)
         => VisitConnected(statement, terminalPos, environment, entryPont => WriteEntryPoint(entryPont, false, writer));
 
-    private void VisitConnected(StatementSyntax statement, byte3 terminalPos, Environment environment, Action<EntryPoint> action)
+    private void VisitConnected(StatementSyntax statement, byte3 terminalPos, FcEnvironment environment, Action<EntryPoint> action)
     {
         foreach (var connection in statement.OutVoidConnections)
         {
@@ -696,7 +733,7 @@ public sealed partial class AstCompiler
         }
     }
 
-    private bool TryWriteDirrectRef(SyntaxTerminal terminal, Environment environment, IndentedTextWriter writer)
+    private bool TryWriteDirrectRef(SyntaxTerminal terminal, FcEnvironment environment, IndentedTextWriter writer)
     {
         switch (terminal.Node.PrefabId)
         {
@@ -815,7 +852,7 @@ public sealed partial class AstCompiler
         return name;
     }
 
-    private static string GetStateStoreVarName(int environmentIndex, ushort3 blockPos, string suffix)
+    private static string GetStateStoreVarName(int environmentIndex, int3 blockPos, string suffix)
         => $"store_{environmentIndex}_{blockPos.X}_{blockPos.Y}_{blockPos.Z}_{suffix}";
 
     private static string GetCSharpName(SignalType type)
@@ -885,27 +922,6 @@ public sealed partial class AstCompiler
         public bool IsPointer => VariableName is not null;
 
         public SignalType PtrType => IsPointer ? Type.ToPointer() : Type;
-    }
-
-    private sealed class Environment
-    {
-        public Environment(FcAST ast, int index, int outerEnvironmentIndex, ushort3 outerPosition)
-        {
-            Index = index;
-            OuterEnvironmentIndex = outerEnvironmentIndex;
-            AST = ast;
-            OuterPosition = outerPosition;
-        }
-
-        public FcAST AST { get; }
-
-        public int Index { get; }
-
-        public int OuterEnvironmentIndex { get; }
-
-        public ushort3 OuterPosition { get; }
-
-        public Dictionary<ushort3, object> BlockData { get; } = [];
     }
 
     private class IndentedTextWriterPoolPolicy : PooledObjectPolicy<IndentedTextWriter>

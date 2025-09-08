@@ -12,9 +12,9 @@ public sealed class BoxArtStatementSyntax : StatementSyntax
     /// <summary>
     /// Initializes a new instance of the <see cref="BoxArtStatementSyntax"/> class.
     /// </summary>
-    /// <inheritdoc cref="StatementSyntax(ushort, ushort3, ImmutableArray{Connection})"/>
-    public BoxArtStatementSyntax(ushort prefabId, ushort3 position, ImmutableArray<Connection> outVoidConnections)
-        : base(prefabId, position, outVoidConnections)
+    /// <inheritdoc cref="StatementSyntax(ushort, int3, ImmutableArray{Connection})"/>
+    public BoxArtStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections)
+        : base(409, position, outVoidConnections)
     {
     }
 

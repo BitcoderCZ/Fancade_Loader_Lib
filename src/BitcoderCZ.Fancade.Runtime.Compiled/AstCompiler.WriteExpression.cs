@@ -10,6 +10,7 @@ using BitcoderCZ.Fancade.Runtime.Syntax.Physics;
 using BitcoderCZ.Fancade.Runtime.Syntax.Sound;
 using BitcoderCZ.Fancade.Runtime.Syntax.Values;
 using BitcoderCZ.Fancade.Runtime.Syntax.Variables;
+using BitcoderCZ.Maths.Vectors;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
 
@@ -17,7 +18,7 @@ namespace BitcoderCZ.Fancade.Runtime.Compiled;
 
 public partial class AstCompiler
 {
-    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, SignalType type, Environment environment, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, SignalType type, FcEnvironment environment, IndentedTextWriter writer)
     {
         if (terminal is null)
         {
@@ -29,7 +30,7 @@ public partial class AstCompiler
         return WriteExpression(terminal, type.IsPointer(), environment, writer);
     }
 
-    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, string defaultValue, SignalType type, Environment environment, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, string defaultValue, SignalType type, FcEnvironment environment, IndentedTextWriter writer)
     {
         if (terminal is null)
         {
@@ -41,7 +42,7 @@ public partial class AstCompiler
         return WriteExpression(terminal, type.IsPointer(), environment, writer);
     }
 
-    private ExpressionInfo WriteExpressionOrNull(SyntaxTerminal? terminal, SignalType type, Environment environment, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpressionOrNull(SyntaxTerminal? terminal, SignalType type, FcEnvironment environment, IndentedTextWriter writer)
     {
         if (terminal is null)
         {
@@ -53,10 +54,10 @@ public partial class AstCompiler
         return WriteExpression(terminal, type.IsPointer(), environment, writer);
     }
 
-    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, Environment environment, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, FcEnvironment environment, IndentedTextWriter writer)
         => WriteExpression(terminal, asReference, environment, false, writer);
 
-    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, Environment environment, bool direct, IndentedTextWriter writer)
+    private ExpressionInfo WriteExpression(SyntaxTerminal terminal, bool asReference, FcEnvironment environment, bool direct, IndentedTextWriter writer)
     {
         if (!direct)
         {
@@ -133,45 +134,26 @@ public partial class AstCompiler
                     Debug.Assert(!asReference);
                     var getPosition = (GetPositionExpressionSyntax)terminal.Node;
 
-                    if (getPosition.Object is null)
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(");
+
+                    WriteExpressionOrDefault(getPosition.Object, SignalType.Obj, environment, writer);
+
+                    var np = terminal.Node.Position;
+                    writer.WriteInv($", _environments[{environment.Index}], new {nameof(int3)}({np.X}, {np.Y}, {np.Z}))");
+
+                    if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
                     {
-                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
-                        {
-                            writer.Write(GetDefaultValue(SignalType.Float));
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
-                        {
-                            writer.Write(GetDefaultValue(SignalType.Rot));
-                            return new ExpressionInfo(SignalType.Rot);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        writer.Write(".Position");
+                        return new ExpressionInfo(SignalType.Vec3);
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                    {
+                        writer.Write(".Rotation");
+                        return new ExpressionInfo(SignalType.Rot);
                     }
                     else
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(");
-
-                        WriteExpression(getPosition.Object, false, environment, writer);
-
-                        writer.Write(')');
-
-                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
-                        {
-                            writer.Write(".Position");
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
-                        {
-                            writer.Write(".Rotation");
-                            return new ExpressionInfo(SignalType.Rot);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        throw new InvalidTerminalException(terminal.Position);
                     }
                 }
 
@@ -198,7 +180,7 @@ public partial class AstCompiler
                     }
                     else if (terminal.Position == TerminalDef.GetOutPosition(2, 2, 3))
                     {
-                        writer.Write(".HitObj.Value");
+                        writer.Write(".HitObj");
                         return new ExpressionInfo(SignalType.Obj);
                     }
                     else
@@ -212,38 +194,23 @@ public partial class AstCompiler
                     Debug.Assert(!asReference);
                     var getSize = (GetSizeExpressionSyntax)terminal.Node;
 
-                    if (getSize.Object is null)
+                    writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(");
+                    WriteExpressionOrDefault(getSize.Object, SignalType.Obj, environment, writer);
+                    writer.Write(')');
+
+                    if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
                     {
-                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2) || terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
-                        {
-                            writer.Write(GetDefaultValue(SignalType.Float));
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        writer.Write(".Min");
+                        return new ExpressionInfo(SignalType.Vec3);
+                    }
+                    else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
+                    {
+                        writer.Write(".Max");
+                        return new ExpressionInfo(SignalType.Vec3);
                     }
                     else
                     {
-                        writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(");
-                        WriteExpression(getSize.Object, false, environment, writer);
-                        writer.Write(')');
-
-                        if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
-                        {
-                            writer.Write(".Min");
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 2))
-                        {
-                            writer.Write(".Max");
-                            return new ExpressionInfo(SignalType.Float);
-                        }
-                        else
-                        {
-                            throw new InvalidTerminalException(terminal.Position);
-                        }
+                        throw new InvalidTerminalException(terminal.Position);
                     }
                 }
 
@@ -653,7 +620,7 @@ public partial class AstCompiler
                             break;
                         case 168:
                             outType = SignalType.Float;
-                            writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetRandomValue)}(");
+                            writer.Write("_rng.NextSingle(");
                             WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(", ");
                             WriteExpressionOrDefault(binary.Input2, "1f", SignalType.Float, environment, writer);
@@ -765,7 +732,7 @@ public partial class AstCompiler
                     WriteExpressionOrDefault(screenToWorld.ScreenX, SignalType.Float, environment, writer);
                     writer.Write(", ");
                     WriteExpressionOrDefault(screenToWorld.ScreenY, SignalType.Float, environment, writer);
-                    writer.Write(')');
+                    writer.Write("))");
 
                     if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
                     {
@@ -1062,13 +1029,13 @@ public partial class AstCompiler
                                     }
                                 }
 
-                                // TODO: throw
-                                return new ExpressionInfo(SignalType.Error);
+                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObject)}(new {nameof(int3)}({environment.OuterPosition.X}, {environment.OuterPosition.Y}, {environment.OuterPosition.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z}), {outerEnvironment.AST.PrefabId})");
+                                return new ExpressionInfo(SignalType.Obj);
                             }
 
                         case CustomStatementSyntax custom:
                             {
-                                var customEnvironment = (Environment)environment.BlockData[custom.Position];
+                                var customEnvironment = (FcEnvironment)environment.BlockData[custom.Position];
 
                                 foreach (var (con, conTerm) in custom.AST.NonVoidOutputs)
                                 {
@@ -1092,7 +1059,7 @@ public partial class AstCompiler
 
                         case ObjectExpressionSyntax:
                             {
-                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObject)}(new ushort3({terminal.Node.Position.X}, {terminal.Node.Position.Y}, {terminal.Node.Position.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z}), {environment.AST.PrefabId}).Value");
+                                writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObject)}(new {nameof(int3)}({terminal.Node.Position.X}, {terminal.Node.Position.Y}, {terminal.Node.Position.Z}), new byte3({terminal.Position.X}, {terminal.Position.Y}, {terminal.Position.Z}), {environment.AST.PrefabId})");
                                 return new ExpressionInfo(SignalType.Obj);
                             }
 
