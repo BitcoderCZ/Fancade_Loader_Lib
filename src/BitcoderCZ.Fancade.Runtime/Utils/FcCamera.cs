@@ -100,16 +100,28 @@ public sealed class FcCamera
     public Vector3 WorldPos { get; internal set; }
 
     /// <summary>
+    /// Gets the world to camera matrix.
+    /// </summary>
+    /// <value>The world to camera matrix.</value>
+    public Matrix4x4 WorldToCameraMatrix { get; internal set; }
+
+    /// <summary>
     /// Gets the camera's projection matrix.
     /// </summary>
     /// <value>The camera's projection matrix.</value>
-    public Matrix4x4 WorldViewpoint { get; internal set; }
+    public Matrix4x4 ProjectionMatrix { get; internal set; }
 
     /// <summary>
-    /// Gets the inverse of the camera's projection matrix.
+    /// Gets the combination of <see cref="WorldToCameraMatrix"/> and <see cref="ProjectionMatrix"/> matrix.
     /// </summary>
-    /// <value>Inverse of the  camera's projection matrix.</value>
-    public Matrix4x4 WorldViewpointInverted { get; internal set; }
+    /// <value>The combination of <see cref="WorldToCameraMatrix"/> and <see cref="ProjectionMatrix"/> matrix.</value>
+    public Matrix4x4 WorldViewpointMatrix { get; internal set; }
+
+    /// <summary>
+    /// Gets the inverse of <see cref="WorldViewpointMatrix"/>.
+    /// </summary>
+    /// <value>Inverse of <see cref="WorldViewpointMatrix"/>.</value>
+    public Matrix4x4 WorldViewpointMatrixInverted { get; internal set; }
 
     /// <summary>
     /// Sets <see cref="Focus"/>, <see cref="Rotation"/>, <see cref="DistanceAuto"/>, <see cref="Ortho"/>, vertical and horizontal fov.
@@ -246,15 +258,15 @@ public sealed class FcCamera
         {
             float orthoInv = 1f - Ortho;
             float depthOffset = Ortho + Ortho + (orthoInv * 0.1f) + (orthoInv * 0.1f);
-            float vfovTan = MathF.Tan(VerticalFov * 0.5f);
+            float vFovTan = MathF.Tan(VerticalFov * 0.5f);
 
             if (Ortho == 0f)
             {
                 // perspective left handed
 #pragma warning disable SA1117 // Parameters should be on same line or separate lines
                 projection = new Matrix4x4(
-                    screen.AspectRatio * (1f / vfovTan), 0f, 0f, 0f,
-                    0f, 1f / vfovTan, 0f, 0f,
+                    screen.AspectRatio * (1f / vFovTan), 0f, 0f, 0f,
+                    0f, 1f / vFovTan, 0f, 0f,
                     0f, 0f, (depthOffset + 400f) / (400f - depthOffset), 1f,
                     0f, 0f, (depthOffset * -800f) / (400f - depthOffset), 0f);
 #pragma warning restore SA1117 // Parameters should be on same line or separate lines
@@ -270,18 +282,20 @@ public sealed class FcCamera
                 // perspective left handed
 #pragma warning disable SA1117 // Parameters should be on same line or separate lines
                 projection = new Matrix4x4(
-                    (Ortho * (2f / zoomDouble)) + (orthoInv * screen.AspectRatio * (1f / vfovTan)), 0f, 0f, 0f,
-                    0f, (orthoInv * (1f / vfovTan)) + (Ortho * (2f / orthoWidthDiff)), 0f, 0f,
+                    (Ortho * (2f / zoomDouble)) + (orthoInv * screen.AspectRatio * (1f / vFovTan)), 0f, 0f, 0f,
+                    0f, (orthoInv * (1f / vFovTan)) + (Ortho * (2f / orthoWidthDiff)), 0f, 0f,
                     0f, 0f, (Ortho * 0.0050251256f) + (orthoInv * ((depthOffset + 400f) / (400f - depthOffset))), orthoInv,
                     -Ortho * (zoomDiff / zoomDouble), -Ortho * ((orthoWidth + (screen.AspectRatio * negZoom)) / orthoWidthDiff), (Ortho * -1.0100503f) + (orthoInv * ((depthOffset * -800f) / (400f - depthOffset))), Ortho);
 #pragma warning restore SA1117 // Parameters should be on same line or separate lines
             }
         }
 
-        WorldViewpoint = matWorldV * projection;
-        bool inverted = Matrix4x4.Invert(WorldViewpoint, out var worldViewpointInverted);
-        Debug.Assert(inverted, $"{nameof(WorldViewpoint)} inversion should always succeed.");
-        WorldViewpointInverted = worldViewpointInverted;
+        WorldToCameraMatrix = matWorldV;
+        ProjectionMatrix = projection;
+        WorldViewpointMatrix = matWorldV * projection;
+        bool inverted = Matrix4x4.Invert(WorldViewpointMatrix, out var worldViewpointInverted);
+        Debug.Assert(inverted, $"{nameof(WorldViewpointMatrix)} inversion should always succeed.");
+        WorldViewpointMatrixInverted = worldViewpointInverted;
     }
 
     /// <summary>
@@ -298,8 +312,8 @@ public sealed class FcCamera
         Vector4 clipNear = new Vector4(ndcX, ndcY, 0f, 1.0f);
         Vector4 clipFar = new Vector4(ndcX, ndcY, Perspective ? 1f : 2f, 1.0f);
 
-        Vector4 worldNearH = Vector4.Transform(clipNear, WorldViewpointInverted);
-        Vector4 worldFarH = Vector4.Transform(clipFar, WorldViewpointInverted);
+        Vector4 worldNearH = Vector4.Transform(clipNear, WorldViewpointMatrixInverted);
+        Vector4 worldFarH = Vector4.Transform(clipFar, WorldViewpointMatrixInverted);
 
         Vector3 worldNear = new Vector3(
             worldNearH.X / worldNearH.W,
@@ -324,7 +338,7 @@ public sealed class FcCamera
     {
         Vector4 worldPos4 = new Vector4(worldPos, 1f);
 
-        Vector4 transformed = Vector4.Transform(worldPos4, WorldViewpoint);
+        Vector4 transformed = Vector4.Transform(worldPos4, WorldViewpointMatrix);
 
         float screenX = (screen.Width * 0.5f) + ((transformed.X / transformed.W) * 0.5f * screen.Width);
         float screenY = (screen.Height * 0.5f) - ((transformed.Y / transformed.W) * 0.5f * screen.Height);
