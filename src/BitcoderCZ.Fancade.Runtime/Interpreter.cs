@@ -169,6 +169,17 @@ public sealed class Interpreter : IAstRunner
     }
 
     /// <inheritdoc/>
+    public void Reset()
+    {
+        foreach (var environment in _environments)
+        {
+            environment.BlockData.Clear();
+        }
+
+        _variableAccessor.Clear();
+    }
+
+    /// <inheritdoc/>
     public Span<RuntimeValue> GetGlobalVariableValue(Variable variable)
     {
         if (!variable.IsGlobal)
@@ -1488,6 +1499,9 @@ public sealed class Interpreter : IAstRunner
         }
 
         public IEnumerable<KeyValuePair<Variable, int>> GlobalVariables => _globalVariableToId;
+
+        public void Clear()
+            => _variableManager.Clear();
 
         public int GetVariableId(FcEnvironment environment, Variable variable)
             => variable.IsGlobal ? _globalVariableToId[variable] : _variableToId[(environment.Index, variable)];

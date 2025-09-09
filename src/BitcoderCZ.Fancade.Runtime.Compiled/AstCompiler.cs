@@ -385,6 +385,19 @@ public sealed partial class AstCompiler
             {
                 _writer.WriteLineInv($"private {type} {varName}{(defaultValue is null ? string.Empty : $"= {defaultValue}")};");
             }
+
+            using (_writer.CurlyIndent("public void Reset()"))
+            {
+                foreach (var (environmentIndex, variable) in _environments[0].AST.GlobalVariables.Select(var => (-1, var)).Concat(_variables))
+                {
+                    _writer.WriteLineInv($"{GetVariableName(environmentIndex, variable)}.Clear();");
+                }
+
+                foreach (var (varName, _, _) in _stateStoreVariables)
+                {
+                    _writer.WriteLineInv($"{varName} = default;");
+                }
+            }
         }
 
         _writer.WriteLine("""
@@ -436,6 +449,9 @@ public sealed partial class AstCompiler
                         _items[index] = value;
                     }
                 }
+
+                public void Clear()
+                    => _count = 0;
 
                 public Span<RuntimeValue> AsSpan()
                 {

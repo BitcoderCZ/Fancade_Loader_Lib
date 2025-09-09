@@ -16,6 +16,14 @@ internal readonly struct VariableManager
         }
     }
 
+    public void Clear()
+    {
+        for (int i = 0; i < _variables.Length; i++)
+        {
+            _variables[i].Length = 0;
+        }
+    }
+
     public RuntimeValue GetVariableValue(int variableIndex, int index)
     {
         // TODO: bounds check variableId?

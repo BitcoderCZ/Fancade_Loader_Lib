@@ -26,6 +26,11 @@ public interface IAstRunner
     Action RunFrame();
 
     /// <summary>
+    /// Resets the state of the <see cref="IAstRunner"/>.
+    /// </summary>
+    void Reset();
+
+    /// <summary>
     /// Gets the value of a global variable.
     /// </summary>
     /// <param name="variable">The variable whose value should be retrieved.</param>
