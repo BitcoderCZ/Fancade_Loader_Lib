@@ -58,8 +58,6 @@ public static class StockBlocks
                 using var reader = new FcBinaryReader(resourceStream);
                 _prefabList = PrefabList.Load(reader);
 
-                _prefabList.AddImplicitConnections();
-
                 foreach (var prefab in _prefabList.Prefabs)
                 {
                     if (TryGetBlockDef(prefab.Id, out var def) && def.Terminals.Length > 0)
@@ -74,6 +72,8 @@ public static class StockBlocks
                         }
                     }
                 }
+
+                _prefabList.AddImplicitConnections();
             }
 
             return _prefabList;

@@ -4,6 +4,7 @@ using BitcoderCZ.Fancade.Editing.Scripting.Builders;
 using BitcoderCZ.Fancade.Editing.Scripting.Placers;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Raw;
+using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
 using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
@@ -79,6 +80,20 @@ public partial class ExecutionTests
 
             builder.SetSetting(numb, 0, (float)count);
         }
+    }
+
+    [Test]
+    public async Task StockBlocks_HaveImplicitConnections()
+    {
+        var list = new PrefabList();
+        var prefab = Prefab.CreateLevel(0, "A");
+        list.AddPrefab(prefab);
+
+        var blocks = prefab.Blocks;
+        blocks.SetPrefab(int3.Zero, StockBlocks.PrefabList.GetPrefab(540)); // Camera Orbit
+
+        var ast = FcAST.Parse(list, prefab.Id);
+        await Assert.That(((CustomStatementSyntax)ast.Statements.First().Value).AST.EntryPointTerminals.Length).IsEqualTo(6);
     }
 
     [Test]
