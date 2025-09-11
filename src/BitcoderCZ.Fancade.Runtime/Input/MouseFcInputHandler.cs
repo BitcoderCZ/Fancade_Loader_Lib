@@ -117,7 +117,7 @@ public sealed class MouseFcInputHandler : IFcInputHandler
                 else
                 {
                     float t = -mouseNear.Y / mouseDir.Y;
-                    var swipeWorldPos = mouseNear + ((mouseFar - mouseNear) * t);
+                    var swipeWorldPos = mouseNear + (mouseDir * t);
                     swipeWorldDir = new Vector3(swipeWorldPos.X - _swipeStartPosWorld.X, 0f, swipeWorldPos.Z - _swipeStartPosWorld.Y);
                 }
 
@@ -172,7 +172,7 @@ public sealed class MouseFcInputHandler : IFcInputHandler
                 return false;
         }
 
-        touchPos = _mousePos;
+        touchPos = new Vector2(MathF.Round(_mousePos.X), MathF.Round(_mousePos.Y));
         switch (state)
         {
             case TouchState.Touching:
