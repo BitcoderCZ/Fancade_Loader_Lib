@@ -104,17 +104,28 @@ public static class PrefabListUtils
     {
         var stockPrefabs = StockBlocks.PrefabList;
 
-        terminalInfos ??= PrefabTerminalInfo.Create(stockPrefabs.Concat(list), id =>
+        if (list.IdOffset == 0)
         {
-            if (id < RawGame.CurrentNumbStockPrefabs)
-            {
-                return stockPrefabs.TryGetSegment(id, out var segment) && stockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
-            }
-            else
+            // is stock
+            terminalInfos ??= PrefabTerminalInfo.Create(list, id =>
             {
                 return list.TryGetSegment(id, out var segment) && list.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
-            }
-        });
+            });
+        }
+        else
+        {
+            terminalInfos ??= PrefabTerminalInfo.Create(stockPrefabs.Concat(list), id =>
+            {
+                if (id < RawGame.CurrentNumbStockPrefabs)
+                {
+                    return stockPrefabs.TryGetSegment(id, out var segment) && stockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+                }
+                else
+                {
+                    return list.TryGetSegment(id, out var segment) && list.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
+                }
+            });
+        }
 
         HashSet<(ushort3, byte3)> connectionsFrom = [];
         HashSet<(ushort3, byte3)> connectionsTo = [];
