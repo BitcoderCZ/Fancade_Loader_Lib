@@ -26,6 +26,7 @@ public static class StockBlocks
     /// <summary>
     /// Gets a <see cref="Partial.PartialPrefabList"/> with all of the stock fancade prefabs.
     /// </summary>
+    /// <remarks>The value is cached and should not be modified.</remarks>
     /// <value>A <see cref="Partial.PartialPrefabList"/> with all of the stock fancade prefabs.</value>
     public static PartialPrefabList PartialPrefabList
     {
@@ -45,6 +46,7 @@ public static class StockBlocks
     /// <summary>
     /// Gets a <see cref="PrefabList"/> with all of the stock fancade prefabs.
     /// </summary>
+    /// <remarks>The value is cached and should not be modified.</remarks>
     /// <value>A <see cref="PrefabList"/> with all of the stock fancade prefabs.</value>
     public static PrefabList PrefabList
     {
@@ -55,6 +57,8 @@ public static class StockBlocks
                 using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcpl");
                 using var reader = new FcBinaryReader(resourceStream);
                 _prefabList = PrefabList.Load(reader);
+
+                _prefabList.AddImplicitConnections();
 
                 foreach (var prefab in _prefabList.Prefabs)
                 {
