@@ -812,13 +812,14 @@ public partial class AstCompiler
                             writer.Write(')');
                             return new ExpressionInfo(SignalType.Vec3);
                         case 162:
+                            const float DegToRad = MathF.PI / 180f;
                             writer.Write("Quaternion.CreateFromYawPitchRoll(");
                             WriteExpressionOrDefault(makeVecRot.Y, SignalType.Float, environment, writer);
-                            writer.Write(", ");
+                            writer.WriteInv($" * {DegToRad}f, ");
                             WriteExpressionOrDefault(makeVecRot.X, SignalType.Float, environment, writer);
-                            writer.Write(", ");
+                            writer.WriteInv($" * {DegToRad}f, ");
                             WriteExpressionOrDefault(makeVecRot.Z, SignalType.Float, environment, writer);
-                            writer.Write(')');
+                            writer.WriteInv($" * {DegToRad}f)");
                             return new ExpressionInfo(SignalType.Rot);
                         default:
                             throw new UnreachableException();

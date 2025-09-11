@@ -232,24 +232,27 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
             SignalType.Float => MathF.Abs(a.Float - (float)b) < MaxDeltaNumber,
             SignalType.Vec3 => (a.Vector3 - (Vector3)b).LengthSquared() < MaxDeltaVector,
-            SignalType.Rot => Equals(a.Quaternion, ((Rotation)b).Value),
+            SignalType.Rot => Equals(a.Quaternion, b),
             SignalType.Bool => a.Bool == (bool)b,
             SignalType.Obj => (FcObject)a.Int == (FcObject)b,
             SignalType.Con => (FcConstraint)a.Int == (FcConstraint)b,
             _ => throw new UnreachableException(),
         };
 
-        // TODO: does not work, find some better way to do equals rotation
-        static bool Equals(Quaternion a, Vector3 bEuler)
+        static bool Equals(Quaternion a, object b)
         {
             const float DegToRad = MathF.PI / 180f;
 
-            Quaternion b = Quaternion.CreateFromYawPitchRoll(bEuler.Y * DegToRad, bEuler.X * DegToRad, bEuler.Z * DegToRad);
+            if (b is not Quaternion bQuat)
+            {
+                var bEuler = ((Rotation)b).Value;
+                bQuat = Quaternion.CreateFromYawPitchRoll(bEuler.Y * DegToRad, bEuler.X * DegToRad, bEuler.Z * DegToRad);
+            }
 
-            return MathF.Abs(a.X - b.X) < MaxDeltaRotation &&
-                MathF.Abs(a.Y - b.Y) < MaxDeltaRotation &&
-                MathF.Abs(a.Z - b.Z) < MaxDeltaRotation &&
-                MathF.Abs(a.W - b.W) < MaxDeltaRotation;
+            return MathF.Abs(a.X - bQuat.X) < MaxDeltaRotation &&
+                MathF.Abs(a.Y - bQuat.Y) < MaxDeltaRotation &&
+                MathF.Abs(a.Z - bQuat.Z) < MaxDeltaRotation &&
+                MathF.Abs(a.W - bQuat.W) < MaxDeltaRotation;
         }
     }
 

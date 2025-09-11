@@ -1282,10 +1282,12 @@ public sealed class Interpreter : IAstRunner
                     float y = GetValue(makeVecRot.Y, environment).Float;
                     float z = GetValue(makeVecRot.Z, environment).Float;
 
+                    const float DegToRad = MathF.PI / 180f;
+
                     return new TerminalOutput(makeVecRot.PrefabId switch
                     {
                         150 => new RuntimeValue(new Vector3(x, y, z)),
-                        162 => new RuntimeValue(Quaternion.CreateFromYawPitchRoll(y, x, z)),
+                        162 => new RuntimeValue(Quaternion.CreateFromYawPitchRoll(y * DegToRad, x * DegToRad, z * DegToRad)),
                         _ => throw new UnreachableException(),
                     });
                 }

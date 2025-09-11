@@ -13,6 +13,7 @@ internal readonly struct InspectAssertExpected : ISpanFormattable
             float => SignalType.Float,
             Vector3 => SignalType.Vec3,
             Rotation => SignalType.Rot,
+            Quaternion => SignalType.Rot,
             bool => SignalType.Bool,
             FcObject => SignalType.Obj,
             FcConstraint => SignalType.Con,

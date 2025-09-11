@@ -826,13 +826,13 @@ public sealed partial class CodeWriter
 
             public ITerminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(_vector ? StockBlocks.Math.Make_Vector : StockBlocks.Math.Break_Vector);
+                var block = writer._codePlacer.PlaceBlock(_vector ? StockBlocks.Math.Make_Vector : StockBlocks.Math.Make_Rotation);
 
                 using (writer.ExpressionBlock())
                 {
-                    writer._codePlacer.Connect(_x.WriteTo(writer), new BlockTerminal(block, "X"));
-                    writer._codePlacer.Connect(_y.WriteTo(writer), new BlockTerminal(block, "Y"));
-                    writer._codePlacer.Connect(_z.WriteTo(writer), new BlockTerminal(block, "Z"));
+                    writer._codePlacer.Connect(_x.WriteTo(writer), new BlockTerminal(block, 3));
+                    writer._codePlacer.Connect(_y.WriteTo(writer), new BlockTerminal(block, 2));
+                    writer._codePlacer.Connect(_z.WriteTo(writer), new BlockTerminal(block, 1));
                 }
 
                 return new BlockTerminal(block, 0);

@@ -33,7 +33,7 @@ public partial class ExecutionTests
     [Arguments(1, 2)]
     [Arguments(-1, -2)]
     public Task Add_Number_ProducesCorrectOutput(float value1, float value2)
-        => TestExpression(AddNumbers(Literal(value1), Literal(value2)), value1  + value2);
+        => TestExpression(AddNumbers(Literal(value1), Literal(value2)), value1 + value2);
 
     [Test]
     [Arguments(1, 2, 3, 4, 5, 6)]
@@ -44,6 +44,16 @@ public partial class ExecutionTests
         var value2 = new Vector3(value2X, value2Y, value2Z);
 
         await TestExpression(AddVectors(Literal(value1), Literal(value2)), value1 + value2);
+    }
+
+    [Test]
+    [Arguments(0, 0, 0)]
+    [Arguments(45, 90, -45)]
+    public async Task Make_Rotation_ProducesCorrectOutput(float x, float y, float z)
+    {
+        const float DegToRad = MathF.PI / 180f;
+
+        await TestExpression(MakeRotation(Literal(x), Literal(y), Literal(z)), Quaternion.CreateFromYawPitchRoll(y * DegToRad, x * DegToRad, z * DegToRad));
     }
 
     private static async Task TestExpression(CodeWriter.IExpression expression, object expected)
