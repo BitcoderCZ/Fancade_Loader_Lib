@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Editing")]
 [assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime")]
+[assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime.Compiled")]
 
 namespace BitcoderCZ.Fancade.Utils;
 

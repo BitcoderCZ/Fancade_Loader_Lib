@@ -1,5 +1,6 @@
 ﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
+using BitcoderCZ.Fancade.Runtime.Compiled.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Compiled.Utils;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Syntax;
@@ -12,10 +13,12 @@ using Microsoft.Extensions.ObjectPool;
 using System.CodeDom.Compiler;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Compiled;
 
@@ -40,9 +43,9 @@ public sealed partial class AstCompiler
 
     private int _localVarCounter = 0;
 
-    private AstCompiler(FcAST ast, TimeSpan timeout, int maxDepth)
+    private AstCompiler(FcAST ast, Options options)
     {
-        _timeout = timeout;
+        _timeout = options.Timeout;
 
         List<FcEnvironment> environments = [];
         List<ImmutableArray<Variable>> variables = [];
@@ -51,7 +54,7 @@ public sealed partial class AstCompiler
         environments.Add(mainEnvironment);
         variables.Add(mainEnvironment.AST.Variables);
 
-        InitEnvironments(mainEnvironment, environments, variables, maxDepth);
+        InitEnvironments(mainEnvironment, environments, variables, options.MaxDepth);
 
         _environments = [.. environments];
         _variables = [.. variables.Select((var, index) => (index, var)).SelectMany(item => item.var.Select(var => (item.index, var)))];
@@ -60,22 +63,27 @@ public sealed partial class AstCompiler
         _writer = new IndentedTextWriter(new StringWriter(_writerBuilder));
     }
 
-    public static string Parse(FcAST ast)
-        => Parse(ast, TimeSpan.FromSeconds(3));
+    /// <exception cref="CompilationErrorException"></exception>
+    public static IAstRunner Compile(FcAST ast, IRuntimeContext ctx, Options options)
+        => TryCompile(ast, ctx, options, out _, out var runner, out var diagnostics)
+            ? runner
+            : throw new CompilationErrorException(diagnostics);
 
-    public static string Parse(FcAST ast, TimeSpan timeout)
-        => Parse(ast, timeout, 4);
+    public static bool TryCompile(FcAST ast, IRuntimeContext ctx, Options options, [NotNullWhen(true)] out IAstRunner? runner)
+        => TryCompile(ast, ctx, options, out _, out runner, out _);
 
-    public static string Parse(FcAST ast, TimeSpan timeout, int maxDepth)
+    public static bool TryCompile(FcAST ast, IRuntimeContext ctx, Options options, out string code, [NotNullWhen(true)] out IAstRunner? runner, [NotNullWhen(false)] out IEnumerable<Diagnostic>? diagnostics)
     {
-        // TODO: constant fold
+        ThrowIfNull(options);
 
-        var compiler = new AstCompiler(ast, timeout, maxDepth);
+        var compiler = new AstCompiler(ast, options);
 
-        return compiler.WriteAll();
+        code = compiler.WriteAll();
+
+        return TryCompileInternal(code, ctx, out diagnostics, out runner);
     }
 
-    public static IAstRunner? Compile(string code, IRuntimeContext ctx)
+    private static bool TryCompileInternal(string code, IRuntimeContext ctx, [NotNullWhen(false)] out IEnumerable<Diagnostic>? diagnostics, [NotNullWhen(true)] out IAstRunner? runner)
     {
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp13));
 
@@ -107,21 +115,13 @@ public sealed partial class AstCompiler
 
             if (!result.Success)
             {
-                // handle exceptions
-                IEnumerable<Diagnostic> failures = result.Diagnostics.Where(diagnostic =>
-                    diagnostic.IsWarningAsError ||
-                    diagnostic.Severity == DiagnosticSeverity.Error);
+                diagnostics = result.Diagnostics.Where(diagnostic =>
+                   diagnostic.IsWarningAsError ||
+                   diagnostic.Severity == DiagnosticSeverity.Error);
 
-                foreach (Diagnostic diagnostic in failures)
-                {
-                    Console.Error.WriteLine($"{diagnostic.Id}, {diagnostic.Location}: {diagnostic.GetMessage()}");
+                runner = null;
 
-                    int start = Math.Max(diagnostic.Location.SourceSpan.Start - 5, 0);
-                    int end = Math.Min(diagnostic.Location.SourceSpan.End + 5, code.Length - 1);
-                    Console.Error.WriteLine(code.AsSpan()[start..end]);
-                }
-
-                return null;
+                return false;
             }
             else
             {
@@ -132,7 +132,10 @@ public sealed partial class AstCompiler
                 // create instance of the desired class and call the desired function
                 Type type = assembly.GetType("BitcoderCZ.Fancade.Runtime.Compiled.Generated.CompiledAST`1")!.MakeGenericType([ctx.GetType()]);
                 object obj = Activator.CreateInstance(type, [ctx])!;
-                return (IAstRunner)obj;
+
+                diagnostics = null;
+                runner = (IAstRunner)obj;
+                return true;
             }
         }
     }
@@ -918,6 +921,39 @@ public sealed partial class AstCompiler
             0 => 1,
             _ => (int)Math.Floor(Math.Log10(i)) + 1,
         };
+
+    public sealed class Options
+    {
+        public static readonly Options Default = new Options();
+
+        private readonly TimeSpan _timeout = TimeSpan.FromSeconds(3);
+        private readonly int _maxDepth = 4;
+
+        public TimeSpan Timeout
+        {
+            get => _timeout;
+            init
+            {
+                if (value.Ticks <= 0 && value != System.Threading.Timeout.InfiniteTimeSpan)
+                {
+                    ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(Timeout)} must be greater than 0, or equal to {nameof(System.Threading.Timeout)}.{nameof(System.Threading.Timeout.InfiniteTimeSpan)}.");
+                }
+
+                _timeout = value;
+            }
+        }
+
+        public int MaxDepth
+        {
+            get => _maxDepth;
+            init
+            {
+                ThrowIfLessThan(value, 1);
+
+                _maxDepth = value;
+            }
+        }
+    }
 
     private readonly struct ExpressionInfo
     {

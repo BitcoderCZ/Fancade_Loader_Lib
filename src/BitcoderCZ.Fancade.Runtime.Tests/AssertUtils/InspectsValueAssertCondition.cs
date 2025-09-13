@@ -94,7 +94,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
 
     private AssertionResult Run(FcAST ast, bool boxArt = false)
     {
-        IEnumerable<Func<FcAST, IRuntimeContext, IAstRunner>> runnerFactories = [(ast, ctx) => new Interpreter(ast, ctx, Timeout), (ast, ctx) => AstCompiler.Compile(AstCompiler.Parse(ast, Timeout), ctx)!];
+        IEnumerable<Func<FcAST, IRuntimeContext, IAstRunner>> runnerFactories = [(ast, ctx) => new Interpreter(ast, ctx, Timeout), (ast, ctx) => AstCompiler.Compile(ast, ctx, new() { Timeout = Timeout })!];
 
         Queue<Inspect> inspectQueue = new();
 
