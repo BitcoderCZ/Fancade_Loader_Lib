@@ -1,10 +1,6 @@
 ﻿using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Fancade.Runtime.Utils;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Numerics;
-using System.Text;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Input;

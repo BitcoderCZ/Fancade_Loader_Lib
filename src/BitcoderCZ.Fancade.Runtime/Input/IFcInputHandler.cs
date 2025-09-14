@@ -1,8 +1,5 @@
 ﻿using BitcoderCZ.Fancade.Editing.Scripting.Settings;
-using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 
 namespace BitcoderCZ.Fancade.Runtime.Input;
 

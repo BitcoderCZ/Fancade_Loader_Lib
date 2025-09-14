@@ -1,4 +1,5 @@
 ﻿using BitcoderCZ.Maths.Vectors;
+using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -155,6 +156,43 @@ public readonly struct Voxels : ICloneable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool InBounds(int3 position)
         => position.InBounds(Size, Size, Size);
+
+    /// <summary>
+    /// Writes the face glue data into a <see cref="BitArray"/>.
+    /// </summary>
+    /// <remarks>
+    /// <see langword="false"/> means that the face has glue; <see langword="true"/> means that the face does not have glue.
+    /// </remarks>
+    /// <param name="destination">The <see cref="BitArray"/> to write into, must be at least <see cref="VoxelCount"/> * 6 elements long.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the <see cref="Voxels"/> instance is empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="destination"/> has less than <see cref="VoxelCount"/> * 6 elements.</exception>
+    public void WriteFaceGlueInfo(BitArray destination)
+    {
+        CheckNotEmpty();
+        ThrowIfLessThan(destination.Length, VoxelCount * 6);
+
+        for (int i = 0; i < VoxelCount * 6; i++)
+        {
+            destination[i] = (_data[i] & 0b_1000_0000) != 0;
+        }
+    }
+
+    /// <summary>
+    /// Gets the face glue data as a <see cref="BitArray"/>.
+    /// </summary>
+    /// <remarks>
+    /// <see langword="false"/> means that the face has glue; <see langword="true"/> means that the face does not have glue.
+    /// </remarks>
+    /// <returns>The <see cref="BitArray"/> with the face data..</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the <see cref="Voxels"/> instance is empty.</exception>
+    public BitArray GetFaceGlueInfo()
+    {
+        CheckNotEmpty();
+
+        var array = new BitArray(VoxelCount * 6);
+        WriteFaceGlueInfo(array);
+        return array;
+    }
 
     /// <summary>
     /// Gets a reference to the voxel at the specified position.

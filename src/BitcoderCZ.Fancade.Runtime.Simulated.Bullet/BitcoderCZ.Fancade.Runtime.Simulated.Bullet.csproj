@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="stylecop.json" />
-  </ItemGroup>
-
-  <ItemGroup>
     <AdditionalFiles Include="stylecop.json" />
   </ItemGroup>
 
@@ -21,18 +17,18 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.9" />
     <PackageReference Include="PolySharp" Version="1.15.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.9" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BitcoderCZ.Fancade.Editing\BitcoderCZ.Fancade.Editing.csproj" />
+    <ProjectReference Include="..\..\libs\BulletSharpPInvoke\BulletSharp\BulletSharp.csproj" />
+    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Simulated\BitcoderCZ.Fancade.Runtime.Simulated.csproj" />
     <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime\BitcoderCZ.Fancade.Runtime.csproj" />
-    <ProjectReference Include="..\BitcoderCZ.Fancade\BitcoderCZ.Fancade.csproj" />
   </ItemGroup>
 
 </Project>

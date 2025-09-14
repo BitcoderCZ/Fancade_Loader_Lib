@@ -25,6 +25,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoderCZ.Fancade.Runtime.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoderCZ.Fancade.Runtime.Tests", "BitcoderCZ.Fancade.Runtime.Tests\BitcoderCZ.Fancade.Runtime.Tests.csproj", "{B5C2ECF1-2040-A263-638C-D4C6B1B3A810}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoderCZ.Fancade.Runtime.Simulated.Bullet", "BitcoderCZ.Fancade.Runtime.Simulated.Bullet\BitcoderCZ.Fancade.Runtime.Simulated.Bullet.csproj", "{DB1F88BC-AFC8-48AC-BA64-B3B33B62AC64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoderCZ.Fancade.Runtime.Simulated", "BitcoderCZ.Fancade.Runtime.Simulated\BitcoderCZ.Fancade.Runtime.Simulated.csproj", "{66D29962-1585-43C1-9C4C-001A447F1987}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BulletSharp", "..\libs\BulletSharpPInvoke\BulletSharp\BulletSharp.csproj", "{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +69,18 @@ Global
 		{B5C2ECF1-2040-A263-638C-D4C6B1B3A810}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5C2ECF1-2040-A263-638C-D4C6B1B3A810}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5C2ECF1-2040-A263-638C-D4C6B1B3A810}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB1F88BC-AFC8-48AC-BA64-B3B33B62AC64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB1F88BC-AFC8-48AC-BA64-B3B33B62AC64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB1F88BC-AFC8-48AC-BA64-B3B33B62AC64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB1F88BC-AFC8-48AC-BA64-B3B33B62AC64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66D29962-1585-43C1-9C4C-001A447F1987}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66D29962-1585-43C1-9C4C-001A447F1987}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66D29962-1585-43C1-9C4C-001A447F1987}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66D29962-1585-43C1-9C4C-001A447F1987}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
