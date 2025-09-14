@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BitcoderCZ.BulletSharp" Version="0.12.0" />
     <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
       <PrivateAssets>all</PrivateAssets>
@@ -26,7 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\libs\BulletSharpPInvoke\BulletSharp\BulletSharp.csproj" />
     <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Simulated\BitcoderCZ.Fancade.Runtime.Simulated.csproj" />
     <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime\BitcoderCZ.Fancade.Runtime.csproj" />
   </ItemGroup>

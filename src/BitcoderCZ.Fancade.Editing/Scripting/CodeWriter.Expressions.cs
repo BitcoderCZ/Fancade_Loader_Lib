@@ -65,10 +65,11 @@ public sealed partial class CodeWriter
         /// Wraps an <see cref="ITerminal"/> as an <see cref="IExpression"/>.
         /// </summary>
         /// <param name="terminal">The terminal to wrap.</param>
+        [Obsolete($"Use {nameof(Editing.Utils.TerminalUtils)}.{nameof(Editing.Utils.TerminalUtils.Wrap)} instead.")]
         public static IExpression WrapTerminal(ITerminal terminal)
             => new TerminalWrapperExpression(terminal);
 
-        private sealed class TerminalWrapperExpression : IExpression
+        internal sealed class TerminalWrapperExpression : IExpression
         {
             private readonly ITerminal _terminal;
 
@@ -147,7 +148,7 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Objects.GetPos"/> block.
         /// </summary>
-        /// <param name="object">The object whose position and rotation should be retrived.</param>
+        /// <param name="object">The object whose position and rotation should be retrieved.</param>
         public static (IExpression Position, IExpression Rotation) GetPos(IExpression @object)
         {
             var expression = new GetPosExpression(@object);
@@ -247,7 +248,7 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Objects.GetSize"/> block.
         /// </summary>
-        /// <param name="object">The object whose size should be retrived.</param>
+        /// <param name="object">The object whose size should be retrieved.</param>
         public static (IExpression Min, IExpression Max) GetSize(IExpression @object)
         {
             var expression = new GetSizeExpression(@object);
@@ -289,7 +290,7 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Physics.GetVelocity"/> block.
         /// </summary>
-        /// <param name="object">The object whose velocity should be retrived.</param>
+        /// <param name="object">The object whose velocity should be retrieved.</param>
         public static (IExpression Velocity, IExpression Spin) GetVelocity(IExpression @object)
         {
             var expression = new GetVelocityExpression(@object);
@@ -564,14 +565,14 @@ public sealed partial class CodeWriter
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Absolute"/> block.
         /// </summary>
-        /// <param name="num">The number whose absolute value should be retrived.</param>
+        /// <param name="num">The number whose absolute value should be retrieved.</param>
         public static IExpression Absolute(IExpression num)
             => new UnaryExpression(num, StockBlocks.Math.Absolute);
 
         /// <summary>
         /// Writes the <see cref="StockBlocks.Math.Logarithm"/> block.
         /// </summary>
-        /// <param name="number">The number whose logarithm value should be retrived.</param>
+        /// <param name="number">The number whose logarithm value should be retrieved.</param>
         /// <param name="base">Base of the logarithm.</param>
         public static IExpression Logarithm(IExpression number, IExpression @base)
             => new BinaryExpression(number, @base, StockBlocks.Math.Logarithm);
@@ -1040,7 +1041,7 @@ public sealed partial class CodeWriter
             }
         }
 
-        // it would be inefficient for expresions with multiple outputs to write the block multiple times, this wrapper allows them to "cache" the block
+        // it would be inefficient for expressions with multiple outputs to write the block multiple times, this wrapper allows them to "cache" the block
         private sealed class MultiOutputExpression : IExpression
         {
             private readonly IMultiOutputExpression _expression;

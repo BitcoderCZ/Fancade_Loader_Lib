@@ -1,5 +1,5 @@
 ﻿using BitcoderCZ.Fancade.Editing.Scripting;
-using BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
+using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 

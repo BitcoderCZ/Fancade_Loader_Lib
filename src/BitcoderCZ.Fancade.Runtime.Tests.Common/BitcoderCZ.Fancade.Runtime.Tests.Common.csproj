@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit.Assertions" Version="0.57.65" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Compiled\BitcoderCZ.Fancade.Runtime.Compiled.csproj" />
+    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Simulated.Bullet\BitcoderCZ.Fancade.Runtime.Simulated.Bullet.csproj" />
+    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime\BitcoderCZ.Fancade.Runtime.csproj" />
+  </ItemGroup>
+
+</Project>

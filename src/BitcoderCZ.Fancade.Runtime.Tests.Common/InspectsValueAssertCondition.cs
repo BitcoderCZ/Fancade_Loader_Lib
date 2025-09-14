@@ -1,5 +1,6 @@
 ﻿using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Fancade.Runtime.Compiled;
+using BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
@@ -7,10 +8,10 @@ using System.Numerics;
 using System.Text;
 using TUnit.Assertions.AssertConditions;
 
-namespace BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
+namespace BitcoderCZ.Fancade.Runtime.Tests.Common;
 
 // TODO: allow using Bullet
-internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expected, int RunFor, TimeSpan Timeout, bool AllowOnlyExpectedInspects) : BaseAssertCondition<FcAST>
+internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expected, int RunFor, TimeSpan Timeout, bool AllowOnlyExpectedInspects, (ushort, PrefabList)? Physics) : BaseAssertCondition<FcAST>
 {
     protected override string GetExpectation()
     {
@@ -105,9 +106,25 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                 TakingBoxArt = boxArt,
             };
 
-            var runner = factory(ast, ctx);
+            IAstRunner runner;
+            if (Physics is { } physics)
+            {
+                runner = FcWorld.Create(physics.Item1, physics.Item2, ctx, physicsCtx => factory(ast, physicsCtx));
+            }
+            else
+            {
+                runner = factory(ast, ctx);
+            }
 
-            var res = Run(runner, inspectQueue, ctx);
+            AssertionResult res;
+            try
+            {
+                res = Run(runner, inspectQueue, ctx);
+            }
+            finally
+            {
+                runner.Dispose();
+            }
 
             if (!res.IsPassed)
             {
@@ -224,8 +241,8 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
 
     private static bool Equals(RuntimeValue a, object b, SignalType type)
     {
-        const float MaxDeltaNumber = Runtime.Constants.EqualsNumbersMaxDiff;
-        const float MaxDeltaVector = Runtime.Constants.EqualsVectorsMaxDiff;
+        const float MaxDeltaNumber = Constants.EqualsNumbersMaxDiff;
+        const float MaxDeltaVector = Constants.EqualsVectorsMaxDiff;
         const float MaxDeltaRotation = 0.001f;
 
         return type switch

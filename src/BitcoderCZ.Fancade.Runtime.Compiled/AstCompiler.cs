@@ -332,7 +332,12 @@ public sealed partial class AstCompiler
                 _writer.WriteLine("return _environments[index];");
             }
 
-            if (_timeout != Timeout.InfiniteTimeSpan)
+            using (_writer.CurlyIndent("public void Dispose()"))
+            {
+                // empty
+            }
+
+                if (_timeout != Timeout.InfiniteTimeSpan)
             {
                 _writer.WriteLineAll("""
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]

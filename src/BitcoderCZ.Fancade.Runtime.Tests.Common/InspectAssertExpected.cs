@@ -2,10 +2,10 @@
 using System.Diagnostics;
 using System.Numerics;
 
-namespace BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
+namespace BitcoderCZ.Fancade.Runtime.Tests.Common;
 
 // TODO: allow specifying if assert should (not) be in late update
-internal readonly struct InspectAssertExpected : ISpanFormattable
+public readonly struct InspectAssertExpected : ISpanFormattable
 {
     public InspectAssertExpected(object value)
         : this(value, value switch

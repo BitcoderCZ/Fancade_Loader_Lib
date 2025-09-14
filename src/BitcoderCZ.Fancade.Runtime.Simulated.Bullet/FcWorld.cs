@@ -1,9 +1,9 @@
-﻿using BitcoderCZ.Fancade.Editing;
+﻿using BitcoderCZ.BulletSharp;
+using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet.Utils;
 using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
 using BitcoderCZ.Maths.Vectors;
-using BulletSharp;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
@@ -11,7 +11,7 @@ using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 
-public sealed partial class FcWorld : IDisposable
+public sealed partial class FcWorld : IAstRunner
 {
     private readonly DiscreteDynamicsWorld _world;
 
@@ -44,6 +44,10 @@ public sealed partial class FcWorld : IDisposable
     private int _constraintIdCounter = 1;
 
     private int _disposed;
+
+    public IEnumerable<Variable> GlobalVariables => _runner.GlobalVariables;
+
+    public int EnvironmentCount => _runner.EnvironmentCount;
 
     private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId)
     {
@@ -161,6 +165,97 @@ public sealed partial class FcWorld : IDisposable
 
         _runtimeCtx.CurrentFrame++;
     }
+
+    public Action RunFrame()
+    {
+        const float TimeStep = 1f / 60f;
+
+        if (_disposed == 1)
+        {
+            throw new ObjectDisposedException(nameof(FcWorld));
+        }
+
+        var lateUpdate = _runner.RunFrame();
+
+        foreach (var rObject in _objects)
+        {
+            rObject.MaxForceCollision = RuntimeObject.CollisionInfo.Default;
+        }
+
+        _world.StepSimulation(TimeStep);
+
+        int numManifolds = _world.Dispatcher.NumManifolds;
+        for (int i = 0; i < numManifolds; i++)
+        {
+            var manifold = _world.Dispatcher.GetManifoldByIndexInternal(i);
+
+            int numContacts = manifold.NumContacts;
+            if (numContacts == 0)
+            {
+                continue;
+            }
+
+            float maxImpulse = 0f;
+            ManifoldPoint? strongestPoint = null;
+
+            for (int j = 0; j < numContacts; j++)
+            {
+                var pt = manifold.GetContactPoint(j);
+                if (pt.AppliedImpulse > maxImpulse)
+                {
+                    maxImpulse = pt.AppliedImpulse;
+                    strongestPoint = pt;
+                }
+            }
+
+            // TODO: IsActive and Distance not needed originally, also AppliedImpulse seems to be higher with my impl, fancade uses custom collision algorithm so that might be the cause, but I can't replicate that with BulletSharp (without modifying it, which I don't want to/can't do); investigate why
+            if (strongestPoint == null || maxImpulse < 0.1f || strongestPoint.Distance > -0.005f)
+            {
+                continue;
+            }
+
+            manifold.ClearManifold();
+
+            var bodyA = manifold.Body0 as RigidBody;
+            var bodyB = manifold.Body1 as RigidBody;
+
+            int idA = bodyA?.UserIndex ?? -1;
+            int idB = bodyB?.UserIndex ?? -1;
+
+            Vector3 normalOnB = strongestPoint.NormalWorldOnB;
+
+            if (idA != -1 && TryGetObject((FcObject)idA, out var rA) && rA.RigidBody.IsActive)
+            {
+                rA.MaxForceCollision = new RuntimeObject.CollisionInfo(maxImpulse, (FcObject)idB, normalOnB);
+            }
+
+            if (idB != -1 && TryGetObject((FcObject)idB, out var rB) && rB.RigidBody.IsActive)
+            {
+                rB.MaxForceCollision = new RuntimeObject.CollisionInfo(maxImpulse, (FcObject)idA, -normalOnB);
+            }
+        }
+
+        foreach (var rObject in _objects)
+        {
+            rObject.Update();
+        }
+
+        return () =>
+        {
+            lateUpdate();
+
+            _runtimeCtx.CurrentFrame++;
+        };
+    }
+
+    public void Reset()
+        => throw new NotImplementedException();
+
+    public Span<RuntimeValue> GetGlobalVariableValue(Variable variable)
+        => _runner.GetGlobalVariableValue(variable);
+
+    public IFcEnvironment GetEnvironment(int index)
+        => _runner.GetEnvironment(index);
 
     private void InitObjects(ushort mainId)
     {
@@ -339,7 +434,14 @@ public sealed partial class FcWorld : IDisposable
 
                 if (!terminalInfo.OutputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
                 {
-                    int meshIndex = meshInfo.BlockMeshIds[segmentMeshes.VoxelMeshIndex[Voxels.Index(connection.FromVoxel % 8, 0)] + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)]];
+                    int localMeshIndex = segmentMeshes.VoxelMeshIndex[Voxels.Index(connection.FromVoxel % 8, 0)];
+                    if (localMeshIndex == 255)
+                    {
+                        // connected to empty voxel
+                        continue;
+                    }
+
+                    int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)]];
 
                     var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
 

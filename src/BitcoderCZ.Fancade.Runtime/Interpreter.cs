@@ -194,6 +194,12 @@ public sealed class Interpreter : IAstRunner
     public IFcEnvironment GetEnvironment(int index)
         => _environments[index];
 
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        // empty
+    }
+
     private static void InitEnvironments(FcEnvironment outer, List<FcEnvironment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
     {
         if (depth > maxDepth)

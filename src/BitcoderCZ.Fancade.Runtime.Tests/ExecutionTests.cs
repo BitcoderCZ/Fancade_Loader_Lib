@@ -5,7 +5,7 @@ using BitcoderCZ.Fancade.Editing.Scripting.Placers;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Syntax;
-using BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
+using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;

@@ -9,6 +9,13 @@ namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
 public readonly struct GameMeshInfo
 {
+    private static readonly
+#if NET9_0_OR_GREATER
+        Lock
+#else
+        object
+#endif
+        _initLock = new();
     private static (ushort Id, BlockMesh Mesh)[]? stockBlockMeshes;
     private static PrefabSegmentMeshes[]? stockSegmentMeshes;
     private static bool stockInitialized = false;
@@ -92,31 +99,34 @@ public readonly struct GameMeshInfo
     [MemberNotNull(nameof(stockBlockMeshes), nameof(stockSegmentMeshes))]
     private static void InitStock()
     {
-        if (stockInitialized)
+        lock (_initLock)
         {
-            Debug.Assert(stockBlockMeshes is not null);
-            Debug.Assert(stockSegmentMeshes is not null);
-            return;
-        }
+            if (stockInitialized)
+            {
+                Debug.Assert(stockBlockMeshes is not null);
+                Debug.Assert(stockSegmentMeshes is not null);
+                return;
+            }
 
-        stockInitialized = true;
+            stockInitialized = true;
 
-        var stockPrefabs = StockBlocks.PrefabList;
+            var stockPrefabs = StockBlocks.PrefabList;
 
-        stockBlockMeshes = new (ushort, BlockMesh)[stockPrefabs.PrefabCount];
-        stockSegmentMeshes = new PrefabSegmentMeshes[stockPrefabs.SegmentCount];
+            stockBlockMeshes = new (ushort, BlockMesh)[stockPrefabs.PrefabCount];
+            stockSegmentMeshes = new PrefabSegmentMeshes[stockPrefabs.SegmentCount];
 
-        for (ushort i = 0; i < stockSegmentMeshes.Length; i++)
-        {
-            stockSegmentMeshes[i] = PrefabSegmentMeshes.Create(stockPrefabs.GetSegment(i));
-        }
+            for (ushort i = 0; i < stockSegmentMeshes.Length; i++)
+            {
+                stockSegmentMeshes[i] = PrefabSegmentMeshes.Create(stockPrefabs.GetSegment(i));
+            }
 
-        PrefabList emptyList = new();
+            PrefabList emptyList = new();
 
-        int prefabIndex = 0;
-        foreach (var prefab in stockPrefabs.OrderBy(prefab => prefab.Id))
-        {
-            stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, emptyList, stockSegmentMeshes));
+            int prefabIndex = 0;
+            foreach (var prefab in stockPrefabs.OrderBy(prefab => prefab.Id))
+            {
+                stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, emptyList, stockSegmentMeshes));
+            }
         }
     }
 }

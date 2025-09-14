@@ -1,4 +1,4 @@
-﻿namespace BitcoderCZ.Fancade.Runtime.Tests.AssertUtils;
+﻿namespace BitcoderCZ.Fancade.Runtime.Tests.Common;
 
 public enum InspectFrequency
 {

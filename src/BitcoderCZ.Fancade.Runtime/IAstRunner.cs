@@ -5,7 +5,7 @@ namespace BitcoderCZ.Fancade.Runtime;
 /// <summary>
 /// Methods for running a <see cref="FcAST"/> and accessing its global variables.
 /// </summary>
-public interface IAstRunner
+public interface IAstRunner : IDisposable
 {
     /// <summary>
     /// Gets the global variables of the underlying <see cref="FcAST"/>.

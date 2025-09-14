@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		Directory.Build.props = Directory.Build.props
+		nuget.config = nuget.config
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BitcoderCZ.Fancade.Tests", "BitcoderCZ.Fancade.Tests\BitcoderCZ.Fancade.Tests.csproj", "{4CDB30B1-F40F-AE0A-AC4C-F54975BB1F19}"
@@ -29,7 +30,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoderCZ.Fancade.Runtime.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoderCZ.Fancade.Runtime.Simulated", "BitcoderCZ.Fancade.Runtime.Simulated\BitcoderCZ.Fancade.Runtime.Simulated.csproj", "{66D29962-1585-43C1-9C4C-001A447F1987}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BulletSharp", "..\libs\BulletSharpPInvoke\BulletSharp\BulletSharp.csproj", "{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoderCZ.Fancade.Runtime.Simulated.Tests", "BitcoderCZ.Fancade.Runtime.Simulated.Tests\BitcoderCZ.Fancade.Runtime.Simulated.Tests.csproj", "{7A3811BA-DAE9-CD7F-C110-FCE8FB92AB54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitcoderCZ.Fancade.Runtime.Tests.Common", "BitcoderCZ.Fancade.Runtime.Tests.Common\BitcoderCZ.Fancade.Runtime.Tests.Common.csproj", "{F6334DBF-52EC-4B21-82F0-1521B298BD0A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -77,10 +80,14 @@ Global
 		{66D29962-1585-43C1-9C4C-001A447F1987}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{66D29962-1585-43C1-9C4C-001A447F1987}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{66D29962-1585-43C1-9C4C-001A447F1987}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F0C5628E-1297-3EC7-45EA-6286D97AA0B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A3811BA-DAE9-CD7F-C110-FCE8FB92AB54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3811BA-DAE9-CD7F-C110-FCE8FB92AB54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A3811BA-DAE9-CD7F-C110-FCE8FB92AB54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A3811BA-DAE9-CD7F-C110-FCE8FB92AB54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6334DBF-52EC-4B21-82F0-1521B298BD0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6334DBF-52EC-4B21-82F0-1521B298BD0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6334DBF-52EC-4B21-82F0-1521B298BD0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6334DBF-52EC-4B21-82F0-1521B298BD0A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

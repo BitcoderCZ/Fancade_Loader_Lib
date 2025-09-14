@@ -18,6 +18,14 @@ namespace BitcoderCZ.Fancade.Editing;
 /// </summary>
 public static class StockBlocks
 {
+    private static readonly
+#if NET9_0_OR_GREATER
+        Lock
+#else
+        object
+#endif
+        _prefabListInitLock = new();
+
     private static PartialPrefabList? _partialPrefabList;
     private static PrefabList? _prefabList;
 
@@ -34,9 +42,15 @@ public static class StockBlocks
         {
             if (_partialPrefabList is null)
             {
-                using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcppl");
-                using var reader = new FcBinaryReader(resourceStream);
-                _partialPrefabList = PartialPrefabList.Load(reader);
+                lock (_prefabListInitLock)
+                {
+                    if (_partialPrefabList is null)
+                    {
+                        using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcppl");
+                        using var reader = new FcBinaryReader(resourceStream);
+                        _partialPrefabList = PartialPrefabList.Load(reader);
+                    }
+                }
             }
 
             return _partialPrefabList;
@@ -54,26 +68,33 @@ public static class StockBlocks
         {
             if (_prefabList is null)
             {
-                using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcpl");
-                using var reader = new FcBinaryReader(resourceStream);
-                _prefabList = PrefabList.Load(reader);
-
-                foreach (var prefab in _prefabList.Prefabs)
+                lock (_prefabListInitLock)
                 {
-                    if (TryGetBlockDef(prefab.Id, out var def) && def.Terminals.Length > 0)
+                    if (_prefabList is null)
                     {
-                        foreach (var terminal in def.Terminals)
+                        using var resourceStream = ResourceUtils.GetResource("stockPrefabs.fcpl");
+                        using var reader = new FcBinaryReader(resourceStream);
+                        var prefabList = PrefabList.Load(reader);
+
+                        foreach (var prefab in prefabList.Prefabs)
                         {
-                            prefab.Settings[(ushort3)terminal.Position] = prefab.Settings
-                                .GetValueOrDefault((ushort3)terminal.Position, PrefabSettings.Empty)
-                                .WithValueAt(0, new PrefabSetting(
-                                    SettingTypeUtils.FromTerminalSignalType(terminal.SignalType, terminal.Type == TerminalType.In),
-                                    terminal.Name ?? TerminalDef.GetDefaultName(terminal.SignalType)));
+                            if (TryGetBlockDef(prefab.Id, out var def) && def.Terminals.Length > 0)
+                            {
+                                foreach (var terminal in def.Terminals)
+                                {
+                                    prefab.Settings[(ushort3)terminal.Position] = prefab.Settings
+                                        .GetValueOrDefault((ushort3)terminal.Position, PrefabSettings.Empty)
+                                        .WithValueAt(0, new PrefabSetting(
+                                            SettingTypeUtils.FromTerminalSignalType(terminal.SignalType, terminal.Type == TerminalType.In),
+                                            terminal.Name ?? TerminalDef.GetDefaultName(terminal.SignalType)));
+                                }
+                            }
                         }
+
+                        prefabList.AddImplicitConnections();
+                        _prefabList = prefabList;
                     }
                 }
-
-                _prefabList.AddImplicitConnections();
             }
 
             return _prefabList;
@@ -115,6 +136,42 @@ public static class StockBlocks
     /// <returns><see langword="true"/> if the specified <see cref="BlockDef"/> exists; otherwise, <see langword="false"/>.</returns>
     public static bool TryGetBlockDef(ushort id, [MaybeNullWhen(false)] out BlockDef blockDef)
         => Blocks.TryGetValue(id, out blockDef);
+
+    /// <summary>
+    /// The stock blocks in the templates category.
+    /// </summary>
+    public static class Templates
+    {
+        /// <summary>
+        /// The Box block.
+        /// </summary>
+        public static readonly BlockDef Box = new BlockDef("Box", 388, ScriptBlockType.NonScript, PrefabType.Normal, new int3(1, 1, 1), TerminalBuilder.Empty);
+
+        /// <summary>
+        /// The Sphere block.
+        /// </summary>
+        public static readonly BlockDef Sphere = new BlockDef("Sphere", 546, ScriptBlockType.NonScript, PrefabType.Normal, new int3(1, 1, 1), TerminalBuilder.Empty);
+
+        /// <summary>
+        /// The Physics Box block.
+        /// </summary>
+        public static readonly BlockDef PhysicsBox = new BlockDef("Physics Box", 425, ScriptBlockType.NonScript, PrefabType.Physics, new int3(1, 1, 1), TerminalBuilder.Empty);
+
+        /// <summary>
+        /// The Physics Sphere block.
+        /// </summary>
+        public static readonly BlockDef PhysicsSphere = new BlockDef("Physics Sphere", 426, ScriptBlockType.NonScript, PrefabType.Physics, new int3(1, 1, 1), TerminalBuilder.Empty);
+
+        /// <summary>
+        /// The Pass Through block.
+        /// </summary>
+        public static readonly BlockDef PassThrough = new BlockDef("Pass Through", 448, ScriptBlockType.NonScript, PrefabType.Normal, new int3(1, 1, 1), TerminalBuilder.Empty);
+
+        /// <summary>
+        /// The "Script Block" block.
+        /// </summary>
+        public static readonly BlockDef ScriptBlock = new BlockDef("Script Block", 545, ScriptBlockType.NonScript, PrefabType.Script, new int3(1, 1, 1), TerminalBuilder.Empty);
+    }
 
     /// <summary>
     /// The stock blocks in the game category.

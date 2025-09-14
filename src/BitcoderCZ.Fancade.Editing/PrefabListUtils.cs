@@ -96,17 +96,18 @@ public static class PrefabListUtils
     }
 
     /// <summary>
-    /// Adds the connections between blocks that are rigth next to each other.
+    /// Adds the connections between blocks that are right next to each other.
     /// </summary>
     /// <param name="list">The list to operate on.</param>
     /// <param name="terminalInfos"><see cref="PrefabTerminalInfo"/>s for <paramref name="list"/> <b>AND</b> <see cref="StockBlocks.PrefabList"/>.</param>
     public static void AddImplicitConnections(this PrefabList list, FrozenDictionary<ushort, PrefabTerminalInfo>? terminalInfos = null) // TODO: add tests
     {
-        var stockPrefabs = StockBlocks.PrefabList;
+        PrefabList stockPrefabs;
 
         if (list.IdOffset == 0)
         {
-            // is stock
+            stockPrefabs = list;
+
             terminalInfos ??= PrefabTerminalInfo.Create(list, id =>
             {
                 return list.TryGetSegment(id, out var segment) && list.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
@@ -114,6 +115,7 @@ public static class PrefabListUtils
         }
         else
         {
+            stockPrefabs = StockBlocks.PrefabList;
             terminalInfos ??= PrefabTerminalInfo.Create(stockPrefabs.Concat(list), id =>
             {
                 if (id < RawGame.CurrentNumbStockPrefabs)
