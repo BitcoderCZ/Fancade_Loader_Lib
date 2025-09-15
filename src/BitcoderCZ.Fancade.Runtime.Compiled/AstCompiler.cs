@@ -337,7 +337,7 @@ public sealed partial class AstCompiler
                 // empty
             }
 
-                if (_timeout != Timeout.InfiniteTimeSpan)
+            if (_timeout != Timeout.InfiniteTimeSpan)
             {
                 _writer.WriteLineAll("""
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]

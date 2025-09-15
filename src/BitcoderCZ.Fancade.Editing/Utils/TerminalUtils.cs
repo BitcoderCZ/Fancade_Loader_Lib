@@ -1,7 +1,4 @@
 ﻿using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter;
 
 namespace BitcoderCZ.Fancade.Editing.Utils;
