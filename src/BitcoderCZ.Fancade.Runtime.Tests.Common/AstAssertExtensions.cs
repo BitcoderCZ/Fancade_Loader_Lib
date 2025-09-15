@@ -8,5 +8,5 @@ public static class AstAssertExtensions
 {
     public static InvokableValueAssertionBuilder<FcAST> Inspects(this IValueSource<FcAST> valueSource, IEnumerable<InspectAssertExpected> asserts, int runFor = 2, (ushort, PrefabList)? physics = null, [CallerArgumentExpression(nameof(asserts))] string doNotPopulateThisValue1 = "")
         => valueSource
-            .RegisterAssertion(new InspectsValueAssertCondition([.. asserts], runFor, TimeSpan.FromSeconds(3), true, physics), [doNotPopulateThisValue1]);
+            .RegisterAssertion(new InspectsValueAssertCondition([.. asserts], runFor, TimeSpan.FromSeconds(10), true, physics), [doNotPopulateThisValue1]);
 }

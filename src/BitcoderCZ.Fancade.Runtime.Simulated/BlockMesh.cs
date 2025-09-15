@@ -56,7 +56,14 @@ public readonly struct BlockMesh
         {
             blockMeshIdOffsets[i] = (ushort)totalSegmentMeshCount;
 
-            totalSegmentMeshCount += segmentMeshes[blocksArray[i]].MeshCount;
+            ushort segmentId = blocksArray[i];
+
+            if (segmentId == 0 || (segmentId < RawGame.CurrentNumbStockPrefabs ? StockBlocks.IsScriptSegment(segmentId) : prefabs.GetPrefab(prefabs.GetSegment(segmentId).PrefabId).Type == PrefabType.Script))
+            {
+                continue;
+            }
+
+            totalSegmentMeshCount += segmentMeshes[segmentId].MeshCount;
         }
 
         var stockPrefabs = StockBlocks.PrefabList;
@@ -77,22 +84,7 @@ public readonly struct BlockMesh
                 continue;
             }
 
-            int iVar21 = blocksSize.X * blocksSize.Y;
-            short sVar12 = 0;
-            if (iVar21 != 0)
-            {
-                sVar12 = (short)(blockIndex / iVar21);
-            }
-
-            iVar21 = blockIndex - sVar12 * iVar21;
-
-            short sVar13 = 0;
-            if (blocksSize.X != 0)
-            {
-                sVar13 = (short)(iVar21 / blocksSize.X);
-            }
-
-            short sVar5 = (short)(iVar21 - sVar13 * blocksSize.X);
+            int3 blockPos = blocks.Array.Index(blockIndex);
 
             var segment = GetSegment(blockId);
 
@@ -115,7 +107,7 @@ public readonly struct BlockMesh
 
                     Debug.Assert(stack.Count == 0);
 
-                    stack.Push((new int3(sVar5, sVar13, sVar12), (short)segmentMeshIndex));
+                    stack.Push((blockPos, (short)segmentMeshIndex));
 
                     while (stack.TryPop(out var item))
                     {

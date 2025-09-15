@@ -40,6 +40,31 @@ public class FcWorldTests
     }
 
     [Test]
+    public async Task Physics_ObjectFalls_2()
+    {
+        var writer = CreateWriter(out var prefab);
+
+        var blocks = prefab.Blocks;
+        blocks.SetPrefab(new int3(50, 1, 1), StockBlocks.Templates.PhysicsBox.Prefab);
+
+        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 1)) { VoxelPosition = int3.Zero };
+        writer.PlaySensor(writer =>
+        {
+            writer.Inspect(GreaterThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(1.4f)));
+        });
+
+        writer.If(EqualsNumbers(CurrentFrame(), Number(120f)),
+        @true: writer =>
+        {
+            writer.Inspect(LessThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(0.6f)));
+        }, null);
+
+        var compiled = Compile(writer, out var prefabs);
+
+        await Assert.That(compiled).Inspects([new(true) { Count = 2 }], runFor: 121, physics: (prefab.Id, prefabs));
+    }
+
+    [Test]
     public async Task Physics_NonPhysics_DoesNotMove()
     {
         var writer = CreateWriter(out var prefab);

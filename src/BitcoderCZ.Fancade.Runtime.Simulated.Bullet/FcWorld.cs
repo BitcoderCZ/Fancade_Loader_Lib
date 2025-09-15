@@ -264,7 +264,7 @@ public sealed partial class FcWorld : IAstRunner
 
         foreach (var prefab in stockPrefabs.Concat(_prefabs))
         {
-            if (!usedPrefabs.Used(prefab.Id) || (prefab.Id < RawGame.CurrentNumbStockPrefabs && StockIsScript.Data[prefab.Id]))
+            if (!usedPrefabs.Used(prefab.Id) || (prefab.Id < RawGame.CurrentNumbStockPrefabs && StockBlocks.IsScriptPrefab(prefab.Id)))
             {
                 continue;
             }
@@ -331,7 +331,7 @@ public sealed partial class FcWorld : IAstRunner
                                     sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
                                 }
                             }
-                            else
+                            else if (currentPrefab.Type == PrefabType.Normal)
                             {
                                 for (int meshIndex = 0; meshIndex < currentSegmentMesh.MeshCount; meshIndex++)
                                 {
@@ -406,7 +406,7 @@ public sealed partial class FcWorld : IAstRunner
         foreach (var prefab in stockPrefabs.Concat(_prefabs))
         {
             if (!usedPrefabs.Used(prefab.Id) ||
-                (prefab.Id < RawGame.CurrentNumbStockPrefabs && StockIsScript.Data[prefab.Id]) ||
+                (prefab.Id < RawGame.CurrentNumbStockPrefabs && StockBlocks.IsScriptPrefab(prefab.Id)) ||
                 prefab.Connections.Count == 0)
             {
                 continue;
@@ -441,6 +441,7 @@ public sealed partial class FcWorld : IAstRunner
                         continue;
                     }
 
+                    int off = meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)];
                     int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)]];
 
                     var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
