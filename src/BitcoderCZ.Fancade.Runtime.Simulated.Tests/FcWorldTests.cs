@@ -8,6 +8,7 @@ using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
+using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Tests;
@@ -82,6 +83,42 @@ public class FcWorldTests
         var compiled = Compile(writer, out var prefabs);
 
         await Assert.That(compiled).Inspects([new(true) { Count = 2 }], runFor: 121, physics: (prefab.Id, prefabs));
+    }
+
+    [Test]
+    public async Task ConnectionToBlock_ConnectsToCorrectBlock()
+    {
+        var writer = CreateWriter(out var prefab);
+
+        var blocks = prefab.Blocks;
+        blocks.SetPrefab(new int3(4, 2, 1), StockBlocks.Templates.Box.Prefab);
+        blocks.SetPrefab(new int3(4, 0, 0), StockBlocks.Templates.Box.Prefab);
+        blocks.SetPrefab(new int3(4, 0, 1), StockBlocks.Templates.Box.Prefab);
+
+        var terminal = new AbsolutePositionTerminal(new int3(4, 2, 1)) { VoxelPosition = int3.Zero };
+        writer.Inspect(GetPos(terminal.Wrap()).Position);
+
+        var compiled = Compile(writer, out var prefabs);
+
+        await Assert.That(compiled).Inspects([new(new Vector3(4.5f, 2.5f, 1.5f)) { Frequency = InspectFrequency.EveryFrame }], physics: (prefab.Id, prefabs));
+    }
+
+    [Test]
+    public async Task ConnectionToBlock_ConnectsToCorrectBlock_2()
+    {
+        var writer = CreateWriter(out var prefab);
+
+        var blocks = prefab.Blocks;
+        blocks.SetPrefab(new int3(4, 2, 1), StockBlocks.Templates.Box.Prefab);
+        blocks.SetPrefab(new int3(4, 0, 0), StockBlocks.Templates.Box.Prefab);
+        blocks.SetPrefab(new int3(4, 0, 1), StockBlocks.Templates.Box.Prefab);
+
+        var terminal = new AbsolutePositionTerminal(new int3(4, 0, 0)) { VoxelPosition = int3.Zero };
+        writer.Inspect(GetPos(terminal.Wrap()).Position);
+
+        var compiled = Compile(writer, out var prefabs);
+
+        await Assert.That(compiled).Inspects([new(new Vector3(4.5f, 0.5f, 1f)) { Frequency = InspectFrequency.EveryFrame }], physics: (prefab.Id, prefabs));
     }
 
     private static CodeWriter CreateWriter(out Prefab prefab)

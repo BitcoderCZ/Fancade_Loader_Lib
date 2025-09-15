@@ -441,8 +441,7 @@ public sealed partial class FcWorld : IAstRunner
                         continue;
                     }
 
-                    int off = meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)];
-                    int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)]];
+                    int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(meshInfo.BlockMeshIdOffsets.Size.X, meshInfo.BlockMeshIdOffsets.Size.Y)]];
 
                     var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
 
