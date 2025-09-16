@@ -130,12 +130,10 @@ public sealed class PrefabSegmentMeshes
         PrefabSegmentMesh[] meshes = new PrefabSegmentMesh[meshCount];
 
         Span<byte> currentMeshVoxels = stackalloc byte[8 * 8 * 8 * 6];
-        Span<byte> buffer64 = stackalloc byte[64];
-        byte[] some_buffer_for_tex_optimization = new byte[10240];
 
         Span<byte> rawVoxels = voxels.Data;
 
-        Span<ulong> mesh_bitfield = stackalloc ulong[6];
+        Span<ulong> sideBitfield = stackalloc ulong[6];
 
         short3 voxelsMin = new short3(short.MaxValue, short.MaxValue, short.MaxValue);
         short3 voxelsMax = new short3(short.MinValue, short.MinValue, short.MinValue);
@@ -154,7 +152,7 @@ public sealed class PrefabSegmentMeshes
 
             currentMeshVoxels.Clear();
 
-            mesh_bitfield.Clear();
+            sideBitfield.Clear();
 
             ulong value = 0;
             var rawVoxelsSlice = rawVoxels[7..];
@@ -205,7 +203,7 @@ public sealed class PrefabSegmentMeshes
                 rawVoxelsSlice = rawVoxelsSlice[64..];
             } while (voxelIndex != 71);
 
-            mesh_bitfield[0] = value;
+            sideBitfield[0] = value;
 
             value = 0;
             rawVoxelsSlice = currentMeshVoxels[512..];
@@ -256,7 +254,7 @@ public sealed class PrefabSegmentMeshes
                 rawVoxelsSlice = rawVoxelsSlice[64..];
             } while (voxelIndex != 71);
 
-            mesh_bitfield[1] = value;
+            sideBitfield[1] = value;
 
             value = 0;
             rawVoxelsSlice = currentMeshVoxels[1080..];
@@ -307,7 +305,7 @@ public sealed class PrefabSegmentMeshes
                 rawVoxelsSlice = rawVoxelsSlice[64..];
             } while (voxelIndex != 71);
 
-            mesh_bitfield[2] = value;
+            sideBitfield[2] = value;
 
             value = 0;
             rawVoxelsSlice = currentMeshVoxels[1536..];
@@ -358,7 +356,7 @@ public sealed class PrefabSegmentMeshes
                 rawVoxelsSlice = rawVoxelsSlice[64..];
             } while (voxelIndex != 71);
 
-            mesh_bitfield[3] = value;
+            sideBitfield[3] = value;
 
             value = 0;
             voxelIndex = 0;
@@ -408,49 +406,49 @@ public sealed class PrefabSegmentMeshes
                 voxelIndex += 8;
             } while (voxelIndex != 64);
 
-            mesh_bitfield[4] = value;
+            sideBitfield[4] = value;
 
             value = 0;
             voxelIndex = 0;
 
             do
             {
-                if (rawVoxels[voxelIndex + 2560] != 0)
+                if (rawVoxels[voxelIndex + (512 * 5) + 0] != 0)
                 {
                     value |= 1UL << (voxelIndex + 0 & 0b0011_1111);
                 }
 
-                if (rawVoxels[voxelIndex + 2561] != 0)
+                if (rawVoxels[voxelIndex + (512 * 5) + 1] != 0)
                 {
                     value |= 1UL << (voxelIndex + 1 & 0b0011_1111);
                 }
 
-                if (rawVoxels[voxelIndex + 2562] != 0)
+                if (rawVoxels[voxelIndex + (512 * 5) + 2] != 0)
                 {
                     value |= 1UL << (voxelIndex + 2 & 0b0011_1111);
                 }
 
-                if (rawVoxels[voxelIndex + 2563] != 0)
+                if (rawVoxels[voxelIndex + (512 * 5) + 3] != 0)
                 {
                     value |= 1UL << (voxelIndex + 3 & 0b0011_1111);
                 }
 
-                if (rawVoxels[voxelIndex + 2564] != 0)
+                if (rawVoxels[voxelIndex + (512 * 5) + 4] != 0)
                 {
                     value |= 1UL << (voxelIndex + 4 & 0b0011_1111);
                 }
 
-                if (rawVoxels[voxelIndex + 2565] != 0)
+                if (rawVoxels[voxelIndex + (512 * 5) + 5] != 0)
                 {
                     value |= 1UL << (voxelIndex + 5 & 0b0011_1111);
                 }
 
-                if (rawVoxels[voxelIndex + 2566] != 0)
+                if (rawVoxels[voxelIndex + (512 * 5) + 6] != 0)
                 {
                     value |= 1UL << (voxelIndex + 6 & 0b0011_1111);
                 }
 
-                if (rawVoxels[voxelIndex + 2567] != 0)
+                if (rawVoxels[voxelIndex + (512 * 5) + 7] != 0)
                 {
                     value |= 1UL << (voxelIndex + 7 & 0b0011_1111);
                 }
@@ -458,7 +456,7 @@ public sealed class PrefabSegmentMeshes
                 voxelIndex += 8;
             } while (voxelIndex != 64);
 
-            mesh_bitfield[5] = value;
+            sideBitfield[5] = value;
 
             int meshVoxelCount = 0;
 
@@ -470,10 +468,8 @@ public sealed class PrefabSegmentMeshes
                 }
             }
 
-            meshes[meshIndex] = new PrefabSegmentMesh(Math.Min(meshVoxelCount / 2, 255), mesh_bitfield);
+            meshes[meshIndex] = new PrefabSegmentMesh(meshVoxelCount, sideBitfield);
         }
-
-        // uvs offset by chunk pos
 
         return meshes;
     }

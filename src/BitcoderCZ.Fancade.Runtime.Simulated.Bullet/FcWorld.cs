@@ -7,6 +7,7 @@ using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
@@ -45,9 +46,18 @@ public sealed partial class FcWorld : IAstRunner
 
     private int _disposed;
 
+    public ref readonly GameMeshInfo GameMeshInfo => ref _gameMesh;
+
+    public IEnumerable<RuntimeObject> Objects => _objects;
+
+    public ReadOnlySpan<RuntimeObject> ObjectsSpan => CollectionsMarshal.AsSpan(_objects);
+
     public IEnumerable<Variable> GlobalVariables => _runner.GlobalVariables;
 
     public int EnvironmentCount => _runner.EnvironmentCount;
+
+    public event Action<RuntimeObject, RuntimeObject>? OnObjectCreated;
+    public event Action<RuntimeObject>? OnObjectDestroyed;
 
     private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId)
     {
@@ -421,8 +431,8 @@ public sealed partial class FcWorld : IAstRunner
                     continue;
                 }
 
-                ushort blockId = prefab.Blocks.GetBlock(connection.From);
-                ushort segmentId = prefab.Blocks.GetBlock(connection.From + connection.FromVoxel / 8);
+                ushort blockId = prefab.Blocks.GetBlockOrDefault(connection.From);
+                ushort segmentId = prefab.Blocks.GetBlockOrDefault(connection.From + connection.FromVoxel / 8);
 
                 if (blockId == 0 || segmentId == 0)
                 {
@@ -441,7 +451,7 @@ public sealed partial class FcWorld : IAstRunner
                         continue;
                     }
 
-                    int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(meshInfo.BlockMeshIdOffsets.Size.X, meshInfo.BlockMeshIdOffsets.Size.Y)]];
+                    int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(meshInfo.Size.X, meshInfo.Size.Y)]];
 
                     var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
 
@@ -709,7 +719,7 @@ public sealed partial class FcWorld : IAstRunner
 
                                     if (neighborMeshIndexToUse != -1)
                                     {
-                                        if (currentSegmentMeshes.Meshes[meshIndex].Bitfields[sideIndex] == neighborSegmentMeshes.Meshes[neighborMeshIndexToUse].Bitfields[(int)((sideIndex & 0xffffffff) ^ 1)])
+                                        if (currentSegmentMeshes.Meshes[meshIndex].GetSideBitfield(sideIndex) == neighborSegmentMeshes.Meshes[neighborMeshIndexToUse].GetSideBitfield(sideIndex ^ 1))
                                         {
                                             connectsToSideBitfield |= (uint)(1L << (sideIndex & 0b111111));
                                         }
@@ -753,7 +763,7 @@ public sealed partial class FcWorld : IAstRunner
         }
     }
 
-    private bool TryGetObject(FcObject @object, [MaybeNullWhen(false)] out RuntimeObject rObject)
+    private bool TryGetObject(FcObject @object, [NotNullWhen(true)] out RuntimeObject? rObject)
     {
         if (@object == FcObject.Null)
         {
@@ -764,7 +774,7 @@ public sealed partial class FcWorld : IAstRunner
         return _idToObject.TryGetValue(@object, out rObject);
     }
 
-    private bool TryGetConstraint(FcConstraint constraint, [MaybeNullWhen(false)] out Generic6DofSpring2Constraint bConstraint)
+    private bool TryGetConstraint(FcConstraint constraint, [NotNullWhen(true)] out Generic6DofSpring2Constraint? bConstraint)
     {
         if (constraint == FcConstraint.Null)
         {
@@ -775,23 +785,8 @@ public sealed partial class FcWorld : IAstRunner
         return _idToConstraint.TryGetValue(constraint, out bConstraint);
     }
 
-    private bool TryGetObjectByPos(ushort prefabId, int3 pos, int3 voxelPos, [MaybeNullWhen(false)] out RuntimeObject rObject)
+    private bool TryGetObjectByPos(ushort prefabId, int3 pos, int3 voxelPos, [NotNullWhen(true)] out RuntimeObject? rObject)
     {
-        var stockPrefabs = StockBlocks.PrefabList;
-
-        // TODO
-        var terminalInfos = PrefabTerminalInfo.Create(stockPrefabs.Concat(_prefabs), id =>
-        {
-            if (id < RawGame.CurrentNumbStockPrefabs)
-            {
-                return stockPrefabs.TryGetSegment(id, out var segment) && stockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
-            }
-            else
-            {
-                return _prefabs.TryGetSegment(id, out var segment) && _prefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
-            }
-        });
-
         Prefab prefab;
         try
         {
@@ -803,8 +798,16 @@ public sealed partial class FcWorld : IAstRunner
             return false;
         }
 
+        ushort segmentId = prefab.Blocks.GetBlockOrDefault(pos);
+
+        if (segmentId == 0)
+        {
+            rObject = null;
+            return false;
+        }
+
         var meshInfo = _gameMesh.GetBlockMesh(prefab.Id);
-        var segmentMeshes = _gameMesh.GetSegmentMesh(prefab.Id);
+        var segmentMeshes = _gameMesh.GetSegmentMesh(segmentId);
 
         int meshIndex = meshInfo.BlockMeshIds[meshInfo.BlockMeshIdOffsets[pos.ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)] + segmentMeshes.VoxelMeshIndex[Voxels.Index(voxelPos, 0)]];
 
@@ -822,21 +825,6 @@ public sealed partial class FcWorld : IAstRunner
 
     private bool TryGetObjectByPos(ushort prefabId, int3 pos, int meshIndex, [MaybeNullWhen(false)] out RuntimeObject rObject)
     {
-        var stockPrefabs = StockBlocks.PrefabList;
-
-        // TODO
-        var terminalInfos = PrefabTerminalInfo.Create(stockPrefabs.Concat(_prefabs), id =>
-        {
-            if (id < RawGame.CurrentNumbStockPrefabs)
-            {
-                return stockPrefabs.TryGetSegment(id, out var segment) && stockPrefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
-            }
-            else
-            {
-                return _prefabs.TryGetSegment(id, out var segment) && _prefabs.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
-            }
-        });
-
         Prefab prefab;
         try
         {

@@ -228,6 +228,8 @@ public sealed partial class FcWorld
             _world._objects.Add(newObject);
             _world._idToObject.Add(newId, newObject);
 
+            _world.OnObjectCreated?.Invoke(rOriginal, newObject);
+
             return newId;
         }
 
@@ -237,6 +239,8 @@ public sealed partial class FcWorld
             {
                 return;
             }
+
+            _world.OnObjectDestroyed?.Invoke(rObject);
 
             for (int i = 0; i < _world._constraints.Count; i++)
             {

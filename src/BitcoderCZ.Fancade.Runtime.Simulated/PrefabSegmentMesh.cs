@@ -1,10 +1,13 @@
 ﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+#if !NET8_0_OR_GREATER
+using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+#endif
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
-public sealed class PrefabSegmentMesh
+public readonly struct PrefabSegmentMesh
 {
     private readonly int _voxelCount;
     private readonly Array6<ulong> _bitfields;
@@ -16,8 +19,6 @@ public sealed class PrefabSegmentMesh
     }
 
     public int VoxelCount => _voxelCount;
-
-    public ReadOnlySpan<ulong> Bitfields => AsSpan(ref Unsafe.AsRef(in _bitfields));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Assign<T>(ref Array6<T> field, ReadOnlySpan<T> param)
@@ -37,12 +38,16 @@ public sealed class PrefabSegmentMesh
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ReadOnlySpan<T> AsSpan<T>(ref Array6<T> field)
+    public ulong GetSideBitfield(int sideIndex)
+    {
 #if NET8_0_OR_GREATER
-        => field;
+        return _bitfields[sideIndex];
 #else
-        => MemoryMarshal.CreateReadOnlySpan(ref field._element0, 6);
+        ThrowIfGreaterThanOrEqualToOrNegative(sideIndex, 6, nameof(sideIndex));
+
+        return Unsafe.Add(ref Unsafe.AsRef(in _bitfields._element0), sideIndex);
 #endif
+    }
 
 #if NET8_0_OR_GREATER
     [InlineArray(6)]

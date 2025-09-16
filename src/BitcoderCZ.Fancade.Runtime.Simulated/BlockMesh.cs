@@ -1,14 +1,16 @@
 ﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
+using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
 public readonly struct BlockMesh
 {
-    public static readonly BlockMesh Empty = new BlockMesh(0, new Array3D<ushort>(int3.Zero), []);
+    public static readonly BlockMesh Empty = new BlockMesh(0, new Array3D<int>(int3.Zero), [], []);
 
     private static readonly short3[] NeighborOffsets =
     [
@@ -21,17 +23,24 @@ public readonly struct BlockMesh
     ];
 
     private readonly short[] _blockMeshIds;
+    private readonly List<ValueList<int3>> _meshBlockPositions;
+    private readonly Array3D<int> _blockMeshIdOffsets;
 
-    private BlockMesh(int meshCount, Array3D<ushort> blockMeshIdOffsets, short[] blockMeshIds)
+    private BlockMesh(int meshCount, Array3D<int> blockMeshIdOffsets, List<ValueList<int3>> meshBlockPositions, short[] blockMeshIds)
     {
+        Debug.Assert(meshBlockPositions.Count == meshCount);
+
         MeshCount = meshCount;
-        BlockMeshIdOffsets = blockMeshIdOffsets;
+        _blockMeshIdOffsets = blockMeshIdOffsets;
+        _meshBlockPositions = meshBlockPositions;
         _blockMeshIds = blockMeshIds;
     }
 
     public int MeshCount { get; }
 
-    public Array3D<ushort> BlockMeshIdOffsets { get; }
+    public int3 Size => _blockMeshIdOffsets.Size;
+
+    public ReadOnlySpan<int> BlockMeshIdOffsets => _blockMeshIdOffsets.Array;
 
     public ReadOnlySpan<short> BlockMeshIds => _blockMeshIds;
 
@@ -49,12 +58,12 @@ public readonly struct BlockMesh
 
         int totalSegmentMeshCount = 0;
 
-        Array3D<ushort> blockMeshIdOffsets = new Array3D<ushort>(blocksSize);
+        var blockMeshIdOffsets = new Array3D<int>(blocksSize);
 
         ushort[] blocksArray = blocks.Array.Array;
         for (int i = 0; i < blocksLength; i++)
         {
-            blockMeshIdOffsets[i] = (ushort)totalSegmentMeshCount;
+            blockMeshIdOffsets[i] = totalSegmentMeshCount;
 
             ushort segmentId = blocksArray[i];
 
@@ -66,9 +75,15 @@ public readonly struct BlockMesh
             totalSegmentMeshCount += segmentMeshes[segmentId].MeshCount;
         }
 
+        if (totalSegmentMeshCount == 0)
+        {
+            return Empty;
+        }
+
         var stockPrefabs = StockBlocks.PrefabList;
 
         short[] blockMeshIds = new short[totalSegmentMeshCount];
+        var meshBlockPositions = new List<ValueList<int3>>(totalSegmentMeshCount / 16);
 
         blockMeshIds.AsSpan().Fill(-1);
 
@@ -109,9 +124,11 @@ public readonly struct BlockMesh
 
                     stack.Push((blockPos, (short)segmentMeshIndex));
 
+                    ValueList<int3> meshPositions = [];
                     while (stack.TryPop(out var item))
                     {
                         var currentPos = item.Pos;
+                        meshPositions.Add(currentPos);
 
                         int currentBLockIndex = currentPos.X + (currentPos.Y + currentPos.Z * blocksSize.Y) * blocksSize.X;
 
@@ -154,12 +171,13 @@ public readonly struct BlockMesh
                         }
                     }
 
+                    meshBlockPositions.Add(meshPositions);
                     meshIndex++;
                 }
             }
         }
 
-        return new BlockMesh(meshIndex, blockMeshIdOffsets, blockMeshIds);
+        return new BlockMesh(meshIndex, blockMeshIdOffsets, meshBlockPositions, blockMeshIds);
 
         PrefabSegment GetSegment(ushort id)
         {
@@ -401,4 +419,20 @@ public readonly struct BlockMesh
             return false;
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int GetMeshOffset(int3 position)
+        => _blockMeshIdOffsets.Get(position);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int GetMeshOffsetUnchecked(int3 position)
+        => _blockMeshIdOffsets.GetUnchecked(position);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int GetMeshAtPos(int3 position, int segmentMeshIndex)
+        => _blockMeshIds[GetMeshOffset(position) + segmentMeshIndex];
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public IEnumerable<int3> EnumerateMeshBlocks(int meshIndex)
+        => _meshBlockPositions[meshIndex];
 }
