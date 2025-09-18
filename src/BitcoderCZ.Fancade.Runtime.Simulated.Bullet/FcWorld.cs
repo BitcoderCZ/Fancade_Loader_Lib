@@ -377,17 +377,17 @@ public sealed partial class FcWorld : IAstRunner
                     IsVisible = prefab.Id == mainId,
                 };
 
-                if (foundPhysics)
-                {
-                    rObject.Unfix(_world);
-                }
-
                 _objects.Add(rObject);
                 _idToObject.Add(rObject.Id, rObject);
 
                 if (rObject.IsVisible)
                 {
                     _world.AddRigidBody(rObject.RigidBody);
+                }
+
+                if (foundPhysics)
+                {
+                    rObject.Unfix(_world);
                 }
 
                 AddColliders(rObject);
