@@ -138,14 +138,6 @@ public sealed class PrefabSegmentMeshes
         short3 voxelsMin = new short3(short.MaxValue, short.MaxValue, short.MaxValue);
         short3 voxelsMax = new short3(short.MinValue, short.MinValue, short.MinValue);
 
-        int[] some_array = [1, 1, 2, 2, 1, 1];
-        int[] vector_axis_array = [2, 2, 0, 0, 0, 0];
-
-        int posAxisIndex = 1;
-        int pos2AxisIndex = 1;
-
-        int counter0 = 1;
-
         for (int meshIndex = 0; meshIndex < meshCount; meshIndex++)
         {
             int voxelIndex;

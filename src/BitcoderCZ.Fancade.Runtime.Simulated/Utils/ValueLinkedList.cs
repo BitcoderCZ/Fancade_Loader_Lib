@@ -154,6 +154,12 @@ internal struct ValueLinkedList<T> : IEnumerable<T>
         private byte _count;
         private Array8 _data;
 
+        public ValueCollection8()
+        {
+            _count = 0;
+            _data = default;
+        }
+
         public readonly int Count => _count;
 
         public readonly T this[int index]

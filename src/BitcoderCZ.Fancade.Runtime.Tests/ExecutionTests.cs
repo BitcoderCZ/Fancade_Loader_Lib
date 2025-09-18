@@ -3,6 +3,7 @@ using BitcoderCZ.Fancade.Editing.Scripting;
 using BitcoderCZ.Fancade.Editing.Scripting.Builders;
 using BitcoderCZ.Fancade.Editing.Scripting.Placers;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
+using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
@@ -133,7 +134,7 @@ public partial class ExecutionTests
 
         writer.Loop(Number(0f), Number(10f), (writer, counter) =>
         {
-            writer.Inspect(WrapTerminal(counter));
+            writer.Inspect(counter.Wrap());
         });
 
         var compiled = Compile(writer);
@@ -148,7 +149,7 @@ public partial class ExecutionTests
 
         writer.Loop(Number(10f), Number(0f), (writer, counter) =>
         {
-            writer.Inspect(WrapTerminal(counter));
+            writer.Inspect(counter.Wrap());
         });
 
         var compiled = Compile(writer);

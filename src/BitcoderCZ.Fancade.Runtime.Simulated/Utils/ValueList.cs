@@ -14,7 +14,7 @@ internal struct ValueList<T> : IList<T>, IReadOnlyList<T>
     private const int ListStartCapacity = 4;
 
     private int _count;
-    private Buffer8 _buffer;
+    private Buffer8 _buffer = default;
     private List<T>? _list;
 
     [UnscopedRef]
@@ -165,7 +165,9 @@ internal struct ValueList<T> : IList<T>, IReadOnlyList<T>
         var bufferSpan = ROBufferSpan;
         for (int i = 0; i < Math.Min(_count, BufferCapacity); i++)
         {
+#pragma warning disable HAM0001 // Operation causes the compiler to create a defensive copy
             if (bufferSpan[i].Equals(item))
+#pragma warning restore HAM0001 // Operation causes the compiler to create a defensive copy
             {
                 return i;
             }

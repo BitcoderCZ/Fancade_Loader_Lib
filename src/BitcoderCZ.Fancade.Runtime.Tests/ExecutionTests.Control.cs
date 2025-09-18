@@ -1,4 +1,5 @@
-﻿using BitcoderCZ.Fancade.Runtime.Tests.Common;
+﻿using BitcoderCZ.Fancade.Editing.Utils;
+using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
@@ -12,7 +13,7 @@ public partial class ExecutionTests
 
         writer.Loop(None(), Literal(3f), (writer, index) =>
         {
-            writer.Inspect(WrapTerminal(index));
+            writer.Inspect(index.Wrap());
         });
 
         var compiled = Compile(writer);
@@ -32,7 +33,7 @@ public partial class ExecutionTests
 
         writer.Loop(Literal(3f), None(), (writer, index) =>
         {
-            writer.Inspect(WrapTerminal(index));
+            writer.Inspect(index.Wrap());
         });
 
         var compiled = Compile(writer);
