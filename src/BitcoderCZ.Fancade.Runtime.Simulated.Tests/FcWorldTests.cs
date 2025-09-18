@@ -86,6 +86,32 @@ public class FcWorldTests
     }
 
     [Test]
+    public async Task Physics_Object_Rotates()
+    {
+        var writer = CreateWriter(out var prefab);
+
+        var blocks = prefab.Blocks;
+        blocks.SetPrefab(new int3(50, 1, 1), StockBlocks.Templates.PhysicsBox.Prefab);
+        blocks.SetPrefab(new int3(50, 2, 1), StockBlocks.Templates.PhysicsBox.Prefab);
+        blocks.SetPrefab(new int3(50, 2, 0), StockBlocks.Templates.PhysicsBox.Prefab);
+
+        blocks.SetBlock(new int3(49, 0, 1), 1);
+        blocks.SetBlock(new int3(51, 0, 1), 1);
+
+        var terminal = new AbsolutePositionTerminal(new int3(50, 2, 0)) { VoxelPosition = int3.Zero };
+
+        writer.If(EqualsNumbers(CurrentFrame(), Number(120f)),
+        @true: writer =>
+        {
+            writer.Inspect(GetPos(terminal.Wrap()).Rotation);
+        }, null);
+
+        var compiled = Compile(writer, out var prefabs);
+
+        await Assert.That(compiled).Inspects([new(Quaternion.CreateFromYawPitchRoll(0f, -45f * (float.Pi / 180f), 0f)) { Count = 1 }], runFor: 121, physics: (prefab.Id, prefabs));
+    }
+
+    [Test]
     public async Task ConnectionToBlock_ConnectsToCorrectBlock()
     {
         var writer = CreateWriter(out var prefab);

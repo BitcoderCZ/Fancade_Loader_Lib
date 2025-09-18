@@ -380,6 +380,8 @@ public sealed partial class FcWorld : IAstRunner
                 _objects.Add(rObject);
                 _idToObject.Add(rObject.Id, rObject);
 
+                AddColliders(rObject);
+
                 if (rObject.IsVisible)
                 {
                     _world.AddRigidBody(rObject.RigidBody);
@@ -389,8 +391,6 @@ public sealed partial class FcWorld : IAstRunner
                 {
                     rObject.Unfix(_world);
                 }
-
-                AddColliders(rObject);
             }
         }
 
