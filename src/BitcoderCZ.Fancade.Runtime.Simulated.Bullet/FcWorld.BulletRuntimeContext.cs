@@ -32,6 +32,9 @@ public sealed partial class FcWorld
 
         public bool TakingBoxArt => _baseCtx.TakingBoxArt;
 
+        public void Reset()
+            => _rng.ResetSeed();
+
         // **************************************** Game ****************************************
         public void Win(int delay)
             => _baseCtx.Win(delay);
@@ -98,7 +101,7 @@ public sealed partial class FcWorld
 
                 if (_world.TryGetObjectByPos(_world._mainPrefab, environment.OuterPosition, 0, out var obj))
                 {
-                    pos -= obj.StartPos;
+                    pos -= obj.Start.Position;
                     pos += obj.Pos;
                     rot = obj.Rot;
                 }

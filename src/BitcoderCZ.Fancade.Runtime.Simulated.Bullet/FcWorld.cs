@@ -259,7 +259,39 @@ public sealed partial class FcWorld : IAstRunner
     }
 
     public void Reset()
-        => throw new NotImplementedException();
+    {
+        _runner.Reset();
+
+        for (int i = 0; i < _objects.Count; i++)
+        {
+            var rObject = _objects[i];
+
+            if (rObject.IsUserCreated)
+            {
+                _runtimeCtx.DestroyObject(rObject.Id);
+            }
+            else
+            {
+                rObject.Reset(_world, _runtimeCtx);
+            }
+        }
+
+        _world.Gravity = new Vector3(0, -10, 0);
+
+        _runtimeCtx.CurrentFrame = 0;
+
+        for (int i = 0; i < _constraints.Count; i++)
+        {
+            var con = _constraints[i];
+            Debug.Assert(con.Userobject is FcConstraint);
+
+            _idToConstraint.Remove((FcConstraint)con.Userobject);
+            _world.RemoveConstraint(con);
+            con.Dispose();
+        }
+
+        _constraints.Clear();
+    }
 
     public Span<RuntimeValue> GetGlobalVariableValue(Variable variable)
         => _runner.GetGlobalVariableValue(variable);
@@ -372,10 +404,7 @@ public sealed partial class FcWorld : IAstRunner
                 var rigidBody = BulletCreate(pos, Quaternion.Identity, objectId);
                 rigidBody.UpdateInertiaTensor();
 
-                RuntimeObject rObject = new(objectId, prefab.Id, objectInPrefabMeshIndex, rigidBody, pos, Quaternion.Identity, sizeMin, sizeMax, mass)
-                {
-                    IsVisible = prefab.Id == mainId,
-                };
+                RuntimeObject rObject = new(objectId, prefab.Id, objectInPrefabMeshIndex, rigidBody, pos, Quaternion.Identity, sizeMin, sizeMax, mass, prefab.Id == mainId, !foundPhysics);
 
                 _objects.Add(rObject);
                 _idToObject.Add(rObject.Id, rObject);
@@ -575,7 +604,7 @@ public sealed partial class FcWorld : IAstRunner
 
                 Vector3 size = (Vector3)((boundsMax - boundsMin) + int3.One) * 0.125f;
 
-                Vector3 offset = ((size * 0.5f) + ((Vector3)boundsMin * 0.125f) + (Vector3)currentPos) - rObject.StartPos;
+                Vector3 offset = ((size * 0.5f) + ((Vector3)boundsMin * 0.125f) + (Vector3)currentPos) - rObject.Start.Position;
 
                 uint connectsToSideBitfield = 0;
                 int colliderType;

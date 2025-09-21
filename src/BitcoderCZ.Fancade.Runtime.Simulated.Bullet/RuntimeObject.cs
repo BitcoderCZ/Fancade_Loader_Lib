@@ -8,7 +8,7 @@ public sealed class RuntimeObject : IDisposable
 {
     private float _mass = 1f;
 
-    public RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Quaternion rot, Vector3 sizeMin, Vector3 sizeMax, float mass)
+    public RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Quaternion rot, Vector3 sizeMin, Vector3 sizeMax, float mass, bool visible, bool @fixed)
     {
         Debug.Assert(id != FcObject.Null);
         Debug.Assert(inPrefabMeshIndex >= -1);
@@ -17,22 +17,23 @@ public sealed class RuntimeObject : IDisposable
         InPrefabMeshIndex = inPrefabMeshIndex;
         RigidBody = rigidBody;
         Pos = pos;
-        StartPos = Pos;
         Rot = rot;
+        Start = new StartValues(pos, mass, visible, @fixed);
         SizeMin = sizeMin;
         SizeMax = sizeMax;
         _mass = mass;
+        IsVisible = visible;
     }
 
-    private RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Vector3 startPos, Quaternion rot, Vector3 sizeMin, Vector3 sizeMax, float mass, bool isVisible, bool isUserCreated)
+    private RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Quaternion rot, StartValues start, Vector3 sizeMin, Vector3 sizeMax, float mass, bool isVisible, bool isUserCreated)
     {
         Id = id;
         OutsidePrefabId = outsidePrefabId;
         InPrefabMeshIndex = inPrefabMeshIndex;
         RigidBody = rigidBody;
         Pos = pos;
-        StartPos = startPos;
         Rot = rot;
+        Start = start;
         SizeMin = sizeMin;
         SizeMax = sizeMax;
         _mass = mass;
@@ -50,9 +51,9 @@ public sealed class RuntimeObject : IDisposable
 
     public Vector3 Pos { get; private set; }
 
-    public Vector3 StartPos { get; }
-
     public Quaternion Rot { get; private set; }
+
+    public StartValues Start { get; }
 
     public Vector3 SizeMin { get; }
 
@@ -150,9 +151,62 @@ public sealed class RuntimeObject : IDisposable
         IsFixed = false;
     }
 
+    private void Fix(DynamicsWorld world)
+    {
+        if (IsFixed)
+        {
+            return;
+        }
+
+        bool wasInWorld = RigidBody.IsInWorld;
+        if (wasInWorld)
+        {
+            world.RemoveRigidBody(RigidBody);
+        }
+
+        _mass = 0f;
+        RigidBody.SetMassProps(0f, Vector3.Zero);
+        RigidBody.UpdateInertiaTensor();
+
+        RigidBody.Gravity = Vector3.Zero;
+
+        if (wasInWorld)
+        {
+            world.AddRigidBody(RigidBody);
+        }
+
+        IsFixed = true;
+    }
+
+    internal void Reset(DynamicsWorld world, IRuntimeContext ctx)
+    {
+        RigidBody.Friction = 0.5f;
+        RigidBody.Restitution = 0f; // TODO: is this the correct value?
+        RigidBody.LinearVelocity = Vector3.Zero;
+        RigidBody.AngularVelocity = Vector3.Zero;
+        RigidBody.LinearFactor = Vector3.One;
+        RigidBody.AngularFactor = Vector3.One;
+
+        SetRotPos(Start.Position, Quaternion.Identity);
+        if (Mass != Start.Mass)
+        {
+            Mass = Start.Mass;
+        }
+
+        if (IsVisible != Start.Visible)
+        {
+            ctx.SetVisible(Id, Start.Visible);
+        }
+
+        if (!IsFixed && Start.Fixed)
+        {
+            Fix(world);
+        }
+    }
+
     public RuntimeObject Clone(FcObject newId, RigidBody newBody, bool userCreated)
     {
-        var newObject = new RuntimeObject(newId, OutsidePrefabId, InPrefabMeshIndex, newBody, Pos + Vector3.One, StartPos, Rot, SizeMin, SizeMax, Mass, true, userCreated);
+        var newObject = new RuntimeObject(newId, OutsidePrefabId, InPrefabMeshIndex, newBody, Pos + Vector3.One, Rot, Start, SizeMin, SizeMax, Mass, true, userCreated);
 
         return newObject;
     }
@@ -161,6 +215,25 @@ public sealed class RuntimeObject : IDisposable
     {
         RigidBody.MotionState?.Dispose();
         RigidBody.Dispose();
+    }
+
+    public readonly struct StartValues
+    {
+        public StartValues(Vector3 position, float mass, bool visible, bool @fixed)
+        {
+            Position = position;
+            Mass = mass;
+            Visible = visible;
+            Fixed = @fixed;
+        }
+
+        public readonly Vector3 Position { get; }
+
+        public readonly float Mass { get; }
+
+        public readonly bool Visible { get; }
+
+        public readonly bool Fixed { get; }
     }
 
     public readonly struct CollisionInfo

@@ -14,6 +14,14 @@ public sealed class FcRandom
     /// </summary>
     public FcRandom()
     {
+        ResetSeed();
+    }
+
+    /// <summary>
+    /// Sets the seed to the current time.
+    /// </summary>
+    public void ResetSeed()
+    {
         DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         DateTime now = DateTime.UtcNow;
         _state = (ulong)(int)(now - epoch).TotalSeconds;
