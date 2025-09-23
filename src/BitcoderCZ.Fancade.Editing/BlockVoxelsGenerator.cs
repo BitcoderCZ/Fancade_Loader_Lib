@@ -28,11 +28,19 @@ public sealed class BlockVoxelsGenerator
     /// </remarks>
     /// <param name="sizeInBlocks">The X and Z size of the prefab in blocks.</param>
     /// <returns>The generated voxels.</returns>
-#if NET8_0_OR_GREATER
     public static IEnumerable<KeyValuePair<int3, Voxels>> CreateScript(int2 sizeInBlocks)
-#else
-    public static unsafe IEnumerable<KeyValuePair<int3, Voxels>> CreateScript(int2 sizeInBlocks)
-#endif
+        => CreateScript(sizeInBlocks, ScriptColorStyle.DefaultExecute);
+
+    /// <summary>
+    /// Generates the voxels for a script block.
+    /// </summary>
+    /// <remarks>
+    /// Size in voxels is (<paramref name="sizeInBlocks"/>.x * 8 - 1, 3, <paramref name="sizeInBlocks"/>.y * 8 - 1).
+    /// </remarks>
+    /// <param name="sizeInBlocks">The X and Z size of the prefab in blocks.</param>
+    /// <param name="colors">Colors of the script block.</param>
+    /// <returns>The generated voxels.</returns>
+    public static IEnumerable<KeyValuePair<int3, Voxels>> CreateScript(int2 sizeInBlocks, ScriptColorStyle colors)
     {
         if (sizeInBlocks.X < 1 || sizeInBlocks.Y < 1)
         {
@@ -41,26 +49,26 @@ public sealed class BlockVoxelsGenerator
 
         int3 sizeInVoxels = new int3((sizeInBlocks.X * 8) - 1, 3, (sizeInBlocks.Y * 8) - 1);
 
-        BlockVoxelsGenerator generator = new BlockVoxelsGenerator();
+        var generator = new BlockVoxelsGenerator();
 
-        generator.Fill(int3.Zero, sizeInVoxels, FcColor.Black);
+        generator.Fill(int3.Zero, sizeInVoxels, colors.MainColor);
 
         generator.Loop(new int3(1, 2, 1), new int3(sizeInVoxels.X - 1, 3, sizeInVoxels.Z - 1), (Voxels.Ref voxel) =>
         {
-            voxel.SetColor(2, FcColor.Gray4);
+            voxel.SetColor(2, colors.MiddleColor);
         });
 
-        generator.GetVoxelRef(new int3(sizeInVoxels.X - 1, 2, 0)).SetColor(2, FcColor.Gray4);
-        generator.GetVoxelRef(new int3(0, 2, sizeInVoxels.Z - 1)).SetColor(2, FcColor.Gray4);
+        generator.GetVoxelRef(new int3(sizeInVoxels.X - 1, 2, 0)).SetColor(2, colors.MiddleColor);
+        generator.GetVoxelRef(new int3(0, 2, sizeInVoxels.Z - 1)).SetColor(2, colors.MiddleColor);
 
         generator.Loop(new int3(1, 2, sizeInVoxels.Z - 1), new int3(sizeInVoxels.X, 3, sizeInVoxels.Z), (Voxels.Ref voxel) =>
         {
-            voxel.SetColor(2, FcColor.Gray3);
+            voxel.SetColor(2, colors.BorderColor);
         });
 
         generator.Loop(new int3(sizeInVoxels.X - 1, 2, 1), new int3(sizeInVoxels.X, 3, sizeInVoxels.Z), (Voxels.Ref voxel) =>
         {
-            voxel.SetColor(2, FcColor.Gray3);
+            voxel.SetColor(2, colors.BorderColor);
         });
 
         return generator._blocks;
@@ -206,5 +214,87 @@ public sealed class BlockVoxelsGenerator
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Describes the colors of a standard script block.
+    /// </summary>
+    public readonly struct ScriptColorStyle
+    {
+        /// <summary>
+        /// The style used by default scripts with before/after wires.
+        /// </summary>
+        public static readonly ScriptColorStyle DefaultExecute = new ScriptColorStyle(FcColor.Black, FcColor.Gray4, FcColor.Gray3);
+
+        /// <summary>
+        /// The style used by default scripts without before/after wires.
+        /// </summary>
+        public static readonly ScriptColorStyle Default = new ScriptColorStyle(FcColor.Gray4, FcColor.Gray3, FcColor.Gray2);
+
+        /// <summary>
+        /// The style used by control scripts.
+        /// </summary>
+        public static readonly ScriptColorStyle Control = new ScriptColorStyle(FcColor.DarkYellow, FcColor.Yellow, FcColor.LightYellow);
+
+        /// <summary>
+        /// The style used by number scripts.
+        /// </summary>
+        public static readonly ScriptColorStyle Number = new ScriptColorStyle(FcColor.DarkBlue, FcColor.Blue, FcColor.LightBlue);
+
+        /// <summary>
+        /// The style used by vector scripts.
+        /// </summary>
+        public static readonly ScriptColorStyle Vector = new ScriptColorStyle(FcColor.DarkGreen, FcColor.Green, FcColor.LightGreen);
+
+        /// <summary>
+        /// The style used by rotation scripts.
+        /// </summary>
+        public static readonly ScriptColorStyle Rotation = new ScriptColorStyle(FcColor.DarkOrange, FcColor.Orange, FcColor.LightOrange);
+
+        /// <summary>
+        /// The style used by truth scripts.
+        /// </summary>
+        public static readonly ScriptColorStyle Truth = new ScriptColorStyle(FcColor.DarkRed, FcColor.Red, FcColor.LightRed);
+
+        /// <summary>
+        /// The style used by object scripts.
+        /// </summary>
+        public static readonly ScriptColorStyle Object = new ScriptColorStyle(FcColor.DarkPink, FcColor.Pink, FcColor.LightPink);
+
+        /// <summary>
+        /// The style used by constraint scripts.
+        /// </summary>
+        public static readonly ScriptColorStyle Constraint = new ScriptColorStyle(FcColor.Gray2, FcColor.Gray1, FcColor.White);
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ScriptColorStyle"/> struct.
+        /// </summary>
+        /// <param name="mainColor">Main color of the prefab.</param>
+        /// <param name="middleColor">Color in the middle of the prefab.</param>
+        /// <param name="borderColor">Color of the top and right borders.</param>
+        public ScriptColorStyle(FcColor mainColor, FcColor middleColor, FcColor borderColor)
+        {
+            MainColor = mainColor;
+            MiddleColor = middleColor;
+            BorderColor = borderColor;
+        }
+
+        /// <summary>
+        /// Gets the main color of the prefab.
+        /// </summary>
+        /// <value>Main color of the prefab.</value>
+        public readonly FcColor MainColor { get; }
+
+        /// <summary>
+        /// Gets the color in the middle of the prefab.
+        /// </summary>
+        /// <value>Color in the middle of the prefab.</value>
+        public readonly FcColor MiddleColor { get; }
+
+        /// <summary>
+        /// Gets the color of the top and right borders.
+        /// </summary>
+        /// <value>Color of the top and right borders.</value>
+        public readonly FcColor BorderColor { get; }
     }
 }
