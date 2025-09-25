@@ -164,8 +164,7 @@ public sealed partial class FcWorld
                 return (rObject.SizeMin, rObject.SizeMax);
             }
 
-            // TODO: get level size
-            return (Vector3.Zero, Vector3.Zero);
+            return (Vector3.Zero, _world._prefabs.GetPrefab(_world._mainPrefab).Blocks.Size);
         }
 
         public void SetVisible(FcObject @object, bool visible)

@@ -867,7 +867,20 @@ public sealed partial class FcWorld : IAstRunner
 
         var meshInfo = _gameMesh.GetBlockMesh(prefab.Id);
 
-        int prefabMeshIndex = meshInfo.BlockMeshIds[meshInfo.BlockMeshIdOffsets[pos.ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)] + meshIndex];
+        if (meshInfo.BlockMeshIdOffsets.IsEmpty)
+        {
+            rObject = null;
+            return false;
+        }
+
+        int meshOffset = meshInfo.BlockMeshIdOffsets[pos.ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)];
+        if (meshOffset == -1)
+        {
+            rObject = null;
+            return false;
+        }
+
+        int prefabMeshIndex = meshInfo.BlockMeshIds[meshOffset + meshIndex];
 
         var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == prefabMeshIndex);
 

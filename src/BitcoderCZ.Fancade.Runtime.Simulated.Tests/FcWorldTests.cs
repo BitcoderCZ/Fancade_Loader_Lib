@@ -8,6 +8,7 @@ using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
+using System.Diagnostics;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
@@ -147,6 +148,29 @@ public class FcWorldTests
         await Assert.That(compiled).Inspects([new(new Vector3(4.5f, 0.5f, 1f)) { Frequency = InspectFrequency.EveryFrame }], physics: (prefab.Id, prefabs));
     }
 
+    [Test]
+    public async Task ConnectionToSelf_ReferencesSelf()
+    {
+        var writer = CreateWriter(out var prefab);
+        prefab[int3.Zero].Voxels[int3.Zero] = new Voxel(FcColor.Black, false);
+
+        var prefabs = new PrefabList();
+
+        var level = Prefab.CreateLevel(0, "A");
+        prefabs.AddPrefab(level);
+        prefabs.AddPrefab(prefab);
+
+        var blocks = level.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab);
+
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.Zero };
+        writer.Inspect(terminal.Wrap(), SignalType.Obj);
+
+        var compiled = Compile(writer, prefabs, level.Id);
+
+        await Assert.That(compiled).Inspects([new(new FcObject(1)) { Frequency = InspectFrequency.EveryFrame }], physics: (level.Id, prefabs));
+    }
+
     private static CodeWriter CreateWriter(out Prefab prefab)
     {
         var builder = CreateBuilder(out prefab);
@@ -157,9 +181,20 @@ public class FcWorldTests
 
     private static PrefabBlockBuilder CreateBuilder(out Prefab prefab)
     {
-        prefab = new Prefab(RawGame.CurrentNumbStockPrefabs);
+        prefab = Prefab.CreateBlock(RawGame.CurrentNumbStockPrefabs, "A");
         var builder = new PrefabBlockBuilder(prefab);
         return builder;
+    }
+
+    private static FcAST Compile(CodeWriter writer, PrefabList prefabs, ushort? mainPrefabId = null)
+    {
+        writer.Flush();
+        var prefab = (Prefab)writer.Placer.Builder.Build(int3.Zero);
+
+        Debug.Assert(prefabs.ContainsPrefab(prefab.Id));
+        prefabs.AddImplicitConnections();
+
+        return FcAST.Parse(prefabs, mainPrefabId ?? prefab.Id);
     }
 
     private static FcAST Compile(CodeWriter writer, out PrefabList prefabs)

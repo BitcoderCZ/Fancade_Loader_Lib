@@ -63,6 +63,24 @@ public readonly struct RuntimeValue : IEquatable<RuntimeValue>
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="RuntimeValue"/> struct for an <see cref="FcObject"/> value.
+    /// </summary>
+    /// <param name="value">The value to assign to the <see cref="RuntimeValue"/>.</param>
+    public RuntimeValue(FcObject value)
+    {
+        Write(value.Value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RuntimeValue"/> struct for an <see cref="FcConstraint"/> value.
+    /// </summary>
+    /// <param name="value">The value to assign to the <see cref="RuntimeValue"/>.</param>
+    public RuntimeValue(FcConstraint value)
+    {
+        Write(value.Value);
+    }
+
+    /// <summary>
     /// Gets the value of the <see cref="RuntimeValue"/> as a <see cref="float"/>.
     /// </summary>
     /// <value>Value of the <see cref="RuntimeValue"/> as a <see cref="float"/>.</value>
@@ -132,7 +150,9 @@ public readonly struct RuntimeValue : IEquatable<RuntimeValue>
             SignalType.Vec3 => Vector3,
             SignalType.Rot => Quaternion,
             SignalType.Bool => Bool,
-            _ => throw new ArgumentException($"{nameof(type)} must be {nameof(SignalType.Float)}, {nameof(SignalType.Vec3)}, {nameof(SignalType.Rot)} or {nameof(SignalType.Bool)}.", nameof(type)),
+            SignalType.Obj => new FcObject(Int),
+            SignalType.Con => new FcConstraint(Int),
+            _ => throw new ArgumentException(nameof(type)),
         };
 
     /// <inheritdoc/>

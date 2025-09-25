@@ -199,6 +199,8 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                         float f => f.ToString("0.###"),
                         Vector3 f3 => f3.ToString("0.###"),
                         Quaternion q => q.GetEuler().ToString("0.###"),
+                        FcObject o => o.Value.ToString(),
+                        FcConstraint c => c.Value.ToString(),
                         _ => inspectVal?.ToString() ?? "null",
                     };
 

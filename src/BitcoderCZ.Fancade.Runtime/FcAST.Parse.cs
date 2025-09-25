@@ -372,7 +372,12 @@ public sealed partial class FcAST
                 {
                     if (info.Type != SignalType.Void)
                     {
-                        connectedInputTerminals.Add((info.Position, GetConnectedTerminal(pos, info.Position)));
+                        var terminal = GetConnectedTerminal(pos, info.Position);
+                        if (terminal is not null)
+                        {
+                            // TODO: why did I even add null terminals in the first place?
+                            connectedInputTerminals.Add((info.Position, terminal));
+                        }
                     }
                 }
 
