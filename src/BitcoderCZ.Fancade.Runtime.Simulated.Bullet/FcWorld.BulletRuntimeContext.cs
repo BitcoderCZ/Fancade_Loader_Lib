@@ -273,8 +273,8 @@ public sealed partial class FcWorld
         }
 
         // **************************************** Sound ****************************************
-        public float PlaySound(float volume, float pitch, FcSound sound)
-            => _baseCtx.PlaySound(volume, pitch, sound);
+        public float PlaySound(float volume, float pitch, bool loop, FcSound sound)
+            => _baseCtx.PlaySound(volume, pitch, loop, sound);
 
         public void StopSound(float channel)
             => _baseCtx.StopSound(channel);

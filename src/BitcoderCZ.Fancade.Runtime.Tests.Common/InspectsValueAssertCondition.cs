@@ -375,7 +375,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public float PlaySound(float volume, float pitch, FcSound sound)
+        public float PlaySound(float volume, float pitch, bool loop, FcSound sound)
             => 0f;
 
         public (bool Hit, Vector3 HitPos, FcObject HitObj) Raycast(Vector3 from, Vector3 to)
