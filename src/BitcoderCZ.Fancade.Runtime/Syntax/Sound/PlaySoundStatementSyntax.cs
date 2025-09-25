@@ -17,12 +17,14 @@ public sealed class PlaySoundStatementSyntax : StatementSyntax
     /// <param name="outVoidConnections">Output void connections from this node.</param>
     /// <param name="volume">The volume terminal; or <see langword="null"/>, if it is not connected.</param>
     /// <param name="pitch">The pitch terminal; or <see langword="null"/>, if it is not connected.</param>
+    /// <param name="loop"><see langword="true"/> if the sound should loop; otherwise, <see langword="false"/>.</param>
     /// <param name="sound">The sound to play.</param>
-    public PlaySoundStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? volume, SyntaxTerminal? pitch, FcSound sound)
+    public PlaySoundStatementSyntax(int3 position, ImmutableArray<Connection> outVoidConnections, SyntaxTerminal? volume, SyntaxTerminal? pitch, bool loop, FcSound sound)
         : base(264, position, outVoidConnections)
     {
         Volume = volume;
         Pitch = pitch;
+        Loop = loop;
         Sound = sound;
     }
 
@@ -37,6 +39,12 @@ public sealed class PlaySoundStatementSyntax : StatementSyntax
     /// </summary>
     /// <value>The pitch terminal; or <see langword="null"/>, if it is not connected.</value>
     public SyntaxTerminal? Pitch { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the sound should loop.
+    /// </summary>
+    /// <value><see langword="true"/> if the sound should loop; otherwise, <see langword="false"/>.</value>
+    public bool Loop { get; }
 
     /// <summary>
     /// Gets the sound to play.

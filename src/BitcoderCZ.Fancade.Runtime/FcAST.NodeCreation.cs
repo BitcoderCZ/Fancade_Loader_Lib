@@ -76,7 +76,7 @@ public sealed partial class FcAST
                 // **************************************** Sound ****************************************
                 case 264:
                     {
-                        return new PlaySoundStatementSyntax(pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSetting(pos, 2, out var sound) ? (FcSound)sound.GetValue<byte>() : FcSound.Chirp);
+                        return new PlaySoundStatementSyntax(pos, ctx.GetOutVoidConnections(pos), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(0, 2)), ctx.GetConnectedTerminal(pos, TerminalDef.GetInPosition(1, 2)), ctx.TryGetSetting(pos, 0, out var loop) && loop.GetValue<int>() != 0, ctx.TryGetSetting(pos, 1, out var sound) ? (FcSound)sound.GetValue<byte>() : FcSound.Chirp);
                     }
 
                 case 397:

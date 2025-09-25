@@ -359,7 +359,7 @@ public sealed class Interpreter : IAstRunner
                         float volume = playSound.Volume is null ? 1f : GetValue(playSound.Volume, environment).Float;
                         float pitch = playSound.Pitch is null ? 1f : GetValue(playSound.Pitch, environment).Float;
 
-                        environment.BlockData[playSound.Position] = _ctx.PlaySound(volume, pitch, playSound.Sound);
+                        environment.BlockData[playSound.Position] = _ctx.PlaySound(volume, pitch, playSound.Loop, playSound.Sound);
                     }
 
                     break;

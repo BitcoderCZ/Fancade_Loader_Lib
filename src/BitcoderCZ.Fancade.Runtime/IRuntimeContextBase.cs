@@ -89,9 +89,10 @@ public interface IRuntimeContextBase
     /// </summary>
     /// <param name="volume">Volume of the sound.</param>
     /// <param name="pitch">Pitch of the sound.</param>
+    /// <param name="loop"><see langword="true"/> if the sound should loop; otherwise, <see langword="false"/>.</param>
     /// <param name="sound">The sound to play.</param>
     /// <returns>The channel the sound is playing on.</returns>
-    float PlaySound(float volume, float pitch, FcSound sound);
+    float PlaySound(float volume, float pitch, bool loop, FcSound sound);
 
     /// <summary>
     /// Stops a sound.

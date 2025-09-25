@@ -219,7 +219,7 @@ internal abstract class AstRewriter
 
         return volume == node.Volume && pitch == node.Pitch
             ? node
-            : new PlaySoundStatementSyntax(node.Position, node.OutVoidConnections, volume, pitch, node.Sound);
+            : new PlaySoundStatementSyntax(node.Position, node.OutVoidConnections, volume, pitch, node.Loop, node.Sound);
     }
 
     protected virtual StatementSyntax RewriteStopSoundStatement(StopSoundStatementSyntax node)
@@ -670,7 +670,7 @@ internal abstract class AstRewriter
 
         return volume == node.Volume && pitch == node.Pitch
             ? (node, terminalPos)
-            : (new PlaySoundStatementSyntax(node.Position, node.OutVoidConnections, volume, pitch, node.Sound), terminalPos);
+            : (new PlaySoundStatementSyntax(node.Position, node.OutVoidConnections, volume, pitch, node.Loop, node.Sound), terminalPos);
     }
 
     #endregion

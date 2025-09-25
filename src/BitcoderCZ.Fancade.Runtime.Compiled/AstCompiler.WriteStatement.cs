@@ -213,7 +213,7 @@ public partial class AstCompiler
                         WriteExpression(playSound.Pitch, false, environment, writer);
                     }
 
-                    writer.WriteLineInv($", {nameof(FcSound)}.{playSound.Sound});");
+                    writer.WriteLineInv($", {(playSound.Loop ? "true" : "false")}, {nameof(FcSound)}.{playSound.Sound});");
                 }
 
                 break;
