@@ -334,7 +334,9 @@ public sealed partial class FcAST
                                     }
                                 }
 
-                                if (!foundConnection)
+                                // TODO: are there more scripts like this?
+                                // win, lose and play sound don't run, unless before is connected
+                                if (!foundConnection && id is not (252 or 256 or 264))
                                 {
                                     _notConnectedVoidInputs.Add((pos, termPos));
                                 }
