@@ -11,7 +11,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade.Runtime</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>1.0.0-develop.15</Version>
+    <Version>1.0.0-develop.16</Version>
     <Description>Run fancade scripts.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>

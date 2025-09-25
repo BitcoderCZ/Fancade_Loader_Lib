@@ -177,6 +177,8 @@ public sealed class Interpreter : IAstRunner
         }
 
         _variableAccessor.Clear();
+
+        _timeoutWatch?.Reset();
     }
 
     /// <inheritdoc/>
