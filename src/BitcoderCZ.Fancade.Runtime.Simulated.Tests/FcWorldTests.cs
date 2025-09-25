@@ -171,6 +171,30 @@ public class FcWorldTests
         await Assert.That(compiled).Inspects([new(new FcObject(1)) { Frequency = InspectFrequency.EveryFrame }], physics: (level.Id, prefabs));
     }
 
+    [Test]
+    public async Task ConnectionToSelf_ReferencesSelf2()
+    {
+        var writer = CreateWriter(out var prefab);
+        prefab[int3.Zero].Voxels[int3.Zero] = new Voxel(FcColor.Black, true);
+
+        var prefabs = new PrefabList();
+
+        var level = Prefab.CreateLevel(0, "A");
+        prefabs.AddPrefab(level);
+        prefabs.AddPrefab(prefab);
+
+        var blocks = level.Blocks;
+        blocks.SetBlock(new int3(0, 0, 0), 1);
+        blocks.SetPrefab(new int3(1, 0, 0), prefab);
+
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.Zero };
+        writer.Inspect(terminal.Wrap(), SignalType.Obj);
+
+        var compiled = Compile(writer, prefabs, level.Id);
+
+        await Assert.That(compiled).Inspects([new(new FcObject(2)) { Frequency = InspectFrequency.EveryFrame }], physics: (level.Id, prefabs));
+    }
+
     private static CodeWriter CreateWriter(out Prefab prefab)
     {
         var builder = CreateBuilder(out prefab);

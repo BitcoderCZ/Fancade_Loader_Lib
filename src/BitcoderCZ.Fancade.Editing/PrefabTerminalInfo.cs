@@ -251,6 +251,7 @@ public readonly struct PrefabTerminalInfo
             }
         }
 
+        // TODO: incorrectly identifies object connections to self as terminals
         foreach (var connection in prefab.Connections)
         {
             if (connection.IsFromOutside && connection.FromVoxel == terminalPos)
