@@ -32,12 +32,12 @@ public struct Connection : IEquatable<Connection>
     public ushort3 To;
 
     /// <summary>
-    /// Postition of the voxel that this connection connects from, from <see cref="From"/>.
+    /// Position of the voxel that this connection connects from, from <see cref="From"/>.
     /// </summary>
     public ushort3 FromVoxel;
 
     /// <summary>
-    /// Postition of the voxel that this connection connects to, from <see cref="To"/>.
+    /// Position of the voxel that this connection connects to, from <see cref="To"/>.
     /// </summary>
     public ushort3 ToVoxel;
 
@@ -46,8 +46,8 @@ public struct Connection : IEquatable<Connection>
     /// </summary>
     /// <param name="from">Position of the first block.</param>
     /// <param name="to">Position of the second block.</param>
-    /// <param name="fromVoxel">Postition of the voxel that this connection connects from, from <paramref name="from"/>.</param>
-    /// <param name="toVoxel">Postition of the voxel that this connection connects to, from <paramref name="to"/>.</param>
+    /// <param name="fromVoxel">Position of the voxel that this connection connects from, from <paramref name="from"/>.</param>
+    /// <param name="toVoxel">Position of the voxel that this connection connects to, from <paramref name="to"/>.</param>
     public Connection(ushort3 from, ushort3 to, ushort3 fromVoxel, ushort3 toVoxel)
     {
         From = from;

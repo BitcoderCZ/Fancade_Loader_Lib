@@ -258,6 +258,23 @@ public readonly struct Voxels : ICloneable
         => Data.Clear();
 
     /// <summary>
+    /// Fills the <see cref="Voxels"/> with a <see cref="Voxel"/>.
+    /// </summary>
+    /// <param name="voxel">The <see cref="Voxel"/> to fill the <see cref="Voxels"/> with.</param>
+    /// <exception cref="InvalidOperationException">Thrown when the <see cref="Voxels"/> instance is empty.</exception>
+    public void Fill(Voxel voxel)
+    {
+        CheckNotEmpty();
+
+        var data = _data.AsSpan();
+
+        for (int p = 0; p < 6; p++)
+        {
+            data.Slice(p * VoxelCount, VoxelCount).Fill((byte)voxel[p]);
+        }
+    }
+
+    /// <summary>
     /// Sets the face at the specified position and face index.
     /// </summary>
     /// <param name="position">Position of the voxel to set.</param>

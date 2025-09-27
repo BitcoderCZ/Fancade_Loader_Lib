@@ -1,9 +1,4 @@
 ﻿using BitcoderCZ.Maths.Vectors;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static BitcoderCZ.Fancade.Tests.Common.PrefabGenerator;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Tests;
@@ -116,7 +111,8 @@ public class BlockMeshTests
                     if (x == 7)
                     {
                         voxel.Attribs[0] = true;
-                    }else if (x == 0)
+                    }
+                    else if (x == 0)
                     {
                         voxel.Attribs[1] = true;
                     }

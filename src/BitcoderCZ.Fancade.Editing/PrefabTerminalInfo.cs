@@ -107,7 +107,17 @@ public readonly struct PrefabTerminalInfo
     /// <param name="prefabList">A <see cref="PrefabList"/> used to resolve a terminal's type.</param>
     /// <returns>The <see cref="PrefabTerminalInfo"/> created from <paramref name="prefab"/>.</returns>
     public static PrefabTerminalInfo Create(Prefab prefab, PrefabList prefabList)
-        => Create(prefab, id => prefabList.TryGetSegment(id, out var segment) && prefabList.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null);
+        => Create(prefab, id =>
+        {
+            Prefab? prefab;
+            if (prefabList.TryGetSegment(id, out var segment))
+            {
+                return prefabList.TryGetPrefab(segment.PrefabId, out prefab) ? prefab : null;
+            }
+
+            var stockPrefabs = StockBlocks.PrefabList;
+            return stockPrefabs.TryGetSegment(id, out segment) && stockPrefabs.TryGetPrefab(segment.PrefabId, out prefab) ? prefab : null;
+        });
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrefabTerminalInfo"/> struct from a <see cref="Prefab"/>.
@@ -171,7 +181,15 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    infoBuilder.Add(new TerminalInfo((byte3)connection.FromVoxel, ResolveBlockTerminalType(insidePrefab, (byte3)connection.ToVoxel, getPrefab), prefab.GetTerminalDirection((byte3)connection.FromVoxel), true));
+                    var terminalType = ResolveBlockTerminalType(insidePrefab, (byte3)connection.ToVoxel, getPrefab);
+                    var terminalDirection = prefab.GetTerminalDirection((byte3)connection.FromVoxel);
+
+                    if (terminalType is SignalType.Obj && terminalDirection is TerminalDirection.PositiveX or TerminalDirection.NegativeZ)
+                    {
+                        continue;
+                    }
+
+                    infoBuilder.Add(new TerminalInfo((byte3)connection.FromVoxel, terminalType, terminalDirection, true));
                 }
             }
             else if (connection.IsToOutside && !infoBuilder.Any(terminal => terminal.Position == connection.ToVoxel))
