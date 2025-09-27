@@ -303,10 +303,10 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public void InspectValue(RuntimeValue value, SignalType type, string? variableName, ushort prefabId, int3 inspectBlockPosition)
             => _inspectQueue.Enqueue(new(value, type, variableName, prefabId, inspectBlockPosition));
 
-        public FcConstraint AddConstraint(FcObject @base, FcObject part, Vector3? pivot)
+        public FcConstraint AddConstraint(FcObject @base, FcObject part, Vector3? pivot, EnvironmentPosition blockPosition)
             => FcConstraint.Null;
 
-        public void AddForce(FcObject @object, Vector3? force, Vector3? applyAt, Vector3? torque)
+        public void AddForce(FcObject @object, Vector3? force, Vector3? applyAt, Vector3? torque, EnvironmentPosition blockPosition)
         {
         }
 
@@ -342,7 +342,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId)
             => default;
 
-        public (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, IFcEnvironment environment, int3 blockPosition)
+        public (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, EnvironmentPosition blockPosition)
             => default;
 
         public float GetRandomValue(float min, float max)
@@ -386,7 +386,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         public (Vector3 WorldNear, Vector3 WorldFar) ScreenToWorld(Vector2 screenPos)
             => default;
 
-        public void SetBounciness(FcObject @object, float bounciness)
+        public void SetBounciness(FcObject @object, float bounciness, EnvironmentPosition blockPosition)
         {
         }
 
@@ -394,11 +394,11 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void SetFriction(FcObject @object, float friction)
+        public void SetFriction(FcObject @object, float friction, EnvironmentPosition blockPosition)
         {
         }
 
-        public void SetGravity(Vector3 gravity)
+        public void SetGravity(Vector3 gravity, EnvironmentPosition blockPosition)
         {
         }
 
@@ -406,15 +406,15 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void SetLocked(FcObject @object, Vector3? position, Vector3? rotation)
+        public void SetLocked(FcObject @object, Vector3? position, Vector3? rotation, EnvironmentPosition blockPosition)
         {
         }
 
-        public void SetMass(FcObject @object, float mass)
+        public void SetMass(FcObject @object, float mass, EnvironmentPosition blockPosition)
         {
         }
 
-        public void SetPosition(FcObject @object, Vector3? position, Quaternion? rotation)
+        public void SetPosition(FcObject @object, Vector3? position, Quaternion? rotation, EnvironmentPosition blockPosition)
         {
         }
 
@@ -425,7 +425,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void SetVelocity(FcObject @object, Vector3? velocity, Vector3? spin)
+        public void SetVelocity(FcObject @object, Vector3? velocity, Vector3? spin, EnvironmentPosition blockPosition)
         {
         }
 

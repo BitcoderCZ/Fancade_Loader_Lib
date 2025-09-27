@@ -9,8 +9,10 @@ public sealed class InvalidInputException : FancadeException
     /// Initializes a new instance of the <see cref="InvalidInputException"/> class.
     /// </summary>
     /// <param name="blockName">Name of the prefab that received the invalid input.</param>
-    public InvalidInputException(string blockName)
+    /// <param name="sourceBlock">Location of the block that caused the exception.</param>
+    public InvalidInputException(string blockName, EnvironmentPosition sourceBlock)
         : base($"{blockName} got invalid (inf or nan) input!")
     {
+        SourceBlock = sourceBlock;
     }
 }

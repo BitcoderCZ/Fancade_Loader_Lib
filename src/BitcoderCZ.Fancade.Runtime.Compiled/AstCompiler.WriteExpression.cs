@@ -138,8 +138,9 @@ public partial class AstCompiler
 
                     WriteExpressionOrDefault(getPosition.Object, SignalType.Obj, environment, writer);
 
-                    var np = terminal.Node.Position;
-                    writer.WriteInv($", _environments[{environment.Index}], new {nameof(int3)}({np.X}, {np.Y}, {np.Z}))");
+                    writer.Write(", ");
+                    WriteEnvironmentPosition(environment.Index, terminal.Node.Position, writer);
+                    writer.Write(")");
 
                     if (terminal.Position == TerminalDef.GetOutPosition(0, 2, 2))
                     {

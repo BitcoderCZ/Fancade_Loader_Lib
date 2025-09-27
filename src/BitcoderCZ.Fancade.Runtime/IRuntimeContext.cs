@@ -36,10 +36,9 @@ public interface IRuntimeContext : IRuntimeContextBase
     /// Gets the position and rotation of an object.
     /// </summary>
     /// <param name="object">The object whose position and rotation should be retrieved.</param>
-    /// <param name="environment">The environment of hte object.</param>
-    /// <param name="blockPosition">Position of the <see cref="Syntax.Objects.GetPositionExpressionSyntax"/> node.</param>
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
     /// <returns>Position and rotation of the specified object.</returns>
-    (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, IFcEnvironment environment, int3 blockPosition);
+    (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Sets the position and rotation of an object.
@@ -47,7 +46,8 @@ public interface IRuntimeContext : IRuntimeContextBase
     /// <param name="object">The object whose position and/or rotation should be set.</param>
     /// <param name="position">The new position; or <see langword="null"/>, if the value should not be changed.</param>
     /// <param name="rotation">The new rotation; or <see langword="null"/>, if the value should not be changed.</param>
-    void SetPosition(FcObject @object, Vector3? position, Quaternion? rotation);
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
+    void SetPosition(FcObject @object, Vector3? position, Quaternion? rotation, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Performs a ray cast between 2 points.
@@ -93,7 +93,8 @@ public interface IRuntimeContext : IRuntimeContextBase
     /// <param name="force">The linear force.</param>
     /// <param name="applyAt">The position, relative to the object, at which to apply the force.</param>
     /// <param name="torque">The angular force.</param>
-    void AddForce(FcObject @object, Vector3? force, Vector3? applyAt, Vector3? torque);
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
+    void AddForce(FcObject @object, Vector3? force, Vector3? applyAt, Vector3? torque, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Get the linear and angular velocity of an object.
@@ -108,7 +109,8 @@ public interface IRuntimeContext : IRuntimeContextBase
     /// <param name="object">The object whose velocity should be set.</param>
     /// <param name="velocity">The new linear velocity; or <see langword="null"/>, if the value should not be changed.</param>
     /// <param name="spin">The new angular velocity; or <see langword="null"/>, if the value should not be changed.</param>
-    void SetVelocity(FcObject @object, Vector3? velocity, Vector3? spin);
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
+    void SetVelocity(FcObject @object, Vector3? velocity, Vector3? spin, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Sets velocity multipliers that determine how forces affect the specified object.
@@ -116,34 +118,39 @@ public interface IRuntimeContext : IRuntimeContextBase
     /// <param name="object">The object whose motion constraints should be set.</param>
     /// <param name="position">The new linear velocity multiplier; or <see langword="null"/>, if the value should not be changed.</param>
     /// <param name="rotation">The new angular velocity multiplier; or <see langword="null"/>, if the value should not be changed.</param>
-    void SetLocked(FcObject @object, Vector3? position, Vector3? rotation);
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
+    void SetLocked(FcObject @object, Vector3? position, Vector3? rotation, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Sets the mass of an object.
     /// </summary>
     /// <param name="object">The object whose mass should be set.</param>
     /// <param name="mass">The new mass.</param>
-    void SetMass(FcObject @object, float mass);
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
+    void SetMass(FcObject @object, float mass, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Sets the friction of an object.
     /// </summary>
     /// <param name="object">The object whose friction should be set.</param>
     /// <param name="friction">The new friction.</param>
-    void SetFriction(FcObject @object, float friction);
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
+    void SetFriction(FcObject @object, float friction, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Sets the bounciness of an object.
     /// </summary>
     /// <param name="object">The object whose bounciness should be set.</param>
     /// <param name="bounciness">The new bounciness.</param>
-    void SetBounciness(FcObject @object, float bounciness);
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
+    void SetBounciness(FcObject @object, float bounciness, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Sets the gravity of the game world.
     /// </summary>
     /// <param name="gravity">The new gravity, default is {0, -9.8, 0}.</param>
-    void SetGravity(Vector3 gravity);
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
+    void SetGravity(Vector3 gravity, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Adds a constraint between 2 objects.
@@ -152,7 +159,8 @@ public interface IRuntimeContext : IRuntimeContextBase
     /// <param name="part">Part of the constraint (a physics-enabled object).</param>
     /// <param name="pivot">Pivot of the constraint.</param>
     /// <returns>The created constraint.</returns>
-    FcConstraint AddConstraint(FcObject @base, FcObject part, Vector3? pivot);
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
+    FcConstraint AddConstraint(FcObject @base, FcObject part, Vector3? pivot, EnvironmentPosition blockPosition);
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 #pragma warning disable SA1600 // Elements should be documented

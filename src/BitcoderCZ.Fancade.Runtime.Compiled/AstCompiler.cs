@@ -757,7 +757,7 @@ public sealed partial class AstCompiler
         }
     }
 
-    private bool TryWriteDirrectRef(SyntaxTerminal terminal, FcEnvironment environment, IndentedTextWriter writer)
+    private bool TryWriteDirectRef(SyntaxTerminal terminal, FcEnvironment environment, IndentedTextWriter writer)
     {
         switch (terminal.Node.PrefabId)
         {
@@ -785,7 +785,7 @@ public sealed partial class AstCompiler
 
                     if (list.Index is null)
                     {
-                        return TryWriteDirrectRef(list.Variable, environment, writer);
+                        return TryWriteDirectRef(list.Variable, environment, writer);
                     }
                     else if (list.Variable.Node is GetVariableExpressionSyntax getVariable)
                     {
@@ -807,6 +807,9 @@ public sealed partial class AstCompiler
                 return false;
         }
     }
+
+    private static void WriteEnvironmentPosition(int environmentIndex, int3 blockPos, IndentedTextWriter writer)
+        => writer.WriteInv($"new EnvironmentPosition(_environments[{environmentIndex}], new int3({blockPos.X}, {blockPos.Y}, {blockPos.Z}))");
 
     private string GetVariableName(int environmentIndex, Variable variable)
     {

@@ -31,4 +31,10 @@ public abstract class FancadeException : Exception
     /// </summary>
     /// <value>The message that should be shown to the user.</value>
     public string FancadeMessage { get; }
+
+    /// <summary>
+    /// Gets the location of the block that caused the exception.
+    /// </summary>
+    /// <value>Location of the block that caused the exception; or <see langword="null"/>, if the exception was not caused by a specific block.</value>
+    public EnvironmentPosition? SourceBlock { get; init; }
 }

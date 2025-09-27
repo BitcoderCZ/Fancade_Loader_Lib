@@ -309,7 +309,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setPosition.ObjectTerminal is not null)
                         {
-                            _ctx.SetPosition((FcObject)GetValue(setPosition.ObjectTerminal, environment).Int, setPosition.PositionTerminal is null ? null : GetValue(setPosition.PositionTerminal, environment).Vector3, setPosition.RotationTerminal is null ? null : GetValue(setPosition.RotationTerminal, environment).Quaternion);
+                            _ctx.SetPosition((FcObject)GetValue(setPosition.ObjectTerminal, environment).Int, setPosition.PositionTerminal is null ? null : GetValue(setPosition.PositionTerminal, environment).Vector3, setPosition.RotationTerminal is null ? null : GetValue(setPosition.RotationTerminal, environment).Quaternion, new EnvironmentPosition(environment, statement.Position));
                         }
                     }
 
@@ -398,7 +398,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (addForce.Object is not null)
                         {
-                            _ctx.AddForce((FcObject)GetValue(addForce.Object, environment).Int, addForce.Force is null ? null : GetValue(addForce.Force, environment).Vector3, addForce.ApplyAt is null ? null : GetValue(addForce.ApplyAt, environment).Vector3, addForce.Torque is null ? null : GetValue(addForce.Torque, environment).Vector3);
+                            _ctx.AddForce((FcObject)GetValue(addForce.Object, environment).Int, addForce.Force is null ? null : GetValue(addForce.Force, environment).Vector3, addForce.ApplyAt is null ? null : GetValue(addForce.ApplyAt, environment).Vector3, addForce.Torque is null ? null : GetValue(addForce.Torque, environment).Vector3, new EnvironmentPosition(environment, statement.Position));
                         }
                     }
 
@@ -410,7 +410,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setVelocity.Object is not null)
                         {
-                            _ctx.SetVelocity((FcObject)GetValue(setVelocity.Object, environment).Int, setVelocity.Velocity is null ? null : GetValue(setVelocity.Velocity, environment).Vector3, setVelocity.Spin is null ? null : GetValue(setVelocity.Spin, environment).Vector3);
+                            _ctx.SetVelocity((FcObject)GetValue(setVelocity.Object, environment).Int, setVelocity.Velocity is null ? null : GetValue(setVelocity.Velocity, environment).Vector3, setVelocity.Spin is null ? null : GetValue(setVelocity.Spin, environment).Vector3, new EnvironmentPosition(environment, statement.Position));
                         }
                     }
 
@@ -422,7 +422,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setLocked.Object is not null)
                         {
-                            _ctx.SetLocked((FcObject)GetValue(setLocked.Object, environment).Int, setLocked.PositionTerminal is null ? null : GetValue(setLocked.PositionTerminal, environment).Vector3, setLocked.RotationTerminal is null ? null : GetValue(setLocked.RotationTerminal, environment).Vector3);
+                            _ctx.SetLocked((FcObject)GetValue(setLocked.Object, environment).Int, setLocked.PositionTerminal is null ? null : GetValue(setLocked.PositionTerminal, environment).Vector3, setLocked.RotationTerminal is null ? null : GetValue(setLocked.RotationTerminal, environment).Vector3, new EnvironmentPosition(environment, statement.Position));
                         }
                     }
 
@@ -434,7 +434,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setMass.Object is not null && setMass.Mass is not null)
                         {
-                            _ctx.SetMass((FcObject)GetValue(setMass.Object, environment).Int, GetValue(setMass.Mass, environment).Float);
+                            _ctx.SetMass((FcObject)GetValue(setMass.Object, environment).Int, GetValue(setMass.Mass, environment).Float, new EnvironmentPosition(environment, statement.Position));
                         }
                     }
 
@@ -446,7 +446,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setFriction.Object is not null && setFriction.Friction is not null)
                         {
-                            _ctx.SetFriction((FcObject)GetValue(setFriction.Object, environment).Int, GetValue(setFriction.Friction, environment).Float);
+                            _ctx.SetFriction((FcObject)GetValue(setFriction.Object, environment).Int, GetValue(setFriction.Friction, environment).Float, new EnvironmentPosition(environment, statement.Position));
                         }
                     }
 
@@ -458,7 +458,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setBounciness.Object is not null && setBounciness.Bounciness is not null)
                         {
-                            _ctx.SetBounciness((FcObject)GetValue(setBounciness.Object, environment).Int, GetValue(setBounciness.Bounciness, environment).Float);
+                            _ctx.SetBounciness((FcObject)GetValue(setBounciness.Object, environment).Int, GetValue(setBounciness.Bounciness, environment).Float, new EnvironmentPosition(environment, statement.Position));
                         }
                     }
 
@@ -470,7 +470,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (setGravity.Gravity is not null)
                         {
-                            _ctx.SetGravity(GetValue(setGravity.Gravity, environment).Vector3);
+                            _ctx.SetGravity(GetValue(setGravity.Gravity, environment).Vector3, new EnvironmentPosition(environment, statement.Position));
                         }
                     }
 
@@ -482,7 +482,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (addConstraint.Base is not null && addConstraint.Part is not null)
                         {
-                            environment.BlockData[addConstraint.Position] = _ctx.AddConstraint((FcObject)GetValue(addConstraint.Base, environment).Int, (FcObject)GetValue(addConstraint.Part, environment).Int, addConstraint.Pivot is null ? null : GetValue(addConstraint.Pivot, environment).Vector3);
+                            environment.BlockData[addConstraint.Position] = _ctx.AddConstraint((FcObject)GetValue(addConstraint.Base, environment).Int, (FcObject)GetValue(addConstraint.Part, environment).Int, addConstraint.Pivot is null ? null : GetValue(addConstraint.Pivot, environment).Vector3, new EnvironmentPosition(environment, statement.Position));
                         }
                     }
 
@@ -912,7 +912,7 @@ public sealed class Interpreter : IAstRunner
                     var getPosition = (GetPositionExpressionSyntax)terminal.Node;
 
                     RuntimeValue val;
-                    var (position, rotation) = _ctx.GetObjectPosition((FcObject)GetValue(getPosition.Object, environment).Int, environment, terminal.Node.Position);
+                    var (position, rotation) = _ctx.GetObjectPosition((FcObject)GetValue(getPosition.Object, environment).Int, new EnvironmentPosition(environment, terminal.Node.Position));
 
                     if (terminal.Position == PosOut02)
                     {

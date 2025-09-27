@@ -69,16 +69,17 @@ public sealed partial class FcWorld
             return FcObject.Null;
         }
 
-        public (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, IFcEnvironment environment, int3 blockPosition)
+        public (Vector3 Position, Quaternion Rotation) GetObjectPosition(FcObject @object, EnvironmentPosition blockPosition)
         {
             if (@object == FcObject.Null)
             {
-                if (environment.OuterEnvironmentIndex == -1)
+                if (blockPosition.Environment.OuterEnvironmentIndex == -1)
                 {
-                    return ((Vector3)blockPosition + new Vector3(0.9375f, 0.1875f, 0.9375f), Quaternion.Identity);
+                    return ((Vector3)blockPosition.Position + new Vector3(0.9375f, 0.1875f, 0.9375f), Quaternion.Identity);
                 }
 
                 // get the second top most environment
+                var environment = blockPosition.Environment;
                 while (true)
                 {
                     var outer = _world._runner.GetEnvironment(environment.OuterEnvironmentIndex);
@@ -117,7 +118,7 @@ public sealed partial class FcWorld
             return (rObject.Pos, rObject.Rot);
         }
 
-        public void SetPosition(FcObject @object, Vector3? position, Quaternion? rotation)
+        public void SetPosition(FcObject @object, Vector3? position, Quaternion? rotation, EnvironmentPosition blockPosition)
         {
             if (!_world.TryGetObject(@object, out var rObject))
             {
@@ -126,12 +127,12 @@ public sealed partial class FcWorld
 
             if (position is { } pos && pos.IsInfOrNaN())
             {
-                throw new InvalidInputException("Set Position");
+                throw new InvalidInputException("Set Position", blockPosition);
             }
 
             if (rotation is { } rot && rot.IsInfOrNaN())
             {
-                throw new InvalidInputException("Set Position");
+                throw new InvalidInputException("Set Position", blockPosition);
             }
 
             rObject.SetRotPos(position, rotation);
@@ -282,7 +283,7 @@ public sealed partial class FcWorld
             => _baseCtx.AdjustVolumePitch(channel, volume, pitch);
 
         // **************************************** Physics ****************************************
-        public void AddForce(FcObject @object, Vector3? force, Vector3? applyAt, Vector3? torque)
+        public void AddForce(FcObject @object, Vector3? force, Vector3? applyAt, Vector3? torque, EnvironmentPosition blockPosition)
         {
             if (!_world.TryGetObject(@object, out var rObject))
             {
@@ -295,14 +296,14 @@ public sealed partial class FcWorld
             {
                 if (forceVal.IsInfOrNaN())
                 {
-                    throw new InvalidInputException("Add Force");
+                    throw new InvalidInputException("Add Force", blockPosition);
                 }
 
                 if (applyAt is { } applyAtVal)
                 {
                     if (applyAtVal.IsInfOrNaN())
                     {
-                        throw new InvalidInputException("Add Force");
+                        throw new InvalidInputException("Add Force", blockPosition);
                     }
 
                     rObject.RigidBody.ApplyForce(forceVal, applyAtVal);
@@ -319,7 +320,7 @@ public sealed partial class FcWorld
             {
                 if (torqueVal.IsInfOrNaN())
                 {
-                    throw new InvalidInputException("Add Force");
+                    throw new InvalidInputException("Add Force", blockPosition);
                 }
 
                 rObject.RigidBody.ApplyTorque(torqueVal);
@@ -337,7 +338,7 @@ public sealed partial class FcWorld
             return (rObject.RigidBody.LinearVelocity, rObject.RigidBody.AngularVelocity * (180f / MathF.PI));
         }
 
-        public void SetVelocity(FcObject @object, Vector3? velocity, Vector3? spin)
+        public void SetVelocity(FcObject @object, Vector3? velocity, Vector3? spin, EnvironmentPosition blockPosition)
         {
             if (!_world.TryGetObject(@object, out var rObject))
             {
@@ -350,7 +351,7 @@ public sealed partial class FcWorld
             {
                 if (velocityVal.IsInfOrNaN())
                 {
-                    throw new InvalidInputException("Set Velocity");
+                    throw new InvalidInputException("Set Velocity", blockPosition);
                 }
 
                 rObject.RigidBody.LinearVelocity = velocityVal;
@@ -361,7 +362,7 @@ public sealed partial class FcWorld
             {
                 if (spinVal.IsInfOrNaN())
                 {
-                    throw new InvalidInputException("Set Velocity");
+                    throw new InvalidInputException("Set Velocity", blockPosition);
                 }
 
                 rObject.RigidBody.AngularVelocity = spinVal * (MathF.PI / 180f);
@@ -369,7 +370,7 @@ public sealed partial class FcWorld
             }
         }
 
-        public void SetLocked(FcObject @object, Vector3? position, Vector3? rotation)
+        public void SetLocked(FcObject @object, Vector3? position, Vector3? rotation, EnvironmentPosition blockPosition)
         {
             if (!_world.TryGetObject(@object, out var rObject))
             {
@@ -382,7 +383,7 @@ public sealed partial class FcWorld
             {
                 if (positionVal.IsInfOrNaN())
                 {
-                    throw new InvalidInputException("Set Locked");
+                    throw new InvalidInputException("Set Locked", blockPosition);
                 }
 
                 rObject.RigidBody.LinearFactor = positionVal;
@@ -392,14 +393,14 @@ public sealed partial class FcWorld
             {
                 if (rotationVal.IsInfOrNaN())
                 {
-                    throw new InvalidInputException("Set Locked");
+                    throw new InvalidInputException("Set Locked", blockPosition);
                 }
 
                 rObject.RigidBody.AngularFactor = rotationVal;
             }
         }
 
-        public void SetMass(FcObject @object, float mass)
+        public void SetMass(FcObject @object, float mass, EnvironmentPosition blockPosition)
         {
             if (!_world.TryGetObject(@object, out var rObject))
             {
@@ -410,13 +411,13 @@ public sealed partial class FcWorld
 
             if (float.IsNaN(mass) || float.IsInfinity(mass))
             {
-                throw new InvalidInputException("Set Mass/Friction/Bounciness");
+                throw new InvalidInputException("Set Mass", blockPosition);
             }
 
             rObject.Mass = mass;
         }
 
-        public void SetFriction(FcObject @object, float friction)
+        public void SetFriction(FcObject @object, float friction, EnvironmentPosition blockPosition)
         {
             if (!_world.TryGetObject(@object, out var rObject))
             {
@@ -425,13 +426,13 @@ public sealed partial class FcWorld
 
             if (float.IsNaN(friction) || float.IsInfinity(friction))
             {
-                throw new InvalidInputException("Set Mass/Friction/Bounciness");
+                throw new InvalidInputException("Set Friction", blockPosition);
             }
 
             rObject.RigidBody.Friction = friction;
         }
 
-        public void SetBounciness(FcObject @object, float bounciness)
+        public void SetBounciness(FcObject @object, float bounciness, EnvironmentPosition blockPosition)
         {
             if (!_world.TryGetObject(@object, out var rObject))
             {
@@ -440,23 +441,23 @@ public sealed partial class FcWorld
 
             if (float.IsNaN(bounciness) || float.IsInfinity(bounciness))
             {
-                throw new InvalidInputException("Set Mass/Friction/Bounciness");
+                throw new InvalidInputException("Set Bounciness", blockPosition);
             }
 
             rObject.RigidBody.Restitution = bounciness;
         }
 
-        public void SetGravity(Vector3 gravity)
+        public void SetGravity(Vector3 gravity, EnvironmentPosition blockPosition)
         {
             if (gravity.IsInfOrNaN())
             {
-                throw new InvalidInputException("Set Gravity");
+                throw new InvalidInputException("Set Gravity", blockPosition);
             }
 
             _world._world.Gravity = gravity;
         }
 
-        public FcConstraint AddConstraint(FcObject @base, FcObject part, Vector3? pivot)
+        public FcConstraint AddConstraint(FcObject @base, FcObject part, Vector3? pivot, EnvironmentPosition blockPosition)
         {
             if (@base == part || !_world.TryGetObject(@base, out var rBase) || !_world.TryGetObject(part, out var rPart))
             {
@@ -470,7 +471,7 @@ public sealed partial class FcWorld
 
             if (pivotVal.IsInfOrNaN())
             {
-                throw new InvalidInputException("Add Constraint");
+                throw new InvalidInputException("Add Constraint", blockPosition);
             }
 
             rPart.Unfix(_world._world);

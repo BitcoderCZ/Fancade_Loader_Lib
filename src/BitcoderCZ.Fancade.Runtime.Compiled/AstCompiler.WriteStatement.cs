@@ -120,6 +120,8 @@ public partial class AstCompiler
                         WriteExpressionOrNull(setPosition.PositionTerminal, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
                         WriteExpressionOrNull(setPosition.RotationTerminal, SignalType.Rot, environment, writer);
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, setPosition.Position, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -266,6 +268,8 @@ public partial class AstCompiler
                         WriteExpressionOrNull(addForce.ApplyAt, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
                         WriteExpressionOrNull(addForce.Torque, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, addForce.Position, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -284,6 +288,8 @@ public partial class AstCompiler
                         WriteExpressionOrNull(setVelocity.Velocity, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
                         WriteExpressionOrNull(setVelocity.Spin, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, setVelocity.Position, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -302,6 +308,8 @@ public partial class AstCompiler
                         WriteExpressionOrNull(setLocked.PositionTerminal, SignalType.Vec3, environment, writer);
                         writer.Write(", ");
                         WriteExpressionOrNull(setLocked.RotationTerminal, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, setLocked.Position, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -318,6 +326,8 @@ public partial class AstCompiler
                         WriteExpression(setMass.Object, false, environment, writer);
                         writer.Write(", ");
                         WriteExpression(setMass.Mass, false, environment, writer);
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, setMass.Position, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -334,6 +344,8 @@ public partial class AstCompiler
                         WriteExpression(setFriction.Object, false, environment, writer);
                         writer.Write(", ");
                         WriteExpression(setFriction.Friction, false, environment, writer);
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, setFriction.Position, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -350,6 +362,8 @@ public partial class AstCompiler
                         WriteExpression(setBounciness.Object, false, environment, writer);
                         writer.Write(", ");
                         WriteExpression(setBounciness.Bounciness, false, environment, writer);
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, setBounciness.Position, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -364,6 +378,8 @@ public partial class AstCompiler
                     {
                         writer.WriteInv($"_ctx.{nameof(IRuntimeContext.SetGravity)}(");
                         WriteExpression(setGravity.Gravity, false, environment, writer);
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, setGravity.Position, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -385,6 +401,8 @@ public partial class AstCompiler
                         WriteExpression(addConstraint.Part, false, environment, writer);
                         writer.Write(", ");
                         WriteExpressionOrNull(addConstraint.Pivot, SignalType.Vec3, environment, writer);
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, addConstraint.Position, writer);
                         writer.WriteLine(");");
                     }
                 }
@@ -795,7 +813,7 @@ public partial class AstCompiler
 
                     if (setPointer.Variable is not null && setPointer.Value is not null)
                     {
-                        if (!TryWriteDirrectRef(setPointer.Variable, environment, writer))
+                        if (!TryWriteDirectRef(setPointer.Variable, environment, writer))
                         {
                             WriteExpression(setPointer.Variable, true, environment, writer);
 
@@ -820,7 +838,7 @@ public partial class AstCompiler
 
                     if (incDecNumber.Variable is not null)
                     {
-                        if (!TryWriteDirrectRef(incDecNumber.Variable, environment, writer))
+                        if (!TryWriteDirectRef(incDecNumber.Variable, environment, writer))
                         {
                             WriteExpression(incDecNumber.Variable, true, environment, writer);
 
