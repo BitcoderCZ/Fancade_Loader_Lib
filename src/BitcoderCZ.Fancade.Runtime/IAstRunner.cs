@@ -1,4 +1,5 @@
 ﻿using BitcoderCZ.Fancade.Editing;
+using BitcoderCZ.Fancade.Runtime.Exceptions;
 
 namespace BitcoderCZ.Fancade.Runtime;
 
@@ -23,6 +24,8 @@ public interface IAstRunner : IDisposable
     /// Runs a single frame.
     /// </summary>
     /// <returns>An <see cref="Action"/>, that when executed, runs the "Late Update" blocks.</returns>
+    /// <exception cref="FcTimeoutException">Thrown if the execution takes too long.</exception>
+    /// <exception cref="InvalidInputException">Thrown when a script block receives invalid input.</exception>
     Action RunFrame();
 
     /// <summary>

@@ -64,7 +64,7 @@ public sealed class Interpreter : IAstRunner
     /// </summary>
     /// <param name="ast">The <see cref="FcAST"/> to interpret.</param>
     /// <param name="ctx">The <see cref="IRuntimeContext"/> to use.</param>
-    /// <param name="timeout">The time after which <see cref="TimeoutException"/> will be thrown.</param>
+    /// <param name="timeout">The time after which <see cref="FcTimeoutException"/> will be thrown.</param>
     /// <exception cref="EnvironmentDepthLimitReachedException">Thrown when max depth is exceeded.</exception>
     public Interpreter(FcAST ast, IRuntimeContext ctx, TimeSpan timeout)
         : this(ast, ctx, timeout, 4)
@@ -76,7 +76,7 @@ public sealed class Interpreter : IAstRunner
     /// </summary>
     /// <param name="ast">The <see cref="FcAST"/> to interpret.</param>
     /// <param name="ctx">The <see cref="IRuntimeContext"/> to use.</param>
-    /// <param name="timeout">The time after which <see cref="TimeoutException"/> will be thrown.</param>
+    /// <param name="timeout">The time after which <see cref="FcTimeoutException"/> will be thrown.</param>
     /// <param name="maxDepth">The maximum environment depth (blocks inside blocks).</param>
     /// <exception cref="EnvironmentDepthLimitReachedException">Thrown when <paramref name="maxDepth"/> is exceeded.</exception>
     public Interpreter(FcAST ast, IRuntimeContext ctx, TimeSpan timeout, int maxDepth)
@@ -124,7 +124,7 @@ public sealed class Interpreter : IAstRunner
     /// </summary>
     /// <returns>An <see cref="Action"/>, that when executed, runs the "Late Update" blocks.</returns>
     /// <exception cref="InvalidOperationException">Thrown when <see cref="RunFrame"/> or it's result is running when this method executes.</exception>
-    /// <exception cref="TimeoutException">Thrown if the execution takes too long.</exception>
+    /// <exception cref="FcTimeoutException">Thrown if the execution takes too long.</exception>
     public Action RunFrame()
     {
         if (_timeoutWatch is not null)

@@ -8,7 +8,7 @@
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
       <PackageId>BitcoderCZ.Fancade.Runtime.Simulated</PackageId>
       <PackageTags>library;fancade</PackageTags>
-      <Version>1.0.0-develop.8</Version>
+      <Version>1.0.0-develop.9</Version>
       <Description>Base package for BitcoderCZ.Fancade.Runtime.Simulated.*</Description>
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
       <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
