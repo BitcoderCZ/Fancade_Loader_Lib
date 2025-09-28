@@ -727,8 +727,10 @@ public partial class AstCompiler
                         {
                             if (_timeout != Timeout.InfiniteTimeSpan)
                             {
+                                _writer.Write("ThrowIfTimeout(");
+                                WriteEnvironmentPosition(environment.Index, loop.Position, _writer);
                                 _writer.WriteLine("""
-                                    ThrowIfTimeout();
+                                    );
 
                                     """);
                             }

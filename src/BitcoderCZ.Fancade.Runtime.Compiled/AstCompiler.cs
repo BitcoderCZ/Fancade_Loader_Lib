@@ -146,6 +146,7 @@ public sealed partial class AstCompiler
             using BitcoderCZ.Fancade.Editing;
             using BitcoderCZ.Fancade.Editing.Scripting.Settings;
             using BitcoderCZ.Fancade.Runtime;
+            using BitcoderCZ.Fancade.Runtime.Exceptions;
             using BitcoderCZ.Maths.Vectors;
             using System;
             using System.Collections.Generic;
@@ -341,12 +342,17 @@ public sealed partial class AstCompiler
             {
                 _writer.WriteLineAll("""
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                    private void ThrowIfTimeout()
+                    private void ThrowIfTimeout(EnvironmentPosition currentBlock)
                     {
                         if (_timeoutWatch.Elapsed > _timeout)
                         {
-                            throw new TimeoutException();
+                            ThrowFcTimeoutException(currentBlock);
                         }
+                    }
+
+                    private static void ThrowFcTimeoutException(EnvironmentPosition currentBlock)
+                    {
+                        throw new FcTimeoutException(currentBlock);
                     }
 
                     """);
@@ -367,8 +373,10 @@ public sealed partial class AstCompiler
                 {
                     if (_timeout != Timeout.InfiniteTimeSpan)
                     {
+                        _writer.Write("ThrowIfTimeout(");
+                        WriteEnvironmentPosition(entryPoint.EnvironmentIndex, entryPoint.BlockPos, _writer);
                         _writer.WriteLine("""
-                            ThrowIfTimeout();
+                            );
 
                             """);
                     }
@@ -396,6 +404,11 @@ public sealed partial class AstCompiler
 
             using (_writer.CurlyIndent("public void Reset()"))
             {
+                if (_timeout != Timeout.InfiniteTimeSpan)
+                {
+                    _writer.WriteLine("_timeoutWatch.Reset();");
+                }
+
                 foreach (var (environmentIndex, variable) in _environments[0].AST.GlobalVariables.Select(var => (-1, var)).Concat(_variables))
                 {
                     _writer.WriteLineInv($"{GetVariableName(environmentIndex, variable)}.Clear();");

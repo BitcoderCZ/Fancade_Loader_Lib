@@ -233,10 +233,11 @@ public sealed class Interpreter : IAstRunner
 
         while (executeNext.TryPop(out var item))
         {
-            ThrowIfTimeout();
-
             var (environmentIndex, blockPos, terminalPos) = item;
             var environment = _environments[environmentIndex];
+
+            ThrowIfTimeout(environment, blockPos);
+
             var statement = environment.AST.Statements[blockPos];
 
             int nextCount = 0;
@@ -702,7 +703,7 @@ public sealed class Interpreter : IAstRunner
 
                         while (true)
                         {
-                            ThrowIfTimeout();
+                            ThrowIfTimeout(environment, loop.Position);
 
                             stop = (int)MathF.Ceiling(GetValue(loop.Stop, environment).Float);
 
@@ -861,7 +862,7 @@ public sealed class Interpreter : IAstRunner
             return TerminalOutput.Disconnected;
         }
 
-        ThrowIfTimeout();
+        ThrowIfTimeout(environment, terminal.Position);
 
         // faster than switching on type
         switch (terminal.Node.PrefabId)
@@ -1462,7 +1463,7 @@ public sealed class Interpreter : IAstRunner
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ThrowIfTimeout()
+    private void ThrowIfTimeout(FcEnvironment environment, int3 blockPos)
     {
         if (_timeout != Timeout.InfiniteTimeSpan)
         {
@@ -1470,7 +1471,7 @@ public sealed class Interpreter : IAstRunner
 
             if (_timeoutWatch.Elapsed > _timeout)
             {
-                ThrowTimeoutException();
+                ThrowFcTimeoutException(new EnvironmentPosition(environment, blockPos));
             }
         }
     }

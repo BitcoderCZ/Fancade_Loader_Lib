@@ -21,4 +21,9 @@ internal static class ThrowHelper
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static void ThrowTimeoutException()
         => throw new TimeoutException();
+
+    [DoesNotReturn]
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static void ThrowFcTimeoutException(EnvironmentPosition sourceBlock)
+        => throw new FcTimeoutException(sourceBlock);
 }
