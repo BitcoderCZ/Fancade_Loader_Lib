@@ -5,6 +5,7 @@ using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.Loader;
 using System.Text;
 using TUnit.Assertions.AssertConditions;
 
@@ -95,43 +96,52 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
 
     private AssertionResult Run(FcAST ast, bool boxArt = false)
     {
-        IEnumerable<Func<FcAST, IRuntimeContext, IAstRunner>> runnerFactories = [(ast, ctx) => new Interpreter(ast, ctx, Timeout), (ast, ctx) => AstCompiler.Compile(ast, ctx, new() { Timeout = Timeout })!];
+        var assemblyLoadContext = new AssemblyLoadContext("TempLoadCtx", isCollectible: true);
 
-        Queue<Inspect> inspectQueue = new();
+        IEnumerable<Func<FcAST, IRuntimeContext, IAstRunner>> runnerFactories = [(ast, ctx) => new Interpreter(ast, ctx, Timeout), (ast, ctx) => FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext) { Timeout = Timeout })!];
 
-        foreach (var factory in runnerFactories)
+        try
         {
-            var ctx = new InspectRuntimeContext(inspectQueue)
-            {
-                TakingBoxArt = boxArt,
-            };
+            Queue<Inspect> inspectQueue = new();
 
-            IAstRunner runner;
-            if (Physics is { } physics)
+            foreach (var factory in runnerFactories)
             {
-                runner = FcWorld.Create(physics.Item1, physics.Item2, ctx, physicsCtx => factory(ast, physicsCtx));
-            }
-            else
-            {
-                runner = factory(ast, ctx);
-            }
+                var ctx = new InspectRuntimeContext(inspectQueue)
+                {
+                    TakingBoxArt = boxArt,
+                };
 
-            AssertionResult res;
-            try
-            {
-                res = Run(runner, inspectQueue, ctx);
-            }
-            finally
-            {
-                runner.Dispose();
-            }
+                IAstRunner runner;
+                if (Physics is { } physics)
+                {
+                    runner = FcWorld.Create(physics.Item1, physics.Item2, ctx, physicsCtx => factory(ast, physicsCtx));
+                }
+                else
+                {
+                    runner = factory(ast, ctx);
+                }
 
-            if (!res.IsPassed)
-            {
-                return res;
-            }
+                AssertionResult res;
+                try
+                {
+                    res = Run(runner, inspectQueue, ctx);
+                }
+                finally
+                {
+                    runner.Dispose();
+                }
 
-            Debug.Assert(inspectQueue.Count == 0);
+                if (!res.IsPassed)
+                {
+                    return res;
+                }
+
+                Debug.Assert(inspectQueue.Count == 0);
+            }
+        }
+        finally
+        {
+            assemblyLoadContext.Unload();
         }
 
         return AssertionResult.Passed;

@@ -97,7 +97,7 @@ public sealed partial class FcWorld
                 var segment = _world._prefabs.GetSegmentOrStock(_world._prefabs.GetPrefab(_world._mainPrefab).Blocks.GetBlockOrDefault(environment.OuterPosition));
 
                 // prefab pos + size / 2
-                Vector3 pos = (Vector3)(environment.OuterPosition - segment.PosInPrefab) + ((Vector3)((max - min) + int3.One) * 0.5f + (Vector3)min) * 0.125f;
+                Vector3 pos = (Vector3)(environment.OuterPosition - segment.PosInPrefab) + ((((Vector3)((max - min) + int3.One) * 0.5f) + (Vector3)min) * 0.125f);
                 Quaternion rot = Quaternion.Identity;
 
                 if (_world.TryGetObjectByPos(_world._mainPrefab, environment.OuterPosition, 0, out var obj))
@@ -186,7 +186,7 @@ public sealed partial class FcWorld
                         if (con.RigidBodyA == rObject.RigidBody || con.RigidBodyB == rObject.RigidBody)
                         {
                             _world._constraints.RemoveAt(i);
-                            Debug.Assert(con.Userobject is FcConstraint);
+                            Debug.Assert(con.Userobject is FcConstraint, $"Userobject should be {nameof(FcConstraint)}.");
                             _world._idToConstraint.Remove((FcConstraint)con.Userobject);
                             _world._world.RemoveConstraint(con);
                             con.Dispose();
@@ -194,13 +194,13 @@ public sealed partial class FcWorld
                         }
                     }
 
-                    Debug.Assert(rObject.RigidBody.IsInWorld);
+                    Debug.Assert(rObject.RigidBody.IsInWorld, $"{nameof(rObject)} should be in world, if the object is visible.");
                     _world._world.RemoveRigidBody(rObject.RigidBody);
                 }
             }
             else if (visible)
             {
-                Debug.Assert(!rObject.RigidBody.IsInWorld);
+                Debug.Assert(!rObject.RigidBody.IsInWorld, $"{nameof(rObject)} should not be in world, if the object is not visible.");
                 _world._world.AddRigidBody(rObject.RigidBody);
             }
 
@@ -252,7 +252,7 @@ public sealed partial class FcWorld
                 if (con.RigidBodyA == rObject.RigidBody || con.RigidBodyB == rObject.RigidBody)
                 {
                     _world._constraints.RemoveAt(i);
-                    Debug.Assert(con.Userobject is FcConstraint);
+                    Debug.Assert(con.Userobject is FcConstraint, $"Userobject should be {nameof(FcConstraint)}.");
                     _world._idToConstraint.Remove((FcConstraint)con.Userobject);
                     _world._world.RemoveConstraint(con);
                     con.Dispose();
@@ -477,9 +477,9 @@ public sealed partial class FcWorld
             rPart.Unfix(_world._world);
 
             bool inverted = Matrix4x4.Invert(rBase.RigidBody.WorldTransform, out var invBase);
-            Debug.Assert(inverted);
+            Debug.Assert(inverted, "Matrix invert should succeed.");
             inverted = Matrix4x4.Invert(rPart.RigidBody.WorldTransform, out var invPart);
-            Debug.Assert(inverted);
+            Debug.Assert(inverted, "Matrix invert should succeed.");
 
             Vector3 localPivotA = Vector3.Transform(pivotVal, invBase);
             Vector3 localPivotB = Vector3.Transform(pivotVal, invPart);

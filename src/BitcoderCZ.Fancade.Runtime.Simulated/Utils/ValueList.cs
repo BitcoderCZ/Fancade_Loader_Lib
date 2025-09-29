@@ -17,14 +17,6 @@ internal struct ValueList<T> : IList<T>, IReadOnlyList<T>
     private Buffer8 _buffer = default;
     private List<T>? _list;
 
-    [UnscopedRef]
-#pragma warning disable IDE0251 // Make member 'readonly'
-    private Span<T> BufferSpan => Buffer8.AsSpan(ref Unsafe.AsRef(in _buffer));
-#pragma warning restore IDE0251 // Make member 'readonly'
-
-    [UnscopedRef]
-    private readonly ReadOnlySpan<T> ROBufferSpan => Buffer8.AsSpan(ref Unsafe.AsRef(in _buffer));
-
     public ValueList(int capacity)
     {
         _count = 0;
@@ -56,33 +48,6 @@ internal struct ValueList<T> : IList<T>, IReadOnlyList<T>
         }
     }
 
-    public T this[int index]
-    {
-        readonly get
-        {
-            ThrowIfGreaterThanOrEqualToOrNegative(index, Count, nameof(index));
-
-            return index < BufferCapacity
-                ? ROBufferSpan[index]
-                : _list![index - BufferCapacity];
-        }
-#pragma warning disable IDE0251 // Make member 'readonly'
-        set
-#pragma warning restore IDE0251 // Make member 'readonly'
-        {
-            ThrowIfGreaterThanOrEqualToOrNegative(index, Count, nameof(index));
-
-            if (index < BufferCapacity)
-            {
-                BufferSpan[index] = value;
-            }
-            else
-            {
-                _list![index - BufferCapacity] = value;
-            }
-        }
-    }
-
     public readonly int Count => _count;
 
     public int Capacity
@@ -108,6 +73,40 @@ internal struct ValueList<T> : IList<T>, IReadOnlyList<T>
     }
 
     public readonly bool IsReadOnly => false;
+
+    [UnscopedRef]
+#pragma warning disable IDE0251 // Make member 'readonly'
+    private Span<T> BufferSpan => Buffer8.AsSpan(ref Unsafe.AsRef(in _buffer));
+#pragma warning restore IDE0251 // Make member 'readonly'
+
+    [UnscopedRef]
+    private readonly ReadOnlySpan<T> ROBufferSpan => Buffer8.AsSpan(ref Unsafe.AsRef(in _buffer));
+
+    public T this[int index]
+    {
+        readonly get
+        {
+            ThrowIfGreaterThanOrEqualToOrNegative(index, Count, nameof(index));
+
+            return index < BufferCapacity
+                ? ROBufferSpan[index]
+                : _list![index - BufferCapacity];
+        }
+
+        set
+        {
+            ThrowIfGreaterThanOrEqualToOrNegative(index, Count, nameof(index));
+
+            if (index < BufferCapacity)
+            {
+                BufferSpan[index] = value;
+            }
+            else
+            {
+                _list![index - BufferCapacity] = value;
+            }
+        }
+    }
 
     public void Add(T item)
     {
@@ -256,7 +255,7 @@ internal struct ValueList<T> : IList<T>, IReadOnlyList<T>
 
             if (_count > BufferCapacity)
             {
-                Debug.Assert(_list is not null);
+                Debug.Assert(_list is not null, $"{nameof(_list)} should not be null.");
 
                 bufferSpan[BufferCapacity - 1] = _list[0];
                 _list.RemoveAt(0);
@@ -264,7 +263,7 @@ internal struct ValueList<T> : IList<T>, IReadOnlyList<T>
         }
         else
         {
-            Debug.Assert(_list is not null);
+            Debug.Assert(_list is not null, $"{nameof(_list)} should not be null.");
 
             _list.RemoveAt(index - BufferCapacity);
         }

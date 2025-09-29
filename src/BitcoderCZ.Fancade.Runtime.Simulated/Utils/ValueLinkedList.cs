@@ -141,14 +141,6 @@ internal struct ValueLinkedList<T> : IEnumerable<T>
         }
     }
 
-    private sealed class Node
-    {
-        public ValueCollection8 Data;
-        public Node? NextNode;
-
-        public int Count => Data.Count;
-    }
-
     private struct ValueCollection8
     {
         private byte _count;
@@ -162,6 +154,9 @@ internal struct ValueLinkedList<T> : IEnumerable<T>
 
         public readonly int Count => _count;
 
+        [UnscopedRef]
+        private readonly Span<T> Data => Array8.AsSpan(ref Unsafe.AsRef(in _data));
+
         public readonly T this[int index]
         {
             get
@@ -171,9 +166,6 @@ internal struct ValueLinkedList<T> : IEnumerable<T>
                 return Data[index];
             }
         }
-
-        [UnscopedRef]
-        private readonly Span<T> Data => Array8.AsSpan(ref Unsafe.AsRef(in _data));
 
         public void Add(T item)
         {
@@ -226,4 +218,12 @@ internal struct ValueLinkedList<T> : IEnumerable<T>
             => MemoryMarshal.CreateSpan(ref array._element0, MaxItemsPerNode);
     }
 #endif
+
+    private sealed class Node
+    {
+        public ValueCollection8 Data;
+        public Node? NextNode;
+
+        public int Count => Data.Count;
+    }
 }

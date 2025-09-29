@@ -18,7 +18,7 @@ using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime.Compiled;
 
-public partial class AstCompiler
+public partial class FcAstCompiler
 {
     private StatementSyntax WriteStatement(int3 pos, byte3 terminalPos, FcEnvironment environment, out byte3 executeNext, IndentedTextWriter writer)
     {
@@ -101,7 +101,6 @@ public partial class AstCompiler
                     writer.WriteLineInv($"""
                         , "{menuItem.Name}", new MaxBuyCount({menuItem.MaxBuyCount.Value}), PriceIncrease.{menuItem.PriceIncrease});
                         """);
-
                 }
 
                 break;

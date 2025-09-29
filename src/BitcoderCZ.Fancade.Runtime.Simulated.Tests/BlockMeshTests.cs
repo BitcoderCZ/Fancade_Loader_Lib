@@ -96,7 +96,7 @@ public class BlockMeshTests
         return prefab;
     }
 
-    private Prefab CreatePrefabNotGlue(ushort id)
+    private static Prefab CreatePrefabNotGlue(ushort id)
     {
         var prefab = CreatePrefab(id, 1, initVoxels: true);
 

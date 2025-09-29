@@ -7,6 +7,9 @@ using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
+/// <summary>
+/// Stores the meshes of a game.
+/// </summary>
 public readonly struct GameMeshInfo
 {
     private static readonly
@@ -16,6 +19,7 @@ public readonly struct GameMeshInfo
         object
 #endif
         _initLock = new();
+
     private static (ushort Id, BlockMesh Mesh)[]? stockBlockMeshes;
     private static PrefabSegmentMeshes[]? stockSegmentMeshes;
     private static bool stockInitialized = false;
@@ -24,6 +28,12 @@ public readonly struct GameMeshInfo
     private readonly PrefabSegmentMeshes[] _segmentMeshes;
     private readonly (int3 Min, int3 Max)[] _prefabMeshBounds;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GameMeshInfo"/> struct.
+    /// </summary>
+    /// <param name="blockMeshes">A dictionary of prefab id to <see cref="BlockMesh"/>.</param>
+    /// <param name="segmentMeshes">A <see cref="PrefabSegmentMeshes"/> array, where the index corresponds to the segment id.</param>
+    /// <param name="prefabMeshBounds">An array,of voxel mesh bounds of a prefab, where the index corresponds to the segment id.</param>
     public GameMeshInfo(Dictionary<ushort, BlockMesh> blockMeshes, PrefabSegmentMeshes[] segmentMeshes, (int3 Min, int3 Max)[] prefabMeshBounds)
     {
         _blockMeshes = blockMeshes;
@@ -31,6 +41,12 @@ public readonly struct GameMeshInfo
         _prefabMeshBounds = prefabMeshBounds;
     }
 
+    /// <summary>
+    /// Creates a new instance of the <see cref="GameMeshInfo"/>.
+    /// </summary>
+    /// <param name="prefabs"><see cref="PrefabList"/> of the game.</param>
+    /// <param name="mainPrefabId">Id of the main(open) prefab.</param>
+    /// <returns>The created <see cref="GameMeshInfo"/>.</returns>
     public static GameMeshInfo Create(PrefabList prefabs, ushort mainPrefabId)
     {
         if (prefabs.IdOffset != RawGame.CurrentNumbStockPrefabs)
@@ -74,8 +90,8 @@ public readonly struct GameMeshInfo
             foreach (var (segment, segmentId) in prefab.EnumerateWithId())
             {
                 var segmentMesh = segmentMeshes[segmentId];
-                min = int3.Min(min, segment.PosInPrefab * 8 + segmentMesh.MinPosition);
-                max = int3.Max(max, segment.PosInPrefab * 8 + segmentMesh.MaxPosition);
+                min = int3.Min(min, (segment.PosInPrefab * 8) + segmentMesh.MinPosition);
+                max = int3.Max(max, (segment.PosInPrefab * 8) + segmentMesh.MaxPosition);
             }
 
             foreach (var (_, segmentId) in prefab.EnumerateWithId())
@@ -87,12 +103,27 @@ public readonly struct GameMeshInfo
         return new GameMeshInfo(blockMeshes, segmentMeshes, prefabMeshBounds);
     }
 
+    /// <summary>
+    /// Gets the <see cref="BlockMesh"/> of a prefab.
+    /// </summary>
+    /// <param name="id">Id of the prefab.</param>
+    /// <returns><see cref="BlockMesh"/> for the prefab.</returns>
     public BlockMesh GetBlockMesh(ushort id)
         => _blockMeshes[id];
 
+    /// <summary>
+    /// Gets the <see cref="PrefabSegmentMeshes"/> for a segment.
+    /// </summary>
+    /// <param name="id">Id of the segment.</param>
+    /// <returns>The <see cref="PrefabSegmentMeshes"/> for the segment.</returns>
     public PrefabSegmentMeshes GetSegmentMesh(ushort id)
         => _segmentMeshes[id];
 
+    /// <summary>
+    /// Gets the voxel mesh bounds of a prefab.
+    /// </summary>
+    /// <param name="id">Id of the prefab.</param>
+    /// <returns>Mesh bounds of the prefab.</returns>
     public (int3 Min, int3 Max) GetPrefabMeshBounds(ushort id)
         => _prefabMeshBounds[id];
 
@@ -103,8 +134,8 @@ public readonly struct GameMeshInfo
         {
             if (stockInitialized)
             {
-                Debug.Assert(stockBlockMeshes is not null);
-                Debug.Assert(stockSegmentMeshes is not null);
+                Debug.Assert(stockBlockMeshes is not null, $"{nameof(stockBlockMeshes)} should not be null after initialization.");
+                Debug.Assert(stockSegmentMeshes is not null, $"{nameof(stockSegmentMeshes)} should not be null after initialization.");
                 return;
             }
 

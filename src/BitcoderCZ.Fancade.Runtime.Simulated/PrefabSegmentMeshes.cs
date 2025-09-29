@@ -3,11 +3,15 @@ using System.Diagnostics;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
+/// <summary>
+/// Stores the meshes of a <see cref="PrefabSegment"/>.
+/// </summary>
 public sealed class PrefabSegmentMeshes
 {
-    private static readonly byte[] EmptyVoxelMeshIndex = new byte[8 * 8 * 8];
-
-    public static readonly PrefabSegmentMeshes Empty = new PrefabSegmentMeshes(0, EmptyVoxelMeshIndex, [], int3.Zero, int3.Zero);
+    /// <summary>
+    /// An empty <see cref="PrefabSegmentMeshes"/> instance.
+    /// </summary>
+    public static readonly PrefabSegmentMeshes Empty = new PrefabSegmentMeshes(0, new byte[8 * 8 * 8], [], int3.Zero, int3.Zero);
 
     private static readonly short3[] NeighborOffsets =
     [
@@ -25,7 +29,7 @@ public sealed class PrefabSegmentMeshes
 
     private PrefabSegmentMeshes(int meshCount, byte[] voxelMeshIndex, PrefabSegmentMesh[] meshes, int3 minPosition, int3 maxPosition)
     {
-        Debug.Assert(voxelMeshIndex.Length == 8 * 8 * 8);
+        Debug.Assert(voxelMeshIndex.Length == 8 * 8 * 8, $"{nameof(voxelMeshIndex)} should be {8 * 8 * 8} elements long.");
 
         MeshCount = meshCount;
         _voxelMeshIndex = voxelMeshIndex;
@@ -34,21 +38,43 @@ public sealed class PrefabSegmentMeshes
         MaxPosition = maxPosition;
     }
 
+    /// <summary>
+    /// Gets the number of meshes in the segment.
+    /// </summary>
+    /// <value>The number of meshes in the segment.</value>
     public int MeshCount { get; }
 
+    /// <summary>
+    /// Gets the minimum position of a voxel.
+    /// </summary>
+    /// <value>Minimum position of a voxel.</value>
     public int3 MinPosition { get; }
 
+    /// <summary>
+    /// Gets the maximum position of a voxel.
+    /// </summary>
+    /// <value>Maximum position of a voxel.</value>
     public int3 MaxPosition { get; }
 
+    /// <summary>
+    /// Gets the mesh indices of the voxels.
+    /// </summary>
+    /// <remarks>Indexing same as <see cref="Voxels"/>.</remarks>
+    /// <value>Mesh indices of the voxels.</value>
     public ReadOnlySpan<byte> VoxelMeshIndex => _voxelMeshIndex;
 
+    /// <summary>
+    /// Gets the meshes.
+    /// </summary>
+    /// <value>The meshes.</value>
     public ReadOnlySpan<PrefabSegmentMesh> Meshes => _meshes;
 
-#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Creates a new instance of the <see cref="PrefabSegmentMeshes"/> class.
+    /// </summary>
+    /// <param name="segment">The <see cref="PrefabSegment"/> to create the <see cref="PrefabSegmentMeshes"/> for.</param>
+    /// <returns>The created <see cref="PrefabSegmentMeshes"/>.</returns>
     public static PrefabSegmentMeshes Create(PrefabSegment segment)
-#else
-    public static unsafe PrefabSegmentMeshes Create(PrefabSegment segment)
-#endif
     {
         if (segment.Voxels.IsEmpty || segment.PrefabId == 0)
         {
@@ -99,18 +125,21 @@ public sealed class PrefabSegmentMeshes
                         {
                             int3 neighborPos = currentPos + NeighborOffsets[sideIndex];
 
-                            if (voxel.Attribs[sideIndex] || !neighborPos.InBounds(8, 8, 8))
+                            unsafe
                             {
-                                continue;
-                            }
+                                if (voxel.Attribs[sideIndex] || !neighborPos.InBounds(8, 8, 8))
+                                {
+                                    continue;
+                                }
 
-                            int neighborVoxelIndex = Voxels.Index(neighborPos, 0);
+                                int neighborVoxelIndex = Voxels.Index(neighborPos, 0);
 
-                            var neighbor = voxels[neighborPos];
+                                var neighbor = voxels[neighborPos];
 
-                            if (neighbor.IsEmpty || voxelMeshIndex[neighborVoxelIndex] != byte.MaxValue || neighbor.Attribs[sideIndex ^ 1])
-                            {
-                                continue;
+                                if (neighbor.IsEmpty || voxelMeshIndex[neighborVoxelIndex] != byte.MaxValue || neighbor.Attribs[sideIndex ^ 1])
+                                {
+                                    continue;
+                                }
                             }
 
                             stack.Push(neighborPos);
@@ -198,7 +227,9 @@ public sealed class PrefabSegmentMeshes
             sideBitfield[0] = value;
 
             value = 0;
+#pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
             rawVoxelsSlice = currentMeshVoxels[512..];
+#pragma warning restore CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
             voxelIndex = 7;
             do
             {
@@ -249,7 +280,9 @@ public sealed class PrefabSegmentMeshes
             sideBitfield[1] = value;
 
             value = 0;
+#pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
             rawVoxelsSlice = currentMeshVoxels[1080..];
+#pragma warning restore CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
             voxelIndex = 7;
             do
             {
@@ -300,7 +333,9 @@ public sealed class PrefabSegmentMeshes
             sideBitfield[2] = value;
 
             value = 0;
+#pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
             rawVoxelsSlice = currentMeshVoxels[1536..];
+#pragma warning restore CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
             voxelIndex = 7;
             do
             {

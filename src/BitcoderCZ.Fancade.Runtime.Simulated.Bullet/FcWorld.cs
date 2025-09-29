@@ -1,6 +1,7 @@
 ﻿using BitcoderCZ.BulletSharp;
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
+using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet.Utils;
 using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
 using BitcoderCZ.Maths.Vectors;
@@ -46,19 +47,6 @@ public sealed partial class FcWorld : IAstRunner
 
     private int _disposed;
 
-    public ref readonly GameMeshInfo GameMeshInfo => ref _gameMesh;
-
-    public IEnumerable<RuntimeObject> Objects => _objects;
-
-    public ReadOnlySpan<RuntimeObject> ObjectsSpan => CollectionsMarshal.AsSpan(_objects);
-
-    public IEnumerable<Variable> GlobalVariables => _runner.GlobalVariables;
-
-    public int EnvironmentCount => _runner.EnvironmentCount;
-
-    public event Action<RuntimeObject, RuntimeObject>? OnObjectCreated;
-    public event Action<RuntimeObject>? OnObjectDestroyed;
-
     private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId)
     {
         _runtimeCtx = new BulletRuntimeContext(this, runtimeContext);
@@ -72,7 +60,7 @@ public sealed partial class FcWorld : IAstRunner
         var solver = new SequentialImpulseConstraintSolver();
         _world = new DiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConf)
         {
-            Gravity = new Vector3(0, -10, 0)
+            Gravity = new Vector3(0, -10, 0),
         };
 
         _groundPlane = _world.CreateStaticBody(Matrix4x4.Identity, new StaticPlaneShape(Vector3.UnitY, 0f));
@@ -86,6 +74,48 @@ public sealed partial class FcWorld : IAstRunner
         _world.UpdateAabbs();
     }
 
+    /// <summary>
+    /// An event raised when an object is cloned, first <see cref="RuntimeObject"/> is the original, the second is the clone.
+    /// </summary>
+    public event Action<RuntimeObject, RuntimeObject>? OnObjectCreated;
+
+    /// <summary>
+    /// An event raised when an object is destroyed.
+    /// </summary>
+    public event Action<RuntimeObject>? OnObjectDestroyed;
+
+    /// <summary>
+    /// Gets the <see cref="Simulated.GameMeshInfo"/> for the <see cref="FcWorld"/>.
+    /// </summary>
+    /// <value><see cref="Simulated.GameMeshInfo"/> for the <see cref="FcWorld"/>.</value>
+    public ref readonly GameMeshInfo GameMeshInfo => ref _gameMesh;
+
+    /// <summary>
+    /// Gets the objects as a <see cref="IEnumerable{T}"/>.
+    /// </summary>
+    /// <value>Objects as a <see cref="IEnumerable{T}"/>.</value>
+    public IEnumerable<RuntimeObject> Objects => _objects;
+
+    /// <summary>
+    /// Gets the objects as a <see cref="ReadOnlySpan{T}"/>.
+    /// </summary>
+    /// <value>Objects as a <see cref="ReadOnlySpan{T}"/>.</value>
+    public ReadOnlySpan<RuntimeObject> ObjectsSpan => CollectionsMarshal.AsSpan(_objects);
+
+    /// <inheritdoc/>
+    public IEnumerable<Variable> GlobalVariables => _runner.GlobalVariables;
+
+    /// <inheritdoc/>
+    public int EnvironmentCount => _runner.EnvironmentCount;
+
+    /// <summary>
+    /// Creates a new instance of the <see cref="FcWorld"/> class.
+    /// </summary>
+    /// <param name="prefabId">The open prefab.</param>
+    /// <param name="prefabs">The game's prefabs.</param>
+    /// <param name="runtimeContext">The <see cref="IRuntimeContextBase"/> to use.</param>
+    /// <param name="runnerFactory">A func to create a <see cref="IAstRunner"/> given a <see cref="IRuntimeContext"/>.</param>
+    /// <returns>The created <see cref="FcWorld"/>.</returns>
     public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory)
     {
         ThrowIfNull(runtimeContext, nameof(runtimeContext));
@@ -99,6 +129,13 @@ public sealed partial class FcWorld : IAstRunner
         return new FcWorld(runtimeContext, runnerFactory, prefabs, prefabId);
     }
 
+    /// <summary>
+    /// Runs a single frame.
+    /// </summary>
+    /// <param name="timeStep">The time that has passed since the last frame, 1 / 60 by default.</param>
+    /// <exception cref="ObjectDisposedException">Thrown when the <see cref="FcWorld"/> instance has been disposed.</exception>
+    /// <exception cref="FcTimeoutException">Thrown if the execution takes too long.</exception>
+    /// <exception cref="InvalidInputException">Thrown when a script block receives invalid input.</exception>
     public void RunFrame(float timeStep = 1f / 60f)
     {
         if (_disposed == 1)
@@ -176,6 +213,8 @@ public sealed partial class FcWorld : IAstRunner
         _runtimeCtx.CurrentFrame++;
     }
 
+    /// <inheritdoc/>
+    /// <exception cref="ObjectDisposedException">Thrown when the <see cref="FcWorld"/> instance has been disposed.</exception>
     public Action RunFrame()
     {
         const float TimeStep = 1f / 60f;
@@ -258,6 +297,7 @@ public sealed partial class FcWorld : IAstRunner
         };
     }
 
+    /// <inheritdoc/>
     public void Reset()
     {
         _runner.Reset();
@@ -283,7 +323,7 @@ public sealed partial class FcWorld : IAstRunner
         for (int i = 0; i < _constraints.Count; i++)
         {
             var con = _constraints[i];
-            Debug.Assert(con.Userobject is FcConstraint);
+            Debug.Assert(con.Userobject is FcConstraint, $"The Userobject should be a {nameof(FcConstraint)}.");
 
             _idToConstraint.Remove((FcConstraint)con.Userobject);
             _world.RemoveConstraint(con);
@@ -293,11 +333,105 @@ public sealed partial class FcWorld : IAstRunner
         _constraints.Clear();
     }
 
+    /// <inheritdoc/>
     public Span<RuntimeValue> GetGlobalVariableValue(Variable variable)
         => _runner.GetGlobalVariableValue(variable);
 
+    /// <inheritdoc/>
     public IFcEnvironment GetEnvironment(int index)
         => _runner.GetEnvironment(index);
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
+        {
+            return;
+        }
+
+        foreach (var shape in _collisionShapeCache)
+        {
+            shape.Value.Dispose();
+        }
+
+        foreach (var obj in _objects)
+        {
+            obj.Dispose();
+        }
+
+        foreach (var con in _constraints)
+        {
+            con.Dispose();
+        }
+
+        _groundPlane.Dispose();
+
+        _world.Dispose();
+    }
+
+    private static RigidBody BulletCreate(Vector3 position, Quaternion rotation, FcObject id)
+    {
+        CompoundShape shape = new CompoundShape(true, 0);
+
+        var motionState = new DefaultMotionState(Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position));
+
+        Vector3 localInertia = shape.CalculateLocalInertia(0f);
+
+        RigidBody body;
+        using (var rbInfo = new RigidBodyConstructionInfo(0f, motionState, shape, localInertia)
+        {
+            Friction = 0.5f,
+        })
+        {
+            body = new RigidBody(rbInfo);
+        }
+
+        body.UserIndex = id.Value;
+
+        return body;
+    }
+
+    private static (short3 Min, short3 Max) GetMeshBounds(Voxels voxels, PrefabSegmentMeshes mesh, byte meshIndex)
+    {
+        short3 min = new short3(short.MaxValue, short.MaxValue, short.MaxValue);
+        short3 max = new short3(short.MinValue, short.MinValue, short.MinValue);
+
+        if (voxels.IsEmpty)
+        {
+            goto SkipLoop;
+        }
+
+        int voxelIndex = 0;
+        for (int z = 0; z < 8; z++)
+        {
+            for (int y = 0; y < 8; y++)
+            {
+                for (int x = 0; x < 8; x++, voxelIndex++)
+                {
+                    if (voxels.GetRawFace(voxelIndex) == 0 || mesh.VoxelMeshIndex[voxelIndex] != meshIndex)
+                    {
+                        continue;
+                    }
+
+                    short3 pos = new short3(x, y, z);
+
+                    min = short3.Min(min, pos);
+                    max = short3.Max(max, pos);
+                }
+            }
+        }
+
+    SkipLoop:
+
+        // no voxels
+        if (min.X == short.MaxValue)
+        {
+            min = new short3(0);
+            max = new short3(-1);
+        }
+
+        return (min, max);
+    }
 
     private void InitObjects(ushort mainId)
     {
@@ -364,10 +498,10 @@ public sealed partial class FcWorld : IAstRunner
                                     float volume = size.X * size.Y * size.Z;
                                     totalVolume += volume;
 
-                                    Vector3 worldBoundsMin = (Vector3)boundsMin * 0.125f + new Vector3(x, y, z);
-                                    Vector3 worldBoundsMax = (Vector3)boundsMax * 0.125f + new Vector3(x + 0.125f, y + 0.125f, z + 0.125f);
+                                    Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + new Vector3(x, y, z);
+                                    Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + new Vector3(x + 0.125f, y + 0.125f, z + 0.125f);
 
-                                    centerOfMass += (size * 0.5f + worldBoundsMin) * volume;
+                                    centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
 
                                     sizeMin = Vector3.Min(sizeMin, worldBoundsMin);
                                     sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
@@ -461,7 +595,7 @@ public sealed partial class FcWorld : IAstRunner
                 }
 
                 ushort blockId = prefab.Blocks.GetBlockOrDefault(connection.From);
-                ushort segmentId = prefab.Blocks.GetBlockOrDefault(connection.From + connection.FromVoxel / 8);
+                ushort segmentId = prefab.Blocks.GetBlockOrDefault(connection.From + (connection.FromVoxel / 8));
 
                 if (blockId == 0 || segmentId == 0)
                 {
@@ -491,76 +625,13 @@ public sealed partial class FcWorld : IAstRunner
 #else
                         if (!_connectorToObject.TryAdd((prefab.Id, connection.From, (byte3)connection.FromVoxel), obj.Id))
                         {
-                            Debug.Assert(_connectorToObject[(prefab.Id, connection.From, (byte3)connection.FromVoxel)] == obj.Id);
+                            Debug.Assert(_connectorToObject[(prefab.Id, connection.From, (byte3)connection.FromVoxel)] == obj.Id, "If a connector as already been added, it should be the same one that was to be added.");
                         }
 #endif
                     }
                 }
             }
         }
-    }
-
-    private static RigidBody BulletCreate(Vector3 position, Quaternion rotation, FcObject id)
-    {
-        CompoundShape shape = new CompoundShape(true, 0);
-
-        var motionState = new DefaultMotionState(Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position));
-
-        Vector3 localInertia = shape.CalculateLocalInertia(0f);
-
-        RigidBody body;
-        using (var rbInfo = new RigidBodyConstructionInfo(0f, motionState, shape, localInertia)
-        {
-            Friction = 0.5f,
-        })
-        {
-            body = new RigidBody(rbInfo);
-        }
-
-        body.UserIndex = id.Value;
-
-        return body;
-    }
-
-    private static (short3 Min, short3 Max) GetMeshBounds(Voxels voxels, PrefabSegmentMeshes mesh, byte meshIndex)
-    {
-        short3 min = new short3(short.MaxValue, short.MaxValue, short.MaxValue);
-        short3 max = new short3(short.MinValue, short.MinValue, short.MinValue);
-
-        if (voxels.IsEmpty)
-        {
-            goto SkipLoop;
-        }
-
-        int voxelIndex = 0;
-        for (int z = 0; z < 8; z++)
-        {
-            for (int y = 0; y < 8; y++)
-            {
-                for (int x = 0; x < 8; x++, voxelIndex++)
-                {
-                    if (voxels.GetRawFace(voxelIndex) == 0 || mesh.VoxelMeshIndex[voxelIndex] != meshIndex)
-                    {
-                        continue;
-                    }
-
-                    short3 pos = new short3(x, y, z);
-
-                    min = short3.Min(min, pos);
-                    max = short3.Max(max, pos);
-                }
-            }
-        }
-
-    SkipLoop:
-        // no voxels
-        if (min.X == short.MaxValue)
-        {
-            min = new short3(0);
-            max = new short3(-1);
-        }
-
-        return (min, max);
     }
 
     private void AddColliders(RuntimeObject rObject)
@@ -572,7 +643,7 @@ public sealed partial class FcWorld : IAstRunner
         int insideLength = insideSize.X * insideSize.Y * insideSize.Z;
 
         ushort[] blocks = prefab.Blocks.Array.Array;
-        Debug.Assert(blocks.Length == insideLength);
+        Debug.Assert(blocks.Length == insideLength, $"{nameof(blocks)}.Length should be equal to {nameof(insideLength)}.");
         for (int insideIndex = 0; insideIndex < insideLength; insideIndex++)
         {
             ushort blockId = blocks[insideIndex];
@@ -615,7 +686,9 @@ public sealed partial class FcWorld : IAstRunner
                             colliderType = 2;
                             float sizeMax = MathF.Max(MathF.Max(size.X, size.Y), size.Z);
                             size = new Vector3(sizeMax, sizeMax, sizeMax);
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
                             connectsToSideBitfield = 0;
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
                         }
 
                         break;
@@ -669,7 +742,7 @@ public sealed partial class FcWorld : IAstRunner
                                         neighborIsAnotherBlock = boundsMax.Z == 7;
                                         break;
                                     default:
-                                        Debug.Assert(sideIndex == 5);
+                                        Debug.Assert(sideIndex == 5, $"{nameof(sideIndex)} should be in the range 0-5.");
                                         if (currentPos.Z > 1)
                                         {
                                             neighborPos = currentPos + new int3(0, 0, -1);
@@ -762,9 +835,11 @@ public sealed partial class FcWorld : IAstRunner
                         break;
                     default:
                         {
-                            Debug.Assert(currentPrefab.Collider == PrefabCollider.None);
+                            Debug.Assert(currentPrefab.Collider == PrefabCollider.None, $"{nameof(currentPrefab)}.{nameof(currentPrefab.Collider)} should be valid.");
                             colliderType = 3;
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
                             connectsToSideBitfield = 0;
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
                         }
 
                         break;
@@ -892,32 +967,5 @@ public sealed partial class FcWorld : IAstRunner
 
         rObject = null;
         return false;
-    }
-
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref _disposed, 1) == 1)
-        {
-            return;
-        }
-
-        foreach (var shape in _collisionShapeCache)
-        {
-            shape.Value.Dispose();
-        }
-
-        foreach (var obj in _objects)
-        {
-            obj.Dispose();
-        }
-
-        foreach (var con in _constraints)
-        {
-            con.Dispose();
-        }
-
-        _groundPlane.Dispose();
-
-        _world.Dispose();
     }
 }

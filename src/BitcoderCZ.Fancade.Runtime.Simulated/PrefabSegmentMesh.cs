@@ -7,6 +7,9 @@ using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
+/// <summary>
+/// Stores a mesh of a prefab segment.
+/// </summary>
 public readonly struct PrefabSegmentMesh
 {
     private readonly int _voxelCount;
@@ -18,12 +21,33 @@ public readonly struct PrefabSegmentMesh
         Assign(ref _bitfields, bitfields);
     }
 
+    /// <summary>
+    /// Gets the amount of voxels in the mesh.
+    /// </summary>
+    /// <value>Amount of voxels in the mesh.</value>
     public int VoxelCount => _voxelCount;
+
+    /// <summary>
+    /// Gets the bitfield for a side.
+    /// </summary>
+    /// <param name="sideIndex">Index of the side.</param>
+    /// <returns>Bitfield for the side.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ulong GetSideBitfield(int sideIndex)
+    {
+#if NET8_0_OR_GREATER
+        return _bitfields[sideIndex];
+#else
+        ThrowIfGreaterThanOrEqualToOrNegative(sideIndex, 6, nameof(sideIndex));
+
+        return Unsafe.Add(ref Unsafe.AsRef(in _bitfields._element0), sideIndex);
+#endif
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Assign<T>(ref Array6<T> field, ReadOnlySpan<T> param)
     {
-        Debug.Assert(param.Length >= 6);
+        Debug.Assert(param.Length >= 6, $"{nameof(param)} should have at least 6 elements.");
 
 #if NET8_0_OR_GREATER
         field[0] = param[0];
@@ -34,18 +58,6 @@ public readonly struct PrefabSegmentMesh
         field[5] = param[5];
 #else
         field = new Array6<T>(param[0], param[1], param[2], param[3], param[4], param[5]);
-#endif
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ulong GetSideBitfield(int sideIndex)
-    {
-#if NET8_0_OR_GREATER
-        return _bitfields[sideIndex];
-#else
-        ThrowIfGreaterThanOrEqualToOrNegative(sideIndex, 6, nameof(sideIndex));
-
-        return Unsafe.Add(ref Unsafe.AsRef(in _bitfields._element0), sideIndex);
 #endif
     }
 

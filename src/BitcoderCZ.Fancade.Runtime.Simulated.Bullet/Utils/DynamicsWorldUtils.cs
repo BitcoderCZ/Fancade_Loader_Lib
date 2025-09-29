@@ -36,7 +36,7 @@ internal static class DynamicsWorldUtils
         RigidBody body;
         using (var rbInfo = new RigidBodyConstructionInfo(StaticMass, null, shape)
         {
-            StartWorldTransform = startTransform
+            StartWorldTransform = startTransform,
         })
         {
             body = new RigidBody(rbInfo);

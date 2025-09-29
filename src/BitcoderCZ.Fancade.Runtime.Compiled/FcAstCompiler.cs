@@ -17,12 +17,18 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+#if NETCOREAPP
+using System.Runtime.Loader;
+#endif
 using System.Text;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Compiled;
 
-public sealed partial class AstCompiler
+/// <summary>
+/// Transpile <see cref="FcAST"/> into C#.
+/// </summary>
+public sealed partial class FcAstCompiler
 {
     private readonly FcEnvironment[] _environments;
     private readonly StringBuilder _writerBuilder;
@@ -43,7 +49,7 @@ public sealed partial class AstCompiler
 
     private int _localVarCounter = 0;
 
-    private AstCompiler(FcAST ast, Options options)
+    private FcAstCompiler(FcAST ast, Options options)
     {
         _timeout = options.Timeout;
 
@@ -63,27 +69,41 @@ public sealed partial class AstCompiler
         _writer = new IndentedTextWriter(new StringWriter(_writerBuilder));
     }
 
-    /// <exception cref="CompilationErrorException"></exception>
+    /// <summary>
+    /// Transpiles a <see cref="FcAST"/> into C# and compiles it into a <see cref="IAstRunner"/>.
+    /// </summary>
+    /// <param name="ast">The <see cref="FcAST"/> to compile.</param>
+    /// <param name="ctx">The <see cref="IRuntimeContext"/> to use.</param>
+    /// <param name="options">The <see cref="Options"/> to use.</param>
+    /// <returns>The compiled <see cref="IAstRunner"/>.</returns>
+    /// <exception cref="CompilationErrorException">Thrown when the transpiled code contains errors.</exception>
     public static IAstRunner Compile(FcAST ast, IRuntimeContext ctx, Options options)
         => TryCompile(ast, ctx, options, out _, out var runner, out var diagnostics)
             ? runner
             : throw new CompilationErrorException(diagnostics);
 
-    public static bool TryCompile(FcAST ast, IRuntimeContext ctx, Options options, [NotNullWhen(true)] out IAstRunner? runner)
-        => TryCompile(ast, ctx, options, out _, out runner, out _);
-
+    /// <summary>
+    /// Transpiles a <see cref="FcAST"/> into C# and compiles it into a <see cref="IAstRunner"/>.
+    /// </summary>
+    /// <param name="ast">The <see cref="FcAST"/> to compile.</param>
+    /// <param name="ctx">The <see cref="IRuntimeContext"/> to use.</param>
+    /// <param name="options">The <see cref="Options"/> to use.</param>
+    /// <param name="code">The transpiled code.</param>
+    /// <param name="runner">The compiled <see cref="IAstRunner"/>.</param>
+    /// <param name="diagnostics">The errors in <paramref name="code"/>.</param>
+    /// <returns><see langword="true"/> if the transpiled code was successfully compiled; otherwise, <see langword="false"/>.</returns>
     public static bool TryCompile(FcAST ast, IRuntimeContext ctx, Options options, out string code, [NotNullWhen(true)] out IAstRunner? runner, [NotNullWhen(false)] out IEnumerable<Diagnostic>? diagnostics)
     {
         ThrowIfNull(options);
 
-        var compiler = new AstCompiler(ast, options);
+        var compiler = new FcAstCompiler(ast, options);
 
         code = compiler.WriteAll();
 
-        return TryCompileInternal(code, ctx, out diagnostics, out runner);
+        return TryCompileInternal(code, ctx, options.LoadAssemblyFunc, out diagnostics, out runner);
     }
 
-    private static bool TryCompileInternal(string code, IRuntimeContext ctx, [NotNullWhen(false)] out IEnumerable<Diagnostic>? diagnostics, [NotNullWhen(true)] out IAstRunner? runner)
+    private static bool TryCompileInternal(string code, IRuntimeContext ctx, Func<MemoryStream, Assembly> loadAssemblyFunc, [NotNullWhen(false)] out IEnumerable<Diagnostic>? diagnostics, [NotNullWhen(true)] out IAstRunner? runner)
     {
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp13));
 
@@ -125,11 +145,9 @@ public sealed partial class AstCompiler
             }
             else
             {
-                // load this 'virtual' DLL so that we can use
                 ms.Seek(0, SeekOrigin.Begin);
-                Assembly assembly = Assembly.Load(ms.ToArray());
+                Assembly assembly = loadAssemblyFunc(ms);
 
-                // create instance of the desired class and call the desired function
                 Type type = assembly.GetType("BitcoderCZ.Fancade.Runtime.Compiled.Generated.CompiledAST`1")!.MakeGenericType([ctx.GetType()]);
                 object obj = Activator.CreateInstance(type, [ctx])!;
 
@@ -139,6 +157,81 @@ public sealed partial class AstCompiler
             }
         }
     }
+
+    private static void InitEnvironments(FcEnvironment outer, List<FcEnvironment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
+    {
+        if (depth > maxDepth)
+        {
+            throw new EnvironmentDepthLimitReachedException();
+        }
+
+        foreach (var statement in outer.AST.Statements.Values)
+        {
+            if (statement is CustomStatementSyntax customStatement)
+            {
+                var environment = new FcEnvironment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
+                environments.Add(environment);
+                variables.Add(environment.AST.Variables);
+                outer.BlockData[customStatement.Position] = environment;
+
+                InitEnvironments(environment, environments, variables, maxDepth, depth + 1);
+            }
+        }
+    }
+
+    private static void WriteEnvironmentPosition(int environmentIndex, int3 blockPos, IndentedTextWriter writer)
+        => writer.WriteInv($"new EnvironmentPosition(_environments[{environmentIndex}], new int3({blockPos.X}, {blockPos.Y}, {blockPos.Z}))");
+
+    private static string GetStateStoreVarName(int environmentIndex, int3 blockPos, string suffix)
+        => $"store_{environmentIndex}_{blockPos.X}_{blockPos.Y}_{blockPos.Z}_{suffix}";
+
+    private static string GetCSharpName(SignalType type)
+        => type switch
+        {
+            SignalType.Void => "void",
+            SignalType.Float => "float",
+            SignalType.FloatPtr => "FcList<float>.Ref",
+            SignalType.Vec3 => nameof(Vector3),
+            SignalType.Vec3Ptr => $"FcList<{nameof(Vector3)}>.Ref",
+            SignalType.Rot => nameof(Quaternion),
+            SignalType.RotPtr => $"FcList<{nameof(Quaternion)}>.Ref",
+            SignalType.Bool => "bool",
+            SignalType.BoolPtr => "FcList<bool>.Ref",
+            SignalType.Obj => nameof(FcObject),
+            SignalType.ObjPtr => $"FcList<{nameof(FcObject)}>.Ref",
+            SignalType.Con => nameof(FcConstraint),
+            SignalType.ConPtr => $"FcList<{nameof(FcConstraint)}>.Ref",
+            _ => throw new UnreachableException(),
+        };
+
+    private static string GetDefaultValue(SignalType type)
+        => type switch
+        {
+            SignalType.Float => "0f",
+            SignalType.FloatPtr => "new FcList<float>.Ref(null, 0)",
+            SignalType.Vec3 => $"{nameof(Vector3)}.{nameof(Vector3.Zero)}",
+            SignalType.Vec3Ptr => $"new FcList<{nameof(Vector3)}>.Ref(null, 0)",
+            SignalType.Rot => $"{nameof(Quaternion)}.{nameof(Quaternion.Identity)}",
+            SignalType.RotPtr => $"new FcList<{nameof(Quaternion)}>.Ref(null, 0)",
+            SignalType.Bool => "false",
+            SignalType.BoolPtr => "new FcList<bool>.Ref(null, 0)",
+            SignalType.Obj => $"{nameof(FcObject)}.{nameof(FcObject.Null)}",
+            SignalType.ObjPtr => $"new FcList<{nameof(FcObject)}>.Ref(null, 0)",
+            SignalType.Con => $"{nameof(FcConstraint)}.{nameof(FcConstraint.Null)}",
+            SignalType.ConPtr => $"new FcList<{nameof(FcConstraint)}>.Ref(null, 0)",
+            _ => throw new UnreachableException(),
+        };
+
+    private static string GetEntryPointMethodName(EntryPoint entryPoint, bool ptr)
+        => $"Run{entryPoint.EnvironmentIndex}{(ptr ? "_ptr" : string.Empty)}_{entryPoint.BlockPos.X}_{entryPoint.BlockPos.Y}_{entryPoint.BlockPos.Z}__{entryPoint.TerminalPos.X}_{entryPoint.TerminalPos.Y}_{entryPoint.TerminalPos.Z}";
+
+    private static int IntLength(int i)
+        => i switch
+        {
+            < 0 => (int)Math.Floor(Math.Log10(-i)) + 2,
+            0 => 1,
+            _ => (int)Math.Floor(Math.Log10(i)) + 1,
+        };
 
     private string WriteAll()
     {
@@ -683,27 +776,6 @@ public sealed partial class AstCompiler
         return _writerBuilder.ToString()!;
     }
 
-    private static void InitEnvironments(FcEnvironment outer, List<FcEnvironment> environments, List<ImmutableArray<Variable>> variables, int maxDepth, int depth = 1)
-    {
-        if (depth > maxDepth)
-        {
-            throw new EnvironmentDepthLimitReachedException();
-        }
-
-        foreach (var statement in outer.AST.Statements.Values)
-        {
-            if (statement is CustomStatementSyntax customStatement)
-            {
-                var environment = new FcEnvironment(customStatement.AST, environments.Count, outer.Index, customStatement.Position);
-                environments.Add(environment);
-                variables.Add(environment.AST.Variables);
-                outer.BlockData[customStatement.Position] = environment;
-
-                InitEnvironments(environment, environments, variables, maxDepth, depth + 1);
-            }
-        }
-    }
-
     private void WriteEntryPoint(EntryPoint entryPoint, bool direct, IndentedTextWriter writer)
     {
         Queue<EntryPoint> queue = [];
@@ -821,9 +893,6 @@ public sealed partial class AstCompiler
         }
     }
 
-    private static void WriteEnvironmentPosition(int environmentIndex, int3 blockPos, IndentedTextWriter writer)
-        => writer.WriteInv($"new EnvironmentPosition(_environments[{environmentIndex}], new int3({blockPos.X}, {blockPos.Y}, {blockPos.Z}))");
-
     private string GetVariableName(int environmentIndex, Variable variable)
     {
         if (_varToName.TryGetValue((environmentIndex, variable), out string? name))
@@ -869,7 +938,7 @@ public sealed partial class AstCompiler
             {
                 bool written = environmentIndex.TryFormat(span, out int numbWritten);
 
-                Debug.Assert(written);
+                Debug.Assert(written, $"Writing {nameof(environmentIndex)} into {nameof(span)} should always succeed.");
 
                 span[numbWritten] = '_';
 
@@ -892,90 +961,6 @@ public sealed partial class AstCompiler
         return name;
     }
 
-    private static string GetStateStoreVarName(int environmentIndex, int3 blockPos, string suffix)
-        => $"store_{environmentIndex}_{blockPos.X}_{blockPos.Y}_{blockPos.Z}_{suffix}";
-
-    private static string GetCSharpName(SignalType type)
-        => type switch
-        {
-            SignalType.Void => "void",
-            SignalType.Float => "float",
-            SignalType.FloatPtr => "FcList<float>.Ref",
-            SignalType.Vec3 => nameof(Vector3),
-            SignalType.Vec3Ptr => $"FcList<{nameof(Vector3)}>.Ref",
-            SignalType.Rot => nameof(Quaternion),
-            SignalType.RotPtr => $"FcList<{nameof(Quaternion)}>.Ref",
-            SignalType.Bool => "bool",
-            SignalType.BoolPtr => "FcList<bool>.Ref",
-            SignalType.Obj => nameof(FcObject),
-            SignalType.ObjPtr => $"FcList<{nameof(FcObject)}>.Ref",
-            SignalType.Con => nameof(FcConstraint),
-            SignalType.ConPtr => $"FcList<{nameof(FcConstraint)}>.Ref",
-            _ => throw new UnreachableException(),
-        };
-
-    private static string GetDefaultValue(SignalType type)
-        => type switch
-        {
-            SignalType.Float => "0f",
-            SignalType.FloatPtr => "new FcList<float>.Ref(null, 0)",
-            SignalType.Vec3 => $"{nameof(Vector3)}.{nameof(Vector3.Zero)}",
-            SignalType.Vec3Ptr => $"new FcList<{nameof(Vector3)}>.Ref(null, 0)",
-            SignalType.Rot => $"{nameof(Quaternion)}.{nameof(Quaternion.Identity)}",
-            SignalType.RotPtr => $"new FcList<{nameof(Quaternion)}>.Ref(null, 0)",
-            SignalType.Bool => "false",
-            SignalType.BoolPtr => "new FcList<bool>.Ref(null, 0)",
-            SignalType.Obj => $"{nameof(FcObject)}.{nameof(FcObject.Null)}",
-            SignalType.ObjPtr => $"new FcList<{nameof(FcObject)}>.Ref(null, 0)",
-            SignalType.Con => $"{nameof(FcConstraint)}.{nameof(FcConstraint.Null)}",
-            SignalType.ConPtr => $"new FcList<{nameof(FcConstraint)}>.Ref(null, 0)",
-            _ => throw new UnreachableException(),
-        };
-
-    private static string GetEntryPointMethodName(EntryPoint entryPoint, bool ptr)
-        => $"Run{entryPoint.EnvironmentIndex}{(ptr ? "_ptr" : string.Empty)}_{entryPoint.BlockPos.X}_{entryPoint.BlockPos.Y}_{entryPoint.BlockPos.Z}__{entryPoint.TerminalPos.X}_{entryPoint.TerminalPos.Y}_{entryPoint.TerminalPos.Z}";
-
-    public static int IntLength(int i)
-        => i switch
-        {
-            < 0 => (int)Math.Floor(Math.Log10(-i)) + 2,
-            0 => 1,
-            _ => (int)Math.Floor(Math.Log10(i)) + 1,
-        };
-
-    public sealed class Options
-    {
-        public static readonly Options Default = new Options();
-
-        private readonly TimeSpan _timeout = TimeSpan.FromSeconds(3);
-        private readonly int _maxDepth = 4;
-
-        public TimeSpan Timeout
-        {
-            get => _timeout;
-            init
-            {
-                if (value.Ticks <= 0 && value != System.Threading.Timeout.InfiniteTimeSpan)
-                {
-                    ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(Timeout)} must be greater than 0, or equal to {nameof(System.Threading.Timeout)}.{nameof(System.Threading.Timeout.InfiniteTimeSpan)}.");
-                }
-
-                _timeout = value;
-            }
-        }
-
-        public int MaxDepth
-        {
-            get => _maxDepth;
-            init
-            {
-                ThrowIfLessThan(value, 1);
-
-                _maxDepth = value;
-            }
-        }
-    }
-
     private readonly struct ExpressionInfo
     {
         public readonly SignalType Type;
@@ -995,6 +980,86 @@ public sealed partial class AstCompiler
         public bool IsPointer => VariableName is not null;
 
         public SignalType PtrType => IsPointer ? Type.ToPointer() : Type;
+    }
+
+    /// <summary>
+    /// Options for <see cref="FcAstCompiler"/>.
+    /// </summary>
+    public sealed class Options
+    {
+        /// <summary>
+        /// Default <see cref="Options"/>.
+        /// </summary>
+        public static readonly Options Default =
+#if NETCOREAPP
+            new Options(AssemblyLoadContext.Default);
+#else
+            new Options(AppDomain.CurrentDomain);
+#endif
+
+        private readonly Func<MemoryStream, Assembly> _loadAssemblyFunc = null!;
+
+        private readonly TimeSpan _timeout = TimeSpan.FromSeconds(3);
+        private readonly int _maxDepth = 4;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Options"/> class.
+        /// </summary>
+        /// <param name="appDomain">An <see cref="AppDomain"/> to load the assembly into.</param>
+        public Options(AppDomain appDomain)
+        {
+            _loadAssemblyFunc = stream => appDomain.Load(stream.ToArray());
+        }
+
+#if NETCOREAPP
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Options"/> class.
+        /// </summary>
+        /// <param name="assemblyLoadContext">An <see cref="AssemblyLoadContext"/> to load the assembly into.</param>
+        public Options(AssemblyLoadContext assemblyLoadContext)
+        {
+            _loadAssemblyFunc = assemblyLoadContext.LoadFromStream;
+        }
+#endif
+
+        /// <summary>
+        /// Gets the function used to load the assembly.
+        /// </summary>
+        /// <value>Function used to load the assembly.</value>
+        public Func<MemoryStream, Assembly> LoadAssemblyFunc => _loadAssemblyFunc;
+
+        /// <summary>
+        /// Gets the time after which <see cref="FcTimeoutException"/> will be thrown.
+        /// </summary>
+        /// <value>Time after which <see cref="FcTimeoutException"/> will be thrown.</value>
+        public TimeSpan Timeout
+        {
+            get => _timeout;
+            init
+            {
+                if (value.Ticks <= 0 && value != System.Threading.Timeout.InfiniteTimeSpan)
+                {
+                    ThrowArgumentOutOfRangeException(nameof(value), $"{nameof(Timeout)} must be greater than 0, or equal to {nameof(System.Threading.Timeout)}.{nameof(System.Threading.Timeout.InfiniteTimeSpan)}.");
+                }
+
+                _timeout = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the maximum environment depth (blocks inside blocks).
+        /// </summary>
+        /// <value>The maximum environment depth (blocks inside blocks).</value>
+        public int MaxDepth
+        {
+            get => _maxDepth;
+            init
+            {
+                ThrowIfLessThan(value, 1);
+
+                _maxDepth = value;
+            }
+        }
     }
 
     private class IndentedTextWriterPoolPolicy : PooledObjectPolicy<IndentedTextWriter>

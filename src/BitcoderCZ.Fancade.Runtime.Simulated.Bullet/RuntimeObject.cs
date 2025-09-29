@@ -1,17 +1,26 @@
 ﻿using BitcoderCZ.BulletSharp;
 using System.Diagnostics;
 using System.Numerics;
+using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 
+/// <summary>
+/// Represents a runtime fancade object.
+/// </summary>
 public sealed class RuntimeObject : IDisposable
 {
     private float _mass = 1f;
 
-    public RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Quaternion rot, Vector3 sizeMin, Vector3 sizeMax, float mass, bool visible, bool @fixed)
+    internal RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Quaternion rot, Vector3 sizeMin, Vector3 sizeMax, float mass, bool visible, bool @fixed)
     {
-        Debug.Assert(id != FcObject.Null);
-        Debug.Assert(inPrefabMeshIndex >= -1);
+        if (id == FcObject.Null)
+        {
+            ThrowArgumentException($"{nameof(id)} cannot be equal to {nameof(FcObject)}.{nameof(FcObject.Null)}.", nameof(id));
+        }
+
+        ThrowIfNegative(inPrefabMeshIndex);
+
         Id = id;
         OutsidePrefabId = outsidePrefabId;
         InPrefabMeshIndex = inPrefabMeshIndex;
@@ -41,24 +50,58 @@ public sealed class RuntimeObject : IDisposable
         IsUserCreated = isUserCreated;
     }
 
+    /// <summary>
+    /// Gets the id of the object.
+    /// </summary>
+    /// <value>Id of the object.</value>
     public FcObject Id { get; }
 
+    /// <summary>
+    /// Gets the id of the prefab the object is in.
+    /// </summary>
+    /// <value>Id of the prefab the object is in.</value>
     public ushort OutsidePrefabId { get; }
 
+    /// <summary>
+    /// Gets the id of the mesh of the object.
+    /// </summary>
+    /// <value>Id of the mesh of the object.</value>
     public short InPrefabMeshIndex { get; }
 
+    /// <summary>
+    /// Gets the object's <see cref="BulletSharp.RigidBody"/>.
+    /// </summary>
+    /// <value>Object's <see cref="BulletSharp.RigidBody"/>.</value>
     public RigidBody RigidBody { get; }
 
+    /// <summary>
+    /// Gets the object's position.
+    /// </summary>
+    /// <value>Object's position.</value>
     public Vector3 Pos { get; private set; }
 
+    /// <summary>
+    /// Gets the object's rotation.
+    /// </summary>
+    /// <value>Object's rotation.</value>
     public Quaternion Rot { get; private set; }
 
-    public StartValues Start { get; }
-
+    /// <summary>
+    /// Gets the object's size min.
+    /// </summary>
+    /// <value>Object's size min.</value>
     public Vector3 SizeMin { get; }
 
+    /// <summary>
+    /// Gets the object's size max.
+    /// </summary>
+    /// <value>Object's size max.</value>
     public Vector3 SizeMax { get; }
 
+    /// <summary>
+    /// Gets or sets the object's mass.
+    /// </summary>
+    /// <value>Object's mass.</value>
     public float Mass
     {
         get => _mass;
@@ -75,30 +118,40 @@ public sealed class RuntimeObject : IDisposable
         }
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the object is user created.
+    /// </summary>
+    /// <value><see langword="true"/> if the object is user created (by a create object block); otherwise, <see langword="false"/>.</value>
     public bool IsUserCreated { get; init; } = false;
 
-    public bool IsVisible { get; set; } = true;
+    /// <summary>
+    /// Gets a value indicating whether the object is visible.
+    /// </summary>
+    /// <value><see langword="true"/> if the object is visible; otherwise, <see langword="false"/>.</value>
+    public bool IsVisible { get; internal set; } = true;
 
+    /// <summary>
+    /// Gets a value indicating whether the object is fixed (it's physics are disabled).
+    /// </summary>
+    /// <value><see langword="true"/> if the object is fixed; otherwise, <see langword="false"/>.</value>
     public bool IsFixed { get; private set; } = true;
 
-    public CollisionInfo MaxForceCollision { get; set; } = CollisionInfo.Default;
+    /// <summary>
+    /// Gets the current frames most forceful collision.
+    /// </summary>
+    /// <value>Current frames most forceful collision.</value>
+    public CollisionInfo MaxForceCollision { get; internal set; } = CollisionInfo.Default;
 
-    public void Update()
-    {
-        Debug.Assert(RigidBody.MotionState is not null);
+    internal StartValues Start { get; }
 
-        // for some reason in some situations not updated
-        //var wt = RigidBody.MotionState.WorldTransform;
-        //Debug.Assert(wt == RigidBody.WorldTransform);
-        var wt = RigidBody.WorldTransform;
-
-        Pos = wt.Translation;
-        Rot = wt.GetRotation();
-    }
-
+    /// <summary>
+    /// Sets the position and/or rotation of the object.
+    /// </summary>
+    /// <param name="position">The new position; or <see langword="null"/>, if the position should not be changed.</param>
+    /// <param name="rotation">The new rotation; or <see langword="null"/>, if the position should not be changed.</param>
     public void SetRotPos(Vector3? position, Quaternion? rotation)
     {
-        Debug.Assert(RigidBody.MotionState is not null);
+        Debug.Assert(RigidBody.MotionState is not null, "MotionState should not be null.");
         var mat = RigidBody.MotionState.WorldTransform;
 
         if (position is { } pos)
@@ -120,7 +173,60 @@ public sealed class RuntimeObject : IDisposable
         }
     }
 
-    public void Unfix(DynamicsWorld world)
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        RigidBody.MotionState?.Dispose();
+        RigidBody.Dispose();
+    }
+
+    internal RuntimeObject Clone(FcObject newId, RigidBody newBody, bool userCreated)
+    {
+        var newObject = new RuntimeObject(newId, OutsidePrefabId, InPrefabMeshIndex, newBody, Pos + Vector3.One, Rot, Start, SizeMin, SizeMax, Mass, true, userCreated);
+
+        return newObject;
+    }
+
+    internal void Update()
+    {
+        Debug.Assert(RigidBody.MotionState is not null, "MotionState should not be null.");
+
+        // for some reason in some situations not updated
+        //var wt = RigidBody.MotionState.WorldTransform;
+        //Debug.Assert(wt == RigidBody.WorldTransform);
+        var wt = RigidBody.WorldTransform;
+
+        Pos = wt.Translation;
+        Rot = wt.GetRotation();
+    }
+
+    internal void Reset(DynamicsWorld world, IRuntimeContext ctx)
+    {
+        RigidBody.Friction = 0.5f;
+        RigidBody.Restitution = 0f; // TODO: is this the correct value?
+        RigidBody.LinearVelocity = Vector3.Zero;
+        RigidBody.AngularVelocity = Vector3.Zero;
+        RigidBody.LinearFactor = Vector3.One;
+        RigidBody.AngularFactor = Vector3.One;
+
+        SetRotPos(Start.Position, Quaternion.Identity);
+        if (Mass != Start.Mass)
+        {
+            Mass = Start.Mass;
+        }
+
+        if (IsVisible != Start.Visible)
+        {
+            ctx.SetVisible(Id, Start.Visible);
+        }
+
+        if (!IsFixed && Start.Fixed)
+        {
+            Fix(world);
+        }
+    }
+
+    internal void Unfix(DynamicsWorld world)
     {
         if (!IsFixed)
         {
@@ -178,46 +284,49 @@ public sealed class RuntimeObject : IDisposable
         IsFixed = true;
     }
 
-    internal void Reset(DynamicsWorld world, IRuntimeContext ctx)
+    /// <summary>
+    /// Info about a collision.
+    /// </summary>
+    public readonly struct CollisionInfo
     {
-        RigidBody.Friction = 0.5f;
-        RigidBody.Restitution = 0f; // TODO: is this the correct value?
-        RigidBody.LinearVelocity = Vector3.Zero;
-        RigidBody.AngularVelocity = Vector3.Zero;
-        RigidBody.LinearFactor = Vector3.One;
-        RigidBody.AngularFactor = Vector3.One;
+        /// <summary>
+        /// Default <see cref="CollisionInfo"/>.
+        /// </summary>
+        public static readonly CollisionInfo Default = new CollisionInfo(-1f, default, default);
 
-        SetRotPos(Start.Position, Quaternion.Identity);
-        if (Mass != Start.Mass)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CollisionInfo"/> struct.
+        /// </summary>
+        /// <param name="force">Force of the collision.</param>
+        /// <param name="otherObject">Id of the other object.</param>
+        /// <param name="normal">Normal of the collision.</param>
+        public CollisionInfo(float force, FcObject otherObject, Vector3 normal)
         {
-            Mass = Start.Mass;
+            Force = force;
+            OtherObject = otherObject;
+            Normal = normal;
         }
 
-        if (IsVisible != Start.Visible)
-        {
-            ctx.SetVisible(Id, Start.Visible);
-        }
+        /// <summary>
+        /// Gets the force of the collision.
+        /// </summary>
+        /// <value>Force of the collision.</value>
+        public float Force { get; }
 
-        if (!IsFixed && Start.Fixed)
-        {
-            Fix(world);
-        }
+        /// <summary>
+        /// Gets the id of the other object.
+        /// </summary>
+        /// <value>Id of the other object.</value>
+        public FcObject OtherObject { get; }
+
+        /// <summary>
+        /// Gets the normal of the collision.
+        /// </summary>
+        /// <value>Normal of the collision.</value>
+        public Vector3 Normal { get; }
     }
 
-    public RuntimeObject Clone(FcObject newId, RigidBody newBody, bool userCreated)
-    {
-        var newObject = new RuntimeObject(newId, OutsidePrefabId, InPrefabMeshIndex, newBody, Pos + Vector3.One, Rot, Start, SizeMin, SizeMax, Mass, true, userCreated);
-
-        return newObject;
-    }
-
-    public void Dispose()
-    {
-        RigidBody.MotionState?.Dispose();
-        RigidBody.Dispose();
-    }
-
-    public readonly struct StartValues
+    internal readonly struct StartValues
     {
         public StartValues(Vector3 position, float mass, bool visible, bool @fixed)
         {
@@ -234,23 +343,5 @@ public sealed class RuntimeObject : IDisposable
         public readonly bool Visible { get; }
 
         public readonly bool Fixed { get; }
-    }
-
-    public readonly struct CollisionInfo
-    {
-        public static readonly CollisionInfo Default = new CollisionInfo(-1f, default, default);
-
-        public CollisionInfo(float force, FcObject otherObject, Vector3 normal)
-        {
-            Force = force;
-            OtherObject = otherObject;
-            Normal = normal;
-        }
-
-        public float Force { get; }
-
-        public FcObject OtherObject { get; }
-
-        public Vector3 Normal { get; }
     }
 }

@@ -28,7 +28,7 @@ internal sealed class PrefabUsedCache
 
         void MarkUsed(ushort id)
         {
-            Debug.Assert(!used[id]);
+            Debug.Assert(!used[id], $"{nameof(MarkUsed)} should not be called for already marked prefabs.");
 
             used[id] = true;
 

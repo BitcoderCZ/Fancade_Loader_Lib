@@ -7,7 +7,7 @@
     <LangVersion>13</LangVersion>
     <PackageId>BitcoderCZ.Fancade.Runtime.Simulated.Bullet</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>1.0.0-develop.12</Version>
+    <Version>1.0.0-develop.13</Version>
     <Description>Run fancade games with bullet physics.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -25,6 +25,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="PolySharp" Version="1.15.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="StyleCop.Analyzers.Unstable" Version="1.2.0.556">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

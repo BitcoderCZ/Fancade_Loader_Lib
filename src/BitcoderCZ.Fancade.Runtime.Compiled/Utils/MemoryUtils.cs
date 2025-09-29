@@ -2,6 +2,8 @@
 
 namespace BitcoderCZ.Fancade.Runtime.Compiled.Utils;
 
+#pragma warning disable SA1201 // Elements should appear in the correct order
+#pragma warning disable SA1642 // Elements should appear in the correct order
 internal static class MemoryUtils
 {
     // https://source.dot.net/#Microsoft.CodeAnalysis/MemoryExtensions.cs,216a6879a0d8549a
@@ -10,13 +12,15 @@ internal static class MemoryUtils
     /// Enables enumerating each split within a <see cref="ReadOnlySpan{T}"/> that has been divided using one or more separators.
     /// </summary>
     /// <typeparam name="T">The type of items in the <see cref="SpanSplitEnumerator{T}"/>.</typeparam>
-    public ref struct SpanSplitEnumerator<T> where T : IEquatable<T>
+    public ref struct SpanSplitEnumerator<T>
+        where T : IEquatable<T>
     {
         /// <summary>The input span being split.</summary>
         private readonly ReadOnlySpan<T> _source;
 
         /// <summary>A single separator to use when <see cref="_splitMode"/> is <see cref="SpanSplitEnumeratorMode.SingleElement"/>.</summary>
         private readonly T _separator = default!;
+
         /// <summary>
         /// A separator span to use when <see cref="_splitMode"/> is <see cref="SpanSplitEnumeratorMode.Sequence"/> (in which case
         /// it's treated as a single separator) or <see cref="SpanSplitEnumeratorMode.Any"/> (in which case it's treated as a set of separators).
@@ -25,10 +29,13 @@ internal static class MemoryUtils
 
         /// <summary>Mode that dictates how the instance was configured and how its fields should be used in <see cref="MoveNext"/>.</summary>
         private SpanSplitEnumeratorMode _splitMode;
+
         /// <summary>The inclusive starting index in <see cref="_source"/> of the current range.</summary>
         private int _startCurrent = 0;
+
         /// <summary>The exclusive ending index in <see cref="_source"/> of the current range.</summary>
         private int _endCurrent = 0;
+
         /// <summary>The index in <see cref="_source"/> from which the next separator search should start.</summary>
         private int _startNext = 0;
 
@@ -41,15 +48,9 @@ internal static class MemoryUtils
         public readonly ReadOnlySpan<T> Source => _source;
 
         /// <summary>Gets the current element of the enumeration.</summary>
-        /// <returns>Returns a <see cref="Range"/> instance that indicates the bounds of the current element withing the source span.</returns>
         public readonly Range Current => new Range(_startCurrent, _endCurrent);
 
         /// <summary>Initializes the enumerator for <see cref="SpanSplitEnumeratorMode.Any"/>.</summary>
-        /// <remarks>
-        /// If <paramref name="separators"/> is empty and <typeparamref name="T"/> is <see cref="char"/>, as an optimization
-        /// it will instead use <see cref="SpanSplitEnumeratorMode.SearchValues"/> with a cached <see cref="SearchValues{Char}"/>
-        /// for all whitespace characters.
-        /// </remarks>
         internal SpanSplitEnumerator(ReadOnlySpan<T> source, ReadOnlySpan<T> separators)
         {
             _source = source;
@@ -92,6 +93,7 @@ internal static class MemoryUtils
                     return false;
 
                 case SpanSplitEnumeratorMode.SingleElement:
+#pragma warning disable HAM0003 // Operation on readonly member causes the compiler to unnecessarily create a defensive copy
                     separatorIndex = _source[_startNext..].IndexOf(_separator);
                     separatorLength = 1;
                     break;
@@ -103,6 +105,7 @@ internal static class MemoryUtils
 
                 case SpanSplitEnumeratorMode.Sequence:
                     separatorIndex = _source[_startNext..].IndexOf(_separatorBuffer);
+#pragma warning restore HAM0003 // Operation on readonly member causes the compiler to unnecessarily create a defensive copy
                     separatorLength = _separatorBuffer.Length;
                     break;
 
@@ -154,10 +157,8 @@ internal static class MemoryUtils
         /// <summary>The separator is an empty sequence, such that no splits should be performed.</summary>
         EmptySequence,
 
-        /// <summary>
-        /// A <see cref="SearchValues{Char}"/> was provided and should behave the same as with <see cref="Any"/> but with the separators in the <see cref="SearchValues"/>
-        /// instance instead of in a <see cref="ReadOnlySpan{Char}"/>.
-        /// </summary>
-        SearchValues
+        SearchValues,
     }
 }
+#pragma warning restore SA1642
+#pragma warning restore SA1201 // Elements should appear in the correct order

@@ -16,7 +16,7 @@ using System.Diagnostics;
 
 namespace BitcoderCZ.Fancade.Runtime.Compiled;
 
-public partial class AstCompiler
+public partial class FcAstCompiler
 {
     private ExpressionInfo WriteExpressionOrDefault(SyntaxTerminal? terminal, SignalType type, FcEnvironment environment, IndentedTextWriter writer)
     {
@@ -88,7 +88,7 @@ public partial class AstCompiler
             case 220:
                 {
                     Debug.Assert(terminal.Node is ScreenSizeExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(ScreenSizeExpressionSyntax)}");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.ScreenSize)}");
 
@@ -112,16 +112,17 @@ public partial class AstCompiler
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     Debug.Assert(terminal.Node is AccelerometerExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(AccelerometerExpressionSyntax)}");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.Accelerometer)}");
                     return new ExpressionInfo(SignalType.Vec3);
                 }
+
             case 564:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
                     Debug.Assert(terminal.Node is CurrentFrameExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CurrentFrameExpressionSyntax)}");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
 
                     writer.WriteInv($"(float)_ctx.{nameof(IRuntimeContext.CurrentFrame)}");
 
@@ -131,7 +132,7 @@ public partial class AstCompiler
             // **************************************** Objects ****************************************
             case 278:
                 {
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var getPosition = (GetPositionExpressionSyntax)terminal.Node;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetObjectPosition)}(");
@@ -160,7 +161,7 @@ public partial class AstCompiler
 
             case 228:
                 {
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var raycast = (RaycastExpressionSyntax)terminal.Node;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.Raycast)}(");
@@ -192,7 +193,7 @@ public partial class AstCompiler
 
             case 489:
                 {
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var getSize = (GetSizeExpressionSyntax)terminal.Node;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.GetSize)}(");
@@ -218,7 +219,7 @@ public partial class AstCompiler
             case 316:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var createObject = (CreateObjectStatementSyntax)terminal.Node;
 
                     if (createObject.Original is null)
@@ -309,7 +310,7 @@ public partial class AstCompiler
             // **************************************** Control ****************************************
             case 242:
                 {
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var touchSensor = (TouchSensorStatementSyntax)terminal.Node;
 
                     writer.Write(GetStateStoreVarName(environment.Index, touchSensor.Position, "touch_pos"));
@@ -333,7 +334,7 @@ public partial class AstCompiler
             case 248:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var swipeSensor = (SwipeSensorStatementSyntax)terminal.Node;
 
                     writer.Write(GetStateStoreVarName(environment.Index, swipeSensor.Position, "swipe_direction"));
@@ -344,7 +345,7 @@ public partial class AstCompiler
             case 592:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var joystick = (JoystickStatementSyntax)terminal.Node;
 
                     writer.Write(GetStateStoreVarName(environment.Index, joystick.Position, "joystick_direction"));
@@ -354,7 +355,7 @@ public partial class AstCompiler
 
             case 401:
                 {
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var collision = (CollisionStatementSyntax)terminal.Node;
 
                     if (terminal.Position == TerminalDef.GetOutPosition(1, 2, 4))
@@ -381,7 +382,7 @@ public partial class AstCompiler
             case 560:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var loop = (LoopStatementSyntax)terminal.Node;
                     string valueVarName = GetStateStoreVarName(environment.Index, loop.Position, "loop_value");
 
@@ -396,7 +397,7 @@ public partial class AstCompiler
             case 90 or 144 or 440 or 413 or 453 or 184 or 186 or 188 or 455 or 578:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var unary = (UnaryExpressionSyntax)terminal.Node;
 
                     SignalType outType;
@@ -482,7 +483,7 @@ public partial class AstCompiler
             case 92 or 96 or 100 or 104 or 108 or 112 or 116 or 120 or 124 or 172 or 457 or 132 or 136 or 140 or 421 or 146 or 417 or 128 or 481 or 168 or 176 or 180 or 580 or 570 or 574 or 190 or 200 or 204:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var binary = (BinaryExpressionSyntax)terminal.Node;
 
                     writer.Write('(');
@@ -711,7 +712,7 @@ public partial class AstCompiler
             case 194:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var lerp = (LerpExpressionSyntax)terminal.Node;
 
                     writer.Write("Quaternion.Lerp(");
@@ -726,7 +727,7 @@ public partial class AstCompiler
 
             case 216:
                 {
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var screenToWorld = (ScreenToWorldExpressionSyntax)terminal.Node;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.ScreenToWorld)}(new Vector2(");
@@ -753,7 +754,7 @@ public partial class AstCompiler
 
             case 477:
                 {
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var worldToScreen = (WorldToScreenExpressionSyntax)terminal.Node;
 
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.WorldToScreen)}(");
@@ -779,7 +780,7 @@ public partial class AstCompiler
             case 208:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 4), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var lineVsPlane = (LineVsPlaneExpressionSyntax)terminal.Node;
 
                     writer.Write("VectorUtils.LineVsPlane(");
@@ -798,7 +799,7 @@ public partial class AstCompiler
             case 150 or 162:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var makeVecRot = (MakeVecRotExpressionSyntax)terminal.Node;
 
                     switch (makeVecRot.PrefabId)
@@ -829,7 +830,7 @@ public partial class AstCompiler
 
             case 156 or 442:
                 {
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var breakVecRot = (BreakVecRotExpressionSyntax)terminal.Node;
 
                     switch (breakVecRot.PrefabId)
@@ -885,7 +886,7 @@ public partial class AstCompiler
             case 36 or 38 or 42 or 449 or 451:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, terminal.Node.PrefabId is 38 or 42 ? 2 : 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(!asReference);
+                    Debug.Assert(!asReference, $"{nameof(asReference)} should be false.");
                     var literal = (LiteralExpressionSyntax)terminal.Node;
 
                     switch (terminal.Node.PrefabId)

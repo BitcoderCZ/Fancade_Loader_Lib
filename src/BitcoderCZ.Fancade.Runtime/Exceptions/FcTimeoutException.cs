@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BitcoderCZ.Fancade.Runtime.Exceptions;
+﻿namespace BitcoderCZ.Fancade.Runtime.Exceptions;
 
 /// <summary>
 /// The exception that is thrown when the time allotted for a process or operation has expired.

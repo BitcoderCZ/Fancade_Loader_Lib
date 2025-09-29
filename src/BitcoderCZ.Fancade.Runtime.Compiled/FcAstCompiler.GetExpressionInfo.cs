@@ -13,7 +13,7 @@ using System.Diagnostics;
 
 namespace BitcoderCZ.Fancade.Runtime.Compiled;
 
-public partial class AstCompiler
+public partial class FcAstCompiler
 {
     private ExpressionInfo GetExpressionInfo(SyntaxTerminal terminal, bool asReference, FcEnvironment environment)
     {
@@ -47,7 +47,7 @@ public partial class AstCompiler
             // **************************************** Objects ****************************************
             case 278:
                 {
-                    Debug.Assert(terminal.Node is GetPositionExpressionSyntax);
+                    Debug.Assert(terminal.Node is GetPositionExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(GetPositionExpressionSyntax)}");
 
                     return terminal.Position == TerminalDef.GetOutPosition(0, 2, 2)
                         ? new ExpressionInfo(SignalType.Vec3)
@@ -58,7 +58,7 @@ public partial class AstCompiler
 
             case 228:
                 {
-                    Debug.Assert(terminal.Node is RaycastExpressionSyntax);
+                    Debug.Assert(terminal.Node is RaycastExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(RaycastExpressionSyntax)}");
 
                     return terminal.Position == TerminalDef.GetOutPosition(0, 2, 3)
                         ? new ExpressionInfo(SignalType.Bool)
@@ -71,7 +71,7 @@ public partial class AstCompiler
 
             case 489:
                 {
-                    Debug.Assert(terminal.Node is GetSizeExpressionSyntax);
+                    Debug.Assert(terminal.Node is GetSizeExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(GetSizeExpressionSyntax)}");
 
                     return terminal.Position == TerminalDef.GetOutPosition(0, 2, 2) || terminal.Position == TerminalDef.GetOutPosition(1, 2, 2)
                         ? new ExpressionInfo(SignalType.Vec3)
@@ -81,7 +81,7 @@ public partial class AstCompiler
             case 316:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is CreateObjectStatementSyntax);
+                    Debug.Assert(terminal.Node is CreateObjectStatementSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CreateObjectStatementSyntax)}");
 
                     return new ExpressionInfo(SignalType.Obj);
                 }
@@ -90,7 +90,7 @@ public partial class AstCompiler
             case 264:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is PlaySoundStatementSyntax);
+                    Debug.Assert(terminal.Node is PlaySoundStatementSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(PlaySoundStatementSyntax)}");
 
                     return new ExpressionInfo(SignalType.Float);
                 }
@@ -98,7 +98,7 @@ public partial class AstCompiler
             // **************************************** Physics ****************************************
             case 288:
                 {
-                    Debug.Assert(terminal.Node is GetVelocityExpressionSyntax);
+                    Debug.Assert(terminal.Node is GetVelocityExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(GetVelocityExpressionSyntax)}");
 
                     return new ExpressionInfo(SignalType.Vec3);
                 }
@@ -106,7 +106,7 @@ public partial class AstCompiler
             case 340:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is AddConstraintStatementSyntax);
+                    Debug.Assert(terminal.Node is AddConstraintStatementSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(AddConstraintStatementSyntax)}");
 
                     return new ExpressionInfo(SignalType.Con);
                 }
@@ -114,8 +114,8 @@ public partial class AstCompiler
             // **************************************** Control ****************************************
             case 242:
                 {
-                    Debug.Assert(terminal.Node is TouchSensorStatementSyntax);
-                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 3) || terminal.Position == TerminalDef.GetOutPosition(2, 2, 3));
+                    Debug.Assert(terminal.Node is TouchSensorStatementSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(TouchSensorStatementSyntax)}");
+                    Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 3) || terminal.Position == TerminalDef.GetOutPosition(2, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
 
                     return new ExpressionInfo(SignalType.Float);
                 }
@@ -123,7 +123,7 @@ public partial class AstCompiler
             case 248:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is SwipeSensorStatementSyntax);
+                    Debug.Assert(terminal.Node is SwipeSensorStatementSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(SwipeSensorStatementSyntax)}");
 
                     return new ExpressionInfo(SignalType.Vec3);
                 }
@@ -131,14 +131,14 @@ public partial class AstCompiler
             case 592:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is JoystickStatementSyntax);
+                    Debug.Assert(terminal.Node is JoystickStatementSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(JoystickStatementSyntax)}");
 
                     return new ExpressionInfo(SignalType.Vec3);
                 }
 
             case 401:
                 {
-                    Debug.Assert(terminal.Node is CollisionStatementSyntax);
+                    Debug.Assert(terminal.Node is CollisionStatementSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(CollisionStatementSyntax)}");
 
                     return terminal.Position == TerminalDef.GetOutPosition(1, 2, 4)
                         ? new ExpressionInfo(SignalType.Obj)
@@ -152,7 +152,7 @@ public partial class AstCompiler
             case 560:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(1, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is LoopStatementSyntax);
+                    Debug.Assert(terminal.Node is LoopStatementSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(LoopStatementSyntax)}");
 
                     return new ExpressionInfo(SignalType.Float);
                 }
@@ -161,7 +161,7 @@ public partial class AstCompiler
             case 90 or 144 or 440 or 413 or 453 or 184 or 186 or 188 or 455 or 578:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is UnaryExpressionSyntax);
+                    Debug.Assert(terminal.Node is UnaryExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(UnaryExpressionSyntax)}");
 
                     var outType = terminal.Node.PrefabId switch
                     {
@@ -183,7 +183,7 @@ public partial class AstCompiler
             case 92 or 96 or 100 or 104 or 108 or 112 or 116 or 120 or 124 or 172 or 457 or 132 or 136 or 140 or 421 or 146 or 417 or 128 or 481 or 168 or 176 or 180 or 580 or 570 or 574 or 190 or 200 or 204:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 2), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is BinaryExpressionSyntax);
+                    Debug.Assert(terminal.Node is BinaryExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(BinaryExpressionSyntax)}");
 
                     var outType = terminal.Node.PrefabId switch
                     {
@@ -223,21 +223,21 @@ public partial class AstCompiler
             case 194:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 3), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is LerpExpressionSyntax);
+                    Debug.Assert(terminal.Node is LerpExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(LerpExpressionSyntax)}");
 
                     return new ExpressionInfo(SignalType.Rot);
                 }
 
             case 216:
                 {
-                    Debug.Assert(terminal.Node is ScreenToWorldExpressionSyntax);
+                    Debug.Assert(terminal.Node is ScreenToWorldExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(ScreenToWorldExpressionSyntax)}");
 
                     return new ExpressionInfo(SignalType.Vec3);
                 }
 
             case 477:
                 {
-                    Debug.Assert(terminal.Node is WorldToScreenExpressionSyntax);
+                    Debug.Assert(terminal.Node is WorldToScreenExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(WorldToScreenExpressionSyntax)}");
 
                     return new ExpressionInfo(SignalType.Float);
                 }
@@ -245,7 +245,7 @@ public partial class AstCompiler
             case 208:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, 4), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is LineVsPlaneExpressionSyntax);
+                    Debug.Assert(terminal.Node is LineVsPlaneExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(LineVsPlaneExpressionSyntax)}");
 
                     return new ExpressionInfo(SignalType.Vec3);
                 }
@@ -265,7 +265,7 @@ public partial class AstCompiler
 
             case 156 or 442:
                 {
-                    Debug.Assert(terminal.Node is BreakVecRotExpressionSyntax);
+                    Debug.Assert(terminal.Node is BreakVecRotExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(BreakVecRotExpressionSyntax)}");
 
                     return new ExpressionInfo(SignalType.Float);
                 }
@@ -274,8 +274,7 @@ public partial class AstCompiler
             case 36 or 38 or 42 or 449 or 451:
                 {
                     Debug.Assert(terminal.Position == TerminalDef.GetOutPosition(0, 2, terminal.Node.PrefabId is 38 or 42 ? 2 : 1), $"{nameof(terminal)}.{nameof(terminal.Position)} should be valid.");
-                    Debug.Assert(terminal.Node is LiteralExpressionSyntax);
-                    Debug.Assert(!asReference);
+                    Debug.Assert(terminal.Node is LiteralExpressionSyntax, $"{nameof(terminal)}.{nameof(terminal.Node)} should be {nameof(LiteralExpressionSyntax)}");
 
                     return terminal.Node.PrefabId switch
                     {

@@ -8,8 +8,14 @@ using System.Runtime.CompilerServices;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
+/// <summary>
+/// Stores the mesh of the inside of a prefab.
+/// </summary>
 public readonly struct BlockMesh
 {
+    /// <summary>
+    /// An empty <see cref="BlockMesh"/> instance.
+    /// </summary>
     public static readonly BlockMesh Empty = new BlockMesh(0, new Array3D<int>(int3.Zero), [], []);
 
     private static readonly short3[] NeighborOffsets =
@@ -28,7 +34,7 @@ public readonly struct BlockMesh
 
     private BlockMesh(int meshCount, Array3D<int> blockMeshIdOffsets, List<ValueList<int3>> meshBlockPositions, short[] blockMeshIds)
     {
-        Debug.Assert(meshBlockPositions.Count == meshCount);
+        Debug.Assert(meshBlockPositions.Count == meshCount, $"{nameof(meshBlockPositions)} should have {meshCount} elements.");
 
         MeshCount = meshCount;
         _blockMeshIdOffsets = blockMeshIdOffsets;
@@ -36,15 +42,38 @@ public readonly struct BlockMesh
         _blockMeshIds = blockMeshIds;
     }
 
+    /// <summary>
+    /// Gets the number of meshes.
+    /// </summary>
+    /// <value>Number of meshes.</value>
     public int MeshCount { get; }
 
+    /// <summary>
+    /// Gets the size of the inside of the prefab.
+    /// </summary>
+    /// <value>Size of the inside of the prefab.</value>
     public int3 Size => _blockMeshIdOffsets.Size;
 
+    /// <summary>
+    /// Gets the mesh offsets.
+    /// </summary>
+    /// <value>Mesh offsets.</value>
     public ReadOnlySpan<int> BlockMeshIdOffsets => _blockMeshIdOffsets.Array;
 
+    /// <summary>
+    /// Gets the mesh ids.
+    /// </summary>
+    /// <value>Mesh ids.</value>
     public ReadOnlySpan<short> BlockMeshIds => _blockMeshIds;
 
-    public static BlockMesh Create(BlockData blocks, PrefabList prefabs, PrefabSegmentMeshes[] segmentMeshes)
+    /// <summary>
+    /// Creates a new <see cref="BlockMesh"/> instance.
+    /// </summary>
+    /// <param name="blocks">The <see cref="BlockData"/> to create the <see cref="BlockMesh"/> for.</param>
+    /// <param name="prefabs">A <see cref="PrefabList"/> used to resolve prefab types and voxels.</param>
+    /// <param name="segmentMeshes">A <see cref="ReadOnlySpan{T}"/> of <see cref="PrefabSegmentMeshes"/>, where the index corresponds to the segment id.</param>
+    /// <returns>The created <see cref="BlockMesh"/>.</returns>
+    public static BlockMesh Create(BlockData blocks, PrefabList prefabs, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes)
     {
         if (blocks.Size == int3.Zero)
         {
@@ -120,7 +149,7 @@ public readonly struct BlockMesh
                         continue;
                     }
 
-                    Debug.Assert(stack.Count == 0);
+                    Debug.Assert(stack.Count == 0, $"{nameof(stack)} should be empty.");
 
                     stack.Push((blockPos, (short)segmentMeshIndex));
 
@@ -130,7 +159,7 @@ public readonly struct BlockMesh
                         var currentPos = item.Pos;
                         meshPositions.Add(currentPos);
 
-                        int currentBLockIndex = currentPos.X + (currentPos.Y + currentPos.Z * blocksSize.Y) * blocksSize.X;
+                        int currentBLockIndex = currentPos.X + ((currentPos.Y + (currentPos.Z * blocksSize.Y)) * blocksSize.X);
 
                         ushort currentBlockId = blocksArray[currentBLockIndex];
 
@@ -145,7 +174,7 @@ public readonly struct BlockMesh
                                 continue;
                             }
 
-                            int neighborIndex = neighborPos.X + (neighborPos.Y + neighborPos.Z * blocksSize.Y) * blocksSize.X;
+                            int neighborIndex = neighborPos.X + ((neighborPos.Y + (neighborPos.Z * blocksSize.Y)) * blocksSize.X);
 
                             ushort neighborId = blocksArray[neighborIndex];
 
@@ -163,7 +192,7 @@ public readonly struct BlockMesh
                             for (short neighborMeshIndex = 0; neighborMeshIndex < neighborMeshCount; neighborMeshIndex++)
                             {
                                 if (blockMeshIds[neighborMeshIndex + neighborMaxMeshCountUpToPos] == -1 &&
-                                    Glues(currentBlockId, item.MeshIndex, sideIndex, neighborId, neighborMeshIndex))
+                                    Glues(currentBlockId, item.MeshIndex, sideIndex, neighborId, neighborMeshIndex, segmentMeshes))
                                 {
                                     stack.Push((neighborPos, neighborMeshIndex));
                                 }
@@ -204,7 +233,7 @@ public readonly struct BlockMesh
             }
         }
 
-        bool Glues(ushort currentBlockId, short currentMeshIndex, int sideIndex, ushort neighborBLockId, int neighborMeshIndex)
+        bool Glues(ushort currentBlockId, short currentMeshIndex, int sideIndex, ushort neighborBLockId, int neighborMeshIndex, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes)
         {
             if (sideIndex >= 6)
             {
@@ -345,30 +374,30 @@ public readonly struct BlockMesh
                                (neighborVoxelMeshIndex[sideIndexInverted1 | 1] == neighborMeshIndex) &&
                               !currentVoxels[(uVar8 | 1) + someSideIndex] &&
                                (!neighborVoxels[(sideIndexInverted1 | 1) + someIndex])) ||
-                             currentVoxelMeshIndex[uVar8 | 2] == neighborMeshIndex &&
+                             (currentVoxelMeshIndex[uVar8 | 2] == neighborMeshIndex &&
                                (neighborVoxelMeshIndex[sideIndexInverted1 | 2] == neighborMeshIndex) &&
                               !currentVoxels[(uVar8 | 2) + someSideIndex] &&
-                               (!neighborVoxels[(sideIndexInverted1 | 2) + someIndex]) ||
+                               (!neighborVoxels[(sideIndexInverted1 | 2) + someIndex])) ||
                             (currentVoxelMeshIndex[uVar8 | 3] == neighborMeshIndex &&
                                   (neighborVoxelMeshIndex[sideIndexInverted1 | 3] == neighborMeshIndex) &&
                                  (!currentVoxels[(uVar8 | 3) + someSideIndex]) &&
                                 (!neighborVoxels[(sideIndexInverted1 | 3) + someIndex])) ||
-                               currentVoxelMeshIndex[uVar8 | 4] == neighborMeshIndex &&
+                               (currentVoxelMeshIndex[uVar8 | 4] == neighborMeshIndex &&
                                  (neighborVoxelMeshIndex[sideIndexInverted1 | 4] == neighborMeshIndex) &&
                                 !currentVoxels[(uVar8 | 4) + someSideIndex] &&
-                                 (!neighborVoxels[(sideIndexInverted1 | 4) + someIndex]) ||
-                              currentVoxelMeshIndex[uVar8 | 5] == neighborMeshIndex &&
+                                 (!neighborVoxels[(sideIndexInverted1 | 4) + someIndex])) ||
+                              (currentVoxelMeshIndex[uVar8 | 5] == neighborMeshIndex &&
                                  (neighborVoxelMeshIndex[sideIndexInverted1 | 5] == neighborMeshIndex) &&
                                 (!currentVoxels[(uVar8 | 5) + someSideIndex]) &&
-                               (!neighborVoxels[(sideIndexInverted1 | 5) + someIndex]) ||
+                               (!neighborVoxels[(sideIndexInverted1 | 5) + someIndex])) ||
                              (currentVoxelMeshIndex[uVar8 | 6] == neighborMeshIndex &&
                                  (neighborVoxelMeshIndex[sideIndexInverted1 | 6] == neighborMeshIndex) &&
                                 (!currentVoxels[(uVar8 | 6) + someSideIndex]) &&
                                (!neighborVoxels[(sideIndexInverted1 | 6) + someIndex])) ||
-                              currentVoxelMeshIndex[uVar8 | 7] == neighborMeshIndex &&
+                              (currentVoxelMeshIndex[uVar8 | 7] == neighborMeshIndex &&
                                 (neighborVoxelMeshIndex[sideIndexInverted1 | 7] == neighborMeshIndex) &&
                                !currentVoxels[(uVar8 | 7) + someSideIndex] &&
-                                (!neighborVoxels[(sideIndexInverted1 | 7) + someIndex])
+                                (!neighborVoxels[(sideIndexInverted1 | 7) + someIndex]))
                            )
                         {
                             return true;
@@ -406,8 +435,8 @@ public readonly struct BlockMesh
                             int uVar4 = index2 + index3 | iVar2;
 
                             if (neighborVoxelMeshIndex[uVar4] == neighborMeshIndex &&
-                                (!currentVoxels[sideIndex * 512 + uVar2]) &&
-                                (!neighborVoxels[sideIndexInverted1 * 512 + uVar4]))
+                                (!currentVoxels[(sideIndex * 512) + uVar2]) &&
+                                (!neighborVoxels[(sideIndexInverted1 * 512) + uVar4]))
                             {
                                 return true;
                             }
@@ -420,18 +449,39 @@ public readonly struct BlockMesh
         }
     }
 
+    /// <summary>
+    /// Gets the mesh offset <paramref name="position"/>.
+    /// </summary>
+    /// <param name="position">The position of which the mesh offset should be retrieved.</param>
+    /// <returns>Mesh offset at <paramref name="position"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetMeshOffset(int3 position)
         => _blockMeshIdOffsets.Get(position);
 
+    /// <summary>
+    /// Gets the mesh offset <paramref name="position"/>, without bounds checking.
+    /// </summary>
+    /// <param name="position">The position of which the mesh offset should be retrieved.</param>
+    /// <returns>Mesh offset at <paramref name="position"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetMeshOffsetUnchecked(int3 position)
         => _blockMeshIdOffsets.GetUnchecked(position);
 
+    /// <summary>
+    /// Gets the id of the mesh at <paramref name="position"/>.
+    /// </summary>
+    /// <param name="position">The position.</param>
+    /// <param name="segmentMeshIndex">The local segment mesh index of the block.</param>
+    /// <returns>Id of the mesh at <paramref name="position"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetMeshAtPos(int3 position, int segmentMeshIndex)
         => _blockMeshIds[GetMeshOffset(position) + segmentMeshIndex];
 
+    /// <summary>
+    /// Gets the positions a certain mesh occupies.
+    /// </summary>
+    /// <param name="meshIndex">Index of the mesh whose positions should be retrieved.</param>
+    /// <returns>Positions the mesh occupies.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IEnumerable<int3> EnumerateMeshBlocks(int meshIndex)
         => _meshBlockPositions[meshIndex];
