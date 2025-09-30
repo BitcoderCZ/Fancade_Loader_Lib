@@ -100,10 +100,10 @@ public sealed partial class FcAstCompiler
 
         code = compiler.WriteAll();
 
-        return TryCompileInternal(code, ctx, options.LoadAssemblyFunc, out diagnostics, out runner);
+        return TryCompileInternal(code, ctx, options.AdditionalReferences, options.LoadAssemblyFunc, out diagnostics, out runner);
     }
 
-    private static bool TryCompileInternal(string code, IRuntimeContext ctx, Func<MemoryStream, Assembly> loadAssemblyFunc, [NotNullWhen(false)] out IEnumerable<Diagnostic>? diagnostics, [NotNullWhen(true)] out IAstRunner? runner)
+    private static bool TryCompileInternal(string code, IRuntimeContext ctx, IEnumerable<MetadataReference> additionalReferences, Func<MemoryStream, Assembly> loadAssemblyFunc, [NotNullWhen(false)] out IEnumerable<Diagnostic>? diagnostics, [NotNullWhen(true)] out IAstRunner? runner)
     {
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp13));
 
@@ -122,6 +122,7 @@ public sealed partial class FcAstCompiler
             MetadataReference.CreateFromFile(typeof(System.Diagnostics.Stopwatch).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(SignalType).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(Ranking).Assembly.Location),
+            .. additionalReferences,
         ];
 
         CSharpCompilation compilation = CSharpCompilation.Create(
@@ -1000,6 +1001,7 @@ public sealed partial class FcAstCompiler
 #endif
 
         private readonly Func<MemoryStream, Assembly> _loadAssemblyFunc = null!;
+        private readonly IEnumerable<MetadataReference> _additionalReferences = [];
 
         private readonly TimeSpan _timeout = TimeSpan.FromSeconds(3);
         private readonly int _maxDepth = 4;
@@ -1038,6 +1040,20 @@ public sealed partial class FcAstCompiler
         /// </summary>
         /// <value>Function used to load the assembly.</value>
         public Func<MemoryStream, Assembly> LoadAssemblyFunc => _loadAssemblyFunc;
+
+        /// <summary>
+        /// Gets additional <see cref="MetadataReference"/>s used when compiling the transpiled code.
+        /// </summary>
+        /// <value>Additional <see cref="MetadataReference"/>s used when compiling the transpiled code.</value>
+        public IEnumerable<MetadataReference> AdditionalReferences
+        {
+            get => _additionalReferences;
+            init
+            {
+                ThrowIfNull(value);
+                _additionalReferences = value;
+            }
+        }
 
         /// <summary>
         /// Gets the time after which <see cref="FcTimeoutException"/> will be thrown.
