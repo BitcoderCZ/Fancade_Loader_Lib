@@ -117,7 +117,8 @@ public sealed partial class FcAstCompiler
             MetadataReference.CreateFromFile(Assembly.Load("netstandard").Location),
             MetadataReference.CreateFromFile(typeof(IRuntimeContext).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(int3).Assembly.Location),
-            MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Numerics.Vectors.dll")),
+            MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Numerics.Vectors.dll")), // does not work in unity
+            MetadataReference.CreateFromFile(typeof(Vector3).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(SignalType).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(Ranking).Assembly.Location),
         ];
@@ -1021,6 +1022,15 @@ public sealed partial class FcAstCompiler
             _loadAssemblyFunc = assemblyLoadContext.LoadFromStream;
         }
 #endif
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Options"/> class.
+        /// </summary>
+        /// <param name="loadAssemblyFunc">Function used to load the assembly.</param>
+        public Options(Func<MemoryStream, Assembly> loadAssemblyFunc)
+        {
+            _loadAssemblyFunc = loadAssemblyFunc;
+        }
 
         /// <summary>
         /// Gets the function used to load the assembly.
