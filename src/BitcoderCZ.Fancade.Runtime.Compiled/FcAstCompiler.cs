@@ -119,6 +119,7 @@ public sealed partial class FcAstCompiler
             MetadataReference.CreateFromFile(typeof(int3).Assembly.Location),
             MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Numerics.Vectors.dll")), // does not work in unity
             MetadataReference.CreateFromFile(typeof(Vector3).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(System.Diagnostics.Stopwatch).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(SignalType).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(Ranking).Assembly.Location),
         ];
