@@ -356,7 +356,7 @@ public partial class FcAstCompiler
                                     }
                                 }
 
-                                return new ExpressionInfo(SignalType.Error);
+                                return new ExpressionInfo(SignalType.Obj);
                             }
 
                         case CustomStatementSyntax custom:
