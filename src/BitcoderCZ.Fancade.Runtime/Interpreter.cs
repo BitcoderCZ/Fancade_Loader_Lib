@@ -1432,6 +1432,14 @@ public sealed class Interpreter : IAstRunner
                                     }
                                 }
 
+                                foreach (var item in environment.AST.TerminalInfo.InputTerminals)
+                                {
+                                    if (item.Position == terminal.Position)
+                                    {
+                                        return new TerminalOutput(item.Type == SignalType.Rot ? new RuntimeValue(Quaternion.Identity) : RuntimeValue.Zero);
+                                    }
+                                }
+
                                 return new TerminalOutput(new RuntimeValue(_ctx.GetObject(environment.OuterPosition, terminal.Position, outerEnvironment.AST.PrefabId).Value));
                             }
 

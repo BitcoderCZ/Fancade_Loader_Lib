@@ -152,7 +152,7 @@ public class FcWorldTests
     public async Task ConnectionToSelf_ReferencesSelf()
     {
         var writer = CreateWriter(out var prefab);
-        prefab[int3.Zero].Voxels[int3.Zero] = new Voxel(FcColor.Black, false);
+        prefab[int3.Zero].Voxels.Fill(new Voxel(FcColor.Black, false));
 
         var prefabs = new PrefabList();
 
@@ -163,7 +163,7 @@ public class FcWorldTests
         var blocks = level.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.Zero };
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.One };
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
 
         var compiled = Compile(writer, prefabs, level.Id);
@@ -175,7 +175,11 @@ public class FcWorldTests
     public async Task ConnectionToSelf_ReferencesSelf2()
     {
         var writer = CreateWriter(out var prefab);
-        prefab[int3.Zero].Voxels[int3.Zero] = new Voxel(FcColor.Black, true);
+        var voxels = prefab[int3.Zero].Voxels;
+        var voxel = new Voxel(FcColor.Black, false);
+        voxels[new int3(1, 1, 1)] = voxel;
+        voxels[new int3(2, 1, 1)] = voxel;
+        voxels[new int3(2, 1, 2)] = voxel;
 
         var prefabs = new PrefabList();
 
@@ -187,7 +191,7 @@ public class FcWorldTests
         blocks.SetBlock(new int3(0, 0, 0), 1);
         blocks.SetPrefab(new int3(1, 0, 0), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.Zero };
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = new int3(2, 1, 1) };
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
 
         var compiled = Compile(writer, prefabs, level.Id);

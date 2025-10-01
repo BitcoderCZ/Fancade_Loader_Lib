@@ -1023,7 +1023,7 @@ public partial class FcAstCompiler
                                     }
                                 }
 
-                                foreach (var info in outerEnvironment.AST.TerminalInfo.InputTerminals)
+                                foreach (var info in environment.AST.TerminalInfo.InputTerminals)
                                 {
                                     if (info.Position == terminal.Position)
                                     {

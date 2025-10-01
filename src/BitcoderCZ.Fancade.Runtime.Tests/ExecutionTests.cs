@@ -2,12 +2,14 @@
 using BitcoderCZ.Fancade.Editing.Scripting;
 using BitcoderCZ.Fancade.Editing.Scripting.Builders;
 using BitcoderCZ.Fancade.Editing.Scripting.Placers;
+using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
+using System.Diagnostics;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
@@ -50,7 +52,7 @@ public partial class ExecutionTests
     [Test]
     public async Task Execution_CorrectOrderByPlacement()
     {
-        var builder = CreateBuilder();
+        var builder = CreateBuilder(out _);
 
         List<Block> blocks = [];
 
@@ -61,7 +63,7 @@ public partial class ExecutionTests
 
         builder.AddBlockSegments(blocks);
 
-        var compiled = Compile(builder);
+        var compiled = Compile(builder, out _);
 
         await Assert.That(compiled).Inspects(
         [
@@ -174,30 +176,70 @@ public partial class ExecutionTests
         await Assert.That(compiled).Inspects([new(rng.NextSingle()) { Count = 2 }, new(rng.NextSingle()) { Count = 2 }], runFor: 2);
     }
 
-    private static CodeWriter CreateWriter()
+    [Test]
+    public async Task DisconnectedOutsideTerminals_ReturnsDefaultValue()
     {
-        var builder = CreateBuilder();
+        var writer = CreateWriter(out var prefab);
+        prefab[int3.Zero].Voxels[int3.Zero] = new Voxel(FcColor.Black, false);
+
+        var prefabs = new PrefabList();
+
+        var level = Prefab.CreateLevel(0, "A");
+        prefabs.AddPrefab(level);
+        prefabs.AddPrefab(prefab);
+
+        var blocks = level.Blocks;
+        blocks.SetPrefab(new int3(0, 0, 0), prefab);
+
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.Zero };
+        writer.Inspect(terminal.Wrap(), SignalType.Rot);
+
+        var compiled = Compile(writer, prefabs, level.Id);
+
+        await Assert.That(compiled).Inspects([new(Quaternion.Identity) { Count = 2 }], runFor: 2);
+    }
+
+    private static CodeWriter CreateWriter()
+        => CreateWriter(out _);
+
+    private static CodeWriter CreateWriter(out Prefab prefab)
+    {
+        var builder = CreateBuilder(out prefab);
         var placer = new TowerCodePlacer(builder);
         placer.EnterStatementBlock();
         return new CodeWriter(placer, new TerminalConnector(builder.Connect));
     }
 
-    private static PrefabBlockBuilder CreateBuilder()
+    private static PrefabBlockBuilder CreateBuilder(out Prefab prefab)
     {
-        Prefab prefab = new Prefab(RawGame.CurrentNumbStockPrefabs);
+        prefab = Prefab.CreateBlock(RawGame.CurrentNumbStockPrefabs, "A");
         var builder = new PrefabBlockBuilder(prefab);
         return builder;
     }
 
-    private static FcAST Compile(CodeWriter writer)
+    private static FcAST Compile(CodeWriter writer, PrefabList prefabs, ushort? mainPrefabId = null)
     {
         writer.Flush();
-        return Compile(writer.Placer.Builder);
+        var prefab = (Prefab)writer.Placer.Builder.Build(int3.Zero);
+
+        Debug.Assert(prefabs.ContainsPrefab(prefab.Id));
+        prefabs.AddImplicitConnections();
+
+        return FcAST.Parse(prefabs, mainPrefabId ?? prefab.Id);
     }
 
-    private static FcAST Compile(BlockBuilder builder)
+    private static FcAST Compile(CodeWriter writer)
+        => Compile(writer, out _);
+
+    private static FcAST Compile(CodeWriter writer, out PrefabList prefabs)
     {
-        var prefabs = new PrefabList([(Prefab)builder.Build(int3.Zero)]);
+        writer.Flush();
+        return Compile(writer.Placer.Builder, out prefabs);
+    }
+
+    private static FcAST Compile(BlockBuilder builder, out PrefabList prefabs)
+    {
+        prefabs = new PrefabList([(Prefab)builder.Build(int3.Zero)]);
 
         prefabs.AddImplicitConnections();
 
