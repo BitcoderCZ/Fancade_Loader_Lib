@@ -1055,6 +1055,8 @@ public sealed partial class FcAstCompiler
             }
         }
 
+
+
         /// <summary>
         /// Gets the time after which <see cref="FcTimeoutException"/> will be thrown.
         /// </summary>
@@ -1086,6 +1088,22 @@ public sealed partial class FcAstCompiler
 
                 _maxDepth = value;
             }
+        }
+
+        /// <summary>
+        /// Specifies how statements are emitted.
+        /// </summary>
+        public enum StatementExecutionMode
+        {
+            /// <summary>
+            /// Emits statements as a state machine.
+            /// </summary>
+            StateMachine = 0,
+
+            /// <summary>
+            /// Emits statements as function calls, may be faster than <see cref="StateMachine"/>, but can lead to <see cref="StackOverflowException"/>.
+            /// </summary>
+            DirectCalls,
         }
     }
 
