@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Extensions.ObjectPool;
 using System.CodeDom.Compiler;
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -33,6 +34,7 @@ public sealed partial class FcAstCompiler
     private readonly FcEnvironment[] _environments;
     private readonly StringBuilder _writerBuilder;
     private readonly IndentedTextWriter _writer;
+    private readonly FrozenDictionary<ushort, PrefabTerminalInfo>? _terminalInfos;
 
     private readonly StatementExecutionMode _executionMode;
     private readonly TimeSpan _timeout;
@@ -54,6 +56,7 @@ public sealed partial class FcAstCompiler
     {
         _executionMode = options.StatementExecutionMode;
         _timeout = options.Timeout;
+        _terminalInfos = options.TerminalInfos;
 
         List<FcEnvironment> environments = [];
         List<ImmutableArray<Variable>> variables = [];
@@ -277,11 +280,6 @@ public sealed partial class FcAstCompiler
 
         using (_writer.CurlyIndent("public sealed class CompiledAST<TRuntimeContext> : IAstRunner where TRuntimeContext : IRuntimeContext"))
         {
-            if (_executionMode == StatementExecutionMode.StateMachine)
-            {
-                _writer.WriteLine("private Stack<string> _returnStack = new();\n");
-            }
-
             _writer.WriteLineAll("""
                 private readonly TRuntimeContext _ctx;
                 
@@ -367,7 +365,18 @@ public sealed partial class FcAstCompiler
                 {
                     foreach (var entryPoint in environment.AST.EntryPointTerminals)
                     {
-                        WriteEntryPoint(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false, _writer);
+                        switch (_executionMode)
+                        {
+                            case StatementExecutionMode.StateMachine:
+                                _writer.WriteLine($"""
+                                    Run("{GetEntryPointTerminalName(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false)}");
+                                    """);
+                                _nodesToWrite.Enqueue((new SyntaxTerminal(environment.AST.Statements[entryPoint.BlockPosition], entryPoint.TerminalPosition), environment.Index, SignalType.Void));
+                                break;
+                            case StatementExecutionMode.DirectCalls:
+                                WriteEntryPoint(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false, _writer);
+                                break;
+                        }
                     }
                 }
 
@@ -480,78 +489,105 @@ public sealed partial class FcAstCompiler
                     """);
             }
 
-            while (_nodesToWrite.TryDequeue(out var item))
+            switch (_executionMode)
             {
-                var (terminal, environmentIndex, type) = item;
+                case StatementExecutionMode.StateMachine:
+                    var terminalInfos = _terminalInfos!;
 
-                var entryPoint = new EntryPoint(environmentIndex, terminal.Node.Position, terminal.Position);
-
-                if (!_writtenNodes.Add((entryPoint, type.IsPointer())))
-                {
-                    continue;
-                }
-
-                using (_writer.CurlyIndent($"private {GetCSharpName(type)} {GetEntryPointMethodName(entryPoint, type != SignalType.Void && type.IsPointer())}()"))
-                {
-                    if (_timeout != Timeout.InfiniteTimeSpan)
+                    using (_writer.CurlyIndent("private void Run(string entryTerminal)"))
                     {
-                        _writer.Write("ThrowIfTimeout(");
-                        WriteEnvironmentPosition(entryPoint.EnvironmentIndex, entryPoint.BlockPos, _writer);
-                        _writer.WriteLine("""
-                            );
+                        // TODO: pool stacks
+                        _writer.WriteLineAll("""
+                        Stack<string> returnStack = new();
 
-                            """);
-                    }
+                        returnStack.Push(entryTerminal);
 
-                    if (type == SignalType.Void)
-                    {
-                        WriteEntryPoint(entryPoint, true, _writer);
-                    }
-                    else
-                    {
-                        _writer.Write("return ");
-
-                        var env = _environments[environmentIndex];
-                        WriteExpression(terminal, type.IsPointer(), env, true, _writer);
-
-                        _writer.WriteLine(';');
-                    }
-                }
-            }
-
-            if (_executionMode == StatementExecutionMode.StateMachine)
-            {
-                using (_writer.CurlyIndent("private void Run(string entryTerminal)"))
-                {
-                    _writer.WriteLineAll("""
-                        _returnStack.Clear();
-
-                        _returnStack.Push(entryTerminal);
-
-                        while (entryTerminal.TryPop(out var terminal))
+                        while (returnStack.TryPop(out var terminal))
                         {
                             switch (terminal)
                             {
                         """);
-                    _writer.Indent += 2;
+                        _writer.Indent += 2;
+                        while (_nodesToWrite.TryDequeue(out var item))
+                        {
+                            var (terminal, environmentIndex, type) = item;
 
-                    foreach (var (entryPoint, isPtr) in _writtenNodes)
-                    {
-                        _writer.WriteLineAllInv($$"""
-                            case "{{GetEntryPointTerminalName(entryPoint, isPtr)}}":
-                                {{GetEntryPointMethodName(entryPoint, isPtr)}}();
-                                break;
-                            """);
-                    }
+                            var entryPoint = new EntryPoint(environmentIndex, terminal.Node.Position, terminal.Position);
 
-                    _writer.Indent -= 2;
-                    _writer.WriteLineAll("""
+                            if (!_writtenNodes.Add((entryPoint, type.IsPointer())))
+                            {
+                                continue;
+                            }
+
+                            _writer.WriteLineInv($"""
+                                case "{GetEntryPointTerminalName(entryPoint, type.IsPointer())}":
+                                """);
+                            _writer.Indent++;
+
+                            var environment = _environments[environmentIndex];
+                            var statement = WriteStatement(entryPoint.BlockPos, entryPoint.TerminalPos, environment, out var executeNext, _writer);
+
+                            // TODO: handle custom block
+                            VisitConnected(statement, executeNext, environment, connectedEntryPoint =>
+                            {
+                                // push to stack
+                            });
+
+                            _writer.WriteLine("break");
+                            _writer.Indent--;
+                        }
+
+                        _writer.Indent -= 2;
+                        _writer.WriteLineAll("""
                             }
                         }
                         """);
-                }
-            }
+                    }
 
+                    break;
+                case StatementExecutionMode.DirectCalls:
+                    while (_nodesToWrite.TryDequeue(out var item))
+                    {
+                        var (terminal, environmentIndex, type) = item;
+
+                        var entryPoint = new EntryPoint(environmentIndex, terminal.Node.Position, terminal.Position);
+
+                        if (!_writtenNodes.Add((entryPoint, type.IsPointer())))
+                        {
+                            continue;
+                        }
+
+                        using (_writer.CurlyIndent($"private {GetCSharpName(type)} {GetEntryPointMethodName(entryPoint, type != SignalType.Void && type.IsPointer())}()"))
+                        {
+                            if (_timeout != Timeout.InfiniteTimeSpan)
+                            {
+                                _writer.Write("ThrowIfTimeout(");
+                                WriteEnvironmentPosition(entryPoint.EnvironmentIndex, entryPoint.BlockPos, _writer);
+                                _writer.WriteLine("""
+                            );
+
+                            """);
+                            }
+
+                            if (type == SignalType.Void)
+                            {
+                                WriteEntryPoint(entryPoint, true, _writer);
+                            }
+                            else
+                            {
+                                _writer.Write("return ");
+
+                                var env = _environments[environmentIndex];
+                                WriteExpression(terminal, type.IsPointer(), env, true, _writer);
+
+                                _writer.WriteLine(';');
+                            }
+                        }
+                    }
+
+                    break;
+            }
+          
             foreach (var (varName, type, defaultValue) in _stateStoreVariables)
             {
                 _writer.WriteLineInv($"private {type} {varName}{(defaultValue is null ? string.Empty : $"= {defaultValue}")};");
@@ -867,15 +903,7 @@ public sealed partial class FcAstCompiler
 
                 if (conToCount > 1)
                 {
-                    switch (_executionMode)
-                    {
-                        case StatementExecutionMode.StateMachine:
-                            writer.WriteLineInv($"{GetEntryPointMethodName(item, false)}();");
-                            break;
-                        case StatementExecutionMode.DirectCalls:
-                            writer.WriteLineInv($"Run(\"{GetEntryPointTerminalName(item, false)}\");");
-                            break;
-                    }
+                    writer.WriteLineInv($"Run(\"{GetEntryPointTerminalName(item, false)}\");");
 
                     _nodesToWrite.Enqueue((new SyntaxTerminal(environment.AST.Statements[pos], terminalPos), environmentIndex, SignalType.Void));
                     continue;
@@ -1058,7 +1086,7 @@ public sealed partial class FcAstCompiler
     /// </summary>
     public sealed class Options
     {
-        /// <summary>
+        /*/// <summary>
         /// Default <see cref="Options"/>.
         /// </summary>
         public static readonly Options Default =
@@ -1066,7 +1094,7 @@ public sealed partial class FcAstCompiler
             new Options(AssemblyLoadContext.Default);
 #else
             new Options(AppDomain.CurrentDomain);
-#endif
+#endif*/
 
         private readonly Func<MemoryStream, Assembly> _loadAssemblyFunc = null!;
         private readonly IEnumerable<MetadataReference> _additionalReferences = [];
@@ -1132,6 +1160,12 @@ public sealed partial class FcAstCompiler
             get;
             init;
         }
+
+        /// <summary>
+        /// Gets the <see cref="PrefabTerminalInfo"/>s, required if <see cref="StatementExecutionMode"/> is <see cref="StatementExecutionMode.StateMachine"/>.
+        /// </summary>
+        /// <value>The <see cref="PrefabTerminalInfo"/>s.</value>
+        public required FrozenDictionary<ushort, PrefabTerminalInfo>? TerminalInfos {get; init;}
 
         /// <summary>
         /// Gets the time after which <see cref="FcTimeoutException"/> will be thrown.

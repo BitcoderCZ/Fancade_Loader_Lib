@@ -98,7 +98,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
     {
         var assemblyLoadContext = new AssemblyLoadContext("TempTestFcAstCompile", isCollectible: true);
 
-        IEnumerable<Func<FcAST, IRuntimeContext, IAstRunner>> runnerFactories = [(ast, ctx) => new Interpreter(ast, ctx, Timeout), (ast, ctx) => FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext) { Timeout = Timeout })!];
+        IEnumerable<Func<FcAST, IRuntimeContext, IAstRunner>> runnerFactories = [(ast, ctx) => new Interpreter(ast, ctx, Timeout), (ast, ctx) => FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext) { Timeout = Timeout, TerminalInfos = null, })!];
 
         try
         {

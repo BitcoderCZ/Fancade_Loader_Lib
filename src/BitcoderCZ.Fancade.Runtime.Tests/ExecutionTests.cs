@@ -6,11 +6,13 @@ using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Raw;
+using BitcoderCZ.Fancade.Runtime.Compiled;
 using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.Loader;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
@@ -127,6 +129,38 @@ public partial class ExecutionTests
         var compiled = Compile(writer);
 
         await Assert.That(compiled).Inspects([new(1f) { BoxArt = true, Count = 2 }], runFor: 2);
+    }
+
+    [Test]
+    public async Task IfGotoLoop()
+    {
+        var writer = CreateWriter();
+
+        writer.Inspect(Number(1f));
+        writer.Inspect(Number(2f));
+        //const string LoopStart = "LoopStart";
+        //Variable index = new Variable("i", SignalType.Float);
+        //writer.PlaySensor(writer =>
+        //{
+        //    writer.Label(LoopStart);
+        //    writer.If(LessThan(Variable(index), Number(3f)),
+        //    @true: writer =>
+        //    {
+        //        writer.Inspect(Variable(index));
+        //        writer.IncrementNumber(Variable(index));
+        //        writer.Goto(LoopStart);
+        //    },
+        //    @false: null);
+
+        //    writer.Inspect(Number(999f));
+        //});
+
+        var compiled = Compile(writer, out var prefabs);
+        FcAstCompiler.TryCompile(compiled, null!, new FcAstCompiler.Options(AssemblyLoadContext.Default)
+        {
+            StatementExecutionMode = FcAstCompiler.StatementExecutionMode.StateMachine,
+            TerminalInfos = PrefabTerminalInfo.Create(prefabs),
+        }, out string code, out _, out var diagnostics);
     }
 
     [Test]

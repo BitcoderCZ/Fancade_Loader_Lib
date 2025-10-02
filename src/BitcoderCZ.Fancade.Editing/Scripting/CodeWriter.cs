@@ -76,7 +76,7 @@ public sealed partial class CodeWriter
     /// <exception cref="InvalidOperationException">A label with same name as <paramref name="name"/> was already defined.</exception>
     public void Label(string name)
     {
-        if (!_labels.ContainsKey(name))
+        if (_labels.ContainsKey(name))
         {
             throw new InvalidOperationException($"Label '{name}' was already defined.");
         }
