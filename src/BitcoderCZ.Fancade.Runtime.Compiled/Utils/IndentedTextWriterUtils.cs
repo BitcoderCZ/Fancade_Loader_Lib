@@ -9,7 +9,7 @@ namespace BitcoderCZ.Fancade.Runtime.Compiled.Utils;
 
 internal static class IndentedTextWriterUtils
 {
-    public static IDisposable CurlyIndent(this IndentedTextWriter writer, string? openingLine = null, bool newLine = true)
+    public static Disposable CurlyIndent(this IndentedTextWriter writer, string? openingLine = null, bool newLine = true)
     {
         if (openingLine is not null)
         {

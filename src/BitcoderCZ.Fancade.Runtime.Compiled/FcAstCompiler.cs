@@ -34,6 +34,7 @@ public sealed partial class FcAstCompiler
     private readonly StringBuilder _writerBuilder;
     private readonly IndentedTextWriter _writer;
 
+    private readonly StatementExecutionMode _executionMode;
     private readonly TimeSpan _timeout;
 
     private readonly Dictionary<(int, Variable), string> _varToName = [];
@@ -51,6 +52,7 @@ public sealed partial class FcAstCompiler
 
     private FcAstCompiler(FcAST ast, Options options)
     {
+        _executionMode = options.StatementExecutionMode;
         _timeout = options.Timeout;
 
         List<FcEnvironment> environments = [];
@@ -67,6 +69,22 @@ public sealed partial class FcAstCompiler
 
         _writerBuilder = new StringBuilder();
         _writer = new IndentedTextWriter(new StringWriter(_writerBuilder));
+    }
+
+    /// <summary>
+    /// Specifies how statements are emitted.
+    /// </summary>
+    public enum StatementExecutionMode
+    {
+        /// <summary>
+        /// Emits statements as a state machine.
+        /// </summary>
+        StateMachine = 0,
+
+        /// <summary>
+        /// Emits statements as function calls, may be faster than <see cref="StateMachine"/>, but can lead to <see cref="StackOverflowException"/>.
+        /// </summary>
+        DirectCalls,
     }
 
     /// <summary>
@@ -228,6 +246,9 @@ public sealed partial class FcAstCompiler
     private static string GetEntryPointMethodName(EntryPoint entryPoint, bool ptr)
         => $"Run{entryPoint.EnvironmentIndex}{(ptr ? "_ptr" : string.Empty)}_{entryPoint.BlockPos.X}_{entryPoint.BlockPos.Y}_{entryPoint.BlockPos.Z}__{entryPoint.TerminalPos.X}_{entryPoint.TerminalPos.Y}_{entryPoint.TerminalPos.Z}";
 
+    private static string GetEntryPointTerminalName(EntryPoint entryPoint, bool ptr)
+        => $"{entryPoint.EnvironmentIndex}{(ptr ? "_ptr" : string.Empty)}_{entryPoint.BlockPos.X}_{entryPoint.BlockPos.Y}_{entryPoint.BlockPos.Z}__{entryPoint.TerminalPos.X}_{entryPoint.TerminalPos.Y}_{entryPoint.TerminalPos.Z}";
+
     private static int IntLength(int i)
         => i switch
         {
@@ -256,6 +277,11 @@ public sealed partial class FcAstCompiler
 
         using (_writer.CurlyIndent("public sealed class CompiledAST<TRuntimeContext> : IAstRunner where TRuntimeContext : IRuntimeContext"))
         {
+            if (_executionMode == StatementExecutionMode.StateMachine)
+            {
+                _writer.WriteLine("private Stack<string> _returnStack = new();\n");
+            }
+
             _writer.WriteLineAll("""
                 private readonly TRuntimeContext _ctx;
                 
@@ -490,6 +516,39 @@ public sealed partial class FcAstCompiler
 
                         _writer.WriteLine(';');
                     }
+                }
+            }
+
+            if (_executionMode == StatementExecutionMode.StateMachine)
+            {
+                using (_writer.CurlyIndent("private void Run(string entryTerminal)"))
+                {
+                    _writer.WriteLineAll("""
+                        _returnStack.Clear();
+
+                        _returnStack.Push(entryTerminal);
+
+                        while (entryTerminal.TryPop(out var terminal))
+                        {
+                            switch (terminal)
+                            {
+                        """);
+                    _writer.Indent += 2;
+
+                    foreach (var (entryPoint, isPtr) in _writtenNodes)
+                    {
+                        _writer.WriteLineAllInv($$"""
+                            case "{{GetEntryPointTerminalName(entryPoint, isPtr)}}":
+                                {{GetEntryPointMethodName(entryPoint, isPtr)}}();
+                                break;
+                            """);
+                    }
+
+                    _writer.Indent -= 2;
+                    _writer.WriteLineAll("""
+                            }
+                        }
+                        """);
                 }
             }
 
@@ -808,7 +867,16 @@ public sealed partial class FcAstCompiler
 
                 if (conToCount > 1)
                 {
-                    writer.WriteLineInv($"{GetEntryPointMethodName(item, false)}();");
+                    switch (_executionMode)
+                    {
+                        case StatementExecutionMode.StateMachine:
+                            writer.WriteLineInv($"{GetEntryPointMethodName(item, false)}();");
+                            break;
+                        case StatementExecutionMode.DirectCalls:
+                            writer.WriteLineInv($"Run(\"{GetEntryPointTerminalName(item, false)}\");");
+                            break;
+                    }
+
                     _nodesToWrite.Enqueue((new SyntaxTerminal(environment.AST.Statements[pos], terminalPos), environmentIndex, SignalType.Void));
                     continue;
                 }
@@ -1055,7 +1123,15 @@ public sealed partial class FcAstCompiler
             }
         }
 
-
+        /// <summary>
+        /// Gets the statement execution mode.
+        /// </summary>
+        /// <value>Statement execution mode.</value>
+        public StatementExecutionMode StatementExecutionMode
+        {
+            get;
+            init;
+        }
 
         /// <summary>
         /// Gets the time after which <see cref="FcTimeoutException"/> will be thrown.
@@ -1088,22 +1164,6 @@ public sealed partial class FcAstCompiler
 
                 _maxDepth = value;
             }
-        }
-
-        /// <summary>
-        /// Specifies how statements are emitted.
-        /// </summary>
-        public enum StatementExecutionMode
-        {
-            /// <summary>
-            /// Emits statements as a state machine.
-            /// </summary>
-            StateMachine = 0,
-
-            /// <summary>
-            /// Emits statements as function calls, may be faster than <see cref="StateMachine"/>, but can lead to <see cref="StackOverflowException"/>.
-            /// </summary>
-            DirectCalls,
         }
     }
 

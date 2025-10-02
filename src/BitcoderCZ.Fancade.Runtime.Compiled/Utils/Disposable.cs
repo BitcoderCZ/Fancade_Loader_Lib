@@ -1,6 +1,6 @@
 ﻿namespace BitcoderCZ.Fancade.Runtime.Compiled.Utils;
 
-internal sealed class Disposable : IDisposable
+internal struct Disposable : IDisposable
 {
     private Action? _onDispose;
 
