@@ -498,7 +498,7 @@ public sealed partial class FcAstCompiler
                     {
                         // TODO: pool stacks
                         _writer.WriteLineAll("""
-                        Stack<string> returnStack = new();
+                        Stack<string> returnStack = new(1024);
 
                         returnStack.Push(entryTerminal);
 
