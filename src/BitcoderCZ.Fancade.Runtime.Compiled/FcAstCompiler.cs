@@ -538,7 +538,10 @@ public sealed partial class FcAstCompiler
                         var environment = _environments[environmentIndex];
                         var statement = WriteStatement(entryPoint.BlockPos, entryPoint.TerminalPos, environment, out var executeNext, _writer);
 
-                        WritePushStackConnected(statement, executeNext, environment, _writer);
+                        if (executeNext != new byte3(255, 255, 255))
+                        {
+                            WritePushStackConnected(statement, executeNext, environment, _writer);
+                        }
 
                         _writer.WriteLine("break;");
                         _writer.Indent--;

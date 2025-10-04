@@ -46,4 +46,26 @@ public partial class ExecutionTests
             new(1f) { Order = 2, Frequency = InspectFrequency.EveryFrame },
         ]);
     }
+
+    [Test]
+    public async Task If_TrueFalseExecutesBeforeAfter()
+    {
+        var writer = CreateWriter();
+
+        writer.If(Truth(true), 
+        @true: writer =>
+        {
+            writer.Inspect(Number(1f));
+        },
+        @false: null);
+        writer.Inspect(Number(2f));
+
+        var compiled = Compile(writer);
+
+        await Assert.That(compiled).Inspects(
+        [
+            new(1f) { Order = 0, Frequency = InspectFrequency.EveryFrame },
+            new(2f) { Order = 1, Frequency = InspectFrequency.EveryFrame },
+        ]);
+    }
 }

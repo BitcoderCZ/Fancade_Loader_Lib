@@ -535,6 +535,8 @@ public partial class FcAstCompiler
                             switch (_executionMode)
                             {
                                 case StatementExecutionMode.StateMachine:
+                                    executeNext = new byte3(255, 255, 255);
+                                    WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                                     WritePushStackConnected(ifStatement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                                     break;
                                 case StatementExecutionMode.DirectCalls:
@@ -550,6 +552,8 @@ public partial class FcAstCompiler
                             switch (_executionMode)
                             {
                                 case StatementExecutionMode.StateMachine:
+                                    executeNext = new byte3(255, 255, 255);
+                                    WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                                     WritePushStackConnected(ifStatement, TerminalDef.GetOutPosition(1, 2, 2), environment, writer);
                                     break;
                                 case StatementExecutionMode.DirectCalls:
@@ -571,6 +575,8 @@ public partial class FcAstCompiler
                         switch (_executionMode)
                         {
                             case StatementExecutionMode.StateMachine:
+                                executeNext = new byte3(255, 255, 255);
+                                WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                                 WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                                 break;
                             case StatementExecutionMode.DirectCalls:
@@ -623,6 +629,8 @@ public partial class FcAstCompiler
                         switch (_executionMode)
                         {
                             case StatementExecutionMode.StateMachine:
+                                executeNext = new byte3(255, 255, 255);
+                                WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                                 WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                                 break;
                             case StatementExecutionMode.DirectCalls:
@@ -650,6 +658,8 @@ public partial class FcAstCompiler
                         switch (_executionMode)
                         {
                             case StatementExecutionMode.StateMachine:
+                                executeNext = new byte3(255, 255, 255);
+                                WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                                 WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 3), environment, writer);
                                 break;
                             case StatementExecutionMode.DirectCalls:
@@ -677,6 +687,8 @@ public partial class FcAstCompiler
                         switch (_executionMode)
                         {
                             case StatementExecutionMode.StateMachine:
+                                executeNext = new byte3(255, 255, 255);
+                                WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                                 WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                                 break;
                             case StatementExecutionMode.DirectCalls:
@@ -697,6 +709,8 @@ public partial class FcAstCompiler
                         switch (_executionMode)
                         {
                             case StatementExecutionMode.StateMachine:
+                                executeNext = new byte3(255, 255, 255);
+                                WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                                 WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                                 break;
                             case StatementExecutionMode.DirectCalls:
@@ -747,6 +761,8 @@ public partial class FcAstCompiler
                             switch (_executionMode)
                             {
                                 case StatementExecutionMode.StateMachine:
+                                    executeNext = new byte3(255, 255, 255);
+                                    WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                                     WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 4), environment, writer);
                                     break;
                                 case StatementExecutionMode.DirectCalls:
