@@ -1,18 +1,10 @@
 ﻿using BitcoderCZ.Fancade.Editing;
-using BitcoderCZ.Fancade.Editing.Scripting;
-using BitcoderCZ.Fancade.Editing.Scripting.Builders;
-using BitcoderCZ.Fancade.Editing.Scripting.Placers;
 using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
-using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Editing.Utils;
-using BitcoderCZ.Fancade.Raw;
-using BitcoderCZ.Fancade.Runtime.Compiled;
 using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
-using System.Diagnostics;
 using System.Numerics;
-using System.Runtime.Loader;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 using static BitcoderCZ.Fancade.Runtime.Tests.Common.ExeUtils;
 

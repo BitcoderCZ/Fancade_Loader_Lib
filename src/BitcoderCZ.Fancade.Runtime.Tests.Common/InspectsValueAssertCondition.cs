@@ -101,15 +101,15 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         IEnumerable<Func<FcAST, IRuntimeContext, (IAstRunner Runner, string RunnerName)>> runnerFactories =
         [
             (ast, ctx) => (new Interpreter(ast, ctx, Timeout), "Interpreter"),
-            (ast, ctx) => (FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext) 
+            (ast, ctx) => (FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext)
             {
-                Timeout = Timeout, StatementExecutionMode = FcAstCompiler.StatementExecutionMode.StateMachine, 
-                TerminalInfos = Physics is null ? null : PrefabTerminalInfo.Create(Physics.Value.Item2), 
+                Timeout = Timeout, StatementExecutionMode = FcAstCompiler.StatementExecutionMode.StateMachine,
+                TerminalInfos = Physics is null ? null : PrefabTerminalInfo.Create(Physics.Value.Item2),
                 HumanReadable = true,
             })!, "AstStateMachine"),
-            (ast, ctx) => (FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext) 
+            (ast, ctx) => (FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext)
             {
-                Timeout = Timeout, 
+                Timeout = Timeout,
                 StatementExecutionMode = FcAstCompiler.StatementExecutionMode.DirectCalls, TerminalInfos = null,
                 HumanReadable = true,
             })!, "AstDirectCalls"),

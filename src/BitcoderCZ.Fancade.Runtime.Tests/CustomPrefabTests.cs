@@ -7,12 +7,6 @@ using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Partial;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static BitcoderCZ.BulletSharp.Dbvt;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 using static BitcoderCZ.Fancade.Runtime.Tests.Common.ExeUtils;
 

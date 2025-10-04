@@ -932,21 +932,21 @@ public sealed partial class FcAstCompiler
     private void WritePushStackConnected(StatementSyntax statement, byte3 terminalPos, FcEnvironment environment, IndentedTextWriter writer)
         => VisitConnected(
             statement,
-            terminalPos, 
-            environment, 
+            terminalPos,
+            environment,
             connectedEntryPoint =>
             {
                 writer.WriteLineInv($"""
                     returnStack.Push({GetTerminalIndex(connectedEntryPoint, false)});
                     """);
                 _nodesToWrite.Enqueue((new SyntaxTerminal(_environments[connectedEntryPoint.EnvironmentIndex].AST.Statements[connectedEntryPoint.BlockPos], connectedEntryPoint.TerminalPos), connectedEntryPoint.EnvironmentIndex, SignalType.Void));
-            }, 
+            },
             reverse: true);
 
     private void WriteRunConnected(StatementSyntax statement, byte3 terminalPos, FcEnvironment environment, IndentedTextWriter writer)
         => VisitConnected(
             statement,
-            terminalPos, 
+            terminalPos,
             environment,
             connectedEntryPoint =>
             {
