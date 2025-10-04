@@ -68,4 +68,24 @@ public partial class ExecutionTests
             new(2f) { Order = 1, Frequency = InspectFrequency.EveryFrame },
         ]);
     }
+
+    [Test]
+    public async Task PlaySensor()
+    {
+        var writer = CreateWriter();
+
+        writer.PlaySensor(writer =>
+        {
+            writer.Inspect(Number(1f));
+        });
+        writer.Inspect(Number(2f));
+
+        var compiled = Compile(writer);
+
+        await Assert.That(compiled).Inspects(
+        [
+            new(1f) { Order = 0, Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, },
+            new(2f) { Order = 1, Frequency = InspectFrequency.EveryFrame, FrameCount = 1, Count = 2 },
+        ], runFor: 2);
+    }
 }

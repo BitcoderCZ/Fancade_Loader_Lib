@@ -545,9 +545,7 @@ public partial class FcAstCompiler
                             }
                         }
 
-                        writer.WriteLine("else");
-
-                        using (writer.CurlyIndent())
+                        using (writer.CurlyIndent("else"))
                         {
                             switch (_executionMode)
                             {
@@ -582,6 +580,14 @@ public partial class FcAstCompiler
                             case StatementExecutionMode.DirectCalls:
                                 WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                                 break;
+                        }
+                    }
+
+                    if (_executionMode == StatementExecutionMode.StateMachine)
+                    {
+                        using (writer.CurlyIndent("else"))
+                        {
+                            WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                         }
                     }
                 }
@@ -638,6 +644,14 @@ public partial class FcAstCompiler
                                 break;
                         }
                     }
+
+                    if (_executionMode == StatementExecutionMode.StateMachine)
+                    {
+                        using (writer.CurlyIndent("else"))
+                        {
+                            WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
+                        }
+                    }
                 }
 
                 break;
@@ -665,6 +679,14 @@ public partial class FcAstCompiler
                             case StatementExecutionMode.DirectCalls:
                                 WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 3), environment, writer);
                                 break;
+                        }
+                    }
+
+                    if (_executionMode == StatementExecutionMode.StateMachine)
+                    {
+                        using (writer.CurlyIndent("else"))
+                        {
+                            WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                         }
                     }
                 }
@@ -696,6 +718,14 @@ public partial class FcAstCompiler
                                 break;
                         }
                     }
+
+                    if (_executionMode == StatementExecutionMode.StateMachine)
+                    {
+                        using (writer.CurlyIndent("else"))
+                        {
+                            WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
+                        }
+                    }
                 }
 
                 break;
@@ -716,6 +746,14 @@ public partial class FcAstCompiler
                             case StatementExecutionMode.DirectCalls:
                                 WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
                                 break;
+                        }
+                    }
+
+                    if (_executionMode == StatementExecutionMode.StateMachine)
+                    {
+                        using (writer.CurlyIndent("else"))
+                        {
+                            WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                         }
                     }
                 }
@@ -768,6 +806,14 @@ public partial class FcAstCompiler
                                 case StatementExecutionMode.DirectCalls:
                                     WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 4), environment, writer);
                                     break;
+                            }
+                        }
+
+                        if (_executionMode == StatementExecutionMode.StateMachine)
+                        {
+                            using (writer.CurlyIndent("else"))
+                            {
+                                WritePushStackConnected(statement, TerminalDef.AfterPosition, environment, writer);
                             }
                         }
                     }

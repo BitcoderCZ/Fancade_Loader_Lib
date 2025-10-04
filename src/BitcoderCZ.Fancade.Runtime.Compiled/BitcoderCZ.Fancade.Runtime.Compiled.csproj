@@ -10,7 +10,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade.Runtime.Compiled</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>1.0.0-develop.8</Version>
+    <Version>1.0.0-develop.9</Version>
     <Description>Compile fancade scripts for faster execution.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
