@@ -2,6 +2,7 @@
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
+using static BitcoderCZ.Fancade.Runtime.Tests.Common.ExeUtils;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
 

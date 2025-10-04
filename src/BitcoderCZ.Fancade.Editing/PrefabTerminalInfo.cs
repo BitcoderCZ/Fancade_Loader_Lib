@@ -198,7 +198,7 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    infoBuilder.Add(new TerminalInfo((byte3)connection.ToVoxel, ResolveBlockTerminalType(insidePrefab, (byte3)connection.FromVoxel, getPrefab), prefab.GetTerminalDirection((byte3)connection.ToVoxel), true));
+                    infoBuilder.Add(new TerminalInfo((byte3)connection.ToVoxel, ResolveBlockTerminalType(insidePrefab, (byte3)connection.FromVoxel, getPrefab), prefab.GetTerminalDirection((byte3)connection.ToVoxel), false));
                 }
             }
         }

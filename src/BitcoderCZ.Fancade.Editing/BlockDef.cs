@@ -35,14 +35,45 @@ public sealed class BlockDef
     /// <summary>
     /// Initializes a new instance of the <see cref="BlockDef"/> class.
     /// </summary>
+    /// <param name="prefab">The <see cref="Fancade.Prefab"/> of the block.</param>
+    /// <param name="blockType">The script type of the block.</param>
+    /// <param name="terminals">The terminals of the block.</param>
+    public BlockDef(PartialPrefab prefab, ScriptBlockType blockType, PrefabTerminalInfo terminals)
+    {
+        Prefab = prefab;
+        BlockType = blockType;
+        var terminalBuilder = ImmutableArray.CreateBuilder<TerminalDef>(terminals.Terminals.Length);
+        for (int i = 0; i < terminals.Terminals.Length; i++)
+        {
+            var terminal = terminals.Terminals[i];
+            terminalBuilder.Add(new TerminalDef(terminal.Type, terminal.IsInput ? TerminalType.In : TerminalType.Out, i, terminal.Position));
+        }
+
+        Terminals = terminalBuilder.DrainToImmutable();
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BlockDef"/> class.
+    /// </summary>
     /// <param name="prefab">The <see cref="PartialPrefab"/> of the block.</param>
     /// <param name="blockType">The script type of the block.</param>
     /// <param name="terminals">The terminals of the block.</param>
     public BlockDef(PartialPrefab prefab, ScriptBlockType blockType, TerminalBuilder terminals)
+        : this(prefab, blockType, terminals.Build(prefab.Size, blockType))
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BlockDef"/> class.
+    /// </summary>
+    /// <param name="prefab">The <see cref="PartialPrefab"/> of the block.</param>
+    /// <param name="blockType">The script type of the block.</param>
+    /// <param name="terminals">The terminals of the block.</param>
+    public BlockDef(PartialPrefab prefab, ScriptBlockType blockType, ImmutableArray<TerminalDef> terminals)
     {
         Prefab = prefab;
         BlockType = blockType;
-        Terminals = terminals.Build(Prefab.Size, BlockType);
+        Terminals = terminals;
     }
 
     /// <summary>

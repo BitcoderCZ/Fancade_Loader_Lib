@@ -172,5 +172,11 @@ public sealed class TowerCodePlacer : IScopedCodePlacer
         {
             ExitStatementBlock();
         }
+
+        if (_blocks.Count > 0)
+        {
+            EnterStatementBlock();
+            ExitStatementBlock();
+        }
     }
 }

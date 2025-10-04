@@ -1,4 +1,5 @@
-﻿using BitcoderCZ.Fancade.Editing.Scripting.Settings;
+﻿using BitcoderCZ.Fancade.Editing;
+using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Fancade.Runtime.Compiled;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 using BitcoderCZ.Fancade.Runtime.Utils;
@@ -11,7 +12,6 @@ using TUnit.Assertions.AssertConditions;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests.Common;
 
-// TODO: allow using Bullet
 internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expected, int RunFor, TimeSpan Timeout, bool AllowOnlyExpectedInspects, (ushort, PrefabList)? Physics) : BaseAssertCondition<FcAST>
 {
     protected override string GetExpectation()
@@ -98,7 +98,22 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
     {
         var assemblyLoadContext = new AssemblyLoadContext("TempTestFcAstCompile", isCollectible: true);
 
-        IEnumerable<Func<FcAST, IRuntimeContext, IAstRunner>> runnerFactories = [(ast, ctx) => new Interpreter(ast, ctx, Timeout), (ast, ctx) => FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext) { Timeout = Timeout, TerminalInfos = null, })!];
+        IEnumerable<Func<FcAST, IRuntimeContext, (IAstRunner Runner, string RunnerName)>> runnerFactories =
+        [
+            (ast, ctx) => (new Interpreter(ast, ctx, Timeout), "Interpreter"),
+            (ast, ctx) => (FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext) 
+            {
+                Timeout = Timeout, StatementExecutionMode = FcAstCompiler.StatementExecutionMode.StateMachine, 
+                TerminalInfos = Physics is null ? null : PrefabTerminalInfo.Create(Physics.Value.Item2), 
+                HumanReadable = true,
+            })!, "AstStateMachine"),
+            (ast, ctx) => (FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext) 
+            {
+                Timeout = Timeout, 
+                StatementExecutionMode = FcAstCompiler.StatementExecutionMode.DirectCalls, TerminalInfos = null,
+                HumanReadable = true,
+            })!, "AstDirectCalls"),
+        ];
 
         try
         {
@@ -112,19 +127,25 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                 };
 
                 IAstRunner runner;
+                string runnerName = "Unknown";
                 if (Physics is { } physics)
                 {
-                    runner = FcWorld.Create(physics.Item1, physics.Item2, ctx, physicsCtx => factory(ast, physicsCtx));
+                    runner = FcWorld.Create(physics.Item1, physics.Item2, ctx, physicsCtx =>
+                    {
+                        var item = factory(ast, physicsCtx);
+                        runnerName = item.RunnerName;
+                        return item.Runner;
+                    });
                 }
                 else
                 {
-                    runner = factory(ast, ctx);
+                    (runner, runnerName) = factory(ast, ctx);
                 }
 
                 AssertionResult res;
                 try
                 {
-                    res = Run(runner, inspectQueue, ctx);
+                    res = Run(runner, runnerName, inspectQueue, ctx);
                 }
                 finally
                 {
@@ -147,7 +168,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         return AssertionResult.Passed;
     }
 
-    private AssertionResult Run(IAstRunner runner, Queue<Inspect> inspectQueue, InspectRuntimeContext ctx)
+    private AssertionResult Run(IAstRunner runner, string runnerName, Queue<Inspect> inspectQueue, InspectRuntimeContext ctx)
     {
         int[] matchedCount = new int[Expected.Length];
         int[] matchedThisFrame = new int[Expected.Length];
@@ -180,7 +201,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                             case InspectFrequency.OnlyOnOneFrame:
                                 if (matchedCount[i] != matchedThisFrame[i])
                                 {
-                                    return AssertionResult.Fail($"{expected} was inspected on multiple frames");
+                                    return AssertionResult.Fail($"[{runnerName}] {expected} was inspected on multiple frames");
                                 }
 
                                 break;
@@ -190,7 +211,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                         {
                             if (lastOrderedInspect is { } lastInspect && lastInspect.Order > order)
                             {
-                                return AssertionResult.Fail($"{expected} was inspected after {lastInspect}");
+                                return AssertionResult.Fail($"[{runnerName}] {expected} was inspected after {lastInspect}");
                             }
 
                             lastOrderedInspect = expected;
@@ -214,7 +235,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                         _ => inspectVal?.ToString() ?? "null",
                     };
 
-                    return AssertionResult.Fail($"non expected inspect occured, '{inspected}' at pos {inspect.InspectBlockPosition}");
+                    return AssertionResult.Fail($"[{runnerName}] non expected inspect occurred, '{inspected}' at pos {inspect.InspectBlockPosition}");
                 }
             }
 
@@ -224,12 +245,12 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
 
                 if (expected.Frequency is InspectFrequency.EveryFrame && matchedThisFrame[i] == 0)
                 {
-                    return AssertionResult.Fail($"{expected} was not inspected on frame {frame}");
+                    return AssertionResult.Fail($"[{runnerName}] {expected} was not inspected on frame {frame}");
                 }
 
                 if (expected.FrameCount is { } frameCount && matchedThisFrame[i] != frameCount)
                 {
-                    return AssertionResult.Fail($"{expected} was inspected on frame {matchedThisFrame[i]} {(matchedThisFrame[i] == 1 ? "time" : "times")} on frame {frame}");
+                    return AssertionResult.Fail($"[{runnerName}] {expected} was inspected {matchedThisFrame[i]} {(matchedThisFrame[i] == 1 ? "time" : "times")} on frame {frame}");
                 }
             }
 
@@ -244,7 +265,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
 
             if (expected.Count is { } count && matchedCount[i] > count)
             {
-                return AssertionResult.Fail($"{expected} was inspected {matchedCount[i]} {(matchedCount[i] == 1 ? "time" : "times")}");
+                return AssertionResult.Fail($"[{runnerName}] {expected} was inspected {matchedCount[i]} {(matchedCount[i] == 1 ? "time" : "times")}");
             }
         }
 

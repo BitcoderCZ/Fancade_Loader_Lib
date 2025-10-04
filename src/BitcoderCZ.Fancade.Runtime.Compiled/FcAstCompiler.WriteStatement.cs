@@ -532,14 +532,30 @@ public partial class FcAstCompiler
 
                         using (writer.CurlyIndent(newLine: false))
                         {
-                            WriteConnected(ifStatement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                            switch (_executionMode)
+                            {
+                                case StatementExecutionMode.StateMachine:
+                                    WritePushStackConnected(ifStatement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                    break;
+                                case StatementExecutionMode.DirectCalls:
+                                    WriteDirectConnected(ifStatement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                    break;
+                            }
                         }
 
                         writer.WriteLine("else");
 
                         using (writer.CurlyIndent())
                         {
-                            WriteConnected(ifStatement, TerminalDef.GetOutPosition(1, 2, 2), environment, writer);
+                            switch (_executionMode)
+                            {
+                                case StatementExecutionMode.StateMachine:
+                                    WritePushStackConnected(ifStatement, TerminalDef.GetOutPosition(1, 2, 2), environment, writer);
+                                    break;
+                                case StatementExecutionMode.DirectCalls:
+                                    WriteDirectConnected(ifStatement, TerminalDef.GetOutPosition(1, 2, 2), environment, writer);
+                                    break;
+                            }
                         }
                     }
                 }
@@ -552,7 +568,15 @@ public partial class FcAstCompiler
 
                     using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.CurrentFrame)} == 0)"))
                     {
-                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                        switch (_executionMode)
+                        {
+                            case StatementExecutionMode.StateMachine:
+                                WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                break;
+                            case StatementExecutionMode.DirectCalls:
+                                WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                break;
+                        }
                     }
                 }
 
@@ -596,7 +620,15 @@ public partial class FcAstCompiler
 
                     using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.TakingBoxArt)})"))
                     {
-                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                        switch (_executionMode)
+                        {
+                            case StatementExecutionMode.StateMachine:
+                                WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                break;
+                            case StatementExecutionMode.DirectCalls:
+                                WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                break;
+                        }
                     }
                 }
 
@@ -615,7 +647,15 @@ public partial class FcAstCompiler
 
                         _localVarCounter++;
 
-                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 3), environment, writer);
+                        switch (_executionMode)
+                        {
+                            case StatementExecutionMode.StateMachine:
+                                WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 3), environment, writer);
+                                break;
+                            case StatementExecutionMode.DirectCalls:
+                                WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 3), environment, writer);
+                                break;
+                        }
                     }
                 }
 
@@ -634,7 +674,15 @@ public partial class FcAstCompiler
 
                         _localVarCounter++;
 
-                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                        switch (_executionMode)
+                        {
+                            case StatementExecutionMode.StateMachine:
+                                WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                break;
+                            case StatementExecutionMode.DirectCalls:
+                                WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                break;
+                        }
                     }
                 }
 
@@ -646,7 +694,15 @@ public partial class FcAstCompiler
 
                     using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.GetButtonPressed)}({nameof(ButtonType)}.{button.Type}))"))
                     {
-                        WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                        switch (_executionMode)
+                        {
+                            case StatementExecutionMode.StateMachine:
+                                WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                break;
+                            case StatementExecutionMode.DirectCalls:
+                                WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                break;
+                        }
                     }
                 }
 
@@ -688,7 +744,15 @@ public partial class FcAstCompiler
 
                             _localVarCounter++;
 
-                            WriteConnected(statement, TerminalDef.GetOutPosition(0, 2, 4), environment, writer);
+                            switch (_executionMode)
+                            {
+                                case StatementExecutionMode.StateMachine:
+                                    WritePushStackConnected(statement, TerminalDef.GetOutPosition(0, 2, 4), environment, writer);
+                                    break;
+                                case StatementExecutionMode.DirectCalls:
+                                    WriteDirectConnected(statement, TerminalDef.GetOutPosition(0, 2, 4), environment, writer);
+                                    break;
+                            }
                         }
                     }
                 }
@@ -747,7 +811,15 @@ public partial class FcAstCompiler
 
                             writer.WriteLineInv($"{valueVarName} = {localValueVarName} = nextVal;");
 
-                            WriteConnected(loop, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                            switch (_executionMode)
+                            {
+                                case StatementExecutionMode.StateMachine:
+                                    WriteRunConnected(loop, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                    break;
+                                case StatementExecutionMode.DirectCalls:
+                                    WriteDirectConnected(loop, TerminalDef.GetOutPosition(0, 2, 2), environment, writer);
+                                    break;
+                            }
                         }
                     }
                 }

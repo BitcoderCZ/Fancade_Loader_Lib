@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.Loader;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
+using static BitcoderCZ.Fancade.Runtime.Tests.Common.ExeUtils;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
 
@@ -88,6 +89,46 @@ public partial class ExecutionTests
     }
 
     [Test]
+    public async Task Execution_Connections_CorrectOrderByPlacement()
+    {
+        var builder = CreateBuilder(out _);
+
+        List<Block> blocks = [];
+        var playBlock = new Block(StockBlocks.Control.PlaySensor, new int3(0, 0, 10));
+        blocks.Add(playBlock);
+        var playTerminal = new BlockTerminal(playBlock, "On Play");
+
+        AddInspect(new int3(2, 0, 3), 0);
+        AddInspect(new int3(2, 1, 0), 1);
+        AddInspect(new int3(2, 0, 0), 2);
+        AddInspect(new int3(7, 0, 0), 3);
+
+        builder.AddBlockSegments(blocks);
+
+        var compiled = Compile(builder, out _);
+
+        await Assert.That(compiled).Inspects(
+        [
+            new(0f) { Order = 0, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, },
+            new(1f) { Order = 1, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, },
+            new(2f) { Order = 2, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, },
+            new(3f) { Order = 3, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, },
+        ]);
+
+        void AddInspect(int3 pos, int count)
+        {
+            var inspect = new Block(StockBlocks.Values.Inspect_Number, pos);
+            blocks.Add(inspect);
+
+            var numb = new Block(StockBlocks.Values.Number, pos + new int3(-2, 0, 1));
+            blocks.Add(numb);
+
+            builder.Connect(playTerminal, new BlockTerminal(inspect, "Before"));
+            builder.SetSetting(numb, 0, (float)count);
+        }
+    }
+
+    [Test]
     public async Task StockBlocks_HaveImplicitConnections()
     {
         var list = new PrefabList();
@@ -136,31 +177,35 @@ public partial class ExecutionTests
     {
         var writer = CreateWriter();
 
-        writer.Inspect(Number(1f));
-        writer.Inspect(Number(2f));
-        //const string LoopStart = "LoopStart";
-        //Variable index = new Variable("i", SignalType.Float);
-        //writer.PlaySensor(writer =>
-        //{
-        //    writer.Label(LoopStart);
-        //    writer.If(LessThan(Variable(index), Number(3f)),
-        //    @true: writer =>
-        //    {
-        //        writer.Inspect(Variable(index));
-        //        writer.IncrementNumber(Variable(index));
-        //        writer.Goto(LoopStart);
-        //    },
-        //    @false: null);
+        const string LoopStart = "LoopStart";
+        Variable index = new Variable("i", SignalType.Float);
+        writer.PlaySensor(writer =>
+        {
+            writer.Label(LoopStart);
+            writer.If(LessThan(Variable(index), Number(3f)),
+            @true: writer =>
+            {
+                writer.Inspect(Variable(index));
+                writer.IncrementNumber(Variable(index));
+                writer.Goto(LoopStart);
+            },
+            @false: writer =>
+            {
+                writer.Inspect(Number(222f));
+            });
 
-        //    writer.Inspect(Number(999f));
-        //});
+            writer.Inspect(Number(111f));
+        });
 
         var compiled = Compile(writer, out var prefabs);
-        FcAstCompiler.TryCompile(compiled, null!, new FcAstCompiler.Options(AssemblyLoadContext.Default)
-        {
-            StatementExecutionMode = FcAstCompiler.StatementExecutionMode.StateMachine,
-            TerminalInfos = PrefabTerminalInfo.Create(prefabs),
-        }, out string code, out _, out var diagnostics);
+
+        await Assert.That(compiled).Inspects([
+            new InspectAssertExpected(0f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 0 },
+            new InspectAssertExpected(1f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 1 },
+            new InspectAssertExpected(2f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 2 },
+            new InspectAssertExpected(111f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 4 },
+            new InspectAssertExpected(222f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 3 },
+        ], runFor: 2);
     }
 
     [Test]
@@ -231,53 +276,6 @@ public partial class ExecutionTests
         var compiled = Compile(writer, prefabs, level.Id);
 
         await Assert.That(compiled).Inspects([new(Quaternion.Identity) { Count = 2 }], runFor: 2);
-    }
-
-    private static CodeWriter CreateWriter()
-        => CreateWriter(out _);
-
-    private static CodeWriter CreateWriter(out Prefab prefab)
-    {
-        var builder = CreateBuilder(out prefab);
-        var placer = new TowerCodePlacer(builder);
-        placer.EnterStatementBlock();
-        return new CodeWriter(placer, new TerminalConnector(builder.Connect));
-    }
-
-    private static PrefabBlockBuilder CreateBuilder(out Prefab prefab)
-    {
-        prefab = Prefab.CreateBlock(RawGame.CurrentNumbStockPrefabs, "A");
-        var builder = new PrefabBlockBuilder(prefab);
-        return builder;
-    }
-
-    private static FcAST Compile(CodeWriter writer, PrefabList prefabs, ushort? mainPrefabId = null)
-    {
-        writer.Flush();
-        var prefab = (Prefab)writer.Placer.Builder.Build(int3.Zero);
-
-        Debug.Assert(prefabs.ContainsPrefab(prefab.Id));
-        prefabs.AddImplicitConnections();
-
-        return FcAST.Parse(prefabs, mainPrefabId ?? prefab.Id);
-    }
-
-    private static FcAST Compile(CodeWriter writer)
-        => Compile(writer, out _);
-
-    private static FcAST Compile(CodeWriter writer, out PrefabList prefabs)
-    {
-        writer.Flush();
-        return Compile(writer.Placer.Builder, out prefabs);
-    }
-
-    private static FcAST Compile(BlockBuilder builder, out PrefabList prefabs)
-    {
-        prefabs = new PrefabList([(Prefab)builder.Build(int3.Zero)]);
-
-        prefabs.AddImplicitConnections();
-
-        return FcAST.Parse(prefabs, RawGame.CurrentNumbStockPrefabs);
     }
 }
 

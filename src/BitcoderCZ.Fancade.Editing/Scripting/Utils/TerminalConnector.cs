@@ -26,7 +26,7 @@ public sealed class TerminalConnector
     }
 
     /// <summary>
-    /// Gets a <see cref="ITerminalStore"/> whose input and output are the first and last <see cref="ITerminalStore"/> added.
+    /// Gets an <see cref="ITerminalStore"/> whose input and output are the first and last <see cref="ITerminalStore"/> added.
     /// </summary>
     /// <value>A <see cref="ITerminalStore"/> whose input and output are the first and last <see cref="ITerminalStore"/> added.</value>
     public ITerminalStore Store => _firstStore is not null && _lastStore is not null ? new MultiTerminalStore(_firstStore, _lastStore) : NopTerminalStore.Instance;
