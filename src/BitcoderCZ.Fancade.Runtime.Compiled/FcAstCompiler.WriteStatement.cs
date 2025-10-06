@@ -924,7 +924,7 @@ public partial class FcAstCompiler
                         var info = WriteExpression(inspect.Input, false, environment, writer);
 
                         writer.WriteLineInv($"""
-                            ), SignalType.{info.Type}, {(info.VariableName is null ? "null" : $"\"{info.VariableName}\"")}, {environment.AST.PrefabId}, new {nameof(int3)}({pos.X}, {pos.Y}, {pos.Z}));
+                            ), SignalType.{info.Type.ToNotPointer()}, {(info.VariableName is null ? "null" : $"\"{info.VariableName}\"")}, {environment.AST.PrefabId}, new {nameof(int3)}({pos.X}, {pos.Y}, {pos.Z}));
                             """);
                     }
                 }

@@ -52,7 +52,7 @@ public partial class ExecutionTests
     {
         var writer = CreateWriter();
 
-        writer.If(Truth(true), 
+        writer.If(Truth(true),
         @true: writer =>
         {
             writer.Inspect(Number(1f));
