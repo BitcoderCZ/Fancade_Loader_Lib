@@ -296,7 +296,7 @@ public sealed partial class FcAstCompiler
 
                 private Queue<Action>? lateUpdateQueue = new();
 
-                private readonly CompFcEnvironment[] _environments = new CompFcEnvironment[]
+                private static readonly CompFcEnvironment[] _environments = new CompFcEnvironment[]
                 {
                 """);
 
@@ -514,10 +514,22 @@ public sealed partial class FcAstCompiler
 
                         while (returnStack.TryPop(out var terminal))
                         {
-                            switch (terminal)
-                            {
                         """);
-                    _writer.Indent += 2;
+                    _writer.Indent++;
+
+                    if (_timeout != Timeout.InfiniteTimeSpan)
+                    {
+                        _writer.WriteLine("""
+                            ThrowIfTimeout(_indexToEnvironmentPosition[terminal]);
+
+                            """);
+                    }
+
+                    _writer.WriteLineAll("""
+                        switch (terminal)
+                        {
+                        """);
+                    _writer.Indent++;
                     while (_nodesToWrite.TryDequeue(out var item))
                     {
                         if (item.Type != SignalType.Void)
@@ -559,6 +571,36 @@ public sealed partial class FcAstCompiler
                         }
                         """);
                 }
+
+                Debug.Assert(_terminalToIndex is not null, $"{nameof(_terminalToIndex)} should not be null.");
+                _writer.WriteLineAllInv($"""
+                    private static readonly {nameof(EnvironmentPosition)}[] _indexToEnvironmentPosition = 
+                    [
+                    """);
+                _writer.Indent++;
+
+                int nextExpectedIndex = 0;
+                foreach (var (terminal, terminalIndex) in _terminalToIndex.OrderBy(item => item.Value))
+                {
+                    if (nextExpectedIndex < terminalIndex)
+                    {
+                        for (int i = 0; i < (terminalIndex - nextExpectedIndex); i++)
+                        {
+                            _writer.WriteLine("default,");
+                        }
+                    }
+
+                    WriteEnvironmentPosition(terminal.EntryPoint.EnvironmentIndex, terminal.EntryPoint.BlockPos, _writer);
+                    _writer.WriteLine(',');
+
+                    nextExpectedIndex = terminalIndex + 1;
+                }
+
+                _writer.Indent--;
+                _writer.WriteLineAll("""
+                    ];
+
+                    """);
 
                 while (nonVoidNodes.TryPop(out var item))
                 {
