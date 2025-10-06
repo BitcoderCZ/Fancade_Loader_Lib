@@ -468,6 +468,17 @@ public readonly struct BlockMesh
         => _blockMeshIdOffsets.GetUnchecked(position);
 
     /// <summary>
+    /// Gets the mesh offset <paramref name="position"/>.
+    /// </summary>
+    /// <param name="position">The position of which the mesh offset should be retrieved.</param>
+    /// <returns>Mesh offset at <paramref name="position"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int GetMeshOffsetOrZero(int3 position)
+        => _blockMeshIdOffsets.InBounds(position)
+        ? _blockMeshIdOffsets.GetUnchecked(position)
+        : 0;
+
+    /// <summary>
     /// Gets the id of the mesh at <paramref name="position"/>.
     /// </summary>
     /// <param name="position">The position.</param>

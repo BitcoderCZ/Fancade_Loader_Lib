@@ -913,7 +913,7 @@ public sealed partial class FcWorld : IAstRunner
         var meshInfo = _gameMesh.GetBlockMesh(prefab.Id);
         var segmentMeshes = _gameMesh.GetSegmentMesh(segmentId);
 
-        int meshIndex = meshInfo.BlockMeshIds[meshInfo.BlockMeshIdOffsets[pos.ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)] + segmentMeshes.VoxelMeshIndex[Voxels.Index(voxelPos, 0)]];
+        int meshIndex = meshInfo.GetMeshAtPos(pos, segmentMeshes.VoxelMeshIndex[Voxels.Index(voxelPos, 0)]);
 
         var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
 
@@ -948,7 +948,7 @@ public sealed partial class FcWorld : IAstRunner
             return false;
         }
 
-        int meshOffset = meshInfo.BlockMeshIdOffsets[pos.ToIndex(prefab.Blocks.Size.X, prefab.Blocks.Size.Y)];
+        int meshOffset = meshInfo.GetMeshOffsetOrZero(pos);
         if (meshOffset == -1)
         {
             rObject = null;

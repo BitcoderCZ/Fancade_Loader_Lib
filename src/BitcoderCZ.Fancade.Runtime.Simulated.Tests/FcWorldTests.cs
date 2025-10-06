@@ -144,6 +144,49 @@ public class FcWorldTests
     }
 
     [Test]
+    public async Task ConnectionToBlock_ConnectsToCorrectBlock_3()
+    {
+        var writer = CreateWriter(out var prefab);
+        prefab[int3.Zero].Voxels.Fill(new Voxel(FcColor.Black, false));
+
+        var prefabs = new PrefabList();
+
+        var level = Prefab.CreateLevel(0, "A");
+        prefabs.AddPrefab(level);
+        prefabs.AddPrefab(prefab);
+
+        var block = Prefab.CreateBlock(0, "A");
+        prefabs.AddPrefab(block);
+        var voxels = block[int3.Zero].Voxels;
+        for (int z = 0; z < 8; z++)
+        {
+            for (int x = 0; x < 8; x++)
+            {
+                voxels[new int3(x, 0, z)] = new Voxel(FcColor.Black, false);
+            }
+        }
+
+        var blocks = level.Blocks;
+        for (int z = 0; z < 3; z++)
+        {
+            for (int x = 0; x < 3; x++)
+            {
+                blocks.SetPrefab(new int3(x, 0, z), block);
+            }
+        }
+
+        blocks.SetPrefab(new int3(1, 1, 1), prefab);
+
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.One };
+        var size = GetSize(terminal.Wrap());
+        writer.Inspect(SubtractVectors(size.Max, size.Min));
+
+        var compiled = Compile(writer, prefabs, level.Id);
+
+        await Assert.That(compiled).Inspects([new(new Vector3(1f, 1f, 1f)) { Frequency = InspectFrequency.EveryFrame }], physics: (level.Id, prefabs));
+    }
+
+    [Test]
     public async Task ConnectionToSelf_ReferencesSelf()
     {
         var writer = CreateWriter(out var prefab);
