@@ -76,7 +76,11 @@ public sealed partial class FcAstCompiler
         _variables = [.. variables.Select((var, index) => (index, var)).SelectMany(item => item.var.Select(var => (item.index, var)))];
 
         _writerBuilder = new StringBuilder();
-        _writer = new IndentedTextWriter(new StringWriter(_writerBuilder));
+        _writer = new IndentedTextWriter(new StringWriter(_writerBuilder), options.HumanReadable ? IndentedTextWriter.DefaultTabString : string.Empty);
+        if (!options.HumanReadable)
+        {
+            _writer.NewLine = string.Empty;
+        }
     }
 
     /// <summary>
@@ -373,6 +377,7 @@ public sealed partial class FcAstCompiler
                         switch (_executionMode)
                         {
                             case StatementExecutionMode.StateMachine:
+                                // TODO: store entry point indexes in an array and loop over them?
                                 _writer.WriteLineInv($"""
                                     Run({GetTerminalIndex(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false)});
                                     """);
@@ -535,6 +540,7 @@ public sealed partial class FcAstCompiler
                             """);
                         _writer.Indent++;
 
+                        // TODO: don't write the case if no statements gets written and there are 0 connected, or if there is 1 connected, rewrite all references to it, somehow
                         var environment = _environments[environmentIndex];
                         var statement = WriteStatement(entryPoint.BlockPos, entryPoint.TerminalPos, environment, out var executeNext, _writer);
 
