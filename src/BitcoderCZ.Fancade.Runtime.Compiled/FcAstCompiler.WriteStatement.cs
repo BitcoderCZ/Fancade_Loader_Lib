@@ -615,7 +615,16 @@ public partial class FcAstCompiler
                                         """);
                                     writer.WriteLine('{');
                                     writer.Indent++;
-                                    WriteEntryPoint(new(environment.Index, connection.To, (byte3)connection.ToVoxel), false, writer);
+                                    switch (_executionMode)
+                                    {
+                                        case StatementExecutionMode.StateMachine:
+                                            WriteRunEntryPoint(new(environment.Index, connection.To, (byte3)connection.ToVoxel), writer);
+                                            break;
+                                        case StatementExecutionMode.DirectCalls:
+                                            WriteDirectEntryPoint(new(environment.Index, connection.To, (byte3)connection.ToVoxel), false, writer);
+                                            break;
+                                    }
+
                                     writer.Indent--;
                                     writer.WriteLine("});");
                                 }
@@ -953,8 +962,8 @@ public partial class FcAstCompiler
                             WriteExpression(setPointer.Variable, true, environment, writer);
 
                             writer.Write("""
-                            .Value
-                            """);
+                                .Value
+                                """);
                         }
 
                         writer.Write(" = ");
@@ -1005,7 +1014,15 @@ public partial class FcAstCompiler
                     {
                         if (con.OutsideTerminal == terminalPos)
                         {
-                            WriteEntryPoint(new EntryPoint(customEnvironment.Index, con.InsideBlock, con.InsideTerminal), false, writer);
+                            switch (_executionMode)
+                            {
+                                case StatementExecutionMode.StateMachine:
+                                    WritePushStackEntryPoint(new EntryPoint(customEnvironment.Index, con.InsideBlock, con.InsideTerminal), writer);
+                                    break;
+                                case StatementExecutionMode.DirectCalls:
+                                    WriteDirectEntryPoint(new EntryPoint(customEnvironment.Index, con.InsideBlock, con.InsideTerminal), false, writer);
+                                    break;
+                            }
                         }
                     }
                 }

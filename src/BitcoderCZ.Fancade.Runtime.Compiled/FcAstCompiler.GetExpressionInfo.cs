@@ -313,7 +313,7 @@ public partial class FcAstCompiler
 
                     if (list.Variable is null)
                     {
-                        return new ExpressionInfo(type);
+                        return new ExpressionInfo(asReference ? type.ToPointer() : type);
                     }
 
                     if (list.Index is null)
@@ -325,7 +325,7 @@ public partial class FcAstCompiler
                         return new ExpressionInfo(getVariable.Variable);
                     }
 
-                    var varInfo = GetExpressionInfo(list.Variable, true, environment);
+                    var varInfo = GetExpressionInfo(list.Variable, asReference, environment);
 
                     return varInfo;
                 }
@@ -348,11 +348,11 @@ public partial class FcAstCompiler
                                     }
                                 }
 
-                                foreach (var info in outerEnvironment.AST.TerminalInfo.InputTerminals)
+                                foreach (var info in environment.AST.TerminalInfo.InputTerminals)
                                 {
                                     if (info.Position == terminal.Position)
                                     {
-                                        return new ExpressionInfo(info.Type);
+                                        return new ExpressionInfo(asReference ? info.Type.ToPointer() : info.Type);
                                     }
                                 }
 
@@ -371,11 +371,11 @@ public partial class FcAstCompiler
                                     }
                                 }
 
-                                foreach (var info in customEnvironment.AST.TerminalInfo.OutputTerminals)
+                                foreach (var info in environment.AST.TerminalInfo.OutputTerminals)
                                 {
                                     if (info.Position == terminal.Position)
                                     {
-                                        return new ExpressionInfo(info.Type);
+                                        return new ExpressionInfo(asReference ? info.Type.ToPointer() : info.Type);
                                     }
                                 }
 

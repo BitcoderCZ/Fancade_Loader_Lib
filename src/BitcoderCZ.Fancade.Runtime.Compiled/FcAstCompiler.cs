@@ -379,7 +379,7 @@ public sealed partial class FcAstCompiler
                                 _nodesToWrite.Enqueue((new SyntaxTerminal(environment.AST.Statements[entryPoint.BlockPosition], entryPoint.TerminalPosition), environment.Index, SignalType.Void));
                                 break;
                             case StatementExecutionMode.DirectCalls:
-                                WriteEntryPoint(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false, _writer);
+                                WriteDirectEntryPoint(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false, _writer);
                                 break;
                         }
                     }
@@ -585,7 +585,8 @@ public sealed partial class FcAstCompiler
 
                     if (type == SignalType.Void)
                     {
-                        WriteEntryPoint(entryPoint, true, _writer);
+                        Debug.Assert(_executionMode is not StatementExecutionMode.StateMachine, $"If {nameof(_executionMode)} is {nameof(StatementExecutionMode.StateMachine)}, all void nodes should have already been written, and expressions should not create statements.");
+                        WriteDirectEntryPoint(entryPoint, true, _writer);
                     }
                     else
                     {
@@ -885,7 +886,7 @@ public sealed partial class FcAstCompiler
         return _writerBuilder.ToString()!;
     }
 
-    private void WriteEntryPoint(EntryPoint entryPoint, bool direct, IndentedTextWriter writer)
+    private void WriteDirectEntryPoint(EntryPoint entryPoint, bool direct, IndentedTextWriter writer)
     {
         Queue<EntryPoint> queue = [];
 
@@ -929,8 +930,24 @@ public sealed partial class FcAstCompiler
         }
     }
 
+    private void WritePushStackEntryPoint(EntryPoint entryPoint, IndentedTextWriter writer)
+    {
+        writer.WriteLineInv($"""
+            returnStack.Push({GetTerminalIndex(entryPoint, false)});
+            """);
+        _nodesToWrite.Enqueue((new SyntaxTerminal(_environments[entryPoint.EnvironmentIndex].AST.Statements[entryPoint.BlockPos], entryPoint.TerminalPos), entryPoint.EnvironmentIndex, SignalType.Void));
+    }
+
+    private void WriteRunEntryPoint(EntryPoint entryPoint, IndentedTextWriter writer)
+    {
+        writer.WriteLineInv($"""
+            Run({GetTerminalIndex(entryPoint, false)});
+            """);
+        _nodesToWrite.Enqueue((new SyntaxTerminal(_environments[entryPoint.EnvironmentIndex].AST.Statements[entryPoint.BlockPos], entryPoint.TerminalPos), entryPoint.EnvironmentIndex, SignalType.Void));
+    }
+
     private void WriteDirectConnected(StatementSyntax statement, byte3 terminalPos, FcEnvironment environment, IndentedTextWriter writer)
-        => VisitConnected(statement, terminalPos, environment, entryPont => WriteEntryPoint(entryPont, false, writer), reverse: false);
+        => VisitConnected(statement, terminalPos, environment, entryPont => WriteDirectEntryPoint(entryPont, false, writer), reverse: false);
 
     private void WritePushStackConnected(StatementSyntax statement, byte3 terminalPos, FcEnvironment environment, IndentedTextWriter writer)
         => VisitConnected(
@@ -1126,18 +1143,14 @@ public sealed partial class FcAstCompiler
 
         public ExpressionInfo(SignalType type)
         {
-            Type = type.ToNotPointer();
+            Type = type;
         }
 
         public ExpressionInfo(Variable variable)
         {
-            Type = variable.Type.ToNotPointer();
+            Type = variable.Type.ToPointer();
             VariableName = variable.Name;
         }
-
-        public bool IsPointer => VariableName is not null;
-
-        public SignalType PtrType => IsPointer ? Type.ToPointer() : Type;
     }
 
     /// <summary>

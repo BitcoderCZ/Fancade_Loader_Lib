@@ -76,7 +76,8 @@ public partial class FcAstCompiler
                 var entryPoint = new EntryPoint(environment.Index, terminal.Node.Position, terminal.Position);
                 writer.WriteInv($"{GetEntryPointMethodName(entryPoint, asReference)}()");
                 ExpressionInfo info = GetExpressionInfo(terminal, asReference, environment);
-                _nodesToWrite.Enqueue((terminal, environment.Index, asReference ? info.PtrType : info.Type));
+                _nodesToWrite.Enqueue((terminal, environment.Index, asReference ? info.Type : info.Type.ToNotPointer()));
+                Debug.Assert(!asReference || info.Type.IsPointer(), $"If {nameof(asReference)} is true, {nameof(info)}.{nameof(ExpressionInfo.Type)} should be a refenrece.");
                 return info;
             }
         }
@@ -1027,7 +1028,7 @@ public partial class FcAstCompiler
                                 {
                                     if (info.Position == terminal.Position)
                                     {
-                                        writer.Write(GetDefaultValue(info.Type));
+                                        writer.Write(GetDefaultValue(asReference ? info.Type.ToPointer() : info.Type));
                                         return new ExpressionInfo(info.Type);
                                     }
                                 }
