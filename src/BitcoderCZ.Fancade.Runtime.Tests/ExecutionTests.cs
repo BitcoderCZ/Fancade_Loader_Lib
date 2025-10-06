@@ -164,6 +164,7 @@ public partial class ExecutionTests
         await Assert.That(compiled).Inspects([new(1f) { BoxArt = true, Count = 2 }], runFor: 2);
     }
 
+    // TODO: fails
     [Test]
     public async Task IfGotoLoop()
     {
