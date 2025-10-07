@@ -62,4 +62,65 @@ public class CustomPrefabTests
 
         await Assert.That(compiled).Inspects([new InspectAssertExpected(1f) { Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame }], runFor: 2);
     }
+
+    [Test]
+    public async Task Execution_CustomPrefab_CorrectOrderByPlacement()
+    {
+        var builder = CreateBuilder(out var level);
+        var prefabs = new PrefabList();
+        prefabs.AddPrefab(level);
+
+        List<Block> blocks = [];
+
+        AddInspect(new int3(2, 0, 10), 0);
+
+        AddCustomInspect(new int3(7, 0, 3), 4);
+        AddCustomInspect(new int3(2, 0, 3), 3);
+        AddCustomInspect(new int3(2, 1, 3), 2);
+        AddCustomInspect(new int3(2, 0, 6), 1);
+
+        AddInspect(new int3(2, 0, 0), 5);
+
+        builder.AddBlockSegments(blocks);
+
+        builder.Build(int3.Zero);
+        var compiled = Compile(prefabs);
+
+        await Assert.That(compiled).Inspects(
+        [
+            new(0f) { Order = 0, FrameCount = 1, },
+            new(1f) { Order = 1, FrameCount = 1, },
+            new(2f) { Order = 2, FrameCount = 1, },
+            new(3f) { Order = 3, FrameCount = 1, },
+            new(4f) { Order = 4, FrameCount = 1, },
+            new(5f) { Order = 5, FrameCount = 1, },
+        ]);
+
+        void AddInspect(int3 pos, int count)
+        {
+            var inspect = new Block(StockBlocks.Values.Inspect_Number, pos);
+            blocks.Add(inspect);
+
+            var numb = new Block(StockBlocks.Values.Number, pos + new int3(-2, 0, 1));
+            blocks.Add(numb);
+
+            builder.SetSetting(numb, 0, (float)count);
+        }
+
+        void AddCustomInspect(int3 pos, int count)
+        {
+            var prefab = Prefab.CreateBlock(0, "A");
+            prefabs.AddPrefab(prefab);
+
+            var builder = new PrefabBlockBuilder(prefab);
+            var writer = new CodeWriter(new TowerCodePlacer(builder), new TerminalConnector(builder.Connect));
+
+            writer.Inspect(Number(count));
+
+            writer.Flush();
+            builder.Build(int3.Zero);
+
+            level.Blocks.SetPrefab(pos, prefab);
+        }
+    }
 }

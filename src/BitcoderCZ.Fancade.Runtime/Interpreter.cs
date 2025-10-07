@@ -16,6 +16,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Runtime.Utils.ThrowHelper;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
@@ -39,6 +40,7 @@ public sealed class Interpreter : IAstRunner
     private static readonly byte3 PosOut34 = TerminalDef.GetOutPosition(3, 2, 4);
 
     private readonly FcEnvironment[] _environments;
+    private readonly EntryPoint[] _entryPoints;
     private readonly IRuntimeContext _ctx;
 
     private readonly InterpreterVariableAccessor _variableAccessor;
@@ -96,6 +98,7 @@ public sealed class Interpreter : IAstRunner
         InitEnvironments(mainEnvironment, environments, variables, maxDepth);
 
         _environments = [.. environments];
+        _entryPoints = [.. FcEnvironment.GetEntryPointsInExecutionOrder(_environments)];
 
         _variableAccessor = new InterpreterVariableAccessor(ast.GlobalVariables, variables.Select((vars, index) => (index, (IEnumerable<Variable>)vars)));
 
@@ -139,12 +142,9 @@ public sealed class Interpreter : IAstRunner
 
         var lateUpdateQueue = new Queue<EntryPoint>();
 
-        foreach (var environment in _environments)
+        foreach (var entryPoint in _entryPoints)
         {
-            foreach (var entryPoint in environment.AST.EntryPointTerminals)
-            {
-                Execute(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), lateUpdateQueue);
-            }
+            Execute(entryPoint, lateUpdateQueue);
         }
 
         return () =>

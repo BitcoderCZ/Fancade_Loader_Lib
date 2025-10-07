@@ -370,23 +370,20 @@ public sealed partial class FcAstCompiler
                         """);
                 }
 
-                foreach (var environment in _environments)
+                foreach (var entryPoint in FcEnvironment.GetEntryPointsInExecutionOrder(_environments))
                 {
-                    foreach (var entryPoint in environment.AST.EntryPointTerminals)
+                    switch (_executionMode)
                     {
-                        switch (_executionMode)
-                        {
-                            case StatementExecutionMode.StateMachine:
-                                // TODO: store entry point indexes in an array and loop over them?
-                                _writer.WriteLineInv($"""
-                                    Run({GetTerminalIndex(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false)});
-                                    """);
-                                _nodesToWrite.Enqueue((new SyntaxTerminal(environment.AST.Statements[entryPoint.BlockPosition], entryPoint.TerminalPosition), environment.Index, SignalType.Void));
-                                break;
-                            case StatementExecutionMode.DirectCalls:
-                                WriteDirectEntryPoint(new EntryPoint(environment.Index, entryPoint.BlockPosition, entryPoint.TerminalPosition), false, _writer);
-                                break;
-                        }
+                        case StatementExecutionMode.StateMachine:
+                            // TODO: store entry point indexes in an array and loop over them? (in generated code)
+                            _writer.WriteLineInv($"""
+                                Run({GetTerminalIndex(entryPoint, false)});
+                                """);
+                            _nodesToWrite.Enqueue((new SyntaxTerminal(_environments[entryPoint.EnvironmentIndex].AST.Statements[entryPoint.BlockPos], entryPoint.TerminalPos), entryPoint.EnvironmentIndex, SignalType.Void));
+                            break;
+                        case StatementExecutionMode.DirectCalls:
+                            WriteDirectEntryPoint(entryPoint, false, _writer);
+                            break;
                     }
                 }
 
