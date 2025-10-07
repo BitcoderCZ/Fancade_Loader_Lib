@@ -322,7 +322,7 @@ public sealed partial class FcAstCompiler
             foreach (var (environmentIndex, variable) in _environments[0].AST.GlobalVariables.Select(var => (-1, var)).Concat(_variables))
             {
                 _writer.WriteLineInv($"""
-                    private readonly FcList<{GetCSharpName(variable.Type.ToNotPointer())}> {GetVariableName(environmentIndex, variable)} = new();
+                    private readonly FcList<{GetCSharpName(variable.Type.ToNotPointer())}> {GetVariableName(environmentIndex, variable)} = new("{variable.Name}", {nameof(SignalType)}.{variable.Type});
                     """);
             }
 
@@ -674,11 +674,16 @@ public sealed partial class FcAstCompiler
             {
                 private static readonly T DefaultValue = typeof(T) == typeof(Quaternion) ? (T)(object)Quaternion.Identity : default;
 
+                private readonly string _name;
+                private readonly SignalType _type;
+
                 private T[] _items;
                 private int _count;
 
-                public FcList()
+                public FcList(string name, SignalType type)
                 {
+                    _name = name;
+                    _type = type;
                     _items = [];
                 }
 
@@ -721,6 +726,9 @@ public sealed partial class FcAstCompiler
 
                 public void Clear()
                     => _count = 0;
+
+                public Variable ToVariable()
+                    => new Variable(_name, _type);
 
                 public Span<RuntimeValue> AsSpan()
                 {
@@ -790,6 +798,9 @@ public sealed partial class FcAstCompiler
 
                     public Ref Add(int value)
                         => new Ref(_list, _index + value);
+            
+                    public Variable ToVariable()
+                        => _list is null ? default : _list.ToVariable();
                 }
             }
 

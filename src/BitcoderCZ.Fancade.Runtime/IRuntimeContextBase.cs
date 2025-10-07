@@ -1,4 +1,5 @@
-﻿using BitcoderCZ.Fancade.Editing.Scripting.Settings;
+﻿using BitcoderCZ.Fancade.Editing;
+using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
 
@@ -80,7 +81,7 @@ public interface IRuntimeContextBase
     /// <param name="name">Name of the item or section.</param>
     /// <param name="maxBuyCount">The maximum number of times the item can be bought.</param>
     /// <param name="priceIncrease">Determines how the price of the item increases.</param>
-    void MenuItem(VariableReference? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
+    void MenuItem(Variable? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease);
 
     // **************************************** Sound ****************************************
 

@@ -949,7 +949,7 @@ public sealed partial class FcWorld : IAstRunner
         }
 
         int meshOffset = meshInfo.GetMeshOffsetOrZero(pos);
-        if (meshOffset == -1)
+        if (meshOffset == -1 || meshOffset >= meshInfo.BlockMeshIds.Length)
         {
             rObject = null;
             return false;

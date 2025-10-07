@@ -404,7 +404,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
         }
 
-        public void MenuItem(VariableReference? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease)
+        public void MenuItem(Variable? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease)
         {
         }
 

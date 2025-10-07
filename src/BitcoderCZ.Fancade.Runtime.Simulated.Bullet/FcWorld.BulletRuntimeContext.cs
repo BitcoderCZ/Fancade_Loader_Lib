@@ -51,7 +51,7 @@ public sealed partial class FcWorld
         public void SetLight(Vector3? position, Quaternion? rotation)
             => _baseCtx.SetLight(position, rotation);
 
-        public void MenuItem(VariableReference? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease)
+        public void MenuItem(Variable? variable, FcObject picture, string name, MaxBuyCount maxBuyCount, PriceIncrease priceIncrease)
             => _baseCtx.MenuItem(variable, picture, name, maxBuyCount, priceIncrease);
 
         // **************************************** Objects ****************************************

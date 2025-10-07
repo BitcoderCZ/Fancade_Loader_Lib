@@ -297,7 +297,7 @@ public sealed class Interpreter : IAstRunner
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var menuItem = (MenuItemStatementSyntax)statement;
 
-                        _ctx.MenuItem(menuItem.Variable is null ? null : GetOutput(menuItem.Variable, environment).Reference, (FcObject)GetValue(menuItem.Picture, environment).Int, menuItem.Name, menuItem.MaxBuyCount, menuItem.PriceIncrease);
+                        _ctx.MenuItem(menuItem.Variable is null ? null : _variableAccessor.GetVariable(GetOutput(menuItem.Variable, environment).Reference.VariableId).Variable, (FcObject)GetValue(menuItem.Picture, environment).Int, menuItem.Name, menuItem.MaxBuyCount, menuItem.PriceIncrease);
                     }
 
                     break;

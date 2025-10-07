@@ -7,7 +7,7 @@
     <LangVersion>13</LangVersion>
     <PackageId>BitcoderCZ.Fancade.Runtime.Simulated.Bullet</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>1.0.0-develop.14</Version>
+    <Version>1.0.0-develop.15</Version>
     <Description>Run fancade games with bullet physics.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -32,8 +32,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.Collections.Immutable" Version="9.0.9" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
   </ItemGroup>
 
   <ItemGroup>

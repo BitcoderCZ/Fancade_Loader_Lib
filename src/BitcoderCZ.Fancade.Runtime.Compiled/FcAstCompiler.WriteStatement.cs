@@ -93,10 +93,10 @@ public partial class FcAstCompiler
                 {
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var menuItem = (MenuItemStatementSyntax)statement;
-
+                    
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.MenuItem)}(");
                     WriteExpressionOrNull(menuItem.Variable, SignalType.FloatPtr, environment, writer);
-                    writer.WriteInv($", ");
+                    writer.WriteInv($".ToVariable(), ");
                     WriteExpressionOrDefault(menuItem.Picture, SignalType.Obj, environment, writer);
                     writer.WriteLineInv($"""
                         , "{menuItem.Name}", new MaxBuyCount({menuItem.MaxBuyCount.Value}), PriceIncrease.{menuItem.PriceIncrease});
