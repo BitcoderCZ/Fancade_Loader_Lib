@@ -95,8 +95,16 @@ public partial class FcAstCompiler
                     var menuItem = (MenuItemStatementSyntax)statement;
                     
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.MenuItem)}(");
-                    WriteExpressionOrNull(menuItem.Variable, SignalType.FloatPtr, environment, writer);
-                    writer.WriteInv($".ToVariable(), ");
+                    if (menuItem.Variable is null)
+                    {
+                        writer.Write("null, ");
+                    }
+                    else
+                    {
+                        WriteExpression(menuItem.Variable, true, environment, writer);
+                        writer.WriteInv($".ToVariable(), ");
+                    }
+
                     WriteExpressionOrDefault(menuItem.Picture, SignalType.Obj, environment, writer);
                     writer.WriteLineInv($"""
                         , "{menuItem.Name}", new MaxBuyCount({menuItem.MaxBuyCount.Value}), PriceIncrease.{menuItem.PriceIncrease});
