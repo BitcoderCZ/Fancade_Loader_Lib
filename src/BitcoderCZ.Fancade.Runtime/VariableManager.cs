@@ -31,7 +31,7 @@ internal readonly struct VariableManager
 
         return index >= 0 && index < values.Length
             ? values[index]
-            : RuntimeValue.Zero;
+            : RuntimeValue.SafeDefault;
     }
 
     public Span<RuntimeValue> GetVariableValues(int variableIndex)

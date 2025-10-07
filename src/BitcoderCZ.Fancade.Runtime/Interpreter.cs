@@ -380,7 +380,7 @@ public sealed class Interpreter : IAstRunner
                     break;
                 case 391:
                     {
-                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
+                        Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(3), $"{nameof(terminalPos)} should be valid.");
                         var volumePitch = (VolumePitchStatementSyntax)statement;
 
                         if (volumePitch.Channel is not null)

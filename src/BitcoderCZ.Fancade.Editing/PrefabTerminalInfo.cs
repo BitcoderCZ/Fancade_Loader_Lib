@@ -184,7 +184,8 @@ public readonly struct PrefabTerminalInfo
                     var terminalType = ResolveBlockTerminalType(insidePrefab, (byte3)connection.ToVoxel, getPrefab);
                     var terminalDirection = prefab.GetTerminalDirection((byte3)connection.FromVoxel);
 
-                    if (terminalType is SignalType.Obj && terminalDirection is TerminalDirection.PositiveX or TerminalDirection.NegativeZ)
+                    // TODO: find how fancade actually does this
+                    if (terminalType is SignalType.Obj && terminalDirection is not TerminalDirection.NegativeX)
                     {
                         continue;
                     }

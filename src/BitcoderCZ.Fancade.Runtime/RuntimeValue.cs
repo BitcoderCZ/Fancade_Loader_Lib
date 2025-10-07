@@ -15,6 +15,11 @@ public readonly struct RuntimeValue : IEquatable<RuntimeValue>
     /// </summary>
     public static readonly RuntimeValue Zero = default;
 
+    /// <summary>
+    /// A <see cref="RuntimeValue"/> with the value of <see cref="Quaternion.Identity"/>.
+    /// </summary>
+    public static readonly RuntimeValue SafeDefault = new RuntimeValue(Quaternion.Identity);
+
     private readonly DataArray _data;
 
     /// <summary>

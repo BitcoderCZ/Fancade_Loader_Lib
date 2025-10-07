@@ -19,9 +19,7 @@ public class PrefabTerminalInfoTests
 
     [Test]
     [Arguments(0, 0, 0)]
-    [Arguments(0, 7, 7)]
-    [Arguments(3, 1, 7)]
-    [Arguments(7, 7, 7)]
+    [Arguments(0, 7, 6)]
     public async Task BlockConnection_DoesCreateTerminal(int terminalPosX, int terminalPosY, int terminalPosZ)
     {
         var terminals = CreateTerminalsWithBlockConnection(new ushort3(terminalPosX, terminalPosY, terminalPosZ));

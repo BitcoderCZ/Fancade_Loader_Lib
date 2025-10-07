@@ -11,7 +11,7 @@ public readonly struct TerminalOutput
     /// <summary>
     /// Represents a null terminal.
     /// </summary>
-    public static readonly TerminalOutput Disconnected = default;
+    public static readonly TerminalOutput Disconnected = new TerminalOutput(0, RuntimeValue.SafeDefault);
 
     private readonly Flags _flags;
 
@@ -37,6 +37,13 @@ public readonly struct TerminalOutput
         _flags = Flags.IsReference | Flags.IsConnected;
 
         Write(reference);
+    }
+
+    private TerminalOutput(Flags flags, RuntimeValue value)
+    {
+        _flags = flags;
+
+        Write(value);
     }
 
     [Flags]

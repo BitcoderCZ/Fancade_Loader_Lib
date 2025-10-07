@@ -9,6 +9,10 @@ namespace BitcoderCZ.Fancade.Runtime.Tests;
 public partial class ExecutionTests
 {
     [Test]
+    public async Task DefaultRotation_Is_Identity()
+        => await TestExpression(Variable(new Editing.Variable("a", SignalType.Rot)), Quaternion.Identity);
+
+    [Test]
     [Arguments(3.5f)]
     [Arguments(0f)]
     [Arguments(-7f)]
