@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using BitcoderCZ.Fancade.Utils;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -13,21 +14,13 @@ namespace BitcoderCZ.Fancade;
 /// Represents a single voxel of a <see cref="PrefabSegment"/>.
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-#if NET8_0_OR_GREATER
 public struct Voxel : IEquatable<Voxel>
-#else
-public unsafe struct Voxel : IEquatable<Voxel>
-#endif
 {
     /// <summary>
     /// Colors of the sides of the voxel in the following order:
     /// <para>+X, -X, +Y, -Y, +Z, -Z.</para>
     /// </summary>
-#if NET8_0_OR_GREATER
     public Array6<byte> Colors;
-#else
-    public fixed byte Colors[6];
-#endif
 
     /// <summary>
     /// <see langword="true"/> if the side does NOT have glue/"lego" on it - connects to other voxels; otherwise, <see langword="false"/>. 
@@ -35,11 +28,7 @@ public unsafe struct Voxel : IEquatable<Voxel>
     /// <remarks>
     /// In the same order as <see cref="Colors"/>.
     /// </remarks>
-#if NET8_0_OR_GREATER
     public Array6<bool> Attribs;
-#else
-    public fixed bool Attribs[6];
-#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Voxel"/> struct.
@@ -218,6 +207,47 @@ public unsafe struct Voxel : IEquatable<Voxel>
 #pragma warning disable IDE0044 // Add readonly modifier
         private T _element0;
 #pragma warning restore IDE0044
+    }
+#else
+    /// <summary>
+    /// Value array with 6 items.
+    /// </summary>
+    /// <typeparam name="T">The item type.</typeparam>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Array6<T>
+    {
+#pragma warning disable IDE0044
+#pragma warning disable CS0169
+        private T _element0;
+        private T _element1;
+        private T _element2;
+        private T _element3;
+        private T _element4;
+        private T _element5;
+#pragma warning restore CS0169
+#pragma warning restore IDE0044
+
+        /// <summary>
+        /// Gets or sets the value at <paramref name="index"/>.
+        /// </summary>
+        /// <param name="index">Index of the value to get/set.</param>
+        /// <returns>The value at <paramref name="index"/>.</returns>
+        public T this[int index]
+        {
+            readonly get
+            {
+                ThrowHelper.ThrowIfGreaterThanOrEqualToOrNegative(index, 6, nameof(index));
+
+                return Unsafe.Add(ref Unsafe.AsRef(in _element0), index);
+            }
+
+            set
+            {
+                ThrowHelper.ThrowIfGreaterThanOrEqualToOrNegative(index, 6, nameof(index));
+
+                Unsafe.Add(ref _element0, index) = value;
+            }
+        }
     }
 #endif
 }
