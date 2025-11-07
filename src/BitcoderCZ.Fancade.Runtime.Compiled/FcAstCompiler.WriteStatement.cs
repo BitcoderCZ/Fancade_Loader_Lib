@@ -93,7 +93,7 @@ public partial class FcAstCompiler
                 {
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var menuItem = (MenuItemStatementSyntax)statement;
-                    
+
                     writer.WriteInv($"_ctx.{nameof(IRuntimeContext.MenuItem)}(");
                     if (menuItem.Variable is null)
                     {

@@ -27,7 +27,7 @@ public sealed class NopTerminal : ITerminal
     public int TerminalIndex => -1;
 
     /// <inheritdoc/>
-    public int3? VoxelPosition => new int3(-1, -1, -1);
+    public byte3? VoxelPosition => new byte3(255, 255, 255);
 
     /// <inheritdoc/>
     public SignalType SignalType => SignalType.Error;

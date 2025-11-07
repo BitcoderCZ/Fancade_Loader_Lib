@@ -191,8 +191,8 @@ public abstract class BlockBuilder
     /// </summary>
     /// <param name="pos">Position of the block the terminal is on.</param>
     /// <returns>The voxel position of the terminal.</returns>
-    protected virtual int3 ChooseTerminalVoxelPos(int3 pos)
-        => new int3(7, 3, 3);
+    protected virtual byte3 ChooseTerminalVoxelPos(int3 pos)
+        => new byte3(7, 3, 3);
 
     /// <summary>
     /// Represents a connection between 2 terminals.

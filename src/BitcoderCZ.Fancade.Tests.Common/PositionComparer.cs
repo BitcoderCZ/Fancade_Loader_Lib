@@ -2,7 +2,7 @@
 
 namespace BitcoderCZ.Fancade.Tests.Common;
 
-public sealed class PositionComparer : IComparer<ushort3>
+public sealed class PositionComparer : IComparer<int3>
 {
     public static readonly PositionComparer Instance = new();
 
@@ -10,7 +10,7 @@ public sealed class PositionComparer : IComparer<ushort3>
     {
     }
 
-    public int Compare(ushort3 x, ushort3 y)
+    public int Compare(int3 x, int3 y)
     {
         int cmpZ = x.Z.CompareTo(y.Z);
         if (cmpZ != 0)

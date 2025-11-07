@@ -131,8 +131,8 @@ public sealed class GameFileBlockBuilder : BlockBuilder
         for (int i = 0; i < settings.Count; i++)
         {
             SettingRecord set = settings[i];
-            prefab.Settings[(ushort3)set.Block.Position] = prefab.Settings
-                .GetValueOrDefault((ushort3)set.Block.Position, PrefabSettings.Empty)
+            prefab.Settings[set.Block.Position] = prefab.Settings
+                .GetValueOrDefault(set.Block.Position, PrefabSettings.Empty)
                 .WithValueAt(set.SettingIndex, new PrefabSetting(
                     set.Value switch
                     {
@@ -152,10 +152,10 @@ public sealed class GameFileBlockBuilder : BlockBuilder
             ConnectionRecord con = connections[i];
             prefab.Connections.Add(new Connection()
             {
-                From = (ushort3)con.From.BlockPosition,
-                FromVoxel = (ushort3)(con.From.VoxelPosition ?? ChooseTerminalVoxelPos(con.From.BlockPosition)),
-                To = (ushort3)con.To.BlockPosition,
-                ToVoxel = (ushort3)(con.To.VoxelPosition ?? ChooseTerminalVoxelPos(con.To.BlockPosition)),
+                From = con.From.BlockPosition,
+                FromVoxel = con.From.VoxelPosition ?? ChooseTerminalVoxelPos(con.From.BlockPosition),
+                To = con.To.BlockPosition,
+                ToVoxel = con.To.VoxelPosition ?? ChooseTerminalVoxelPos(con.To.BlockPosition),
             });
         }
 

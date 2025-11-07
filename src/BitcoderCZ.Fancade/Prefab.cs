@@ -41,7 +41,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// <param name="settings">The settings applied to blocks in this prefab.</param>
     /// <param name="connections">The connections between blocks in this prefab.</param>
     /// <param name="segments">The segments to be placed in this prefab, all of which must have the same ID.</param>
-    public Prefab(ushort id, string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, IEnumerable<KeyValuePair<ushort3, PrefabSettings>>? settings, List<Connection>? connections, IEnumerable<PrefabSegment> segments)
+    public Prefab(ushort id, string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, IEnumerable<KeyValuePair<int3, PrefabSettings>>? settings, List<Connection>? connections, IEnumerable<PrefabSegment> segments)
     {
         if (!segments.Any())
         {
@@ -61,7 +61,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         BackgroundColor = backgroundColor;
         Editable = editable;
         Blocks = blocks ?? new BlockData();
-        Settings = settings is null ? [] : new Dictionary<ushort3, PrefabSettings>(settings);
+        Settings = settings is null ? [] : new Dictionary<int3, PrefabSettings>(settings);
         Connections = connections ?? [];
 
         _segments = new(segments.Select(segment =>
@@ -95,7 +95,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// <param name="settings">Settings of the blocks inside this prefab.</param>
     /// <param name="connections">Connections between blocks inside this prefab, block-block and block-outside of this prefab.</param>
     /// <param name="segments">The prefabs to be placed in this prefab, must all have the same id.</param>
-    public Prefab(string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, IEnumerable<KeyValuePair<ushort3, PrefabSettings>>? settings, List<Connection>? connections, IEnumerable<PrefabSegment> segments)
+    public Prefab(string name, PrefabCollider collider, PrefabType type, FcColor backgroundColor, bool editable, BlockData? blocks, IEnumerable<KeyValuePair<int3, PrefabSettings>>? settings, List<Connection>? connections, IEnumerable<PrefabSegment> segments)
     {
         if (!segments.Any())
         {
@@ -114,7 +114,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         BackgroundColor = backgroundColor;
         Editable = editable;
         Blocks = blocks ?? new BlockData();
-        Settings = settings is null ? [] : new Dictionary<ushort3, PrefabSettings>(settings);
+        Settings = settings is null ? [] : new Dictionary<int3, PrefabSettings>(settings);
         Connections = connections ?? [];
 
         ushort? id = null;
@@ -231,7 +231,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// Gets the settings applied to the blocks in this prefab.
     /// </summary>
     /// <value>The settings applied to the blocks in this prefab.</value>
-    public Dictionary<ushort3, PrefabSettings> Settings { get; }
+    public Dictionary<int3, PrefabSettings> Settings { get; }
 
     /// <summary>
     /// Gets the connections between blocks inside this prefab and connections to inputs/outputs of this prefab.
@@ -452,7 +452,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
             blockData.Trim(false);
         }
 
-        Dictionary<ushort3, PrefabSettings>? settings = null;
+        Dictionary<int3, PrefabSettings>? settings = null;
         if (rawPrefab.HasSettings && rawPrefab.Settings is not null)
         {
             settings = new(rawPrefab.Settings.Count);
@@ -483,7 +483,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
                     {
                         for (int setI = 0; setI < numbStockSettings; setI++)
                         {
-                            ushort3 pos = (ushort3)blockData.Index(i);
+                            var pos = blockData.Index(i);
 
                             if (!settings.TryGetValue(pos, out var prefabSettings) || !prefabSettings.Contains(setI))
                             {

@@ -19,7 +19,7 @@ public class FcWorldTests
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(50, 1, 0), StockBlocks.Templates.PhysicsBox.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 0)) { VoxelPosition = int3.Zero };
+        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 0)) { VoxelPosition = byte3.Zero };
         writer.PlaySensor(writer =>
         {
             writer.Inspect(GreaterThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(1.4f)));
@@ -44,7 +44,7 @@ public class FcWorldTests
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(50, 1, 1), StockBlocks.Templates.PhysicsBox.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 1)) { VoxelPosition = int3.Zero };
+        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 1)) { VoxelPosition = byte3.Zero };
         writer.PlaySensor(writer =>
         {
             writer.Inspect(GreaterThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(1.4f)));
@@ -69,7 +69,7 @@ public class FcWorldTests
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(50, 1, 0), StockBlocks.Templates.Box.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 0)) { VoxelPosition = int3.Zero };
+        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 0)) { VoxelPosition = byte3.Zero };
         writer.If(EqualsNumbers(CurrentFrame(), Number(120f)),
         @true: writer =>
         {
@@ -94,7 +94,7 @@ public class FcWorldTests
         blocks.SetBlock(new int3(49, 0, 1), 1);
         blocks.SetBlock(new int3(51, 0, 1), 1);
 
-        var terminal = new AbsolutePositionTerminal(new int3(50, 2, 0)) { VoxelPosition = int3.Zero };
+        var terminal = new AbsolutePositionTerminal(new int3(50, 2, 0)) { VoxelPosition = byte3.Zero };
 
         writer.If(EqualsNumbers(CurrentFrame(), Number(120f)),
         @true: writer =>
@@ -117,7 +117,7 @@ public class FcWorldTests
         blocks.SetPrefab(new int3(4, 0, 0), StockBlocks.Templates.Box.Prefab);
         blocks.SetPrefab(new int3(4, 0, 1), StockBlocks.Templates.Box.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(4, 2, 1)) { VoxelPosition = int3.Zero };
+        var terminal = new AbsolutePositionTerminal(new int3(4, 2, 1)) { VoxelPosition = byte3.Zero };
         writer.Inspect(GetPos(terminal.Wrap()).Position);
 
         var compiled = Compile(writer, out var prefabs);
@@ -135,7 +135,7 @@ public class FcWorldTests
         blocks.SetPrefab(new int3(4, 0, 0), StockBlocks.Templates.Box.Prefab);
         blocks.SetPrefab(new int3(4, 0, 1), StockBlocks.Templates.Box.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(4, 0, 0)) { VoxelPosition = int3.Zero };
+        var terminal = new AbsolutePositionTerminal(new int3(4, 0, 0)) { VoxelPosition = byte3.Zero };
         writer.Inspect(GetPos(terminal.Wrap()).Position);
 
         var compiled = Compile(writer, out var prefabs);
@@ -177,7 +177,7 @@ public class FcWorldTests
 
         blocks.SetPrefab(new int3(1, 1, 1), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.One };
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = byte3.One };
         var size = GetSize(terminal.Wrap());
         writer.Inspect(SubtractVectors(size.Max, size.Min));
 
@@ -201,7 +201,7 @@ public class FcWorldTests
         var blocks = level.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.One };
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = byte3.One };
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
 
         var compiled = Compile(writer, prefabs, level.Id);
@@ -229,7 +229,7 @@ public class FcWorldTests
         blocks.SetBlock(new int3(0, 0, 0), 1);
         blocks.SetPrefab(new int3(1, 0, 0), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = new int3(2, 1, 1) };
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = new byte3(2, 1, 1) };
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
 
         var compiled = Compile(writer, prefabs, level.Id);

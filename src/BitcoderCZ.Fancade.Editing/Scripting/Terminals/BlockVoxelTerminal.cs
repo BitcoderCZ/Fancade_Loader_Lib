@@ -32,7 +32,7 @@ public readonly struct BlockVoxelTerminal : ITerminal
     public int TerminalIndex { get; init; }
 
     /// <inheritdoc/>
-    public int3? VoxelPosition { get; init; }
+    public byte3? VoxelPosition { get; init; }
 
     /// <inheritdoc/>
     public SignalType SignalType { get; init; }

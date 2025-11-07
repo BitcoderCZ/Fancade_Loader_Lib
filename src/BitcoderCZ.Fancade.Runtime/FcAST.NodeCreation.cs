@@ -19,7 +19,7 @@ public sealed partial class FcAST
 {
     private static class NodeCreation
     {
-        public static SyntaxNode? CreateNode(ushort id, ushort3 pos, ParseContext ctx)
+        public static SyntaxNode? CreateNode(ushort id, int3 pos, ParseContext ctx)
         {
             switch (id)
             {

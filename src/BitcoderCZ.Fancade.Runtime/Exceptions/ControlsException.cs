@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BitcoderCZ.Fancade.Runtime.Exceptions;
+﻿namespace BitcoderCZ.Fancade.Runtime.Exceptions;
 
 /// <summary>
 /// A base class for fancade exceptions caused by controls.
@@ -10,13 +6,13 @@ namespace BitcoderCZ.Fancade.Runtime.Exceptions;
 public abstract class ControlsException : FancadeException
 {
     /// <inheritdoc/>
-    protected ControlsException(string message) 
+    protected ControlsException(string message)
         : base(message)
     {
     }
 
     /// <inheritdoc/>
-    protected ControlsException(string fancadeMessage, string message) 
+    protected ControlsException(string fancadeMessage, string message)
         : base(fancadeMessage, message)
     {
     }

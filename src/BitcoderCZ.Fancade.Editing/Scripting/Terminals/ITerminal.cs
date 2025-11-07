@@ -27,7 +27,7 @@ public interface ITerminal
     /// Gets the voxel position of the terminal relative to <see cref="BlockPosition"/>.
     /// </summary>
     /// <value>The voxel position of the terminal.</value>
-    int3? VoxelPosition { get; }
+    byte3? VoxelPosition { get; }
 
     /// <summary>
     /// Gets the <see cref="BitcoderCZ.Fancade.SignalType"/> of the terminal.

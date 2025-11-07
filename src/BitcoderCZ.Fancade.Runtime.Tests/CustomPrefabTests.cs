@@ -27,8 +27,8 @@ public class CustomPrefabTests
         var fromPos = new byte3(3, 1, 7);
         var toPos = new byte3(3, 1, 0);
         prefab.Blocks.SetPrefab(int3.Zero, StockBlocks.Control.If.Prefab);
-        prefab.Connections.Add(new Connection(ushort3.One * Connection.IsFromToOutsideValue, ushort3.Zero, fromPos, StockBlocks.Control.If["Before"].Position));
-        prefab.Connections.Add(new Connection(ushort3.Zero, ushort3.One * Connection.IsFromToOutsideValue, TerminalDef.AfterPosition, toPos));
+        prefab.Connections.Add(new Connection(int3.One * Connection.IsFromToOutsideValue, int3.Zero, fromPos, StockBlocks.Control.If["Before"].Position));
+        prefab.Connections.Add(new Connection(int3.Zero, int3.One * Connection.IsFromToOutsideValue, TerminalDef.AfterPosition, toPos));
 
         var builder = new PrefabBlockBuilder(level);
 

@@ -262,7 +262,7 @@ public partial class ExecutionTests
         var blocks = level.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = int3.Zero };
+        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = byte3.Zero };
         writer.Inspect(terminal.Wrap(), SignalType.Rot);
 
         var compiled = Compile(writer, prefabs, level.Id);

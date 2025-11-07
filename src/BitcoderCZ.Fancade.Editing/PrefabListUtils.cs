@@ -129,8 +129,8 @@ public static class PrefabListUtils
             });
         }
 
-        HashSet<(ushort3, byte3)> connectionsFrom = [];
-        HashSet<(ushort3, byte3)> connectionsTo = [];
+        HashSet<(int3, byte3)> connectionsFrom = [];
+        HashSet<(int3, byte3)> connectionsTo = [];
 
         foreach (var item in list.Prefabs)
         {
@@ -141,8 +141,8 @@ public static class PrefabListUtils
 
             foreach (var connection in item.Connections)
             {
-                connectionsFrom.Add((connection.From, (byte3)connection.FromVoxel));
-                connectionsTo.Add((connection.To, (byte3)connection.ToVoxel));
+                connectionsFrom.Add((connection.From, connection.FromVoxel));
+                connectionsTo.Add((connection.To, connection.ToVoxel));
             }
 
             var blocks = item.Blocks;
@@ -152,7 +152,7 @@ public static class PrefabListUtils
                 {
                     for (int x = 0; x < blocks.Size.X; x++)
                     {
-                        ushort3 pos = new ushort3(x, y, z);
+                        var pos = new int3(x, y, z);
                         ushort id = blocks.GetBlockUnchecked(pos);
 
                         if (id == 0)
@@ -192,7 +192,7 @@ public static class PrefabListUtils
             connectionsTo.Clear();
         }
 
-        bool TryGetImplicitlyConnectedTerminalPos(ushort3 pos, TerminalInfo terminal, BlockData blocks, out ushort3 otherBlockPos, out byte3 otherTerminalPos)
+        bool TryGetImplicitlyConnectedTerminalPos(int3 pos, TerminalInfo terminal, BlockData blocks, out int3 otherBlockPos, out byte3 otherTerminalPos)
         {
             var otherPosVoxel = (pos * Voxels.Size) + terminal.Position + (terminal.Direction.GetOffset() * 2);
             var otherPos = VoxelToBlock(otherPosVoxel);
@@ -221,7 +221,7 @@ public static class PrefabListUtils
 
                 if (otherTerminals.Terminals.Any(item => item.Position == otherTerminalPosLocal && item.IsInput != terminal.IsInput && SignalTypeUtils.CanConnect(terminal.Type, item.Type, terminal.IsInput)))
                 {
-                    otherBlockPos = (ushort3)otherBlockPosLocal;
+                    otherBlockPos = otherBlockPosLocal;
                     otherTerminalPos = (byte3)otherTerminalPosLocal;
                     return true;
                 }

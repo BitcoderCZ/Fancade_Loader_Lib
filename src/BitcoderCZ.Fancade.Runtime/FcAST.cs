@@ -121,7 +121,7 @@ public sealed partial class FcAST
         return ctx.Parse();
     }
 
-    private static IEnumerable<Connection> GetConnectionsTo(List<Connection> connections, ushort3 pos)
+    private static IEnumerable<Connection> GetConnectionsTo(List<Connection> connections, int3 pos)
     {
         for (int i = 0; i < connections.Count; i++)
         {
@@ -143,7 +143,7 @@ public sealed partial class FcAST
         /// <param name="outsideTerminal">Position of the outside terminal.</param>
         /// <param name="insideBlock">Position of the block inside the prefab.</param>
         /// <param name="insideTerminal">Position of the inside terminal.</param>
-        public OutsideConnection(byte3 outsideTerminal, ushort3 insideBlock, byte3 insideTerminal)
+        public OutsideConnection(byte3 outsideTerminal, int3 insideBlock, byte3 insideTerminal)
         {
             OutsideTerminal = outsideTerminal;
             InsideBlock = insideBlock;
@@ -160,7 +160,7 @@ public sealed partial class FcAST
         /// Gets the position of the block inside the prefab.
         /// </summary>
         /// <value>Position of the block inside the prefab.</value>
-        public readonly ushort3 InsideBlock { get; }
+        public readonly int3 InsideBlock { get; }
 
         /// <summary>
         /// Gets the position of the inside terminal.

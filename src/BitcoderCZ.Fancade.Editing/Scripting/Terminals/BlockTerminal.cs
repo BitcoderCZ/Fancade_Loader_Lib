@@ -66,7 +66,7 @@ public readonly struct BlockTerminal : ITerminal
     public int TerminalIndex => Terminal.Index;
 
     /// <inheritdoc/>
-    public int3? VoxelPosition => Terminal.Position;
+    public byte3? VoxelPosition => Terminal.Position;
 
     /// <inheritdoc/>
     public SignalType SignalType => Terminal.SignalType;

@@ -24,22 +24,22 @@ public struct Connection : IEquatable<Connection>
     /// <summary>
     /// Position of the first block.
     /// </summary>
-    public ushort3 From;
+    public int3 From;
 
     /// <summary>
     /// Position of the second block.
     /// </summary>
-    public ushort3 To;
+    public int3 To;
 
     /// <summary>
     /// Position of the voxel that this connection connects from, from <see cref="From"/>.
     /// </summary>
-    public ushort3 FromVoxel;
+    public byte3 FromVoxel;
 
     /// <summary>
     /// Position of the voxel that this connection connects to, from <see cref="To"/>.
     /// </summary>
-    public ushort3 ToVoxel;
+    public byte3 ToVoxel;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Connection"/> struct.
@@ -48,7 +48,7 @@ public struct Connection : IEquatable<Connection>
     /// <param name="to">Position of the second block.</param>
     /// <param name="fromVoxel">Position of the voxel that this connection connects from, from <paramref name="from"/>.</param>
     /// <param name="toVoxel">Position of the voxel that this connection connects to, from <paramref name="to"/>.</param>
-    public Connection(ushort3 from, ushort3 to, ushort3 fromVoxel, ushort3 toVoxel)
+    public Connection(int3 from, int3 to, byte3 fromVoxel, byte3 toVoxel)
     {
         From = from;
         To = to;
@@ -96,7 +96,7 @@ public struct Connection : IEquatable<Connection>
         ushort3 fromVoxel = reader.ReadVec3US();
         ushort3 toVoxel = reader.ReadVec3US();
 
-        return new Connection(from, to, fromVoxel, toVoxel);
+        return new Connection(from, to, (byte3)fromVoxel, (byte3)toVoxel);
     }
 
     /// <summary>
@@ -107,8 +107,8 @@ public struct Connection : IEquatable<Connection>
     {
         ThrowIfNull(writer, nameof(writer));
 
-        writer.WriteUshort3(From);
-        writer.WriteUshort3(To);
+        writer.WriteUshort3((ushort3)From);
+        writer.WriteUshort3((ushort3)To);
         writer.WriteUshort3(FromVoxel);
         writer.WriteUshort3(ToVoxel);
     }

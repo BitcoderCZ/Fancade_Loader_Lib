@@ -16,7 +16,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Runtime.Utils.ThrowHelper;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

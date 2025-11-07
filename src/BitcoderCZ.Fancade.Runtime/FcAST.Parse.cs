@@ -248,7 +248,7 @@ public sealed partial class FcAST
                 {
                     for (int x = 0; x < blocks.Size.X; x++)
                     {
-                        ushort3 pos = new ushort3(x, y, z);
+                        var pos = new int3(x, y, z);
 
                         if (blocks.GetBlockUnchecked(pos) != 0)
                         {
@@ -281,7 +281,7 @@ public sealed partial class FcAST
 
                         if (!isVoid)
                         {
-                            _nonVoidOutputs.Add((new OutsideConnection((byte3)connection.ToVoxel, connection.From, (byte3)connection.FromVoxel), GetTerminal(connection.From, (byte3)connection.FromVoxel)));
+                            _nonVoidOutputs.Add((new OutsideConnection(connection.ToVoxel, connection.From, connection.FromVoxel), GetTerminal(connection.From, connection.FromVoxel)));
                         }
                     }
                 }
@@ -290,7 +290,7 @@ public sealed partial class FcAST
             _parsed = true;
         }
 
-        public bool TryCreateNode(ushort3 pos, [MaybeNullWhen(false)] out SyntaxNode node)
+        public bool TryCreateNode(int3 pos, [MaybeNullWhen(false)] out SyntaxNode node)
         {
             if (_nodes.ContainsKey(pos))
             {
@@ -329,7 +329,7 @@ public sealed partial class FcAST
 
                                         if (connection.IsFromOutside)
                                         {
-                                            _voidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, pos, termPos));
+                                            _voidInputs.Add(new OutsideConnection(connection.FromVoxel, pos, termPos));
                                         }
                                     }
                                 }
@@ -410,20 +410,20 @@ public sealed partial class FcAST
             }
         }
 
-        public bool TryGetOrCreateNode(ushort3 pos, [MaybeNullWhen(false)] out SyntaxNode node)
+        public bool TryGetOrCreateNode(int3 pos, [MaybeNullWhen(false)] out SyntaxNode node)
             => _nodes.TryGetValue(pos, out node) || TryCreateNode(pos, out node);
 
-        public SyntaxNode? GetNode(ushort3 pos)
+        public SyntaxNode? GetNode(int3 pos)
             => TryGetOrCreateNode(pos, out var node) ? node : null;
 
-        public SyntaxTerminal? GetTerminal(ushort3 pos, byte3 voxelPos)
+        public SyntaxTerminal? GetTerminal(int3 pos, byte3 voxelPos)
              => _globalCtx.PrefabInfos.TryGetValue(Prefab.Blocks.GetBlockOrDefault(pos), out var info) && !info.TerminalInfo.Terminals.Any(terminal => terminal.Position == voxelPos)
                 ? null
                 : TryGetOrCreateNode(pos, out var node)
                 ? new SyntaxTerminal(node, voxelPos)
                 : null;
 
-        public SyntaxTerminal? GetConnectedTerminal(ushort3 pos, byte3 voxelPos)
+        public SyntaxTerminal? GetConnectedTerminal(int3 pos, byte3 voxelPos)
         {
             foreach (var connection in GetConnectionsTo(Prefab.Connections, pos))
             {
@@ -431,7 +431,7 @@ public sealed partial class FcAST
                 {
                     if (connection.IsFromOutside)
                     {
-                        return new SyntaxTerminal(new OuterExpressionSyntax(Prefab.Id), (byte3)connection.FromVoxel);
+                        return new SyntaxTerminal(new OuterExpressionSyntax(Prefab.Id), connection.FromVoxel);
                     }
                     else
                     {
@@ -457,7 +457,7 @@ public sealed partial class FcAST
 
         public bool TryGetSetting(int3 pos, int index, out PrefabSetting setting)
         {
-            if (Prefab.Settings.TryGetValue((ushort3)pos, out var settings))
+            if (Prefab.Settings.TryGetValue(pos, out var settings))
             {
                 return settings.TryGetValue(index, out setting);
             }

@@ -184,7 +184,7 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
     /// </summary>
     /// <param name="position">The position to assign to the <see cref="RawPrefabSetting"/>s.</param>
     /// <returns>The converted <see cref="RawPrefabSetting"/>s.</returns>
-    public IEnumerable<RawPrefabSetting> ToRaw(ushort3 position)
+    public IEnumerable<RawPrefabSetting> ToRaw(int3 position)
     {
         if (!Any)
         {
@@ -193,7 +193,7 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
 
         if (_firstSetting is { } fistSetting)
         {
-            yield return new RawPrefabSetting(0, fistSetting.Type, position, fistSetting.Value);
+            yield return new RawPrefabSetting(0, fistSetting.Type, (ushort3)position, fistSetting.Value);
         }
 
         if (_settings is not null)
@@ -203,7 +203,7 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
                 var item = _settings[i];
                 if (item is { } setting)
                 {
-                    yield return new RawPrefabSetting((byte)(i + 1), setting.Type, position, setting.Value);
+                    yield return new RawPrefabSetting((byte)(i + 1), setting.Type, (ushort3)position, setting.Value);
                 }
             }
         }

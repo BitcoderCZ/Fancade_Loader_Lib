@@ -1,10 +1,5 @@
 ﻿using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
 

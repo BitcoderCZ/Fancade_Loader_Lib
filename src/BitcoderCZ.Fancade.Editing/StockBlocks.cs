@@ -97,8 +97,8 @@ public static class StockBlocks
                             {
                                 foreach (var terminal in def.Terminals)
                                 {
-                                    prefab.Settings[(ushort3)terminal.Position] = prefab.Settings
-                                        .GetValueOrDefault((ushort3)terminal.Position, PrefabSettings.Empty)
+                                    prefab.Settings[terminal.Position] = prefab.Settings
+                                        .GetValueOrDefault(terminal.Position, PrefabSettings.Empty)
                                         .WithValueAt(0, new PrefabSetting(
                                             SettingTypeUtils.FromTerminalSignalType(terminal.SignalType, terminal.Type == TerminalType.In),
                                             terminal.Name ?? TerminalDef.GetDefaultName(terminal.SignalType)));
