@@ -397,7 +397,7 @@ public sealed partial class FcAST
 
                             if (connection.IsFromOutside)
                             {
-                                _voidInputs.Add(new OutsideConnection((byte3)connection.FromVoxel, pos, termPos));
+                                _voidInputs.Add(new OutsideConnection(connection.FromVoxel, pos, termPos));
                             }
                         }
                     }
@@ -435,7 +435,7 @@ public sealed partial class FcAST
                     }
                     else
                     {
-                        var terminal = GetTerminal(connection.From, (byte3)connection.FromVoxel);
+                        var terminal = GetTerminal(connection.From, connection.FromVoxel);
 
                         if (terminal is null)
                         {
@@ -443,7 +443,7 @@ public sealed partial class FcAST
 
                             if (id != 0)
                             {
-                                terminal = new SyntaxTerminal(new ObjectExpressionSyntax(id, connection.From), (byte3)connection.FromVoxel);
+                                terminal = new SyntaxTerminal(new ObjectExpressionSyntax(id, connection.From), connection.FromVoxel);
                             }
                         }
 

@@ -100,7 +100,7 @@ public sealed partial class FcAstCompiler
     }
 
     /// <summary>
-    /// Transpiles a <see cref="FcAST"/> into C# and compiles it into a <see cref="IAstRunner"/>.
+    /// Transpiles a <see cref="FcAST"/> into C# and compiles it into an <see cref="IAstRunner"/>.
     /// </summary>
     /// <param name="ast">The <see cref="FcAST"/> to compile.</param>
     /// <param name="ctx">The <see cref="IRuntimeContext"/> to use.</param>
@@ -113,7 +113,7 @@ public sealed partial class FcAstCompiler
             : throw new CompilationErrorException(diagnostics);
 
     /// <summary>
-    /// Transpiles a <see cref="FcAST"/> into C# and compiles it into a <see cref="IAstRunner"/>.
+    /// Transpiles a <see cref="FcAST"/> into C# and compiles it into an <see cref="IAstRunner"/>.
     /// </summary>
     /// <param name="ast">The <see cref="FcAST"/> to compile.</param>
     /// <param name="ctx">The <see cref="IRuntimeContext"/> to use.</param>
@@ -140,7 +140,7 @@ public sealed partial class FcAstCompiler
         SyntaxTree tree = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(languageVersion: LanguageVersion.CSharp13));
 
         string assemblyName = Path.GetRandomFileName();
-        MetadataReference[] references =
+        IEnumerable<MetadataReference> references =
         [
             MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
             MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location),
@@ -1047,11 +1047,11 @@ public sealed partial class FcAstCompiler
                 {
                     var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
 
-                    VisitConnected(outerEnvironment.AST.Statements[environment.OuterPosition], (byte3)connection.ToVoxel, outerEnvironment, action, reverse);
+                    VisitConnected(outerEnvironment.AST.Statements[environment.OuterPosition], connection.ToVoxel, outerEnvironment, action, reverse);
                 }
                 else
                 {
-                    action(new(environment.Index, connection.To, (byte3)connection.ToVoxel));
+                    action(new(environment.Index, connection.To, connection.ToVoxel));
                 }
             }
         }
