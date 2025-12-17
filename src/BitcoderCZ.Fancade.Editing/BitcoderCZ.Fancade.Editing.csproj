@@ -12,9 +12,10 @@
     <PackageId>BitcoderCZ.Fancade.Editing</PackageId>
     <PackageTags>library;fancade</PackageTags>
     <Version>4.0.0-develop.20</Version>
-    <Description>Additional stuff for easier editing of fancade games.</Description>
+    <Description>Additional utils for easier editing of fancade games.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -37,6 +38,10 @@
   <ItemGroup>
     <EmbeddedResource Include="stockPrefabs.fcpl" />
     <EmbeddedResource Include="stockPrefabs.fcppl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/"/>
   </ItemGroup>
 
   <ItemGroup>
