@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="nuget.config" />
+  </Folder>
+  <Project Path="BitcoderCZ.Fancade.Editing.Tests/BitcoderCZ.Fancade.Editing.Tests.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Editing/BitcoderCZ.Fancade.Editing.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Runtime.Compiled/BitcoderCZ.Fancade.Runtime.Compiled.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Runtime.Simulated.Bullet/BitcoderCZ.Fancade.Runtime.Simulated.Bullet.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Runtime.Simulated.Tests/BitcoderCZ.Fancade.Runtime.Simulated.Tests.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Runtime.Simulated/BitcoderCZ.Fancade.Runtime.Simulated.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Runtime.Tests.Common/BitcoderCZ.Fancade.Runtime.Tests.Common.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Runtime.Tests/BitcoderCZ.Fancade.Runtime.Tests.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Runtime/BitcoderCZ.Fancade.Runtime.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Tests.Common/BitcoderCZ.Fancade.Tests.Common.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Tests/BitcoderCZ.Fancade.Tests.csproj" />
+  <Project Path="BitcoderCZ.Fancade/BitcoderCZ.Fancade.csproj" />
+</Solution>
