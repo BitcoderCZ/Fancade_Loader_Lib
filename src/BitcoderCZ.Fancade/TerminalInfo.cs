@@ -4,7 +4,7 @@
 
 using BitcoderCZ.Maths.Vectors;
 
-namespace BitcoderCZ.Fancade.Editing;
+namespace BitcoderCZ.Fancade;
 
 /// <summary>
 /// Info about a terminal.

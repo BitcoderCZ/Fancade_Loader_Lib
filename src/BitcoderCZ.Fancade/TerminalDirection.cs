@@ -6,7 +6,7 @@ using BitcoderCZ.Maths.Vectors;
 using System.ComponentModel;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
-namespace BitcoderCZ.Fancade.Editing;
+namespace BitcoderCZ.Fancade;
 
 /// <summary>
 /// Represents the direction of a terminal.
