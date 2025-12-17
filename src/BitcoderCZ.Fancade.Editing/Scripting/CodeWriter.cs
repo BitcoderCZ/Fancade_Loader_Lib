@@ -102,6 +102,89 @@ public sealed partial class CodeWriter
         _connector.SetLast(NopTerminalStore.Instance);
     }
 
+    /// <summary>
+    /// Places a custom block.
+    /// </summary>
+    /// <param name="blockDef">The block to place.</param>
+    /// <param name="expressions">Inputs to the block.</param>
+    /// <returns>Outputs of the placed block.</returns>
+    public IEnumerable<ITerminal> CustomBlock(BlockDef blockDef, params ReadOnlySpan<IExpression> expressions)
+        => CustomBlock(blockDef, expressions, null);
+
+    /// <summary>
+    /// Places a custom block.
+    /// </summary>
+    /// <param name="blockDef">The block to place.</param>
+    /// <param name="expressions">Inputs to the block.</param>
+    /// <param name="voidTerminalCallback">Callback for void outputs.</param>
+    /// <returns>Outputs of the placed block.</returns>
+    public IEnumerable<ITerminal> CustomBlock(BlockDef blockDef, ReadOnlySpan<IExpression> expressions, Action<CodeWriter, TerminalDef, Block>? voidTerminalCallback)
+    {
+        if (blockDef.BlockType is not ScriptBlockType.Active)
+        {
+            ThrowArgumentException($"{nameof(blockDef.BlockType)} must be {nameof(ScriptBlockType)}.{nameof(ScriptBlockType.Active)}", nameof(blockDef));
+        }
+
+        var block = _codePlacer.PlaceBlock(blockDef);
+
+        if (expressions.Length > 0)
+        {
+            int exprIndex = 0;
+            IDisposable? exprDisposable = null;
+            foreach (var terminal in block.Type.Terminals)
+            {
+                if (terminal is not { Type: TerminalType.In, SignalType: not SignalType.Error and not SignalType.Void })
+                {
+                    continue;
+                }
+
+                exprDisposable ??= ExpressionBlock();
+
+                _codePlacer.Connect(expressions[exprIndex].WriteTo(this), new BlockTerminal(block, terminal));
+
+                exprIndex++;
+
+                if (exprIndex >= expressions.Length)
+                {
+                    break;
+                }
+            }
+
+            exprDisposable?.Dispose();
+        }
+
+        /*int settingIndex = 0;
+        foreach (object setting in settings)
+        {
+            _codePlacer.SetSetting(block, settingIndex++, setting);
+        }*/
+
+        ConnectorAdd(new TerminalStore(block));
+
+        if (voidTerminalCallback is not null)
+        {
+            foreach (var terminal in block.Type.Terminals)
+            {
+                if (terminal is not { Type: TerminalType.Out, SignalType: SignalType.Void })
+                {
+                    continue;
+                }
+
+                _connector.SetLast(new TerminalStore(NopTerminal.Instance, [new BlockTerminal(block, terminal)]));
+                using (_codePlacer.StatementBlock())
+                {
+                    voidTerminalCallback(this, terminal, block);
+                }
+            }
+
+            _connector.SetLast(new TerminalStore(block));
+        }
+
+        return blockDef.Terminals
+            .Where(terminal => terminal is { SignalType: not SignalType.Error and not SignalType.Void, Type: TerminalType.In })
+            .Select(terminal => (ITerminal)new BlockTerminal(block, terminal));
+    }
+
     #region Statements
 
     /// <summary>
