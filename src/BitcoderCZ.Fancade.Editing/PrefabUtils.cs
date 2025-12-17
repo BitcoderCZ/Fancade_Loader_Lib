@@ -248,11 +248,7 @@ public static class PrefabUtils
     /// <param name="toVoxel">The end position of the fill, inclusive.</param>
     /// <param name="sideIndex">Index of the side to set the color.</param>
     /// <param name="color">The color to set.</param>
-#if NETSTANDARD
-    public static unsafe void FillColor(this Prefab prefab, int3 fromVoxel, int3 toVoxel, int sideIndex, FcColor color)
-#else
     public static void FillColor(this Prefab prefab, int3 fromVoxel, int3 toVoxel, int sideIndex, FcColor color)
-#endif
     {
         if (sideIndex < 0 || sideIndex > 5)
         {
@@ -482,4 +478,34 @@ public static class PrefabUtils
         => (minA.X <= maxB.X && maxA.X >= minB.X) &&
             (minA.Y <= maxB.Y && maxA.Y >= minB.Y) &&
             (minA.Z <= maxB.Z && maxA.Z >= minB.Z);
+
+#pragma warning disable CS1591
+    extension(Prefab)
+#pragma warning restore CS1591
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Prefab"/> class, with the default values for a level.
+        /// </summary>
+        /// <param name="id">Id of the prefab.</param>
+        /// <param name="name">Name of the prefab.</param>
+        /// <param name="sizeInBlocks">Size of the prefab, in blocks.</param>
+        /// <param name="colorStyle">Color palette of the prefab.</param>
+        /// <returns>The new instance of <see cref="Prefab"/>.</returns>
+        public static Prefab CreateScript(ushort id, string name, int2 sizeInBlocks, BlockVoxelsGenerator.ScriptColorStyle colorStyle)
+        {
+            var prefab = new Prefab(id)
+            {
+                Name = name,
+                Collider = PrefabCollider.None,
+                Type = PrefabType.Script,
+            };
+
+            foreach (var (pos, voxels) in BlockVoxelsGenerator.CreateScript(sizeInBlocks, colorStyle))
+            {
+                prefab.Add(new PrefabSegment(prefab.Id, pos, voxels));
+            }
+
+            return prefab;
+        }
+    }
 }
