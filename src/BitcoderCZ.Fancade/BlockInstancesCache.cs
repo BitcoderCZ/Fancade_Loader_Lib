@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Maths.Vectors;
+﻿// <copyright file="BlockInstancesCache.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Maths.Vectors;
 using System.Collections;
 using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;

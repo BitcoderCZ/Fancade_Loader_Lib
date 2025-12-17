@@ -1,4 +1,8 @@
-﻿#pragma warning disable IDE0130
+﻿// <copyright file="UnreachableException.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+#pragma warning disable IDE0130
 namespace System.Diagnostics;
 #pragma warning restore IDE0130
 

@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Editing.Scripting.Settings;
+﻿// <copyright file="PriceIncrease.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Editing.Scripting.Settings;
 
 /// <summary>
 /// Specifies how the price of an item increases, used by menu item.

@@ -1,4 +1,8 @@
-﻿using System.Numerics;
+﻿// <copyright file="ScreenInfo.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime.Utils;
 

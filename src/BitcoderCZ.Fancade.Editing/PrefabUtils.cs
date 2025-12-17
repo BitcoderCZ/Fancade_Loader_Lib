@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Editing.Utils;
+﻿// <copyright file="PrefabUtils.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Exceptions;
 using BitcoderCZ.Maths.Vectors;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;

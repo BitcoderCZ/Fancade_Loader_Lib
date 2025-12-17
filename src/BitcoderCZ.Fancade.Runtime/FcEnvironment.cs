@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Runtime.Syntax;
+﻿// <copyright file="FcEnvironment.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 

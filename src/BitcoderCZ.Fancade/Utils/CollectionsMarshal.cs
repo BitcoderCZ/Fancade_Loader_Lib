@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿// <copyright file="CollectionsMarshal.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Diagnostics;
 using System.Reflection;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

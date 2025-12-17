@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿// <copyright file="PrefabSegmentMesh.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 #if !NET8_0_OR_GREATER

@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.BulletSharp;
+﻿// <copyright file="RuntimeObject.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.BulletSharp;
 using System.Diagnostics;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;

@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Runtime.Exceptions;
+﻿// <copyright file="ThrowHelper.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;

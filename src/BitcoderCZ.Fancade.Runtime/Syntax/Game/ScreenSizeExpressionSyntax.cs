@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Maths.Vectors;
+﻿// <copyright file="ScreenSizeExpressionSyntax.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Maths.Vectors;
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax.Game;
 

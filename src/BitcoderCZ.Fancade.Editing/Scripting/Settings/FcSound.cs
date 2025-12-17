@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Editing.Scripting.Settings;
+﻿// <copyright file="FcSound.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Editing.Scripting.Settings;
 
 /// <summary>
 /// Represents a fancade sound, used by play sound.

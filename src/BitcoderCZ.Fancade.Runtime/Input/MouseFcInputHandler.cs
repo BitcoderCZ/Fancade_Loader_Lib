@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Editing.Scripting.Settings;
+﻿// <copyright file="MouseFcInputHandler.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Fancade.Runtime.Utils;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;

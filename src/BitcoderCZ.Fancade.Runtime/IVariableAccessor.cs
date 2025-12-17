@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Runtime;
+﻿// <copyright file="IVariableAccessor.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Runtime;
 
 /// <summary>
 /// Provides methods to access and modify variable.

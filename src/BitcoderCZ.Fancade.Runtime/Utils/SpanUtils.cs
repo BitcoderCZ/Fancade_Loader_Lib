@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Runtime.Utils;
+﻿// <copyright file="SpanUtils.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Runtime.Utils;
 
 internal static class SpanUtils
 {

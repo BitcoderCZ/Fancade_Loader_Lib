@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Runtime.Exceptions;
+﻿// <copyright file="FcTimeoutException.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Runtime.Exceptions;
 
 /// <summary>
 /// The exception that is thrown when the time allotted for a process or operation has expired.

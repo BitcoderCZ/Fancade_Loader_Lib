@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Raw;
+﻿// <copyright file="PrefabSetting.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Raw;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 

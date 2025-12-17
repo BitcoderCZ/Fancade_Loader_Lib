@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Editing;
+﻿// <copyright file="SyntaxNodeFactory.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Runtime.Syntax.Values;
 using BitcoderCZ.Maths.Vectors;
 using System.Numerics;

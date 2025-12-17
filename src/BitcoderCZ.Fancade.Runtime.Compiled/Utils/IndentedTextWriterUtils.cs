@@ -1,4 +1,8 @@
-﻿using System.CodeDom.Compiler;
+﻿// <copyright file="IndentedTextWriterUtils.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.CodeDom.Compiler;
 using System.Globalization;
 
 #if NET6_0_OR_GREATER

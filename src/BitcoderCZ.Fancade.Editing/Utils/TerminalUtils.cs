@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
+﻿// <copyright file="TerminalUtils.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter;
 
 namespace BitcoderCZ.Fancade.Editing.Utils;

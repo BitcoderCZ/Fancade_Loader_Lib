@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Maths.Vectors;
+﻿// <copyright file="CustomStatementSyntax.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Maths.Vectors;
 using System.Collections.Immutable;
 
 namespace BitcoderCZ.Fancade.Runtime.Syntax;

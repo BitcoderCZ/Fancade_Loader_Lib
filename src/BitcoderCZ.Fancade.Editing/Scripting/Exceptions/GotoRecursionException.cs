@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Editing.Scripting.Exceptions;
+﻿// <copyright file="GotoRecursionException.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Editing.Scripting.Exceptions;
 
 /// <summary>
 /// An <see cref="Exception"/> thrown when goto recursion is encountered.

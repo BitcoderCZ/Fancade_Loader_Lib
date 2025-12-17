@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Editing.Scripting.Settings;
+﻿// <copyright file="IFcInputHandler.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime.Input;

@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Maths.Vectors;
+﻿// <copyright file="IRuntimeContext.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime;

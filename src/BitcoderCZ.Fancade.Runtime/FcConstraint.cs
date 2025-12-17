@@ -1,4 +1,8 @@
-﻿using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+﻿// <copyright file="FcConstraint.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime;
 

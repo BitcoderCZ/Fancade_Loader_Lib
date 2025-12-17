@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Runtime.Exceptions;
+﻿// <copyright file="TooComplexGeometryException.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Runtime.Exceptions;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Exceptions;
 

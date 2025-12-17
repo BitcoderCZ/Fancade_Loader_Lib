@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿// <copyright file="FcRandom.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Diagnostics;
 
 namespace BitcoderCZ.Fancade.Runtime;
 

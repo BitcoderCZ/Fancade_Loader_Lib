@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Editing;
+﻿// <copyright file="AstRewriter.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Syntax.Control;
 using BitcoderCZ.Fancade.Runtime.Syntax.Game;

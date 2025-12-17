@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Editing.Scripting.Settings;
+﻿// <copyright file="Ranking.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Editing.Scripting.Settings;
 
 /// <summary>
 /// Determines how players are ranked, used by set score.

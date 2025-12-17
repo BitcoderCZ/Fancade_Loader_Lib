@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.BulletSharp;
+﻿// <copyright file="FcWorld.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.BulletSharp;
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
@@ -13,6 +17,9 @@ using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 
+/// <summary>
+/// A simulated fancade level.
+/// </summary>
 public sealed partial class FcWorld : IAstRunner
 {
     private readonly DiscreteDynamicsWorld _world;
@@ -623,9 +630,9 @@ public sealed partial class FcWorld : IAstRunner
 #if RELEASE
                         _connectorToObject[(prefab.Id, connection.From, (byte3)connection.FromVoxel)] = obj.Id;
 #else
-                        if (!_connectorToObject.TryAdd((prefab.Id, connection.From, (byte3)connection.FromVoxel), obj.Id))
+                        if (!_connectorToObject.TryAdd((prefab.Id, connection.From, connection.FromVoxel), obj.Id))
                         {
-                            Debug.Assert(_connectorToObject[(prefab.Id, connection.From, (byte3)connection.FromVoxel)] == obj.Id, "If a connector as already been added, it should be the same one that was to be added.");
+                            Debug.Assert(_connectorToObject[(prefab.Id, connection.From, connection.FromVoxel)] == obj.Id, "If a connector as already been added, it should be the same one that was to be added.");
                         }
 #endif
                     }

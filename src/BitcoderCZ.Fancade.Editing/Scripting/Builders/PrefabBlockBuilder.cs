@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Maths.Vectors;
+﻿// <copyright file="PrefabBlockBuilder.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Builders;

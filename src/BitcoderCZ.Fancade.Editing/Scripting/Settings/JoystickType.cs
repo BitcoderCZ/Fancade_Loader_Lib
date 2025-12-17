@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Editing.Scripting.Settings;
+﻿// <copyright file="JoystickType.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Editing.Scripting.Settings;
 
 /// <summary>
 /// Represents the type of a joystick.

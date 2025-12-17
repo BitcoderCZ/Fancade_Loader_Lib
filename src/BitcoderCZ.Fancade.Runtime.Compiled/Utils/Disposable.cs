@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Runtime.Compiled.Utils;
+﻿// <copyright file="Disposable.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Runtime.Compiled.Utils;
 
 internal struct Disposable : IDisposable
 {

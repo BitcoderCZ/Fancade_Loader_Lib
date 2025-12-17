@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Editing;
+﻿// <copyright file="FcAstCompiler.WriteExpression.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Runtime.Compiled.Utils;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Syntax;

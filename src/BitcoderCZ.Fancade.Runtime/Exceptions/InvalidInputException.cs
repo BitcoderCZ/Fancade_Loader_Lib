@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Runtime.Exceptions;
+﻿// <copyright file="InvalidInputException.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Runtime.Exceptions;
 
 /// <summary>
 /// A <see cref="FancadeException"/> thrown a prefab receives an invalid input.

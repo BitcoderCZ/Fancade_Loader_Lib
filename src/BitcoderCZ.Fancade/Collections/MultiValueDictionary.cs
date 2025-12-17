@@ -1,4 +1,8 @@
-﻿using System.Collections;
+﻿// <copyright file="MultiValueDictionary.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 

@@ -1,4 +1,8 @@
-﻿using System.Collections;
+﻿// <copyright file="EnumerableUtils.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Collections;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure

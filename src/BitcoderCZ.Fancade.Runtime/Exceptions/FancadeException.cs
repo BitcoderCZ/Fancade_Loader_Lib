@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Runtime.Exceptions;
+﻿// <copyright file="FancadeException.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Runtime.Exceptions;
 
 /// <summary>
 /// A base class for all fancade exceptions.

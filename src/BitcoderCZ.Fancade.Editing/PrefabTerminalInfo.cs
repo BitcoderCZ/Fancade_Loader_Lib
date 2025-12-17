@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Raw;
+﻿// <copyright file="PrefabTerminalInfo.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;

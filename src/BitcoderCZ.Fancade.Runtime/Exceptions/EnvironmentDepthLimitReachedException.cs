@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Runtime.Exceptions;
+﻿// <copyright file="EnvironmentDepthLimitReachedException.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Runtime.Exceptions;
 
 /// <summary>
 /// A <see cref="FancadeException"/> thrown when maximum ast depth (blocks inside blocks) is exceeded.

@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Editing;
+﻿// <copyright file="PrefabUsedCache.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;

@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade.Runtime;
+﻿// <copyright file="AstExtensions.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade.Runtime;
 
 //public static class AstExtensions
 //{

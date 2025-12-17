@@ -1,4 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+﻿// <copyright file="Constants.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime.Tests")]
 [assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime.Tests.Common")]

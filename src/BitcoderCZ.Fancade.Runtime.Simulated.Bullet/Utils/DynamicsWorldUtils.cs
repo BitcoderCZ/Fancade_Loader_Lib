@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.BulletSharp;
+﻿// <copyright file="DynamicsWorldUtils.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.BulletSharp;
 using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet.Utils;

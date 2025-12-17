@@ -1,4 +1,8 @@
-﻿using System.Numerics;
+﻿// <copyright file="VectorUtils.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime.Simulated.Bullet")]

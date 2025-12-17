@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Raw;
+﻿// <copyright file="PrefabSettings.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;

@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Editing.Scripting;
+﻿// <copyright file="Variable.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Editing.Scripting;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;

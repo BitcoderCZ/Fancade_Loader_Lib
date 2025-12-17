@@ -1,4 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+﻿// <copyright file="TooManyControlsException.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Runtime.CompilerServices;
 
 namespace BitcoderCZ.Fancade.Runtime.Exceptions;
 

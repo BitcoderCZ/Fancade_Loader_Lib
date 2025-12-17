@@ -1,4 +1,8 @@
-﻿namespace BitcoderCZ.Fancade;
+﻿// <copyright file="VoxelFace.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+namespace BitcoderCZ.Fancade;
 
 /// <summary>
 /// Represents a face of a voxel.

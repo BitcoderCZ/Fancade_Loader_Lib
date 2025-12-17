@@ -1,4 +1,8 @@
-﻿using System.Runtime.CompilerServices;
+﻿// <copyright file="TerminalOutput.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace BitcoderCZ.Fancade.Runtime;

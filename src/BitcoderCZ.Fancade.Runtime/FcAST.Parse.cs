@@ -1,4 +1,8 @@
-﻿using BitcoderCZ.Fancade.Collections;
+﻿// <copyright file="FcAST.Parse.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using BitcoderCZ.Fancade.Collections;
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Syntax;

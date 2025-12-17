@@ -1,4 +1,8 @@
-﻿using Microsoft.CodeAnalysis;
+﻿// <copyright file="CompilationErrorException.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using Microsoft.CodeAnalysis;
 
 namespace BitcoderCZ.Fancade.Runtime.Compiled.Exceptions;
 

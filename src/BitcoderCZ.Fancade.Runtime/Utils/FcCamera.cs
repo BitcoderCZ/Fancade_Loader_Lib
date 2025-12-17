@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿// <copyright file="FcCamera.cs" company="BitcoderCZ">
+// Copyright (c) BitcoderCZ. All rights reserved.
+// </copyright>
+
+using System.Diagnostics;
 using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime.Utils;
