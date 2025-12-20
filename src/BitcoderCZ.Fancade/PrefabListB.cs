@@ -8,6 +8,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace BitcoderCZ.Fancade;
@@ -21,7 +23,7 @@ public sealed class PrefabListB
     private static readonly int StockCount = BitcoderCZ.Fancade.Raw.RawGame.CurrentNumbStockPrefabs;
     private const int MaxCustomCount = 512;
 
-    private readonly Prefab?[] _prefabs;
+    private readonly ListPrefab?[] _prefabs;
     private readonly SegmentData[] _segments;
 
     // make setable
@@ -39,11 +41,11 @@ public sealed class PrefabListB
     {
         ThrowHelper.ThrowIfNegative(maxCustomCount);
 
-        _prefabs = new Prefab?[StockCount + maxCustomCount];
+        _prefabs = new ListPrefab?[StockCount + maxCustomCount];
         _segments = new SegmentData[StockCount + maxCustomCount];
     }
 
-    private PrefabListB(Prefab?[] prefabs, SegmentData[] segments)
+    private PrefabListB(ListPrefab?[] prefabs, SegmentData[] segments)
     {
         _prefabs = prefabs;
         _segments = segments;
@@ -113,33 +115,202 @@ public sealed class PrefabListB
         }
     }
 
-    private void SetPrefabInternal(Prefab prefab)
-    {
-        var prefabSegments = new Dictionary<byte3, int>(prefab.Count);
-        foreach (var (segment, segmentId) in prefab.EnumerateWithId())
-        {
-            prefabSegments[(byte3)segment.PosInPrefab] = segmentId;
-            _segments[segmentId] = new SegmentData(prefab.Id, (byte3)segment.PosInPrefab, segment.Voxels);
-        }
+    public bool ContainsPrefab(int prefabId)
+        => _prefabs[prefabId] is not null;
 
-        //Interlocked.Increment(ref _permanentIdCounter)
+    public ListPrefab AddPrefab(string name, PrefabType type, PrefabCollider collider)
+        => AddPrefab(name, type, collider, FcColorUtils.DefaultBackgroundColor, PrefabTerminalInfo.Empty, [byte3.Zero]);
+
+    public ListPrefab AddPrefab(string name, PrefabType type, PrefabCollider collider, FcColor defaultColor, PrefabTerminalInfo terminals, ReadOnlySpan<byte3> segmentPositions)
+    {
+        var prefab = new ListPrefab(Interlocked.Increment(ref _permanentIdCounter), name, type, collider, defaultColor, terminals);
+
+        prefab.Id = TotalSegmentCount;
         _prefabs[prefab.Id] = prefab;
 
-        /*foreach (var (_, segmentId) in prefab.EnumerateWithId())
+        int segmentIndex = 0;
+        foreach (var segmentPos in segmentPositions)
         {
-            _segments[segmentId].UpdateMesh(this);
-        }*/
+            prefab.Segments.Add(segmentPos, prefab.Id);
+            _segments[prefab.Id + segmentIndex] = new SegmentData(prefab.Id, segmentPos, Voxels.Empty);
+            segmentIndex++;
+        }
+
+        _customPrefabCount++;
+        _customSegmentCount += segmentPositions.Length;
+
+        ValidateState();
+
+        return prefab;
     }
 
-
-
-    public readonly struct PrefabEnumerable : IEnumerable<KeyValuePair<int, Prefab>>
+    public ListPrefab InsertPrefab(int id, string name, PrefabType type, PrefabCollider collider, FcColor defaultColor, PrefabTerminalInfo terminals, ReadOnlySpan<byte3> segmentPositions)
     {
-        private readonly Prefab?[] _prefabs;
+        EnsureCustom(id);
+
+        if (WillBeLastPrefab(id))
+        {
+            return AddPrefab(name, type, collider, defaultColor, terminals, segmentPositions);
+        }
+
+        if (!ContainsPrefab(id))
+        {
+            ThrowHelper.ThrowArgumentException($"{nameof(PrefabList)} must contain {nameof(id)}.", nameof(id));
+        }
+
+        ShiftBlockIds(id, segmentPositions.Length);
+
+        var prefab = new ListPrefab(Interlocked.Increment(ref _permanentIdCounter), name, type, collider, defaultColor, terminals);
+
+        prefab.Id = TotalSegmentCount;
+        _prefabs[prefab.Id] = prefab;
+
+        int segmentIndex = 0;
+        foreach (var segmentPos in segmentPositions)
+        {
+            prefab.Segments.Add(segmentPos, prefab.Id);
+            _segments[prefab.Id + segmentIndex] = new SegmentData(prefab.Id, segmentPos, Voxels.Empty);
+            segmentIndex++;
+        }
+
+        _customPrefabCount++;
+        _customSegmentCount += segmentPositions.Length;
+
+        ValidateState();
+
+        return prefab;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void EnsureCustom(ListPrefab prefab)
+    {
+        if (prefab.Id < StockCount)
+        {
+            ThrowHelper.ThrowArgumentOutOfRangeException(nameof(prefab), $"{nameof(prefab)} cannot be stock.");
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void EnsureCustom(int prefabId, [CallerArgumentExpression("prefabId")] string paramName = "")
+    {
+        if (prefabId < StockCount)
+        {
+            ThrowHelper.ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be stock.");
+        }
+    }
+
+    // idShiftStart - 1 less than the first id to shift (blockId > idShiftStart)
+    private void ShiftBlockIds(int idShiftStart, int shiftAmount)
+    {
+        Debug.Assert(shiftAmount != 0);
+
+        Span<KeyValuePair<byte3, int>> segments = stackalloc KeyValuePair<byte3, int>[Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize];
+
+        for (int i = Math.Max(idShiftStart - (Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize), 0); i < TotalSegmentCount; i++)
+        {
+            if (_segments[i].PrefabId >= idShiftStart)
+            {
+                _segments[i].PrefabId += shiftAmount;
+            }
+
+            if (_prefabs[i] is { } prefab)
+            {
+                prefab.Id += shiftAmount;
+
+                Debug.Assert(prefab.Segments.Count <= segments.Length);
+                int segmentCount = prefab.CopySegmentsTo(segments);
+
+                foreach (var segment in segments[..segmentCount])
+                {
+                    if (segment.Value >= idShiftStart)
+                    {
+                        prefab.Segments[segment.Key] = segment.Value + shiftAmount;
+                    }
+                }
+            }
+        }
+
+        _prefabs.AsSpan(idShiftStart, TotalSegmentCount - idShiftStart)
+            .CopyTo(_prefabs.AsSpan(idShiftStart + shiftAmount));
+        _segments.AsSpan(idShiftStart, TotalSegmentCount - idShiftStart)
+            .CopyTo(_segments.AsSpan(idShiftStart + shiftAmount));
+
+        if (shiftAmount < 0)
+        {
+            _prefabs.AsSpan(TotalSegmentCount + shiftAmount).Clear();
+            _segments.AsSpan(TotalSegmentCount + shiftAmount).Clear();
+        }
+    }
+
+    [Conditional("DEBUG")]
+    private void ValidateState()
+    {
+        var segments = new HashSet<(int PrefabId, int3 PosInPrefab)>(StockCount + _customSegmentCount);
+
+        // segments don't repeat
+        for (int i = 0; i < StockCount + _customSegmentCount; i++)
+        {
+            var segment = _segments[i];
+
+            if (!segments.Add((segment.PrefabId, segment.PosInPrefab)))
+            {
+                Debug.Fail($"Repeated segment, prefab id: {segment.PrefabId}, pos: {segment.PosInPrefab}")
+            }
+        }
+
+        // "air"
+        Debug.Assert(_segments[0] == default);
+
+        // segments are valid up to count
+        for (int i = 1; i < _segments.Length; i++)
+        {
+            Debug.Assert(_segments[i] != default == (i < StockCount + _customSegmentCount));
+        }
+
+        // validate prefab cound and segment order
+        int customPrefabCount = 0;
+        for (int i = StockCount; i < _segments.Length; i++)
+        {
+            if (_prefabs[i] is { } prefabData)
+            {
+                customPrefabCount++;
+
+                foreach (var item in prefabData.Segments)
+                {
+                    var segment = _segments[item.Value];
+
+                    Debug.Assert(segment.PrefabId == i);
+                    Debug.Assert(segment.PosInPrefab == item.Key);
+                }
+            }
+        }
+
+        Debug.Assert(customPrefabCount == _customPrefabCount);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsLastPrefab(ListPrefab prefab)
+          => IsLastPrefab(prefab.Id, prefab.Segments.Count);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsLastPrefab(int prefabId, int segmentCount)
+        => prefabId + segmentCount >= TotalSegmentCount;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool WillBeLastPrefab(ListPrefab prefab)
+        => WillBeLastPrefab(prefab.Id);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool WillBeLastPrefab(int prefabId)
+        => prefabId == TotalSegmentCount;
+
+    public readonly struct PrefabEnumerable : IEnumerable<KeyValuePair<int, ListPrefab>>
+    {
+        private readonly ListPrefab?[] _prefabs;
         private readonly int _skip;
         private readonly int _take;
 
-        internal PrefabEnumerable(Prefab?[] prefabs, int skip, int take)
+        internal PrefabEnumerable(ListPrefab?[] prefabs, int skip, int take)
         {
             _prefabs = prefabs;
             _skip = skip;
@@ -149,22 +320,22 @@ public sealed class PrefabListB
         public PrefabEnumerator GetEnumerator()
             => new PrefabEnumerator(_prefabs, _skip, _take);
 
-        IEnumerator<KeyValuePair<int, Prefab>> IEnumerable<KeyValuePair<int, Prefab>>.GetEnumerator()
+        IEnumerator<KeyValuePair<int, ListPrefab>> IEnumerable<KeyValuePair<int, ListPrefab>>.GetEnumerator()
             => GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
     }
 
-    public struct PrefabEnumerator : IEnumerator<KeyValuePair<int, Prefab>>
+    public struct PrefabEnumerator : IEnumerator<KeyValuePair<int, ListPrefab>>
     {
-        private readonly Prefab?[] _prefabs;
+        private readonly ListPrefab?[] _prefabs;
         private readonly int _skip;
         private readonly int _take;
         private int _index;
-        private KeyValuePair<int, Prefab> _current;
+        private KeyValuePair<int, ListPrefab> _current;
 
-        internal PrefabEnumerator(Prefab?[] prefabs, int skip, int take)
+        internal PrefabEnumerator(ListPrefab?[] prefabs, int skip, int take)
         {
             _prefabs = prefabs;
             _skip = skip;
@@ -173,7 +344,7 @@ public sealed class PrefabListB
             _current = default;
         }
 
-        public readonly KeyValuePair<int, Prefab> Current => _current;
+        public readonly KeyValuePair<int, ListPrefab> Current => _current;
 
         readonly object IEnumerator.Current => Current;
 
@@ -185,7 +356,7 @@ public sealed class PrefabListB
                 var prefab = _prefabs[actualIndex];
                 if (prefab is not null)
                 {
-                    _current = new KeyValuePair<int, Prefab>(actualIndex, prefab);
+                    _current = new KeyValuePair<int, ListPrefab>(actualIndex, prefab);
                     return true;
                 }
             }
@@ -204,10 +375,8 @@ public sealed class PrefabListB
         }
     }
 
-    internal struct SegmentData : IEquatable<SegmentData>
+    public struct SegmentData : IEquatable<SegmentData>
     {
-        private readonly Voxels _voxels;
-
         public SegmentData(int prefabId, byte3 posInPrefab, Voxels voxels)
             : this(prefabId, posInPrefab, voxels, Voxels.Empty)
         {
@@ -217,7 +386,7 @@ public sealed class PrefabListB
         {
             PrefabId = prefabId;
             PosInPrefab = posInPrefab;
-            _voxels = voxels;
+            Voxels = voxels;
             VisibleFaces = visibleFaces;
         }
 
@@ -225,7 +394,7 @@ public sealed class PrefabListB
 
         public byte3 PosInPrefab { get; internal set; }
 
-        public readonly Voxels Voxels => _voxels;
+        public Voxels Voxels { get; set; }
 
         public Voxels VisibleFaces { get; private set; }
 

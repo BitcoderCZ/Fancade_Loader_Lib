@@ -7,7 +7,7 @@ using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
 
-namespace BitcoderCZ.Fancade.Editing;
+namespace BitcoderCZ.Fancade;
 
 /// <summary>
 /// Info about the terminals of a prefab.
@@ -23,6 +23,14 @@ public readonly struct PrefabTerminalInfo
         Terminals = terminals;
         VoidTerminalCount = Terminals.Count(terminal => terminal.Type == SignalType.Void);
     }
+
+    /// <summary>
+    /// Gets an empty <see cref="PrefabTerminalInfo"/>.
+    /// </summary>
+    /// <value>An empty <see cref="PrefabTerminalInfo"/>.</value>
+#pragma warning disable IDE0301 // Simplify collection initialization
+    public static PrefabTerminalInfo Empty => new PrefabTerminalInfo(ImmutableArray<TerminalInfo>.Empty);
+#pragma warning restore IDE0301 // Simplify collection initialization
 
     /// <summary>
     /// Gets the terminals of the prefab.
@@ -185,8 +193,8 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    var terminalType = ResolveBlockTerminalType(insidePrefab, (byte3)connection.ToVoxel, getPrefab);
-                    var terminalDirection = prefab.GetTerminalDirection((byte3)connection.FromVoxel);
+                    var terminalType = ResolveBlockTerminalType(insidePrefab, connection.ToVoxel, getPrefab);
+                    var terminalDirection = prefab.GetTerminalDirection(connection.FromVoxel);
 
                     // TODO: find how fancade actually does this
                     if (terminalType is SignalType.Obj && terminalDirection is not TerminalDirection.NegativeX)
@@ -194,7 +202,7 @@ public readonly struct PrefabTerminalInfo
                         continue;
                     }
 
-                    infoBuilder.Add(new TerminalInfo((byte3)connection.FromVoxel, terminalType, terminalDirection, true));
+                    infoBuilder.Add(new TerminalInfo(connection.FromVoxel, terminalType, terminalDirection, true));
                 }
             }
             else if (connection.IsToOutside && !infoBuilder.Any(terminal => terminal.Position == connection.ToVoxel))
@@ -203,7 +211,7 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    infoBuilder.Add(new TerminalInfo((byte3)connection.ToVoxel, ResolveBlockTerminalType(insidePrefab, (byte3)connection.FromVoxel, getPrefab), prefab.GetTerminalDirection((byte3)connection.ToVoxel), false));
+                    infoBuilder.Add(new TerminalInfo(connection.ToVoxel, ResolveBlockTerminalType(insidePrefab, connection.FromVoxel, getPrefab), prefab.GetTerminalDirection(connection.ToVoxel), false));
                 }
             }
         }
@@ -283,7 +291,7 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    return ResolveBlockTerminalType(insidePrefab, (byte3)connection.ToVoxel, getPrefab, depth + 1);
+                    return ResolveBlockTerminalType(insidePrefab, connection.ToVoxel, getPrefab, depth + 1);
                 }
             }
             else if (connection.IsToOutside && connection.ToVoxel == terminalPos)
@@ -292,7 +300,7 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    return ResolveBlockTerminalType(insidePrefab, (byte3)connection.FromVoxel, getPrefab, depth + 1);
+                    return ResolveBlockTerminalType(insidePrefab, connection.FromVoxel, getPrefab, depth + 1);
                 }
             }
         }
