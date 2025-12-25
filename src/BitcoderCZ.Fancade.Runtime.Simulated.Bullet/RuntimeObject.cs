@@ -3,6 +3,8 @@
 // </copyright>
 
 using BitcoderCZ.BulletSharp;
+using BitcoderCZ.BulletSharp.Common;
+using BitcoderCZ.BulletSharp.Dynamics;
 using System.Diagnostics;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
@@ -12,7 +14,7 @@ namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 /// <summary>
 /// Represents a runtime fancade object.
 /// </summary>
-public sealed class RuntimeObject : IDisposable
+public sealed class RuntimeObject
 {
     private float _mass = 1f;
 
@@ -111,7 +113,8 @@ public sealed class RuntimeObject : IDisposable
         get => _mass;
         set
         {
-            RigidBody.SetMassProps(value, RigidBody.CollisionShape.CalculateLocalInertia(value));
+            RigidBody.CollisionShape.CalculateLocalInertia(value, out var inertia);
+            RigidBody.SetMassProps(value, inertia);
             RigidBody.UpdateInertiaTensor();
             if (RigidBody.IsInWorld)
             {
@@ -156,7 +159,7 @@ public sealed class RuntimeObject : IDisposable
     public void SetRotPos(Vector3? position, Quaternion? rotation)
     {
         Debug.Assert(RigidBody.MotionState is not null, "MotionState should not be null.");
-        var mat = RigidBody.MotionState.WorldTransform;
+        RigidBody.MotionState.GetWorldTransform(out var mat);
 
         if (position is { } pos)
         {
@@ -167,21 +170,14 @@ public sealed class RuntimeObject : IDisposable
         if (rotation is { } rot)
         {
             Rot = rot;
-            mat.SetRotation(rot, out mat);
+            mat.SetRotation(rot);
         }
 
         if (position is not null || rotation is not null)
         {
             RigidBody.WorldTransform = mat;
-            RigidBody.MotionState.WorldTransform = mat;
+            RigidBody.MotionState.SetWorldTransform(in mat);
         }
-    }
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        RigidBody.MotionState?.Dispose();
-        RigidBody.Dispose();
     }
 
     internal RuntimeObject Clone(FcObject newId, RigidBody newBody, bool userCreated)
@@ -201,7 +197,7 @@ public sealed class RuntimeObject : IDisposable
         var wt = RigidBody.WorldTransform;
 
         Pos = wt.Translation;
-        Rot = wt.GetRotation();
+        Rot = Quaternion.CreateFromRotationMatrix(wt);
     }
 
     internal void Reset(DynamicsWorld world, IRuntimeContext ctx)

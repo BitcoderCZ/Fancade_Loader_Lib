@@ -3,6 +3,8 @@
 // </copyright>
 
 using BitcoderCZ.BulletSharp;
+using BitcoderCZ.BulletSharp.Collision.CollisionDispatch;
+using BitcoderCZ.BulletSharp.Dynamics.Constraints;
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
@@ -149,7 +151,7 @@ public sealed partial class FcWorld
                 return (false, Vector3.Zero, FcObject.Null);
             }
 
-            using (var callback = new ClosestRayResultCallback(ref from, ref to))
+            using (var callback = ClosestRayResultCallback.Rent(from, to))
             {
                 _world._world.RayTest(from, to, callback);
 
@@ -190,10 +192,9 @@ public sealed partial class FcWorld
                         if (con.RigidBodyA == rObject.RigidBody || con.RigidBodyB == rObject.RigidBody)
                         {
                             _world._constraints.RemoveAt(i);
-                            Debug.Assert(con.Userobject is FcConstraint, $"Userobject should be {nameof(FcConstraint)}.");
-                            _world._idToConstraint.Remove((FcConstraint)con.Userobject);
+                            Debug.Assert(con.UserConstraintPtr is FcConstraint, $"UserConstraintPtr should be {nameof(FcConstraint)}.");
+                            _world._idToConstraint.Remove((FcConstraint)con.UserConstraintPtr);
                             _world._world.RemoveConstraint(con);
-                            con.Dispose();
                             i--;
                         }
                     }
@@ -224,7 +225,7 @@ public sealed partial class FcWorld
             newRigidBody.UpdateInertiaTensor();
 
             RuntimeObject newObject = rOriginal.Clone(newId, newRigidBody, true);
-            newObject.RigidBody.CollisionShape = rOriginal.RigidBody.CollisionShape;
+            newObject.RigidBody.SetCollisionShape(rOriginal.RigidBody.CollisionShape);
 
             if (!rOriginal.IsFixed)
             {
@@ -256,21 +257,17 @@ public sealed partial class FcWorld
                 if (con.RigidBodyA == rObject.RigidBody || con.RigidBodyB == rObject.RigidBody)
                 {
                     _world._constraints.RemoveAt(i);
-                    Debug.Assert(con.Userobject is FcConstraint, $"Userobject should be {nameof(FcConstraint)}.");
-                    _world._idToConstraint.Remove((FcConstraint)con.Userobject);
+                    Debug.Assert(con.UserConstraintPtr is FcConstraint, $"UserConstraintPtr should be {nameof(FcConstraint)}.");
+                    _world._idToConstraint.Remove((FcConstraint)con.UserConstraintPtr);
                     _world._world.RemoveConstraint(con);
-                    con.Dispose();
                     i--;
                 }
             }
 
-            rObject.RigidBody.MotionState?.Dispose();
             if (rObject.RigidBody.IsInWorld)
             {
                 _world._world.RemoveRigidBody(rObject.RigidBody);
             }
-
-            rObject.RigidBody.Dispose();
 
             _world._objects.Remove(rObject);
             _world._idToObject.Remove(rObject.Id);
@@ -493,14 +490,14 @@ public sealed partial class FcWorld
 
             Generic6DofSpring2Constraint constraint = new Generic6DofSpring2Constraint(rBase.RigidBody, rPart.RigidBody, frameInA, frameInB, RotateOrder.XYZ);
 
-            constraint.AngularLowerLimit = Vector3.Zero;
-            constraint.AngularUpperLimit = Vector3.Zero;
+            constraint.SetAngularLowerLimit(Vector3.Zero);
+            constraint.SetAngularUpperLimit(Vector3.Zero);
 
             _world._constraints.Add(constraint);
 
             var id = (FcConstraint)_world._constraintIdCounter++;
 
-            constraint.Userobject = id;
+            constraint.UserConstraintPtr = id;
             _world._idToConstraint.Add(id, constraint);
 
             _world._world.AddConstraint(constraint, true);
@@ -514,8 +511,8 @@ public sealed partial class FcWorld
                 return;
             }
 
-            bConstraint.LinearLowerLimit = lower;
-            bConstraint.LinearUpperLimit = upper;
+            bConstraint.SetLinearLowerLimit(lower);
+            bConstraint.SetLinearUpperLimit(upper);
 
             bConstraint.RigidBodyB.Activate(true);
         }
@@ -527,8 +524,8 @@ public sealed partial class FcWorld
                 return;
             }
 
-            bConstraint.AngularLowerLimit = lower * (MathF.PI / 180f);
-            bConstraint.AngularUpperLimit = upper * (MathF.PI / 180f);
+            bConstraint.SetAngularLowerLimit(lower * (MathF.PI / 180f));
+            bConstraint.SetAngularUpperLimit(upper * (MathF.PI / 180f));
 
             bConstraint.RigidBodyB.Activate(true);
         }

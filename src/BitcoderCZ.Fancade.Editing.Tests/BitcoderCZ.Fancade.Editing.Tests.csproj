@@ -9,11 +9,11 @@
 
   <ItemGroup>
     <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
-    <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
+    <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="TUnit" Version="0.61.39" />
+    <PackageReference Include="TUnit" Version="1.6.5" />
   </ItemGroup>
 
   <ItemGroup>

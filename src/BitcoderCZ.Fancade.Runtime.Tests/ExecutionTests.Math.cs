@@ -67,8 +67,8 @@ public partial class ExecutionTests
 
         writer.Inspect(expression);
 
-        var compiled = Compile(writer);
+        var tester = AstRunnerTester.Create(writer);
 
-        await Assert.That(compiled).Inspects([new(expected) { Count = 1, }], runFor: 1);
+        await Assert.That(tester).Inspects(new(expected) { Count = 1, });
     }
 }

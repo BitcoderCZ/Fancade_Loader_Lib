@@ -332,7 +332,7 @@ public class PrefabUtilsTests
                         }
                         else
                         {
-                            await Assert.That(voxels[pos]).IsEqualTo(default);
+                            await Assert.That(voxels[pos]).IsEqualTo(default(Voxel));
                         }
                     }
                 }

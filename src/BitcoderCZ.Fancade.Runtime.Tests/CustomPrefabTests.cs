@@ -58,9 +58,9 @@ public class CustomPrefabTests
 
         builder.Build(int3.Zero);
 
-        var compiled = Compile(prefabs);
+        var tester = AstRunnerTester.Create(prefabs, options: new() { RunFor = 2, });
 
-        await Assert.That(compiled).Inspects([new InspectAssertExpected(1f) { Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame }], runFor: 2);
+        await Assert.That(tester).Inspects(new InspectAssertExpected(1f) { Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame });
     }
 
     [Test]
@@ -84,17 +84,15 @@ public class CustomPrefabTests
         builder.AddBlockSegments(blocks);
 
         builder.Build(int3.Zero);
-        var compiled = Compile(prefabs);
+        var tester = AstRunnerTester.Create(prefabs);
 
-        await Assert.That(compiled).Inspects(
-        [
-            new(0f) { Order = 0, FrameCount = 1, },
-            new(1f) { Order = 1, FrameCount = 1, },
-            new(2f) { Order = 2, FrameCount = 1, },
-            new(3f) { Order = 3, FrameCount = 1, },
-            new(4f) { Order = 4, FrameCount = 1, },
-            new(5f) { Order = 5, FrameCount = 1, },
-        ]);
+        await Assert.That(tester)
+            .Inspects(new(0f) { Order = 0, FrameCount = 1, })
+            .And.Inspects(new(1f) { Order = 1, FrameCount = 1, })
+            .And.Inspects(new(2f) { Order = 2, FrameCount = 1, })
+            .And.Inspects(new(3f) { Order = 3, FrameCount = 1, })
+            .And.Inspects(new(4f) { Order = 4, FrameCount = 1, })
+            .And.Inspects(new(5f) { Order = 5, FrameCount = 1, });
 
         void AddInspect(int3 pos, int count)
         {

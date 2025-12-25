@@ -2,7 +2,13 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.BulletSharp;
+using BitcoderCZ.BulletSharp.Collision.BroadphaseCollision;
+using BitcoderCZ.BulletSharp.Collision.CollisionDispatch;
+using BitcoderCZ.BulletSharp.Collision.CollisionShapes;
+using BitcoderCZ.BulletSharp.Collision.NarrowPhaseCollision;
+using BitcoderCZ.BulletSharp.Dynamics;
+using BitcoderCZ.BulletSharp.Dynamics.Constraints;
+using BitcoderCZ.BulletSharp.LinearMath;
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
@@ -61,7 +67,7 @@ public sealed partial class FcWorld : IAstRunner
         _prefabs = prefabs;
         _mainPrefab = mainId;
 
-        var collisionConf = new DefaultCollisionConfiguration();
+        var collisionConf = new DefaultCollisionConfiguration(new ());
         var dispatcher = new CollisionDispatcher(collisionConf);
         var broadphase = new DbvtBroadphase();
         var solver = new SequentialImpulseConstraintSolver();
@@ -197,7 +203,7 @@ public sealed partial class FcWorld : IAstRunner
             int idA = bodyA?.UserIndex ?? -1;
             int idB = bodyB?.UserIndex ?? -1;
 
-            Vector3 normalOnB = strongestPoint.NormalWorldOnB;
+            Vector3 normalOnB = strongestPoint._normalWorldOnB;
 
             if (idA != -1 && TryGetObject((FcObject)idA, out var rA) && rA.RigidBody.IsActive)
             {
@@ -278,7 +284,7 @@ public sealed partial class FcWorld : IAstRunner
             int idA = bodyA?.UserIndex ?? -1;
             int idB = bodyB?.UserIndex ?? -1;
 
-            Vector3 normalOnB = strongestPoint.NormalWorldOnB;
+            Vector3 normalOnB = strongestPoint._normalWorldOnB;
 
             if (idA != -1 && TryGetObject((FcObject)idA, out var rA) && rA.RigidBody.IsActive)
             {
@@ -330,11 +336,10 @@ public sealed partial class FcWorld : IAstRunner
         for (int i = 0; i < _constraints.Count; i++)
         {
             var con = _constraints[i];
-            Debug.Assert(con.Userobject is FcConstraint, $"The Userobject should be a {nameof(FcConstraint)}.");
+            Debug.Assert(con.UserConstraintPtr is FcConstraint, $"The UserConstraintPtr should be a {nameof(FcConstraint)}.");
 
-            _idToConstraint.Remove((FcConstraint)con.Userobject);
+            _idToConstraint.Remove((FcConstraint)con.UserConstraintPtr);
             _world.RemoveConstraint(con);
-            con.Dispose();
         }
 
         _constraints.Clear();
@@ -351,47 +356,23 @@ public sealed partial class FcWorld : IAstRunner
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) == 1)
-        {
-            return;
-        }
-
-        foreach (var shape in _collisionShapeCache)
-        {
-            shape.Value.Dispose();
-        }
-
-        foreach (var obj in _objects)
-        {
-            obj.Dispose();
-        }
-
-        foreach (var con in _constraints)
-        {
-            con.Dispose();
-        }
-
-        _groundPlane.Dispose();
-
-        _world.Dispose();
     }
 
     private static RigidBody BulletCreate(Vector3 position, Quaternion rotation, FcObject id)
     {
         CompoundShape shape = new CompoundShape(true, 0);
 
-        var motionState = new DefaultMotionState(Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position));
+        var motionState = new DefaultMotionState(Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position), Matrix4x4.Identity);
 
-        Vector3 localInertia = shape.CalculateLocalInertia(0f);
+        shape.CalculateLocalInertia(0f, out var localInertia);
 
         RigidBody body;
-        using (var rbInfo = new RigidBodyConstructionInfo(0f, motionState, shape, localInertia)
+        var rbInfo = new RigidBodyConstructionInfo(0f, motionState, shape, localInertia)
         {
             Friction = 0.5f,
-        })
-        {
-            body = new RigidBody(rbInfo);
-        }
+        };
+
+        body = new RigidBody(in rbInfo);
 
         body.UserIndex = id.Value;
 

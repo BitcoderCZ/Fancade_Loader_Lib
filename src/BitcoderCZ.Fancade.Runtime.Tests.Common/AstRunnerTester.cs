@@ -1,119 +1,141 @@
-﻿using BitcoderCZ.Fancade.Editing;
+using System.Collections.Specialized;
+using System.Diagnostics;
+using System.Numerics;
+using System.Runtime.Loader;
+using BitcoderCZ.Fancade.Editing;
+using BitcoderCZ.Fancade.Editing.Scripting;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
+using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Compiled;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
-using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.Loader;
-using System.Text;
-using TUnit.Assertions.AssertConditions;
+using TUnit.Assertions.Core;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests.Common;
 
-internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expected, int RunFor, TimeSpan Timeout, bool AllowOnlyExpectedInspects, (ushort, PrefabList)? Physics) : BaseAssertCondition<FcAST>
+public sealed class AstRunnerTester
 {
-    protected override string GetExpectation()
-    {
-        StringBuilder builder = new StringBuilder();
-
-        if (AllowOnlyExpectedInspects)
-        {
-            builder.Append("to inspect only: ");
-        }
-        else
-        {
-            builder.Append("to inspect: ");
-        }
-
-        for (int i = 0; i < Expected.Length; i++)
-        {
-            if (i != 0)
-            {
-                builder.Append(", ");
-            }
-
-            var expected = Expected[i];
-
-            builder.Append($"'{expected.Value}' of type {expected.Type}");
-
-            if (expected.Position is not null)
-            {
-                builder.Append($" at {expected.Position}");
-            }
-
-            if (expected.BoxArt is { } boxArt)
-            {
-                builder.Append(boxArt ? " when taking box art" : " when not taking box art");
-            }
-
-            if (expected.Count is not null)
-            {
-                builder.Append($" {expected.Count} {(expected.Count == 1 ? "time" : "times")} in total");
-            }
-
-            if (expected.FrameCount is not null)
-            {
-                builder.Append($" {expected.FrameCount} {(expected.Count == 1 ? "time" : "times")} per frame");
-            }
-
-            if (expected.Frequency is not null)
-            {
-                builder.Append($" {expected.Frequency}");
-            }
-
-            if (expected.Order is not null)
-            {
-                builder.Append($" with order {expected.Order}");
-            }
-        }
-
-        return builder.ToString();
-    }
-
-    protected override ValueTask<AssertionResult> GetResult(FcAST? actualValue, Exception? exception, AssertionMetadata assertionMetadata)
-    {
-        if (actualValue is null)
-        {
-            return AssertionResult.Fail("ast was null");
-        }
-
-        Debug.Assert(exception is null);
-
-        if (Expected.Any(expected => expected.BoxArt is not null))
-        {
-            var res = Run(actualValue, false);
-            return res.IsPassed
-                ? Run(actualValue, true)
-                : res;
-        }
-        else
-        {
-            return Run(actualValue);
-        }
-    }
-
-    private AssertionResult Run(FcAST ast, bool boxArt = false)
-    {
-        var assemblyLoadContext = new AssemblyLoadContext("TempTestFcAstCompile", isCollectible: true);
-
-        IEnumerable<Func<FcAST, IRuntimeContext, (IAstRunner Runner, string RunnerName)>> runnerFactories =
+    private static readonly IEnumerable<Func<AstRunnerTester, IRuntimeContext, AssemblyLoadContext, (IAstRunner Runner, string RunnerName)>> runnerFactories =
         [
-            (ast, ctx) => (new Interpreter(ast, ctx, Timeout), "Interpreter"),
-            (ast, ctx) => (FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext)
+            (tester, ctx, loadCtx) => (new Interpreter(tester._ast, ctx, tester._options.Timeout), "Interpreter"),
+            (tester, ctx, loadCtx) => (FcAstCompiler.Compile(tester._ast, ctx, new(loadCtx)
             {
-                Timeout = Timeout, StatementExecutionMode = FcAstCompiler.StatementExecutionMode.StateMachine,
-                TerminalInfos = Physics is null ? null : PrefabTerminalInfo.Create(Physics.Value.Item2),
+                Timeout = tester._options.Timeout,
+                StatementExecutionMode = FcAstCompiler.StatementExecutionMode.StateMachine,
                 HumanReadable = true,
             })!, "AstStateMachine"),
-            (ast, ctx) => (FcAstCompiler.Compile(ast, ctx, new(assemblyLoadContext)
+            (tester, ctx, loadCtx) => (FcAstCompiler.Compile(tester._ast, ctx, new(loadCtx)
             {
-                Timeout = Timeout,
-                StatementExecutionMode = FcAstCompiler.StatementExecutionMode.DirectCalls, TerminalInfos = null,
+                Timeout = tester._options.Timeout,
+                StatementExecutionMode = FcAstCompiler.StatementExecutionMode.DirectCalls,
                 HumanReadable = true,
             })!, "AstDirectCalls"),
         ];
+
+    private readonly FcAST _ast;
+    private readonly Options _options;
+    private readonly PhysicsConfig? _physicsConfig;
+    private readonly OrderedDictionary<InspectAssertExpected, AssertionResult?> _expectedInspects = [];
+    private readonly Lock _runLock = new();
+
+    private bool _ran;
+    private AssertionResult? _nonExpectedAssert;
+
+    private AstRunnerTester(FcAST ast, Options options, PhysicsConfig? physicsConfig)
+    {
+        _ast = ast;
+        _options = options;
+        _physicsConfig = physicsConfig;
+    }
+
+    public static AstRunnerTester Create(FcAST ast, Options? options = null)
+        => new AstRunnerTester(ast, options ?? new(), null);
+
+    public static AstRunnerTester CreatePhysics(FcAST ast, PrefabList prefabs, ushort? levelId = null, Options? options = null)
+        => new AstRunnerTester(ast, options ?? new(), new(levelId ?? RawGame.CurrentNumbStockPrefabs, prefabs));
+
+    public static AstRunnerTester Create(PrefabList prefabs, ushort? levelId = null, Options? options = null)
+    {
+        prefabs.AddImplicitConnections();
+
+        levelId ??= RawGame.CurrentNumbStockPrefabs;
+        return Create(FcAST.Parse(prefabs, levelId.Value), options);
+    }
+
+    public static AstRunnerTester CreatePhysics(PrefabList prefabs, ushort? levelId = null, Options? options = null)
+    {
+        prefabs.AddImplicitConnections();
+
+        levelId ??= RawGame.CurrentNumbStockPrefabs;
+        return CreatePhysics(FcAST.Parse(prefabs, levelId.Value), prefabs, levelId, options);
+    }
+
+    public static AstRunnerTester Create(BlockBuilder builder, ushort? levelId = null, Options? options = null)
+        => Create(new PrefabList([(Prefab)builder.Build(int3.Zero)]), levelId, options);
+
+    public static AstRunnerTester CreatePhysics(BlockBuilder builder, ushort? levelId = null, Options? options = null)
+        => CreatePhysics(new PrefabList([(Prefab)builder.Build(int3.Zero)]), levelId, options);
+
+    public static AstRunnerTester Create(CodeWriter writer, ushort? levelId = null, Options? options = null)
+    {
+        writer.Flush();
+        return Create(writer.Placer.Builder, levelId, options);
+    }
+
+    public static AstRunnerTester CreatePhysics(CodeWriter writer, ushort? levelId = null, Options? options = null)
+    {
+        writer.Flush();
+        return CreatePhysics(writer.Placer.Builder, levelId, options);
+    }
+
+    public static AstRunnerTester Create(CodeWriter writer, PrefabList prefabs, ushort? levelId = null, Options? options = null)
+    {
+        writer.Flush();
+        var prefab = (Prefab)writer.Placer.Builder.Build(int3.Zero);
+
+        Debug.Assert(prefabs.ContainsPrefab(prefab.Id));
+        prefabs.AddImplicitConnections();
+
+        return Create(prefabs, levelId ?? prefab.Id, options);
+    }
+
+    public static AstRunnerTester CreatePhysics(CodeWriter writer, PrefabList prefabs, ushort? levelId = null, Options? options = null)
+    {
+        writer.Flush();
+        var prefab = (Prefab)writer.Placer.Builder.Build(int3.Zero);
+
+        Debug.Assert(prefabs.ContainsPrefab(prefab.Id));
+        prefabs.AddImplicitConnections();
+
+        return CreatePhysics(prefabs, levelId ?? prefab.Id, options);
+    }
+
+    public void AddExpectedInspect(InspectAssertExpected inspect)
+        => _expectedInspects.Add(inspect, null);
+
+    public AssertionResult GetResult(InspectAssertExpected inspect)
+    {
+        lock (_runLock)
+        {
+            if (!_ran)
+            {
+                RunAll();
+                _ran = true;
+            }
+        }
+
+        if (_nonExpectedAssert is { } nonExpectedAssert)
+        {
+            return nonExpectedAssert;
+        }
+
+        return _expectedInspects[inspect] ?? AssertionResult.Passed;
+    }
+
+    private void RunAll()
+    {
+        var assemblyLoadContext = new AssemblyLoadContext("TempTestFcAstCompile", isCollectible: true);
 
         try
         {
@@ -121,40 +143,31 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
 
             foreach (var factory in runnerFactories)
             {
-                var ctx = new InspectRuntimeContext(inspectQueue)
-                {
-                    TakingBoxArt = boxArt,
-                };
+                var ctx = new InspectRuntimeContext(inspectQueue);
 
                 IAstRunner runner;
                 string runnerName = "Unknown";
-                if (Physics is { } physics)
+                if (_physicsConfig is { } physics)
                 {
-                    runner = FcWorld.Create(physics.Item1, physics.Item2, ctx, physicsCtx =>
+                    runner = FcWorld.Create(physics.LevelId, physics.Prefabs, ctx, physicsCtx =>
                     {
-                        var item = factory(ast, physicsCtx);
+                        var item = factory(this, physicsCtx, assemblyLoadContext);
                         runnerName = item.RunnerName;
                         return item.Runner;
                     });
                 }
                 else
                 {
-                    (runner, runnerName) = factory(ast, ctx);
+                    (runner, runnerName) = factory(this, ctx, assemblyLoadContext);
                 }
 
-                AssertionResult res;
                 try
                 {
-                    res = Run(runner, runnerName, inspectQueue, ctx);
+                    Run(runner, runnerName, inspectQueue, ctx);
                 }
                 finally
                 {
                     runner.Dispose();
-                }
-
-                if (!res.IsPassed)
-                {
-                    return res;
                 }
 
                 Debug.Assert(inspectQueue.Count == 0);
@@ -164,16 +177,14 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
         {
             assemblyLoadContext.Unload();
         }
-
-        return AssertionResult.Passed;
     }
 
-    private AssertionResult Run(IAstRunner runner, string runnerName, Queue<Inspect> inspectQueue, InspectRuntimeContext ctx)
+    private void Run(IAstRunner runner, string runnerName, Queue<Inspect> inspectQueue, InspectRuntimeContext ctx)
     {
-        int[] matchedCount = new int[Expected.Length];
-        int[] matchedThisFrame = new int[Expected.Length];
+        int[] matchedCount = new int[_expectedInspects.Count];
+        int[] matchedThisFrame = new int[_expectedInspects.Count];
 
-        for (int frame = 0; frame < RunFor; frame++)
+        for (int frame = 0; frame < _options.RunFor; frame++)
         {
             Debug.Assert(inspectQueue.Count == 0);
 
@@ -186,13 +197,18 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
             {
                 bool matched = false;
 
-                for (int i = 0; i < Expected.Length; i++)
+                for (int i = 0; i < _expectedInspects.Count; i++)
                 {
-                    var expected = Expected[i];
+                    var item = _expectedInspects.GetAt(i);
+                    if (item.Value is { })
+                    {
+                        continue; // already has error
+                    }
+
+                    var expected = item.Key;
 
                     if (inspect.Type == expected.Type && Equals(inspect.Value, expected.Value, expected.Type) &&
-                        (expected.Position is null || inspect.InspectBlockPosition == expected.Position) &&
-                        (expected.BoxArt is null || ctx.TakingBoxArt == expected.BoxArt))
+                        (expected.Position is null || inspect.InspectBlockPosition == expected.Position))
                     {
                         matched = true;
 
@@ -201,7 +217,8 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                             case InspectFrequency.OnlyOnOneFrame:
                                 if (matchedCount[i] != matchedThisFrame[i])
                                 {
-                                    return AssertionResult.Fail($"[{runnerName}] {expected} was inspected on multiple frames");
+                                    TryReport(i, AssertionResult.Failed($"[{runnerName}] {expected} was inspected on multiple frames"));
+                                    continue;
                                 }
 
                                 break;
@@ -211,7 +228,8 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                         {
                             if (lastOrderedInspect is { } lastInspect && lastInspect.Order > order)
                             {
-                                return AssertionResult.Fail($"[{runnerName}] {expected} was inspected after {lastInspect}");
+                                TryReport(i, AssertionResult.Failed($"[{runnerName}] {expected} was inspected after {lastInspect}"));
+                                continue;
                             }
 
                             lastOrderedInspect = expected;
@@ -222,7 +240,7 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                     }
                 }
 
-                if (AllowOnlyExpectedInspects && !matched)
+                if (_options.AllowOnlyExpectedInspects && !matched)
                 {
                     object inspectVal = inspect.Value.GetValueOfType(inspect.Type);
                     string inspected = inspectVal switch
@@ -235,22 +253,30 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
                         _ => inspectVal?.ToString() ?? "null",
                     };
 
-                    return AssertionResult.Fail($"[{runnerName}] non expected inspect occurred, '{inspected}' at pos {inspect.InspectBlockPosition}");
+                    _nonExpectedAssert = AssertionResult.Failed($"[{runnerName}] non expected inspect occurred, '{inspected}' of type {inspect.Type} at pos {inspect.InspectBlockPosition}");
                 }
             }
 
-            for (int i = 0; i < Expected.Length; i++)
+            for (int i = 0; i < _expectedInspects.Count; i++)
             {
-                var expected = Expected[i];
+                var item = _expectedInspects.GetAt(i);
+                if (item.Value is { })
+                {
+                    continue; // already has error
+                }
+
+                var expected = item.Key;
 
                 if (expected.Frequency is InspectFrequency.EveryFrame && matchedThisFrame[i] == 0)
                 {
-                    return AssertionResult.Fail($"[{runnerName}] {expected} was not inspected on frame {frame}");
+                    TryReport(i, AssertionResult.Failed($"[{runnerName}] {expected} was not inspected on frame {frame}"));
+                    continue;
                 }
 
                 if (expected.FrameCount is { } frameCount && matchedThisFrame[i] != frameCount)
                 {
-                    return AssertionResult.Fail($"[{runnerName}] {expected} was inspected {matchedThisFrame[i]} {(matchedThisFrame[i] == 1 ? "time" : "times")} on frame {frame}");
+                    TryReport(i, AssertionResult.Failed($"[{runnerName}] {expected} was inspected {matchedThisFrame[i]} {(matchedThisFrame[i] == 1 ? "time" : "times")} on frame {frame}"));
+                    continue;
                 }
             }
 
@@ -259,52 +285,102 @@ internal sealed class InspectsValueAssertCondition(InspectAssertExpected[] Expec
             ctx.StepFrame();
         }
 
-        for (int i = 0; i < Expected.Length; i++)
+        for (int i = 0; i < _expectedInspects.Count; i++)
         {
-            var expected = Expected[i];
+            var expected = _expectedInspects.GetAt(i).Key;
 
             if (expected.Count is { } count && matchedCount[i] > count)
             {
-                return AssertionResult.Fail($"[{runnerName}] {expected} was inspected {matchedCount[i]} {(matchedCount[i] == 1 ? "time" : "times")}");
+                TryReport(i, AssertionResult.Failed($"[{runnerName}] {expected} was inspected {matchedCount[i]} {(matchedCount[i] == 1 ? "time" : "times")}"));
+                continue;
             }
         }
-
-        return AssertionResult.Passed;
     }
 
     private static bool Equals(RuntimeValue a, object b, SignalType type)
     {
         const float MaxDeltaNumber = Constants.EqualsNumbersMaxDiff;
         const float MaxDeltaVector = Constants.EqualsVectorsMaxDiff;
-        const float MaxDeltaRotation = 0.001f;
+        const float MaxDeltaRotationRadians = 0.01f;
 
         return type switch
         {
             SignalType.Float => MathF.Abs(a.Float - (float)b) < MaxDeltaNumber,
             SignalType.Vec3 => (a.Vector3 - (Vector3)b).LengthSquared() < MaxDeltaVector,
-            SignalType.Rot => Equals(a.Quaternion, b),
+            SignalType.Rot => EqualsRotation(a.Quaternion, b),
             SignalType.Bool => a.Bool == (bool)b,
             SignalType.Obj => (FcObject)a.Int == (FcObject)b,
             SignalType.Con => (FcConstraint)a.Int == (FcConstraint)b,
             _ => throw new UnreachableException(),
         };
 
-        static bool Equals(Quaternion a, object b)
+        static bool EqualsRotation(Quaternion a, object b)
         {
             const float DegToRad = MathF.PI / 180f;
 
-            if (b is not Quaternion bQuat)
+            Quaternion bQuat;
+
+            if (b is Quaternion q)
             {
-                var bEuler = ((Rotation)b).Value;
-                bQuat = Quaternion.CreateFromYawPitchRoll(bEuler.Y * DegToRad, bEuler.X * DegToRad, bEuler.Z * DegToRad);
+                bQuat = q;
+            }
+            else if (b is Rotation r)
+            {
+                var e = r.Value;
+                bQuat = Quaternion.CreateFromYawPitchRoll(
+                    e.Y * DegToRad,
+                    e.X * DegToRad,
+                    e.Z * DegToRad
+                );
+            }
+            else
+            {
+                throw new UnreachableException();
             }
 
-            return MathF.Abs(a.X - bQuat.X) < MaxDeltaRotation &&
-                MathF.Abs(a.Y - bQuat.Y) < MaxDeltaRotation &&
-                MathF.Abs(a.Z - bQuat.Z) < MaxDeltaRotation &&
-                MathF.Abs(a.W - bQuat.W) < MaxDeltaRotation;
+            a = Quaternion.Normalize(a);
+            bQuat = Quaternion.Normalize(bQuat);
+
+            float dot = MathF.Abs(Quaternion.Dot(a, bQuat));
+            dot = MathF.Min(dot, 1f);
+
+            float angle = 2f * MathF.Acos(dot);
+
+            return angle <= MaxDeltaRotationRadians;
         }
     }
+
+    private bool TryReport(int expectedIndex, AssertionResult error)
+    {
+        Debug.Assert(!error.IsPassed);
+
+        if (_expectedInspects.GetAt(expectedIndex).Value is { })
+        {
+            return false;
+        }
+
+        _expectedInspects.SetAt(expectedIndex, error);
+
+        return true;
+    }
+
+    public readonly struct Options
+    {
+        public int RunFor { get; init; } = 2;
+        public TimeSpan Timeout { get; init; } =
+#if DEBUG
+            TimeSpan.FromSeconds(1000);
+#else
+            TimeSpan.FromSeconds(4); 
+#endif
+        public bool AllowOnlyExpectedInspects { get; init; } = true;
+
+        public Options()
+        {
+        }
+    }
+
+    private readonly record struct PhysicsConfig(ushort LevelId, PrefabList Prefabs);
 
     private record struct Inspect(RuntimeValue Value, SignalType Type, string? VariableName, ushort PrefabId, int3 InspectBlockPosition);
 

@@ -38,7 +38,6 @@ public sealed partial class FcAstCompiler
     private readonly FcEnvironment[] _environments;
     private readonly StringBuilder _writerBuilder;
     private readonly IndentedTextWriter _writer;
-    private readonly FrozenDictionary<ushort, PrefabTerminalInfo>? _terminalInfos;
 
     private readonly StatementExecutionMode _executionMode;
     private readonly TimeSpan _timeout;
@@ -60,7 +59,6 @@ public sealed partial class FcAstCompiler
     {
         _executionMode = options.StatementExecutionMode;
         _timeout = options.Timeout;
-        _terminalInfos = options.TerminalInfos;
 
         if (_executionMode is StatementExecutionMode.StateMachine)
         {
@@ -503,8 +501,6 @@ public sealed partial class FcAstCompiler
             var nonVoidNodes = new Stack<(SyntaxTerminal Terminal, int EnvironmentIndex, SignalType Type)>();
             if (_executionMode is StatementExecutionMode.StateMachine)
             {
-                var terminalInfos = _terminalInfos!;
-
                 using (_writer.CurlyIndent("private void Run(int entryTerminal)"))
                 {
                     // TODO: pool stacks
@@ -1292,12 +1288,6 @@ public sealed partial class FcAstCompiler
             get;
             init;
         }
-
-        /// <summary>
-        /// Gets the <see cref="PrefabTerminalInfo"/>s, required if <see cref="StatementExecutionMode"/> is <see cref="StatementExecutionMode.StateMachine"/>.
-        /// </summary>
-        /// <value>The <see cref="PrefabTerminalInfo"/>s.</value>
-        public required FrozenDictionary<ushort, PrefabTerminalInfo>? TerminalInfos { get; init; }
 
         /// <summary>
         /// Gets a value indicating whether the transpiled code should be human readable, <see langword="false"/> by default.

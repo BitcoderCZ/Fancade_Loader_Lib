@@ -36,12 +36,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="/"/>
+    <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
-    <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
+    <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -58,7 +58,7 @@
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageReference Include="zlib.net-mutliplatform" Version="1.0.8" />
-	<PackageReference Include="System.Collections.Immutable" Version="9.0.9" />
+	<PackageReference Include="System.Collections.Immutable" Version="10.0.1" />
   </ItemGroup>
 
 </Project>
