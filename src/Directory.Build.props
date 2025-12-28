@@ -2,7 +2,14 @@
     <PropertyGroup>
         <Authors>BitcoderCZ</Authors>
         <RepositoryUrl>https://github.com/BitcoderCZ/Fancade_Loader_Lib</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     </PropertyGroup>
     <PropertyGroup>
         <TrimMode>partial</TrimMode>
