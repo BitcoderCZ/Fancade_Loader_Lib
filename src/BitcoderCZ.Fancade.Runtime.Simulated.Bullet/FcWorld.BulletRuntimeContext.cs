@@ -609,11 +609,11 @@ public sealed partial class FcWorld
         public bool TryGetSwipe(out Vector3 direction)
             => _baseCtx.TryGetSwipe(out direction);
 
-        public bool GetButtonPressed(ButtonType type)
-            => _baseCtx.GetButtonPressed(type);
+        public bool GetButtonPressed(ButtonType type, EnvironmentPosition blockPosition)
+            => _baseCtx.GetButtonPressed(type, blockPosition);
 
-        public Vector3 GetJoystickDirection(JoystickType type)
-            => _baseCtx.GetJoystickDirection(type);
+        public Vector3 GetJoystickDirection(JoystickType type, EnvironmentPosition blockPosition)
+            => _baseCtx.GetJoystickDirection(type, blockPosition);
 
         public bool TryGetCollision(FcObject firstObject, out FcObject secondObject, out float impulse, out Vector3 normal)
         {

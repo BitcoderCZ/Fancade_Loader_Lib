@@ -440,10 +440,10 @@ public sealed class AstRunnerTester
         {
         }
 
-        public bool GetButtonPressed(ButtonType type)
+        public bool GetButtonPressed(ButtonType type, EnvironmentPosition blockPosition)
             => false;
-
-        public Vector3 GetJoystickDirection(JoystickType type)
+            
+        public Vector3 GetJoystickDirection(JoystickType type, EnvironmentPosition blockPosition) 
             => default;
 
         public FcObject GetObject(int3 position, byte3 voxelPosition, ushort prefabId)

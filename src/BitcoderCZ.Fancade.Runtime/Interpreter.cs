@@ -607,7 +607,7 @@ public sealed class Interpreter : IAstRunner
                             {
                                 if (connection.FromVoxel == PosOut02)
                                 {
-                                    lateUpdateQueue.Enqueue(new(environmentIndex, connection.To, (byte3)connection.ToVoxel));
+                                    lateUpdateQueue.Enqueue(new(environmentIndex, connection.To, connection.ToVoxel));
                                 }
                             }
                         }
@@ -657,7 +657,7 @@ public sealed class Interpreter : IAstRunner
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var button = (ButtonStatementSyntax)statement;
 
-                        if (_ctx.GetButtonPressed(button.Type))
+                        if (_ctx.GetButtonPressed(button.Type, new EnvironmentPosition(environment, statement.Position)))
                         {
                             executeNextSpan[nextCount++] = PosOut02;
                         }
@@ -669,7 +669,7 @@ public sealed class Interpreter : IAstRunner
                         Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                         var joystick = (JoystickStatementSyntax)statement;
 
-                        environment.BlockData[joystick.Position] = _ctx.GetJoystickDirection(joystick.Type);
+                        environment.BlockData[joystick.Position] = _ctx.GetJoystickDirection(joystick.Type, new EnvironmentPosition(environment, statement.Position));
                     }
 
                     break;
@@ -723,7 +723,7 @@ public sealed class Interpreter : IAstRunner
                             {
                                 if (connection.FromVoxel == PosOut02)
                                 {
-                                    Execute(new(environment.Index, connection.To, (byte3)connection.ToVoxel), lateUpdateQueue);
+                                    Execute(new(environment.Index, connection.To, connection.ToVoxel), lateUpdateQueue);
                                 }
                             }
                         }
@@ -847,11 +847,11 @@ public sealed class Interpreter : IAstRunner
                 {
                     var outerEnvironment = _environments[environment.OuterEnvironmentIndex];
 
-                    PushAfter(outerEnvironment.AST.Statements[environment.OuterPosition], (byte3)connection.ToVoxel, outerEnvironment, stack);
+                    PushAfter(outerEnvironment.AST.Statements[environment.OuterPosition], connection.ToVoxel, outerEnvironment, stack);
                 }
                 else
                 {
-                    stack.Push(new(environment.Index, connection.To, (byte3)connection.ToVoxel));
+                    stack.Push(new(environment.Index, connection.To, connection.ToVoxel));
                 }
             }
         }

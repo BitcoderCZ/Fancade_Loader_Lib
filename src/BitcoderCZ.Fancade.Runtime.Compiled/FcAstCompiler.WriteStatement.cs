@@ -630,10 +630,10 @@ public partial class FcAstCompiler
                                     switch (_executionMode)
                                     {
                                         case StatementExecutionMode.StateMachine:
-                                            WriteRunEntryPoint(new(environment.Index, connection.To, (byte3)connection.ToVoxel), writer);
+                                            WriteRunEntryPoint(new(environment.Index, connection.To, connection.ToVoxel), writer);
                                             break;
                                         case StatementExecutionMode.DirectCalls:
-                                            WriteDirectEntryPoint(new(environment.Index, connection.To, (byte3)connection.ToVoxel), false, writer);
+                                            WriteDirectEntryPoint(new(environment.Index, connection.To, connection.ToVoxel), false, writer);
                                             break;
                                     }
 
@@ -755,7 +755,10 @@ public partial class FcAstCompiler
                     Debug.Assert(terminalPos == TerminalDef.GetBeforePosition(2), $"{nameof(terminalPos)} should be valid.");
                     var button = (ButtonStatementSyntax)statement;
 
-                    using (writer.CurlyIndent($"if (_ctx.{nameof(IRuntimeContext.GetButtonPressed)}({nameof(ButtonType)}.{button.Type}))"))
+                    writer.Write($"if (_ctx.{nameof(IRuntimeContext.GetButtonPressed)}({nameof(ButtonType)}.{button.Type}, ");
+                    WriteEnvironmentPosition(environment.Index, pos, writer);
+                    writer.WriteLine("))");
+                    using (writer.CurlyIndent())
                     {
                         switch (_executionMode)
                         {
@@ -788,7 +791,9 @@ public partial class FcAstCompiler
                     string directionVarName = GetStateStoreVarName(environment.Index, joystick.Position, "joystick_direction");
                     _stateStoreVariables.Add((directionVarName, nameof(Vector3), null));
 
-                    writer.WriteLineInv($"{directionVarName} = _ctx.{nameof(IRuntimeContext.GetJoystickDirection)}({nameof(JoystickType)}.{joystick.Type});");
+                    writer.WriteInv($"{directionVarName} = _ctx.{nameof(IRuntimeContext.GetJoystickDirection)}({nameof(JoystickType)}.{joystick.Type}, ");
+                    WriteEnvironmentPosition(environment.Index, pos, writer);
+                    writer.WriteLine(");");
                 }
 
                 break;

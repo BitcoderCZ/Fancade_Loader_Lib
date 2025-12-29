@@ -54,11 +54,11 @@ public readonly struct ScreenInfo
     /// Gets a value indicating whether the screen is in portrait orientation.
     /// </summary>
     /// <value><see langword="true"/> if the screen is in portrait orientation; otherwise, <see langword="false"/>.</value>
-    public readonly bool Portrait => (int)Width <= (int)Height;
+    public readonly bool IsPortrait => (int)Width <= (int)Height;
 
     /// <summary>
     /// Gets a value indicating whether the screen is in landscape orientation.
     /// </summary>
     /// <value><see langword="true"/> if the screen is in landscape orientation; otherwise, <see langword="false"/>.</value>
-    public readonly bool Landscape => (int)Height < (int)Width;
+    public readonly bool IsLandscape => (int)Height < (int)Width;
 }

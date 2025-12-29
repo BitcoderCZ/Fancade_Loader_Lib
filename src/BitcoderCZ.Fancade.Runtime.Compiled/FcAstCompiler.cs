@@ -220,6 +220,9 @@ public sealed partial class FcAstCompiler
     private static void WriteEnvironmentPosition(int environmentIndex, int3 blockPos, IndentedTextWriter writer)
         => writer.WriteInv($"new EnvironmentPosition(_environments[{environmentIndex}], new int3({blockPos.X}, {blockPos.Y}, {blockPos.Z}))");
 
+    private static void WriteScreenInfo(IndentedTextWriter writer)
+        => writer.Write($"new global::BitcoderCZ.Fancade.Runtime.Utils.ScreenInfo(_ctx.{nameof(IRuntimeContextBase.ScreenSize)})");
+
     private static string GetStateStoreVarName(int environmentIndex, int3 blockPos, string suffix)
         => $"store_{environmentIndex}_{blockPos.X}_{blockPos.Y}_{blockPos.Z}_{suffix}";
 
