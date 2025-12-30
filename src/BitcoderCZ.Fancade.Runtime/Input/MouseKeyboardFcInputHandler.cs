@@ -264,15 +264,15 @@ public sealed class MouseKeyboardFcInputHandler : IFcInputHandler
                 xPos = key switch
                 {
                     FcKeyCode.Action1 => 0.25f,
-                    FcKeyCode.Action2 => 0.4f,
-                    FcKeyCode.Space => 0.6f,
+                    FcKeyCode.Action2 => 0.75f,
+                    FcKeyCode.Space => 0.5f,
                     _ => null,
                 };
             }
 
             if (xPos is not null)
             {
-                float yPos = 0.4994753f;
+                float yPos = 0.5f;
                 touchPos = new Vector2(xPos.Value, yPos);
                 return true;
             }
