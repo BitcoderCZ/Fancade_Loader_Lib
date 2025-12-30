@@ -273,7 +273,7 @@ public sealed class MouseKeyboardFcInputHandler : IFcInputHandler
             if (xPos is not null)
             {
                 float yPos = 0.5f;
-                touchPos = new Vector2(xPos.Value, yPos);
+                touchPos = new Vector2(xPos.Value * _screenInfo.Width, yPos * _screenInfo.Height);
                 return true;
             }
         }
@@ -591,6 +591,9 @@ public sealed class MouseKeyboardFcInputHandler : IFcInputHandler
         // key is not pressed, detect mouse/jlki
         var buttonBounds = IFcInputHandler.GetButtonBounds(index, type, _currentDirectionButtonCount, _currentNormalButtonCount, _screenInfo);
 
+        float boundsMin = buttonBounds.Min * _screenInfo.Width;
+        float boundsMax = buttonBounds.Max * _screenInfo.Width;
+
         Span<Vector2?> touchPositions = stackalloc Vector2?[3];
         ((IFcInputHandler)this).GetTouchPositions(touchPositions);
         foreach (var item in touchPositions)
@@ -600,7 +603,7 @@ public sealed class MouseKeyboardFcInputHandler : IFcInputHandler
                 continue;
             }
 
-            if (pos.X >= buttonBounds.Min && pos.X <= buttonBounds.Max)
+            if (pos.X >= boundsMin && pos.X <= boundsMax)
             {
                 return true;
             }
