@@ -115,6 +115,12 @@ public sealed partial class FcWorld : IAstRunner
     /// <value>Objects as a <see cref="ReadOnlySpan{T}"/>.</value>
     public ReadOnlySpan<RuntimeObject> ObjectsSpan => CollectionsMarshal.AsSpan(_objects);
 
+    /// <summary>
+    /// Gets the <see cref="DiscreteDynamicsWorld"/>.
+    /// </summary>
+    /// <value>The <see cref="DiscreteDynamicsWorld"/> used by the <see cref="FcWorld"/>.</value>
+    public DiscreteDynamicsWorld BulletWorld => _world;
+
     /// <inheritdoc/>
     public IEnumerable<Variable> GlobalVariables => _runner.GlobalVariables;
 
