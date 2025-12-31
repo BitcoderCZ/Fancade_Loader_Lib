@@ -10,10 +10,6 @@ namespace BitcoderCZ.Fancade.Runtime;
 /// <summary>
 /// Methods used by <see cref="IAstRunner"/>s to interact with the game.
 /// </summary>
-/// <remarks>
-/// Implementations of this interface must ensure that none of its methods throw exceptions.  
-/// Consumers of this interface are not required to handle exceptions.
-/// </remarks>
 public interface IRuntimeContext : IRuntimeContextBase
 {
     /// <summary>

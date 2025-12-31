@@ -13,10 +13,6 @@ namespace BitcoderCZ.Fancade.Runtime;
 /// <summary>
 /// Base methods used by <see cref="IAstRunner"/>s to interact with the game.
 /// </summary>
-/// <remarks>
-/// Implementations of this interface must ensure that none of its methods throw exceptions.  
-/// Consumers of this interface are not required to handle exceptions.
-/// </remarks>
 public interface IRuntimeContextBase
 {
     /// <summary>

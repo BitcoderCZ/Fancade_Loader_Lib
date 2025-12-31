@@ -67,7 +67,7 @@ public sealed partial class FcWorld : IAstRunner
         _prefabs = prefabs;
         _mainPrefab = mainId;
 
-        var collisionConf = new DefaultCollisionConfiguration(new ());
+        var collisionConf = new DefaultCollisionConfiguration(new());
         var dispatcher = new CollisionDispatcher(collisionConf);
         var broadphase = new DbvtBroadphase();
         var solver = new SequentialImpulseConstraintSolver();
@@ -577,46 +577,68 @@ public sealed partial class FcWorld : IAstRunner
 
             foreach (var connection in prefab.Connections)
             {
-                if (connection.IsFromOutside)
+                AddConnection(prefab, meshInfo, connection);
+            }
+        }
+
+        void AddConnection(Prefab prefab, BlockMesh meshInfo, Connection connection)
+        {
+            if (connection.IsFromOutside)
+            {
+                if (terminalInfos[prefab.Id].OutputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
                 {
-                    continue;
+                    return; // normal connection to outside
                 }
 
-                ushort blockId = prefab.Blocks.GetBlockOrDefault(connection.From);
-                ushort segmentId = prefab.Blocks.GetBlockOrDefault(connection.From + (connection.FromVoxel / 8));
-
-                if (blockId == 0 || segmentId == 0)
+                // self connection
+                for (int i = _runner.EnvironmentCount - 1; i >= 0; i--)
                 {
-                    continue;
-                }
-
-                var terminalInfo = terminalInfos[blockId];
-                var segmentMeshes = _gameMesh.GetSegmentMesh(segmentId);
-
-                if (!terminalInfo.OutputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
-                {
-                    int localMeshIndex = segmentMeshes.VoxelMeshIndex[Voxels.Index(connection.FromVoxel % 8, 0)];
-                    if (localMeshIndex == 255)
+                    var env = _runner.GetEnvironment(i);
+                    if (env.PrefabId == prefab.Id)
                     {
-                        // connected to empty voxel
-                        continue;
+                        var outerPrefab = _prefabs.GetPrefabOrStock(_runner.GetEnvironment(env.OuterEnvironmentIndex).PrefabId);
+
+                        AddConnection(outerPrefab, _gameMesh.GetBlockMesh(outerPrefab.Id), new Connection(env.OuterPosition, default, connection.FromVoxel, default));
                     }
+                }
 
-                    int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(meshInfo.Size.X, meshInfo.Size.Y)]];
+                return;
+            }
 
-                    var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
+            ushort blockId = prefab.Blocks.GetBlockOrDefault(connection.From);
+            ushort segmentId = prefab.Blocks.GetBlockOrDefault(connection.From + (connection.FromVoxel / 8));
 
-                    if (obj is not null)
-                    {
+            if (blockId == 0 || segmentId == 0)
+            {
+                return;
+            }
+
+            var terminalInfo = terminalInfos[blockId];
+            var segmentMeshes = _gameMesh.GetSegmentMesh(segmentId);
+
+            if (!terminalInfo.OutputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
+            {
+                int localMeshIndex = segmentMeshes.VoxelMeshIndex[Voxels.Index(connection.FromVoxel % 8, 0)];
+                if (localMeshIndex == 255)
+                {
+                    // connected to empty voxel
+                    return;
+                }
+
+                int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(meshInfo.Size.X, meshInfo.Size.Y)]];
+
+                var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
+
+                if (obj is not null)
+                {
 #if RELEASE
                         _connectorToObject[(prefab.Id, connection.From, (byte3)connection.FromVoxel)] = obj.Id;
 #else
-                        if (!_connectorToObject.TryAdd((prefab.Id, connection.From, connection.FromVoxel), obj.Id))
-                        {
-                            Debug.Assert(_connectorToObject[(prefab.Id, connection.From, connection.FromVoxel)] == obj.Id, "If a connector as already been added, it should be the same one that was to be added.");
-                        }
-#endif
+                    if (!_connectorToObject.TryAdd((prefab.Id, connection.From, connection.FromVoxel), obj.Id))
+                    {
+                        Debug.Assert(_connectorToObject[(prefab.Id, connection.From, connection.FromVoxel)] == obj.Id, "If a connector has already been added, it should be the same one that was to be added.");
                     }
+#endif
                 }
             }
         }
@@ -890,7 +912,7 @@ public sealed partial class FcWorld : IAstRunner
             return false;
         }
 
-        ushort segmentId = prefab.Blocks.GetBlockOrDefault(pos);
+        ushort segmentId = prefab.Blocks.GetBlockOrDefault(pos + (voxelPos / 8));
 
         if (segmentId == 0)
         {
@@ -901,7 +923,7 @@ public sealed partial class FcWorld : IAstRunner
         var meshInfo = _gameMesh.GetBlockMesh(prefab.Id);
         var segmentMeshes = _gameMesh.GetSegmentMesh(segmentId);
 
-        int meshIndex = meshInfo.GetMeshAtPos(pos, segmentMeshes.VoxelMeshIndex[Voxels.Index(voxelPos, 0)]);
+        int meshIndex = meshInfo.GetMeshAtPos(pos, segmentMeshes.VoxelMeshIndex[Voxels.Index(voxelPos % 8, 0)]);
 
         var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
 
