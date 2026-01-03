@@ -21,7 +21,7 @@ internal static class DynamicsWorldUtils
 
         // Using a motion state is recommended,
         // it provides interpolation capabilities and only synchronizes "active" objects
-        var myMotionState = new DefaultMotionState(startTransform, Matrix4x4.Identity);
+        var myMotionState = new DefaultMotionState(Transform.FromMatrix4x4(in startTransform), Transform.Identity);
 
         shape.CalculateLocalInertia(mass, out var localInertia);
 
@@ -41,7 +41,7 @@ internal static class DynamicsWorldUtils
         RigidBody body;
         var rbInfo = new RigidBodyConstructionInfo(StaticMass, null, shape)
         {
-            StartWorldTransform = startTransform,
+            StartWorldTransform = Transform.FromMatrix4x4(in startTransform),
         };
         body = new RigidBody(in rbInfo);
 

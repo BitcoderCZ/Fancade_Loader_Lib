@@ -159,24 +159,24 @@ public sealed class RuntimeObject
     public void SetRotPos(Vector3? position, Quaternion? rotation)
     {
         Debug.Assert(RigidBody.MotionState is not null, "MotionState should not be null.");
-        RigidBody.MotionState.GetWorldTransform(out var mat);
+        RigidBody.MotionState.GetWorldTransform(out var trans);
 
         if (position is { } pos)
         {
             Pos = pos;
-            mat.Translation = pos;
+            trans.Translation = pos;
         }
 
         if (rotation is { } rot)
         {
             Rot = rot;
-            mat.SetRotation(rot);
+            trans.Rotation = rot;
         }
 
         if (position is not null || rotation is not null)
         {
-            RigidBody.WorldTransform = mat;
-            RigidBody.MotionState.SetWorldTransform(in mat);
+            RigidBody.WorldTransform = trans;
+            RigidBody.MotionState.SetWorldTransform(in trans);
         }
     }
 
@@ -197,7 +197,7 @@ public sealed class RuntimeObject
         var wt = RigidBody.WorldTransform;
 
         Pos = wt.Translation;
-        Rot = Quaternion.CreateFromRotationMatrix(wt);
+        Rot = wt.Rotation;
     }
 
     internal void Reset(DynamicsWorld world, IRuntimeContext ctx)

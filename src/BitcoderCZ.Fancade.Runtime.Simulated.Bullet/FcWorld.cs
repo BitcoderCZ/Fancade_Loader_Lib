@@ -877,7 +877,10 @@ public sealed partial class FcWorld : IAstRunner
                     _collisionShapeCache.Add((colliderType, size), shape);
                 }
 
-                ((CompoundShape)rObject.RigidBody.CollisionShape).AddChildShape(Matrix4x4.CreateTranslation(offset), shape);
+                var trans = Transform.Identity;
+                trans.Translation = offset;
+
+                ((CompoundShape)rObject.RigidBody.CollisionShape).AddChildShape(in trans, shape);
             }
         }
     }
