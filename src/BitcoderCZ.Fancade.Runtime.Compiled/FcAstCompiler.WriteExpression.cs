@@ -433,14 +433,14 @@ public partial class FcAstCompiler
                             outType = SignalType.Float;
                             writer.Write("MathF.Sin(");
                             WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
-                            writer.Write(')');
+                            writer.Write(" * (MathF.PI / 180f))");
 
                             break;
                         case 453:
                             outType = SignalType.Float;
                             writer.Write("MathF.Cos(");
                             WriteExpressionOrDefault(unary.Input, SignalType.Float, environment, writer);
-                            writer.Write(')');
+                            writer.Write(" * (MathF.PI / 180f))");
 
                             break;
                         case 184:
