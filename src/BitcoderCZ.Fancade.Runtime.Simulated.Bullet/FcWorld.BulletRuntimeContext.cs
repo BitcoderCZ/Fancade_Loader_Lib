@@ -5,6 +5,7 @@
 using BitcoderCZ.BulletSharp;
 using BitcoderCZ.BulletSharp.Collision.CollisionDispatch;
 using BitcoderCZ.BulletSharp.Dynamics.Constraints;
+using BitcoderCZ.BulletSharp.LinearMath;
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
@@ -477,18 +478,21 @@ public sealed partial class FcWorld
 
             rPart.Unfix(_world._world);
 
-            bool inverted = Matrix4x4.Invert(rBase.RigidBody.WorldTransform, out var invBase);
+            // TODO: .Inverse() ?
+            bool inverted = Matrix4x4.Invert(rBase.RigidBody.WorldTransform.ToMatrix4x4(), out var invBase);
             Debug.Assert(inverted, "Matrix invert should succeed.");
-            inverted = Matrix4x4.Invert(rPart.RigidBody.WorldTransform, out var invPart);
+            inverted = Matrix4x4.Invert(rPart.RigidBody.WorldTransform.ToMatrix4x4(), out var invPart);
             Debug.Assert(inverted, "Matrix invert should succeed.");
 
             Vector3 localPivotA = Vector3.Transform(pivotVal, invBase);
             Vector3 localPivotB = Vector3.Transform(pivotVal, invPart);
 
-            var frameInA = Matrix4x4.CreateTranslation(localPivotA);
-            var frameInB = Matrix4x4.CreateTranslation(localPivotB);
+            var frameInA = Transform.Identity;
+            frameInA.Translation = localPivotA;
+            var frameInB = Transform.Identity;
+            frameInB.Translation = localPivotB;
 
-            Generic6DofSpring2Constraint constraint = new Generic6DofSpring2Constraint(rBase.RigidBody, rPart.RigidBody, frameInA, frameInB, RotateOrder.XYZ);
+            Generic6DofSpring2Constraint constraint = new Generic6DofSpring2Constraint(rBase.RigidBody, rPart.RigidBody, in frameInA, in frameInB, RotateOrder.XYZ);
 
             constraint.SetAngularLowerLimit(Vector3.Zero);
             constraint.SetAngularUpperLimit(Vector3.Zero);

@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BitcoderCZ.BulletSharp.Dynamics" Version="1.0.0-beta.17" />
+    <PackageReference Include="BitcoderCZ.BulletSharp.Dynamics" Version="1.0.0-beta.21" />
     <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
       <PrivateAssets>all</PrivateAssets>

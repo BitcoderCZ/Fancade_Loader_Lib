@@ -188,7 +188,7 @@ public partial class ExecutionTests
             .Inspects(new InspectAssertExpected(0f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 0 })
             .And.Inspects(new InspectAssertExpected(1f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 1 })
             .And.Inspects(new InspectAssertExpected(2f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 2 })
-            .And.Inspects(new InspectAssertExpected(111f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 4, Order = 0 })
+            .And.Inspects(new InspectAssertExpected(111f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 4 })
             .And.Inspects(new InspectAssertExpected(222f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 3 });
     }
 

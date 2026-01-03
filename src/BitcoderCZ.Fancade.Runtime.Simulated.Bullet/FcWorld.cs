@@ -368,7 +368,7 @@ public sealed partial class FcWorld : IAstRunner
     {
         CompoundShape shape = new CompoundShape(true, 0);
 
-        var motionState = new DefaultMotionState(Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position), Matrix4x4.Identity);
+        var motionState = new DefaultMotionState(Transform.FromMatrix4x4(Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position)), Transform.Identity);
 
         shape.CalculateLocalInertia(0f, out var localInertia);
 

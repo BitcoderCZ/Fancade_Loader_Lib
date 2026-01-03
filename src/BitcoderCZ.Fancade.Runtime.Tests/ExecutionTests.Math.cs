@@ -69,6 +69,6 @@ public partial class ExecutionTests
 
         var tester = AstRunnerTester.Create(writer);
 
-        await Assert.That(tester).Inspects(new(expected) { Count = 1, });
+        await Assert.That(tester).Inspects(new(expected) { Count = 2, FrameCount = 1, });
     }
 }

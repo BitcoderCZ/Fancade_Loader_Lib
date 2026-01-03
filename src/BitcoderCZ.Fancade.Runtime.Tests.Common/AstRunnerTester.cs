@@ -202,6 +202,7 @@ public sealed class AstRunnerTester
                     var item = _expectedInspects.GetAt(i);
                     if (item.Value is { })
                     {
+                        matched = true; // don't double report
                         continue; // already has error
                     }
 
