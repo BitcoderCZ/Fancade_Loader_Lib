@@ -171,7 +171,8 @@ public partial class FcAstCompiler
                         writer.WriteInv($"{objectVarName} = _ctx.{nameof(IRuntimeContext.CreateObject)}(");
 
                         WriteExpression(createObject.Original, false, environment, writer);
-
+                        writer.Write(", ");
+                        WriteEnvironmentPosition(environment.Index, createObject.Position, writer);
                         writer.WriteLine(");");
                     }
                 }

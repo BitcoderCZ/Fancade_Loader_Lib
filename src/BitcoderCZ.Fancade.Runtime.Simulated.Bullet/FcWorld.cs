@@ -14,6 +14,7 @@ using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet.Utils;
 using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
+using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -53,6 +54,8 @@ public sealed partial class FcWorld : IAstRunner
     private readonly Dictionary<(ushort PrefabId, int3 Pos, byte3 VoxelPos), FcObject> _connectorToObject = [];
 
     private readonly Dictionary<(int Type, Vector3 Size), CollisionShape> _collisionShapeCache = [];
+
+    private int _maximumObjectCount = 4096;
 
     private int _objectIdCounter = 1;
 
@@ -126,6 +129,21 @@ public sealed partial class FcWorld : IAstRunner
 
     /// <inheritdoc/>
     public int EnvironmentCount => _runner.EnvironmentCount;
+
+    /// <summary>
+    /// Gets or sets the maximum allowed amount of user create objects, 4096 by default.
+    /// </summary>
+    /// <value>The maximum amount of objects created using <see cref="IRuntimeContext.CreateObject(FcObject, EnvironmentPosition)"/> before <see cref="TooManyObjectsException"/> is thrown.</value>
+    public int MaximumObjectCount
+    {
+        get => _maximumObjectCount;
+        set
+        {
+            ThrowHelper.ThrowIfNegative(value);
+
+            _maximumObjectCount = value;
+        }
+    }
 
     /// <summary>
     /// Creates a new instance of the <see cref="FcWorld"/> class.

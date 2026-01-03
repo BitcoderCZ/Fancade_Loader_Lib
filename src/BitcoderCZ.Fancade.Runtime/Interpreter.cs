@@ -337,7 +337,7 @@ public sealed class Interpreter : IAstRunner
 
                         if (createObject.Original is not null)
                         {
-                            environment.BlockData[createObject.Position] = _ctx.CreateObject((FcObject)GetValue(createObject.Original, environment).Int).Value;
+                            environment.BlockData[createObject.Position] = _ctx.CreateObject((FcObject)GetValue(createObject.Original, environment).Int, new EnvironmentPosition(environment, statement.Position)).Value;
                         }
                     }
 

@@ -213,11 +213,16 @@ public sealed partial class FcWorld
             rObject.IsVisible = visible;
         }
 
-        public FcObject CreateObject(FcObject original)
+        public FcObject CreateObject(FcObject original, EnvironmentPosition blockPosition)
         {
             if (!_world.TryGetObject(original, out var rOriginal))
             {
                 return FcObject.Null;
+            }
+
+            if (_world._objects.Count >= _world.MaximumObjectCount)
+            {
+                throw new TooManyObjectsException(blockPosition);
             }
 
             var newId = (FcObject)_world._objectIdCounter++;
