@@ -9,12 +9,12 @@ using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 
 Game game;
-using (var file = File.OpenRead(""))
+using (var file = File.OpenRead("/home/bitcoder/Downloads/6020F44F3A287C88.fcg"))
 {
     game = Game.LoadCompressed(file);
 }
 
-ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name == "").Id;
+ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "Game").Id;
 
 var ast = FcAST.Parse(game.Prefabs, levelId);
 

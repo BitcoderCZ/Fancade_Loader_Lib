@@ -590,7 +590,7 @@ public sealed partial class FcWorld : IAstRunner
         {
             if (connection.IsFromOutside)
             {
-                if (terminalInfos[prefab.Id].OutputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
+                if (terminalInfos[prefab.Id].InputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
                 {
                     return; // normal connection to outside
                 }
