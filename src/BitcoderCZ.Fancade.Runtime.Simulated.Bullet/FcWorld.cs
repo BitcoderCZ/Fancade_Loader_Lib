@@ -30,7 +30,7 @@ public sealed partial class FcWorld : IAstRunner
 {
     private readonly DiscreteDynamicsWorld _world;
 
-    private readonly BulletRuntimeContext _runtimeCtx;
+    private BulletRuntimeContext _runtimeCtx;
 
     private readonly IAstRunner _runner;
 
@@ -361,8 +361,7 @@ public sealed partial class FcWorld : IAstRunner
 
     /// <inheritdoc/>
     public void Dispose()
-    {
-    }
+        => _runtimeCtx = null!;
 
     private static RigidBody BulletCreate(Vector3 position, Quaternion rotation, FcObject id)
     {
