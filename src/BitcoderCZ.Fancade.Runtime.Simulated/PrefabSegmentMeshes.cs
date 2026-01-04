@@ -179,7 +179,7 @@ public sealed class PrefabSegmentMeshes
 
             sideBitfield.Clear();
 
-            ulong value = 0;
+            /*ulong value = 0;
             var rawVoxelsSlice = rawVoxels[7..];
             voxelIndex = 7;
             do
@@ -487,19 +487,25 @@ public sealed class PrefabSegmentMeshes
                 voxelIndex += 8;
             } while (voxelIndex != 64);
 
-            sideBitfield[5] = value;
+            sideBitfield[5] = value;*/
 
             int meshVoxelCount = 0;
 
+            byte3 min = new byte3(byte.MaxValue, byte.MaxValue, byte.MaxValue);
+            byte3 max = new byte3(byte.MinValue, byte.MinValue, byte.MinValue);
             for (int i = 0; i < Voxels.Size * Voxels.Size * Voxels.Size; i++)
             {
                 if (voxels.GetRawFace(i) != 0 && voxelMeshIndex[i] == meshIndex)
                 {
                     meshVoxelCount++;
+
+                    var pos = byte3.FromIndex((byte)i, Voxels.Size, Voxels.Size);
+                    min = byte3.Min(min, pos);
+                    max = byte3.Max(max, pos);
                 }
             }
 
-            meshes[meshIndex] = new PrefabSegmentMesh(meshVoxelCount, sideBitfield);
+            meshes[meshIndex] = new PrefabSegmentMesh(meshVoxelCount/*, sideBitfield*/, min, max);
         }
 
         return meshes;

@@ -402,7 +402,7 @@ public sealed partial class FcWorld : IAstRunner
         return body;
     }
 
-    private static (short3 Min, short3 Max) GetMeshBounds(Voxels voxels, PrefabSegmentMeshes mesh, byte meshIndex)
+    /*private static (short3 Min, short3 Max) GetMeshBounds(Voxels voxels, PrefabSegmentMeshes mesh, byte meshIndex)
     {
         short3 min = new short3(short.MaxValue, short.MaxValue, short.MaxValue);
         short3 max = new short3(short.MinValue, short.MinValue, short.MinValue);
@@ -442,7 +442,7 @@ public sealed partial class FcWorld : IAstRunner
         }
 
         return (min, max);
-    }
+    }*/
 
     private void InitObjects(ushort mainId)
     {
@@ -503,7 +503,10 @@ public sealed partial class FcWorld : IAstRunner
 
                                     foundPhysics = true;
 
-                                    var (boundsMin, boundsMax) = GetMeshBounds(currentSegment.Voxels, currentSegmentMesh, (byte)meshIndex);
+                                    //var (boundsMin, boundsMax) = GetMeshBounds(currentSegment.Voxels, currentSegmentMesh, (byte)meshIndex);
+                                    var currentMesh = currentSegmentMesh.Meshes[meshIndex];
+                                    var boundsMin = currentMesh.MinPos;
+                                    var boundsMax = currentMesh.MaxPos;
 
                                     Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
                                     float volume = size.X * size.Y * size.Z;
@@ -704,7 +707,10 @@ public sealed partial class FcWorld : IAstRunner
                     continue;
                 }
 
-                var (boundsMin, boundsMax) = GetMeshBounds(currentSegment.Voxels, currentSegmentMeshes, (byte)meshIndex);
+                //var (boundsMin, boundsMax) = GetMeshBounds(currentSegment.Voxels, currentSegmentMeshes, (byte)meshIndex);
+                var currentMesh = currentSegmentMeshes.Meshes[meshIndex];
+                var boundsMin = currentMesh.MinPos;
+                var boundsMax = currentMesh.MaxPos;
 
                 Vector3 size = (Vector3)((boundsMax - boundsMin) + int3.One) * 0.125f;
 
@@ -807,7 +813,10 @@ public sealed partial class FcWorld : IAstRunner
                                     {
                                         if (blockMesh.BlockMeshIds[neighborMeshIndex + blockMesh.BlockMeshIdOffsets[neighborIndex]] == rObject.InPrefabMeshIndex)
                                         {
-                                            var (neighborBoundsMin, neighborBoundsMax) = GetMeshBounds(_prefabs.GetSegmentOrStock(neighborId).Voxels, neighborSegmentMeshes, (byte)neighborMeshIndex);
+                                            //var (neighborBoundsMin, neighborBoundsMax) = GetMeshBounds(_prefabs.GetSegmentOrStock(neighborId).Voxels, neighborSegmentMeshes, (byte)neighborMeshIndex);
+                                            var neighborMesh = neighborSegmentMeshes.Meshes[neighborMeshIndex];
+                                            var neighborBoundsMin = neighborMesh.MinPos;
+                                            var neighborBoundsMax = neighborMesh.MaxPos;
 
                                             if (sideIndex < 6)
                                             {
@@ -854,10 +863,10 @@ public sealed partial class FcWorld : IAstRunner
 
                                     if (neighborMeshIndexToUse != -1)
                                     {
-                                        if (currentSegmentMeshes.Meshes[meshIndex].GetSideBitfield(sideIndex) == neighborSegmentMeshes.Meshes[neighborMeshIndexToUse].GetSideBitfield(sideIndex ^ 1))
+                                        /*if (currentSegmentMeshes.Meshes[meshIndex].GetSideBitfield(sideIndex) == neighborSegmentMeshes.Meshes[neighborMeshIndexToUse].GetSideBitfield(sideIndex ^ 1))
                                         {
                                             connectsToSideBitfield |= (uint)(1L << (sideIndex & 0b111111));
-                                        }
+                                        }*/
                                     }
                                 }
                             }

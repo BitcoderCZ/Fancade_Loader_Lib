@@ -5,6 +5,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BitcoderCZ.Maths.Vectors;
 #if !NET8_0_OR_GREATER
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 #endif
@@ -17,12 +18,14 @@ namespace BitcoderCZ.Fancade.Runtime.Simulated;
 public readonly struct PrefabSegmentMesh
 {
     private readonly int _voxelCount;
-    private readonly Array6<ulong> _bitfields;
+    //private readonly Array6<ulong> _bitfields;
 
-    internal PrefabSegmentMesh(int voxelCount, ReadOnlySpan<ulong> bitfields)
+    internal PrefabSegmentMesh(int voxelCount, /*ReadOnlySpan<ulong> bitfields, */byte3 minPos, byte3 maxPos)
     {
         _voxelCount = voxelCount;
-        Assign(ref _bitfields, bitfields);
+        //Assign(ref _bitfields, bitfields);
+        MinPos = minPos;
+        MaxPos = maxPos;
     }
 
     /// <summary>
@@ -32,6 +35,18 @@ public readonly struct PrefabSegmentMesh
     public int VoxelCount => _voxelCount;
 
     /// <summary>
+    /// Gets the minimum bounds of the mesh.
+    /// </summary>
+    /// <value>The minimum bounds of the mesh.</value>
+    public byte3 MinPos { get; }
+
+    /// <summary>
+    /// Gets the maximum bounds of the mesh.
+    /// </summary>
+    /// <value>The maximum bounds of the mesh.</value>
+    public byte3 MaxPos { get; }
+
+    /*/// <summary>
     /// Gets the bitfield for a side.
     /// </summary>
     /// <param name="sideIndex">Index of the side.</param>
@@ -93,4 +108,5 @@ public readonly struct PrefabSegmentMesh
         }
     }
 #endif
+*/
 }
