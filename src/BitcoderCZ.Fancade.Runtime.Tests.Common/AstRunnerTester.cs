@@ -434,7 +434,7 @@ public sealed class AstRunnerTester
         {
         }
 
-        public FcObject CreateObject(FcObject original)
+        public FcObject CreateObject(FcObject original, EnvironmentPosition blockPosition)
             => default;
 
         public void DestroyObject(FcObject @object)
