@@ -155,6 +155,11 @@ public sealed class PrefabSegmentMeshes
             }
         }
 
+        if (segment.PrefabId is 604)
+        {
+            
+        }
+
         return new PrefabSegmentMeshes(meshCount, voxelMeshIndex, ChunkVoxels(meshCount, voxelMeshIndex, voxels), min, max);
     }
 
