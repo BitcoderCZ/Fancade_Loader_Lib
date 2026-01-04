@@ -249,7 +249,9 @@ public readonly struct BlockMesh
 
             int neighborSide = sideIndex ^ 1;
 
-            bool gluesA = (meshA.GetSideGlue(sideIndex) & meshB.GetSideGlue(neighborSide)) != 0;
+            ulong glueThis = meshA.GetSideGlue(sideIndex);
+            ulong glueNeighbor = meshB.GetSideGlue(neighborSide);
+            bool gluesA = (glueThis & glueNeighbor) != 0;
 
             uint sideIndexShifted = (uint)(1 << (sideIndex & 31));
             var currentMeshInfo = segmentMeshes[currentBlockId];
