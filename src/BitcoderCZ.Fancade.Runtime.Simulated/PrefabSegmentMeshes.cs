@@ -158,7 +158,7 @@ public sealed class PrefabSegmentMeshes
         return new PrefabSegmentMeshes(meshCount, voxelMeshIndex, ChunkVoxels(meshCount, voxelMeshIndex, voxels), min, max);
     }
 
-    private static unsafe PrefabSegmentMesh[] ChunkVoxels(int meshCount, byte[] voxelMeshIndex, Voxels voxels)
+    private static PrefabSegmentMesh[] ChunkVoxels(int meshCount, byte[] voxelMeshIndex, Voxels voxels)
     {
         PrefabSegmentMesh[] meshes = new PrefabSegmentMesh[meshCount];
 
@@ -499,7 +499,7 @@ public sealed class PrefabSegmentMeshes
                 {
                     meshVoxelCount++;
 
-                    var pos = byte3.FromIndex((byte)i, Voxels.Size, Voxels.Size);
+                    var pos = (byte3)int3.FromIndex(i, Voxels.Size, Voxels.Size);
                     min = byte3.Min(min, pos);
                     max = byte3.Max(max, pos);
                 }

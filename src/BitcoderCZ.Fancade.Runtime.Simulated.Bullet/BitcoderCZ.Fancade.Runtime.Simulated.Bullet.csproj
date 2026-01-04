@@ -7,7 +7,7 @@
     <LangVersion>13</LangVersion>
     <PackageId>BitcoderCZ.Fancade.Runtime.Simulated.Bullet</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>0.0.1-beta.11</Version>
+    <Version>0.0.1-beta.12</Version>
     <Description>Run fancade games with bullet physics.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BitcoderCZ.BulletSharp.Dynamics" Version="1.0.0-beta.22" />
+    <PackageReference Include="BitcoderCZ.BulletSharp.Dynamics" Version="1.0.0-beta.23" />
     <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
       <PrivateAssets>all</PrivateAssets>

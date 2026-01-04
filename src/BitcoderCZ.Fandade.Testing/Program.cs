@@ -22,8 +22,8 @@ var ast = FcAST.Parse(game.Prefabs, levelId);
 var ctx = new MyRuntimeCtx();
 Console.WriteLine("Building level");
 FcWorld world;
-/*while (true)
-{*/
+//while (true)
+//{
     world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx, timeout: Timeout.InfiniteTimeSpan));
 //}
 
