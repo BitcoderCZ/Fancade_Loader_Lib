@@ -193,7 +193,8 @@ public sealed class PrefabSegmentMeshes
                         if (voxelMeshIndex[voxelIndex] == meshIndex)
                         {
                             VoxelFace face = new VoxelFace(voxels.GetRawFace(voxelSideIndex));
-                            if (face.HasGlue && !face.IsEmpty)
+                            byte faceX = voxels.GetRawFace(voxelIndex);
+                            if (face.HasGlue && faceX != 0)
                             {
                                 sideGlue |= 1ul << (layerX + (layerY * Voxels.Size));
                             }
