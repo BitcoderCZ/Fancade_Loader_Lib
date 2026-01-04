@@ -157,7 +157,7 @@ public sealed class PrefabSegmentMeshes
 
         if (segment.PrefabId is 604)
         {
-            
+
         }
 
         return new PrefabSegmentMeshes(meshCount, voxelMeshIndex, ChunkVoxels(meshCount, voxelMeshIndex, voxels), min, max);
@@ -190,10 +190,13 @@ public sealed class PrefabSegmentMeshes
                         int voxelIndex = Voxels.Index(voxelPos, 0);
                         int voxelSideIndex = Voxels.Index(voxelPos, sideIndex);
 
-                        VoxelFace face = new VoxelFace(voxels.GetRawFace(voxelSideIndex));
-                        if (face.HasGlue && !face.IsEmpty && voxelMeshIndex[voxelIndex] == meshIndex)
+                        if (voxelMeshIndex[voxelIndex] == meshIndex)
                         {
-                            sideGlue |= 1ul << (layerX + (layerY * Voxels.Size));
+                            VoxelFace face = new VoxelFace(voxels.GetRawFace(voxelSideIndex));
+                            if (face.HasGlue && !face.IsEmpty)
+                            {
+                                sideGlue |= 1ul << (layerX + (layerY * Voxels.Size));
+                            }
                         }
                     }
                 }
