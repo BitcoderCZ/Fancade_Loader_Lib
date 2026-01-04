@@ -162,6 +162,57 @@ public readonly struct Voxels : ICloneable
         => position.InBounds(Size, Size, Size);
 
     /// <summary>
+    /// Gets the index of the layer that is facing the outside for a given side.
+    /// </summary>
+    /// <param name="sideIndex">Index of the side, 0-5, +X, -X, +Y, -Y, +Z, -Z.</param>
+    /// <returns>Index of the layer that is facing the outside.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int GetOuterLayerIndexForSide(int sideIndex)
+        => sideIndex is 0 or 2 or 4 ? Size - 1 : 0;
+
+    /// <summary>
+    /// Converts a layer position to a voxel position.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <listheader>
+    ///     <term>Side axis</term>
+    ///     <description>Position formula for side.</description>
+    /// </listheader>
+    /// <item>
+    ///     <term>X</term>
+    ///     <description>X: <paramref name="layer"/>, Y: <paramref name="layerY"/>, Z: <paramref name="layerX"/>.</description>
+    /// </item>
+    /// <item>
+    ///     <term>Y</term>
+    ///     <description>X: <paramref name="layerX"/>, Y: <paramref name="layer"/>, Z: <paramref name="layerY"/>.</description>
+    /// </item>
+    /// <item>
+    ///     <term>Z</term>
+    ///     <description>X: <paramref name="layerX"/>, Y: <paramref name="layerY"/>, Z: <paramref name="layer"/>.</description>
+    /// </item>
+    /// </list>
+    /// </remarks>
+    /// <param name="sideIndex">Index of the side, 0 = +X, 1 = -X, 2 = +Y, 3 = -Y, 4 = +Z, 5 = -Z.</param>
+    /// <param name="layer">
+    /// The position of the layer along the axis perpendicular to the side. 
+    /// 0 corresponds to the negative-most layer, and <see cref="Size"/> - 1 corresponds to the positive-most layer. 
+    /// This convention is the same for both positive and negative sides of an axis (e.g., +X and -X).
+    /// </param>
+    /// <param name="layerX">The layer x position.</param>
+    /// <param name="layerY">The layer y position.</param>
+    /// <returns>The voxel position.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int3 MapLayerPosToVoxelPos(int sideIndex, int layer, int layerX, int layerY)
+        => sideIndex switch
+        {
+            0 or 1 => new int3(layer, layerY, layerX),
+            2 or 3 => new int3(layerX, layer, layerY),
+            4 or 5 => new int3(layerX, layerY, layer),
+            _ => default,
+        };
+
+    /// <summary>
     /// Writes the face glue data into a <see cref="BitArray"/>.
     /// </summary>
     /// <remarks>

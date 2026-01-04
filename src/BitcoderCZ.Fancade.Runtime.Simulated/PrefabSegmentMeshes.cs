@@ -162,332 +162,39 @@ public sealed class PrefabSegmentMeshes
     {
         PrefabSegmentMesh[] meshes = new PrefabSegmentMesh[meshCount];
 
-        Span<byte> currentMeshVoxels = stackalloc byte[8 * 8 * 8 * 6];
-
         Span<byte> rawVoxels = voxels.Data;
 
-        Span<ulong> sideBitfield = stackalloc ulong[6];
+        Span<ulong> connectsOnSide = stackalloc ulong[6];
 
         short3 voxelsMin = new short3(short.MaxValue, short.MaxValue, short.MaxValue);
         short3 voxelsMax = new short3(short.MinValue, short.MinValue, short.MinValue);
 
         for (int meshIndex = 0; meshIndex < meshCount; meshIndex++)
         {
-            int voxelIndex;
-
-            currentMeshVoxels.Clear();
-
-            sideBitfield.Clear();
-
-            /*ulong value = 0;
-            var rawVoxelsSlice = rawVoxels[7..];
-            voxelIndex = 7;
-            do
+            for (int sideIndex = 0; sideIndex < 6; sideIndex++)
             {
-                if (rawVoxelsSlice[0] != 0)
+                int layer = Voxels.GetOuterLayerIndexForSide(sideIndex);
+
+                ulong sideGlue = 0;
+
+                for (int layerY = 0; layerY < Voxels.Size; layerY++)
                 {
-                    value |= 1UL << (voxelIndex - 7 & 0b0011_1111);
+                    for (int layerX = 0; layerX < Voxels.Size; layerX++)
+                    {
+                        int3 voxelPos = Voxels.MapLayerPosToVoxelPos(sideIndex, layer, layerX, layerY);
+                        int voxelIndex = Voxels.Index(voxelPos, 0);
+                        int voxelSideIndex = Voxels.Index(voxelPos, sideIndex);
+
+                        VoxelFace face = new VoxelFace(voxels.GetRawFace(voxelSideIndex));
+                        if (face.HasGlue && !face.IsEmpty && voxelMeshIndex[voxelIndex] == meshIndex)
+                        {
+                            sideGlue |= 1ul << (layerX + (layerY * Voxels.Size));
+                        }
+                    }
                 }
 
-                if (rawVoxelsSlice[8] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 6 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[16] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 5 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[24] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 4 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[32] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 3 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[40] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 2 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[48] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 1 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[56] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 0 & 0b0011_1111);
-                }
-
-                voxelIndex += 8;
-                rawVoxelsSlice = rawVoxelsSlice[64..];
-            } while (voxelIndex != 71);
-
-            sideBitfield[0] = value;
-
-            value = 0;
-#pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
-            rawVoxelsSlice = currentMeshVoxels[512..];
-#pragma warning restore CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
-            voxelIndex = 7;
-            do
-            {
-                if (rawVoxelsSlice[0] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 7 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[8] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 6 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[16] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 5 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[24] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 4 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[32] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 3 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[40] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 2 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[48] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 1 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[56] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 0 & 0b0011_1111);
-                }
-
-                voxelIndex += 8;
-                rawVoxelsSlice = rawVoxelsSlice[64..];
-            } while (voxelIndex != 71);
-
-            sideBitfield[1] = value;
-
-            value = 0;
-#pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
-            rawVoxelsSlice = currentMeshVoxels[1080..];
-#pragma warning restore CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
-            voxelIndex = 7;
-            do
-            {
-                if (rawVoxelsSlice[0] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 7 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[1] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 6 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[2] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 5 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[3] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 4 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[4] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 3 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[5] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 2 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[6] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 1 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[7] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 0 & 0b0011_1111);
-                }
-
-                voxelIndex += 8;
-                rawVoxelsSlice = rawVoxelsSlice[64..];
-            } while (voxelIndex != 71);
-
-            sideBitfield[2] = value;
-
-            value = 0;
-#pragma warning disable CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
-            rawVoxelsSlice = currentMeshVoxels[1536..];
-#pragma warning restore CS9080 // Use of variable in this context may expose referenced variables outside of their declaration scope
-            voxelIndex = 7;
-            do
-            {
-                if (rawVoxelsSlice[0] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 7 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[1] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 6 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[2] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 5 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[3] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 4 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[4] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 3 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[5] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 2 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[6] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 1 & 0b0011_1111);
-                }
-
-                if (rawVoxelsSlice[7] != 0)
-                {
-                    value |= 1UL << (voxelIndex - 0 & 0b0011_1111);
-                }
-
-                voxelIndex += 8;
-                rawVoxelsSlice = rawVoxelsSlice[64..];
-            } while (voxelIndex != 71);
-
-            sideBitfield[3] = value;
-
-            value = 0;
-            voxelIndex = 0;
-
-            do
-            {
-                if (rawVoxels[voxelIndex + 2496] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 0 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + 2497] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 1 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + 2498] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 2 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + 2499] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 3 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + 2500] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 4 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + 2501] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 5 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + 2502] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 6 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + 2503] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 7 & 0b0011_1111);
-                }
-
-                voxelIndex += 8;
-            } while (voxelIndex != 64);
-
-            sideBitfield[4] = value;
-
-            value = 0;
-            voxelIndex = 0;
-
-            do
-            {
-                if (rawVoxels[voxelIndex + (512 * 5) + 0] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 0 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + (512 * 5) + 1] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 1 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + (512 * 5) + 2] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 2 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + (512 * 5) + 3] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 3 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + (512 * 5) + 4] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 4 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + (512 * 5) + 5] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 5 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + (512 * 5) + 6] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 6 & 0b0011_1111);
-                }
-
-                if (rawVoxels[voxelIndex + (512 * 5) + 7] != 0)
-                {
-                    value |= 1UL << (voxelIndex + 7 & 0b0011_1111);
-                }
-
-                voxelIndex += 8;
-            } while (voxelIndex != 64);
-
-            sideBitfield[5] = value;*/
+                connectsOnSide[sideIndex] = sideGlue;
+            }
 
             int meshVoxelCount = 0;
 
@@ -505,7 +212,7 @@ public sealed class PrefabSegmentMeshes
                 }
             }
 
-            meshes[meshIndex] = new PrefabSegmentMesh(meshVoxelCount/*, sideBitfield*/, min, max);
+            meshes[meshIndex] = new PrefabSegmentMesh(meshVoxelCount, connectsOnSide, min, max);
         }
 
         return meshes;
