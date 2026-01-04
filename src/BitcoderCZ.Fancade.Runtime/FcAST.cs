@@ -20,6 +20,7 @@ public sealed partial class FcAST
     /// Initializes a new instance of the <see cref="FcAST"/> class.
     /// </summary>
     /// <param name="prefabId">Id of the prefab this AST represents.</param>
+    /// <param name="prefabType">Type of the prefab this AST represents.</param>
     /// <param name="terminalInfo"><see cref="PrefabTerminalInfo"/> for the prefab.</param>
     /// <param name="entryPointTerminals">Positions of input void terminals, that are not connected.</param>
     /// <param name="statements">Map of positions to statements.</param>
@@ -29,7 +30,7 @@ public sealed partial class FcAST
     /// <param name="nonVoidOutputs">Inputs of type other than <see cref="SignalType.Void"/> of the <see cref="FcAST"/>.</param>
     /// <param name="connectionsFrom">A map of connections by the block they originate from.</param>
     /// <param name="connectionsTo">A map of connections by the block they end on.</param>
-    public FcAST(ushort prefabId, PrefabTerminalInfo terminalInfo, ImmutableArray<(int3 BlockPosition, byte3 TerminalPosition)> entryPointTerminals, FrozenDictionary<int3, StatementSyntax> statements, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> nonVoidOutputs, FrozenDictionary<int3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<int3, ImmutableArray<Connection>> connectionsTo)
+    public FcAST(ushort prefabId, PrefabType prefabType, PrefabTerminalInfo terminalInfo, ImmutableArray<(int3 BlockPosition, byte3 TerminalPosition)> entryPointTerminals, FrozenDictionary<int3, StatementSyntax> statements, ImmutableArray<Variable> globalVariables, ImmutableArray<Variable> variables, ImmutableArray<OutsideConnection> voidInputs, ImmutableArray<(OutsideConnection Connection, SyntaxTerminal? InsideTerminal)> nonVoidOutputs, FrozenDictionary<int3, ImmutableArray<Connection>> connectionsFrom, FrozenDictionary<int3, ImmutableArray<Connection>> connectionsTo)
     {
         ThrowIfNull(statements);
         ThrowIfNull(connectionsFrom);
@@ -45,6 +46,7 @@ public sealed partial class FcAST
         NonVoidOutputs = nonVoidOutputs;
         ConnectionsFrom = connectionsFrom;
         ConnectionsTo = connectionsTo;
+        PrefabType = prefabType;
     }
 
     /// <summary>
@@ -52,6 +54,12 @@ public sealed partial class FcAST
     /// </summary>
     /// <value>Id of the prefab this AST represents.</value>
     public ushort PrefabId { get; }
+
+    /// <summary>
+    /// Gets the type of the prefab this AST represents.
+    /// </summary>
+    /// <value>Type of the prefab this AST represents.</value>
+    public PrefabType PrefabType { get; }
 
     /// <summary>
     /// Gets the <see cref="PrefabTerminalInfo"/> for the prefab.

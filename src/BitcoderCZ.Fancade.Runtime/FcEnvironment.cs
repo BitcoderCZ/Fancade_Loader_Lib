@@ -55,6 +55,9 @@ public sealed class FcEnvironment : IFcEnvironment
     /// <value>Id of the prefab this <see cref="FcEnvironment"/> represents.</value>
     public ushort PrefabId => AST.PrefabId;
 
+    /// <inheritdoc/>
+    public bool IsObject => OuterEnvironmentIndex == 0 && AST.PrefabType is PrefabType.Normal or PrefabType.Physics;
+
     internal static List<EntryPoint> GetEntryPointsInExecutionOrder(FcEnvironment[] environments)
     {
         var list = new List<EntryPoint>();

@@ -317,7 +317,7 @@ public sealed partial class FcAstCompiler
             _writer.Indent++;
             foreach (var env in _environments)
             {
-                _writer.WriteLineInv($"new CompFcEnvironment({env.PrefabId}, {env.Index}, {env.OuterEnvironmentIndex}, new {nameof(int3)}({env.OuterPosition.X}, {env.OuterPosition.Y}, {env.OuterPosition.Z})),");
+                _writer.WriteLineInv($"new CompFcEnvironment({env.PrefabId}, {env.Index}, {env.OuterEnvironmentIndex}, new {nameof(int3)}({env.OuterPosition.X}, {env.OuterPosition.Y}, {env.OuterPosition.Z}), {(env.IsObject ? "true" : "false")}),");
             }
 
             _writer.Indent--;
@@ -818,17 +818,19 @@ public sealed partial class FcAstCompiler
 
             internal sealed class CompFcEnvironment : IFcEnvironment
             {
-                public CompFcEnvironment(ushort prefabId, int index, int outerEnvironmentIndex, int3 outerPosition)
+                public CompFcEnvironment(ushort prefabId, int index, int outerEnvironmentIndex, int3 outerPosition, bool isObject)
                 {
                     PrefabId = prefabId;
                     Index = index;
                     OuterEnvironmentIndex = outerEnvironmentIndex;
                     OuterPosition = outerPosition;
+                    IsObject = isObject;
                 }
                 public ushort PrefabId { get; }
                 public int Index { get; }
                 public int OuterEnvironmentIndex { get; }
                 public int3 OuterPosition { get; }
+                public bool IsObject { get; }
             }
 
             internal static class NumberUtils

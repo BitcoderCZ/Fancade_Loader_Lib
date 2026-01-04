@@ -9,7 +9,7 @@ using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 
 Game game;
-using (var file = File.OpenRead("/home/bitcoder/Downloads/6020F44F3A287C88.fcg"))
+using (var file = File.OpenRead("/home/bitcoder/Downloads/cookie blast.fcg"))
 {
     game = Game.LoadCompressed(file);
 }
@@ -19,13 +19,14 @@ ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "Game").Id
 var ast = FcAST.Parse(game.Prefabs, levelId);
 
 var ctx = new MyRuntimeCtx();
-var world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx));
+var world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx, timeout: Timeout.InfiniteTimeSpan));
 
 for (int i = 0; i < 60; i++)
 {
     world.RunFrame(timeStep: 1f / 60f);
 
     ctx.Camera.Step(MyRuntimeCtx.ScreenInfo);
+    Thread.Sleep(1);
 }
 
 Console.WriteLine("Done");

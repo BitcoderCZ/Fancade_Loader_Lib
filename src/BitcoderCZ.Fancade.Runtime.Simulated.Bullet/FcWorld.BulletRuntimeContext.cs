@@ -99,6 +99,11 @@ public sealed partial class FcWorld
                     environment = outer;
                 }
 
+                if (!environment.IsObject)
+                {
+                    return ((Vector3)environment.OuterPosition + new Vector3(0.9375f, 0.1875f, 0.9375f), Quaternion.Identity);
+                }
+
                 var (min, max) = _world._gameMesh.GetPrefabMeshBounds(environment.PrefabId);
 
                 var segment = _world._prefabs.GetSegmentOrStock(_world._prefabs.GetPrefab(_world._mainPrefab).Blocks.GetBlockOrDefault(environment.OuterPosition));

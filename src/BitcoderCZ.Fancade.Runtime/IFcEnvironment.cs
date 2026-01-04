@@ -34,4 +34,10 @@ public interface IFcEnvironment
     /// </summary>
     /// <value>Position of this environment in the outer environment; or <see cref="int3.Zero"/>, if this is the outer-most environment.</value>
     int3 OuterPosition { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the environment corresponds to an object.
+    /// </summary>
+    /// <value><see langword="true"/> if the prefab's type is <see cref="PrefabType.Normal"/> or <see cref="PrefabType.Physics"/>; otherwise, <see langword="false"/>.</value>
+    bool IsObject { get; }
 }
