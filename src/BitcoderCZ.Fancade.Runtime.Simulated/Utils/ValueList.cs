@@ -349,6 +349,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
 
         comparer ??= Comparer<T>.Default;
 
+        #if NET5_0_OR_GREATER
         if (_count <= BufferCapacity)
         {
             BufferSpan[.._count].Sort(comparer);
@@ -370,6 +371,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
 
             return;
         }
+        #endif
 
         IntroSort(0, _count - 1, 2 * FloorLog2(_count), comparer);
 
