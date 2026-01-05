@@ -63,7 +63,7 @@ public sealed partial class FcWorld : IAstRunner
 
     private int _disposed;
 
-    private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId)
+    private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId, bool createMultiThreaded)
     {
         _runtimeCtx = new BulletRuntimeContext(this, runtimeContext);
         _runner = runnerFactory(_runtimeCtx);
@@ -83,9 +83,9 @@ public sealed partial class FcWorld : IAstRunner
         _groundPlane.UserIndex = FcObject.Null.Value;
         _groundPlane.Restitution = 1f;
 
-        _gameMesh = GameMeshInfo.Create(prefabs, mainId);
+        _gameMesh = GameMeshInfo.Create(prefabs, mainId, createMultiThreaded);
 
-        InitObjects(mainId);
+        InitObjects(mainId, createMultiThreaded);
 
         _world.UpdateAabbs();
     }
@@ -152,8 +152,9 @@ public sealed partial class FcWorld : IAstRunner
     /// <param name="prefabs">The game's prefabs.</param>
     /// <param name="runtimeContext">The <see cref="IRuntimeContextBase"/> to use.</param>
     /// <param name="runnerFactory">A func to create a <see cref="IAstRunner"/> given a <see cref="IRuntimeContext"/>.</param>
+    /// <param name="createMultiThreaded">Whether to use multiple threads to create the <see cref="FcWorld"/>.</param>
     /// <returns>The created <see cref="FcWorld"/>.</returns>
-    public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory)
+    public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, bool createMultiThreaded = true)
     {
         ThrowIfNull(runtimeContext, nameof(runtimeContext));
         ThrowIfNull(runnerFactory, nameof(runnerFactory));
@@ -163,7 +164,7 @@ public sealed partial class FcWorld : IAstRunner
             ThrowArgumentException($"{nameof(prefabs)}.{nameof(prefabs.IdOffset)} must be equal to {nameof(RawGame)}.{nameof(RawGame.CurrentNumbStockPrefabs)}.", nameof(prefabs));
         }
 
-        return new FcWorld(runtimeContext, runnerFactory, prefabs, prefabId);
+        return new FcWorld(runtimeContext, runnerFactory, prefabs, prefabId, createMultiThreaded);
     }
 
     /// <summary>
@@ -444,10 +445,25 @@ public sealed partial class FcWorld : IAstRunner
         return (min, max);
     }*/
 
-    private void InitObjects(ushort mainId)
+    private void InitObjects(ushort mainId, bool createMultiThreaded)
     {
+        _gameMesh.DeduplicateMeshes(createMultiThreaded);
+
         var stockPrefabs = StockBlocks.PrefabList;
         var usedPrefabs = PrefabUsedCache.Create(_prefabs, mainId);
+
+        /* float totalVolume = 0f;
+            Vector3 centerOfMass = Vector3.Zero;
+            Vector3 sizeMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            Vector3 sizeMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+
+            bool foundPhysics = false;*/
+        var uniqueMeshInfo = new (float TotalVolume, Vector3 CenterOfMass, Vector3 SizeMin, Vector3 SizeMax, bool FoundPhysics)?[_gameMesh.UniqueMeshCount!.Value];
+
+        for (int i = 0; i < uniqueMeshInfo.Length; i++)
+        {
+
+        }
 
         foreach (var prefab in stockPrefabs.Concat(_prefabs))
         {
@@ -463,85 +479,18 @@ public sealed partial class FcWorld : IAstRunner
                 var objectId = (FcObject)_objectIdCounter++;
                 short objectInPrefabMeshIndex = (short)i;
 
-                var insideSize = prefab.Blocks.Array.Size;
+                meshInfo.GetMesh(i, out var mesh, out int? uniqueMeshIndex);
+                Debug.Assert(uniqueMeshIndex is not null);
 
-                ushort[] blocks = prefab.Blocks.Array.Array;
-
-                float totalVolume = 0f;
-                Vector3 centerOfMass = Vector3.Zero;
-                Vector3 sizeMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-                Vector3 sizeMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
-
-                bool foundPhysics = false;
-
-                int index = 0;
-                for (int z = 0; z < insideSize.Z; z++)
+                if (uniqueMeshInfo[uniqueMeshIndex.Value] is null)
                 {
-                    for (int y = 0; y < insideSize.Y; y++)
-                    {
-                        for (int x = 0; x < insideSize.X; x++, index++)
-                        {
-                            ushort blockId = blocks[index];
-
-                            if (blockId == 0)
-                            {
-                                continue;
-                            }
-
-                            var currentSegment = _prefabs.GetSegmentOrStock(blockId);
-                            var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
-                            var currentSegmentMesh = _gameMesh.GetSegmentMesh(blockId);
-
-                            if (currentPrefab.Type == PrefabType.Physics)
-                            {
-                                for (int meshIndex = 0; meshIndex < currentSegmentMesh.MeshCount; meshIndex++)
-                                {
-                                    if (meshInfo.BlockMeshIds[meshIndex + meshInfo.BlockMeshIdOffsets[index]] != objectInPrefabMeshIndex)
-                                    {
-                                        continue;
-                                    }
-
-                                    foundPhysics = true;
-
-                                    //var (boundsMin, boundsMax) = GetMeshBounds(currentSegment.Voxels, currentSegmentMesh, (byte)meshIndex);
-                                    var currentMesh = currentSegmentMesh.Meshes[meshIndex];
-                                    var boundsMin = currentMesh.MinPos;
-                                    var boundsMax = currentMesh.MaxPos;
-
-                                    Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
-                                    float volume = size.X * size.Y * size.Z;
-                                    totalVolume += volume;
-
-                                    Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + new Vector3(x, y, z);
-                                    Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + new Vector3(x + 0.125f, y + 0.125f, z + 0.125f);
-
-                                    centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
-
-                                    sizeMin = Vector3.Min(sizeMin, worldBoundsMin);
-                                    sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
-                                }
-                            }
-                            else if (currentPrefab.Type == PrefabType.Normal)
-                            {
-                                for (int meshIndex = 0; meshIndex < currentSegmentMesh.MeshCount; meshIndex++)
-                                {
-                                    if (meshInfo.BlockMeshIds[meshIndex + meshInfo.BlockMeshIdOffsets[index]] != objectInPrefabMeshIndex)
-                                    {
-                                        continue;
-                                    }
-
-                                    centerOfMass += new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
-                                    totalVolume++;
-
-                                    sizeMin = Vector3.Min(sizeMin, new Vector3(x, y, z));
-                                    sizeMax = Vector3.Max(sizeMax, new Vector3(x + 1f, y + 1f, z + 1f));
-
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    InitUnique(meshInfo, prefab, i);
                 }
+
+                var (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics) = uniqueMeshInfo[uniqueMeshIndex.Value]!.Value;
+                centerOfMass += (Vector3)mesh.Position;
+                sizeMin += (Vector3)mesh.Position;
+                sizeMax += (Vector3)mesh.Position;
 
                 Vector3 pos = centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume);
                 float mass = totalVolume;
@@ -572,6 +521,89 @@ public sealed partial class FcWorld : IAstRunner
         }
 
         InitConnectedObjects(usedPrefabs);
+
+        void InitUnique(BlockMesh meshInfo, Prefab prefab, int meshIndex)
+        {
+            meshInfo.GetMesh(meshIndex, out var mesh, out int? uniqueMeshIndex);
+            Debug.Assert(uniqueMeshIndex is not null);
+
+            var blocks = prefab.Blocks;
+            ushort[] blocksArray = blocks.Array.Array;
+
+            float totalVolume = 0f;
+            Vector3 centerOfMass = Vector3.Zero;
+            Vector3 sizeMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            Vector3 sizeMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+
+            bool foundPhysics = false;
+
+            foreach (var block in mesh)
+            {
+                var pos = mesh.Position + block.Offset;
+
+                int index = blocks.Index(pos);
+                ushort blockId = blocksArray[index];
+
+                if (blockId == 0)
+                {
+                    continue;
+                }
+
+                var currentSegment = _prefabs.GetSegmentOrStock(blockId);
+                var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
+                var currentSegmentMesh = _gameMesh.GetSegmentMesh(blockId);
+
+                if (currentPrefab.Type == PrefabType.Physics)
+                {
+                    for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
+                    {
+                        if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
+                        {
+                            continue;
+                        }
+
+                        foundPhysics = true;
+
+                        //var (boundsMin, boundsMax) = GetMeshBounds(currentSegment.Voxels, currentSegmentMesh, (byte)meshIndex);
+                        var currentMesh = currentSegmentMesh.Meshes[segmentMeshIndex];
+                        var boundsMin = currentMesh.MinPos;
+                        var boundsMax = currentMesh.MaxPos;
+
+                        Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
+                        float volume = size.X * size.Y * size.Z;
+                        totalVolume += volume;
+
+                        Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + (Vector3)block.Offset;
+                        Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + (Vector3)block.Offset + new Vector3(0.125f);
+
+                        centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
+
+                        sizeMin = Vector3.Min(sizeMin, worldBoundsMin);
+                        sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
+                    }
+                }
+                else if (currentPrefab.Type == PrefabType.Normal)
+                {
+                    for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
+                    {
+                        if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
+                        {
+                            continue;
+                        }
+
+                        centerOfMass += (Vector3)block.Offset + new Vector3(0.5f);
+                        totalVolume++;
+
+                        sizeMin = Vector3.Min(sizeMin, (Vector3)block.Offset);
+                        sizeMax = Vector3.Max(sizeMax, (Vector3)block.Offset + Vector3.One);
+
+                        break;
+                    }
+                }
+            }
+
+            uniqueMeshInfo[uniqueMeshIndex.Value] = (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics);
+        }
     }
 
     private void InitConnectedObjects(PrefabUsedCache usedPrefabs)
@@ -716,7 +748,7 @@ public sealed partial class FcWorld : IAstRunner
 
                 Vector3 offset = ((size * 0.5f) + ((Vector3)boundsMin * 0.125f) + (Vector3)currentPos) - rObject.Start.Position;
 
-                uint connectsToSideBitfield = 0;
+                //uint connectsToSideBitfield = 0;
                 int colliderType;
                 switch (currentPrefab.Collider)
                 {
@@ -726,14 +758,15 @@ public sealed partial class FcWorld : IAstRunner
                             float sizeMax = MathF.Max(MathF.Max(size.X, size.Y), size.Z);
                             size = new Vector3(sizeMax, sizeMax, sizeMax);
 #pragma warning disable IDE0059 // Unnecessary assignment of a value
-                            connectsToSideBitfield = 0;
+                            //connectsToSideBitfield = 0;
 #pragma warning restore IDE0059 // Unnecessary assignment of a value
                         }
 
                         break;
                     case PrefabCollider.Box:
                         {
-                            for (int sideIndex = 0; sideIndex < 6; sideIndex++)
+                            // todo: stretch the box if possible
+                            /*for (int sideIndex = 0; sideIndex < 6; sideIndex++)
                             {
                                 int3 neighborPos = new int3(-1, -1, -1);
                                 bool neighborIsAnotherBlock;
@@ -863,14 +896,14 @@ public sealed partial class FcWorld : IAstRunner
 
                                     if (neighborMeshIndexToUse != -1)
                                     {
-                                        /*if (currentSegmentMeshes.Meshes[meshIndex].GetSideBitfield(sideIndex) == neighborSegmentMeshes.Meshes[neighborMeshIndexToUse].GetSideBitfield(sideIndex ^ 1))
-                                        {
-                                            connectsToSideBitfield |= (uint)(1L << (sideIndex & 0b111111));
-                                        }*/
+                                        //if (currentSegmentMeshes.Meshes[meshIndex].GetSideBitfield(sideIndex) == neighborSegmentMeshes.Meshes////[neighborMeshIndexToUse].GetSideBitfield(sideIndex ^ 1))
+                                        //{
+                                        //    connectsToSideBitfield |= (uint)(1L << (sideIndex & 0b111111));
+                                        //}
                                     }
                                 }
                             }
-
+*/
                             colliderType = 1;
                         }
 
@@ -880,7 +913,7 @@ public sealed partial class FcWorld : IAstRunner
                             Debug.Assert(currentPrefab.Collider == PrefabCollider.None, $"{nameof(currentPrefab)}.{nameof(currentPrefab.Collider)} should be valid.");
                             colliderType = 3;
 #pragma warning disable IDE0059 // Unnecessary assignment of a value
-                            connectsToSideBitfield = 0;
+                            //connectsToSideBitfield = 0;
 #pragma warning restore IDE0059 // Unnecessary assignment of a value
                         }
 

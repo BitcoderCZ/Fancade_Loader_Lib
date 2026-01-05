@@ -16,7 +16,7 @@ namespace BitcoderCZ.Fancade.Runtime.Simulated;
 /// <summary>
 /// Stores the mesh of the inside of a prefab.
 /// </summary>
-public readonly struct BlockMesh
+public struct BlockMesh
 {
     /// <summary>
     /// An empty <see cref="BlockMesh"/> instance.
@@ -34,10 +34,10 @@ public readonly struct BlockMesh
     ];
 
     private readonly short[] _blockMeshIds;
-    private readonly List<FcMesh> _meshes;
+    internal readonly List<(FcMesh Mesh, int? UniqueMeshIndex)> _meshes;
     private readonly Array3D<int> _blockMeshIdOffsets;
 
-    private BlockMesh(int meshCount, Array3D<int> blockMeshIdOffsets, List<FcMesh> meshes, short[] blockMeshIds)
+    private BlockMesh(int meshCount, Array3D<int> blockMeshIdOffsets, List<(FcMesh Mesh, int? UniqueMeshIndex)> meshes, short[] blockMeshIds)
     {
         Debug.Assert(meshes.Count == meshCount, $"{nameof(meshes)} should have {meshCount} elements.");
 
@@ -51,37 +51,43 @@ public readonly struct BlockMesh
     /// Gets the number of meshes.
     /// </summary>
     /// <value>Number of meshes.</value>
-    public int MeshCount { get; }
+    public readonly int MeshCount { get; }
 
     /// <summary>
     /// Gets the size of the inside of the prefab.
     /// </summary>
     /// <value>Size of the inside of the prefab.</value>
-    public int3 Size => _blockMeshIdOffsets.Size;
+    public readonly int3 Size => _blockMeshIdOffsets.Size;
 
     /// <summary>
     /// Gets the mesh offsets.
     /// </summary>
     /// <value>Mesh offsets.</value>
-    public ReadOnlySpan<int> BlockMeshIdOffsets => _blockMeshIdOffsets.Array;
+    public readonly ReadOnlySpan<int> BlockMeshIdOffsets => _blockMeshIdOffsets.Array;
+
+    /// <summary>
+    /// Gets the mesh ids as <see cref="ReadOnlySpan{T}"/>.
+    /// </summary>
+    /// <value>Mesh ids as <see cref="ReadOnlySpan{T}"/>.</value>
+    public readonly ReadOnlySpan<short> BlockMeshIds => _blockMeshIds;
 
     /// <summary>
     /// Gets the mesh ids.
     /// </summary>
     /// <value>Mesh ids.</value>
-    public ReadOnlySpan<short> BlockMeshIds => _blockMeshIds;
+    public readonly IReadOnlyList<short> BlockMeshIdsList => _blockMeshIds;
 
     /// <summary>
-    /// Gets the meshes.
-    /// </summary>
-    /// <value>The meshes.</value>
-    public IReadOnlyList<FcMesh> Meshes => _meshes;
-
-    /// <summary>
-    /// Gets the meshes as <see cref="ReadOnlySpan{T}"/>.
+    /// Gets the meshes as <see cref="ReadOnlySpan{T}"/>, call <see cref="GameMeshInfo.DeduplicateMeshes"/> to initialize UniqueMeshIndex.
     /// </summary>
     /// <value>The meshes as <see cref="ReadOnlySpan{T}"/>.</value>
-    public ReadOnlySpan<FcMesh> MeshesSpan => CollectionsMarshal.AsSpan(_meshes);
+    public readonly ReadOnlySpan<(FcMesh Mesh, int? UniqueMeshIndex)> Meshes => CollectionsMarshal.AsSpan(_meshes);
+
+    /// <summary>
+    /// Gets the meshes, call <see cref="GameMeshInfo.DeduplicateMeshes"/> to initialize UniqueMeshIndex.
+    /// </summary>
+    /// <value>The meshes.</value>
+    public readonly IReadOnlyList<(FcMesh Mesh, int? UniqueMeshIndex)> MeshesList => _meshes;
 
     /// <summary>
     /// Creates a new <see cref="BlockMesh"/> instance.
@@ -127,7 +133,7 @@ public readonly struct BlockMesh
         var stockPrefabs = StockBlocks.PrefabList;
 
         short[] blockMeshIds = new short[totalSegmentMeshCount];
-        var meshes = new List<FcMesh>(totalSegmentMeshCount / 16);
+        var meshes = new List<(FcMesh Mesh, int? UniqueMeshIndex)>(totalSegmentMeshCount / 16);
 
         blockMeshIds.AsSpan().Fill(-1);
 
@@ -217,7 +223,7 @@ public readonly struct BlockMesh
                     }
 
                     meshBuilder.Drain(out var mesh);
-                    meshes.Add(mesh);
+                    meshes.Add((mesh, null));
                     meshIndex++;
                 }
             }
@@ -258,7 +264,7 @@ public readonly struct BlockMesh
     /// <param name="position">The position of which the mesh offset should be retrieved.</param>
     /// <returns>Mesh offset at <paramref name="position"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int GetMeshOffset(int3 position)
+    public readonly int GetMeshOffset(int3 position)
         => _blockMeshIdOffsets.Get(position);
 
     /// <summary>
@@ -267,7 +273,7 @@ public readonly struct BlockMesh
     /// <param name="position">The position of which the mesh offset should be retrieved.</param>
     /// <returns>Mesh offset at <paramref name="position"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int GetMeshOffsetUnchecked(int3 position)
+    public readonly int GetMeshOffsetUnchecked(int3 position)
         => _blockMeshIdOffsets.GetUnchecked(position);
 
     /// <summary>
@@ -276,7 +282,7 @@ public readonly struct BlockMesh
     /// <param name="position">The position of which the mesh offset should be retrieved.</param>
     /// <returns>Mesh offset at <paramref name="position"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int GetMeshOffsetOrZero(int3 position)
+    public readonly int GetMeshOffsetOrZero(int3 position)
         => _blockMeshIdOffsets.InBounds(position)
         ? _blockMeshIdOffsets.GetUnchecked(position)
         : 0;
@@ -288,7 +294,7 @@ public readonly struct BlockMesh
     /// <param name="segmentMeshIndex">The local segment mesh index of the block.</param>
     /// <returns>Id of the mesh at <paramref name="position"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int GetMeshAtPos(int3 position, int segmentMeshIndex)
+    public readonly int GetMeshAtPos(int3 position, int segmentMeshIndex)
         => _blockMeshIds[GetMeshOffset(position) + segmentMeshIndex];
 
     /// <summary>
@@ -297,6 +303,14 @@ public readonly struct BlockMesh
     /// <param name="meshIndex">Index of the mesh whose positions should be retrieved.</param>
     /// <returns>Positions the mesh occupies, may contain duplicates.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public FcMesh.PositionsEnumerable EnumerateMeshBlocks(int meshIndex)
-        => _meshes[meshIndex].Positions;    
+    public readonly FcMesh.PositionsEnumerable EnumerateMeshBlocks(int meshIndex)
+        => _meshes[meshIndex].Mesh.Positions;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void GetMesh(int meshIndex, out FcMesh mesh, out int? uniqueMeshIndex)
+    {
+        var item = _meshes[meshIndex];
+        mesh = item.Mesh;
+        uniqueMeshIndex = item.UniqueMeshIndex;
+    }
 }

@@ -12,9 +12,9 @@ using BitcoderCZ.Maths.Vectors;
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
 [StructLayout(LayoutKind.Auto)]
-public readonly struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
+public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
 {
-    internal readonly ValueList<Block> Blocks;
+    internal ValueList<Block> Blocks;
     private readonly int _hashCode;
 
     private FcMesh(ValueList<Block> blocks, int3 position)

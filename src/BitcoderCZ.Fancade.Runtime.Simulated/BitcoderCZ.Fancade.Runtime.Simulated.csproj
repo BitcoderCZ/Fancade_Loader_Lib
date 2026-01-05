@@ -47,4 +47,10 @@
     <ProjectReference Include="..\BitcoderCZ.Fancade\BitcoderCZ.Fancade.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
+		<Reference Include="Bcl.CollectionsMarshal">
+			<HintPath>..\..\libs\Bcl.CollectionsMarshal.dll</HintPath>
+		</Reference>
+  </ItemGroup>
+
 </Project>

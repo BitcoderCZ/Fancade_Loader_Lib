@@ -62,7 +62,10 @@
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageReference Include="zlib.net-mutliplatform" Version="1.1.0" />
-	<PackageReference Include="System.Collections.Immutable" Version="10.0.1" />
+	  <PackageReference Include="System.Collections.Immutable" Version="10.0.1" />
+		<Reference Include="Bcl.CollectionsMarshal">
+			<HintPath>..\..\libs\Bcl.CollectionsMarshal.dll</HintPath>
+		</Reference>
   </ItemGroup>
 
 </Project>
