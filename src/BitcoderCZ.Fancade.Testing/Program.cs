@@ -24,7 +24,7 @@ Console.WriteLine("Building level");
 FcWorld world;
 while (true)
 {
-    world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx, timeout: Timeout.InfiniteTimeSpan));
+    world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx, timeout: Timeout.InfiniteTimeSpan), true);
 }
 
 for (int i = 0; i < 60; i++)

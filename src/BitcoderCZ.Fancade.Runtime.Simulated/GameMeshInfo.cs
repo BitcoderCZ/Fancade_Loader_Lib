@@ -261,6 +261,7 @@ public struct GameMeshInfo
     {
         if (stockInitialized)
         {
+
             Debug.Assert(stockBlockMeshes is not null, $"{nameof(stockBlockMeshes)} should not be null after initialization.");
             Debug.Assert(stockSegmentMeshes is not null, $"{nameof(stockSegmentMeshes)} should not be null after initialization.");
             return;
@@ -274,8 +275,6 @@ public struct GameMeshInfo
                 Debug.Assert(stockSegmentMeshes is not null, $"{nameof(stockSegmentMeshes)} should not be null after initialization.");
                 return;
             }
-
-            stockInitialized = true;
 
             var stockPrefabs = StockBlocks.PrefabList;
 
@@ -322,6 +321,8 @@ public struct GameMeshInfo
                     stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, emptyList, stockSegmentMeshes));
                 }
             }
+
+            stockInitialized = true;
         }
     }
 }
