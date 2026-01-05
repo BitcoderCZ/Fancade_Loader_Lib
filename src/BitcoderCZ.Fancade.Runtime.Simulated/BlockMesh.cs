@@ -9,6 +9,7 @@ using BitcoderCZ.Maths.Vectors;
 using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
@@ -33,16 +34,16 @@ public readonly struct BlockMesh
     ];
 
     private readonly short[] _blockMeshIds;
-    private readonly List<ValueList<int3>> _meshBlockPositions;
+    private readonly List<FcMesh> _meshes;
     private readonly Array3D<int> _blockMeshIdOffsets;
 
-    private BlockMesh(int meshCount, Array3D<int> blockMeshIdOffsets, List<ValueList<int3>> meshBlockPositions, short[] blockMeshIds)
+    private BlockMesh(int meshCount, Array3D<int> blockMeshIdOffsets, List<FcMesh> meshes, short[] blockMeshIds)
     {
-        Debug.Assert(meshBlockPositions.Count == meshCount, $"{nameof(meshBlockPositions)} should have {meshCount} elements.");
+        Debug.Assert(meshes.Count == meshCount, $"{nameof(meshes)} should have {meshCount} elements.");
 
         MeshCount = meshCount;
         _blockMeshIdOffsets = blockMeshIdOffsets;
-        _meshBlockPositions = meshBlockPositions;
+        _meshes = meshes;
         _blockMeshIds = blockMeshIds;
     }
 
@@ -69,6 +70,18 @@ public readonly struct BlockMesh
     /// </summary>
     /// <value>Mesh ids.</value>
     public ReadOnlySpan<short> BlockMeshIds => _blockMeshIds;
+
+    /// <summary>
+    /// Gets the meshes.
+    /// </summary>
+    /// <value>The meshes.</value>
+    public IReadOnlyList<FcMesh> Meshes => _meshes;
+
+    /// <summary>
+    /// Gets the meshes as <see cref="ReadOnlySpan{T}"/>.
+    /// </summary>
+    /// <value>The meshes as <see cref="ReadOnlySpan{T}"/>.</value>
+    public ReadOnlySpan<FcMesh> MeshesSpan => CollectionsMarshal.AsSpan(_meshes);
 
     /// <summary>
     /// Creates a new <see cref="BlockMesh"/> instance.
@@ -114,11 +127,13 @@ public readonly struct BlockMesh
         var stockPrefabs = StockBlocks.PrefabList;
 
         short[] blockMeshIds = new short[totalSegmentMeshCount];
-        var meshBlockPositions = new List<ValueList<int3>>(totalSegmentMeshCount / 16);
+        var meshes = new List<FcMesh>(totalSegmentMeshCount / 16);
 
         blockMeshIds.AsSpan().Fill(-1);
 
-        Stack<(int3 Pos, short MeshIndex)> stack = new(blocksLength * 6);
+        Stack<(ushort SegmentId, int3 Pos, ushort MeshIndex)> stack = new(blocksLength * 6);
+
+        FcMesh.Builder meshBuilder = new();
 
         short meshIndex = 0; // returned
         for (int blockIndex = 0; blockIndex < blocksLength; blockIndex++)
@@ -153,13 +168,12 @@ public readonly struct BlockMesh
 
                     Debug.Assert(stack.Count == 0, $"{nameof(stack)} should be empty.");
 
-                    stack.Push((blockPos, (short)segmentMeshIndex));
+                    stack.Push((blockId, blockPos, (ushort)segmentMeshIndex));
 
-                    ValueList<int3> meshPositions = [];
                     while (stack.TryPop(out var item))
                     {
                         var currentPos = item.Pos;
-                        meshPositions.Add(currentPos);
+                        meshBuilder.Add(new FcMesh.Block(item.SegmentId, currentPos, item.MeshIndex));
 
                         int currentBLockIndex = currentPos.X + ((currentPos.Y + (currentPos.Z * blocksSize.Y)) * blocksSize.X);
 
@@ -191,24 +205,25 @@ public readonly struct BlockMesh
 
                             int neighborMaxMeshCountUpToPos = blockMeshIdOffsets[neighborIndex];
 
-                            for (short neighborMeshIndex = 0; neighborMeshIndex < neighborMeshCount; neighborMeshIndex++)
+                            for (ushort neighborMeshIndex = 0; neighborMeshIndex < neighborMeshCount; neighborMeshIndex++)
                             {
                                 if (blockMeshIds[neighborMeshIndex + neighborMaxMeshCountUpToPos] == -1 &&
                                     Glues(currentBlockId, item.MeshIndex, sideIndex, neighborId, neighborMeshIndex, segmentMeshes))
                                 {
-                                    stack.Push((neighborPos, neighborMeshIndex));
+                                    stack.Push((neighborId, neighborPos, neighborMeshIndex));
                                 }
                             }
                         }
                     }
 
-                    meshBlockPositions.Add(meshPositions);
+                    meshBuilder.Drain(out var mesh);
+                    meshes.Add(mesh);
                     meshIndex++;
                 }
             }
         }
 
-        return new BlockMesh(meshIndex, blockMeshIdOffsets, meshBlockPositions, blockMeshIds);
+        return new BlockMesh(meshIndex, blockMeshIdOffsets, meshes, blockMeshIds);
 
         PrefabSegment GetSegment(ushort id)
         {
@@ -221,7 +236,7 @@ public readonly struct BlockMesh
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static bool Glues(ushort currentBlockId, short currentMeshIndex, int sideIndex, ushort neighborBLockId, int neighborMeshIndex, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes)
+        static bool Glues(ushort currentBlockId, int currentMeshIndex, int sideIndex, ushort neighborBLockId, int neighborMeshIndex, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes)
         {
             if (sideIndex >= 6)
             {
@@ -277,11 +292,11 @@ public readonly struct BlockMesh
         => _blockMeshIds[GetMeshOffset(position) + segmentMeshIndex];
 
     /// <summary>
-    /// Gets the positions a certain mesh occupies.
+    /// Gets the positions a certain mesh occupies, may contain duplicates.
     /// </summary>
     /// <param name="meshIndex">Index of the mesh whose positions should be retrieved.</param>
-    /// <returns>Positions the mesh occupies.</returns>
+    /// <returns>Positions the mesh occupies, may contain duplicates.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IEnumerable<int3> EnumerateMeshBlocks(int meshIndex)
-        => _meshBlockPositions[meshIndex];
+    public FcMesh.PositionsEnumerable EnumerateMeshBlocks(int meshIndex)
+        => _meshes[meshIndex].Positions;    
 }
