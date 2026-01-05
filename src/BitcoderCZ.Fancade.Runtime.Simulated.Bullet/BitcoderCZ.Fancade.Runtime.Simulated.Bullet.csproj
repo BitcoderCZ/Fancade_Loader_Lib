@@ -7,7 +7,7 @@
     <LangVersion>13</LangVersion>
     <PackageId>BitcoderCZ.Fancade.Runtime.Simulated.Bullet</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>0.0.1-beta.14</Version>
+    <Version>0.0.1-beta.15</Version>
     <Description>Run fancade games with bullet physics.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
