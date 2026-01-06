@@ -16,7 +16,7 @@ namespace BitcoderCZ.Fancade.Runtime.Simulated;
 /// <summary>
 /// Stores the mesh of the inside of a prefab.
 /// </summary>
-public struct BlockMesh
+public readonly struct BlockMesh
 {
     /// <summary>
     /// An empty <see cref="BlockMesh"/> instance.
@@ -34,10 +34,10 @@ public struct BlockMesh
     ];
 
     private readonly short[] _blockMeshIds;
-    internal readonly List<(FcMesh Mesh, int? UniqueMeshIndex)> _meshes;
+    private readonly List<(FcMesh Mesh, int UniqueMeshIndex)> _meshes;
     private readonly Array3D<int> _blockMeshIdOffsets;
 
-    private BlockMesh(int meshCount, Array3D<int> blockMeshIdOffsets, List<(FcMesh Mesh, int? UniqueMeshIndex)> meshes, short[] blockMeshIds)
+    private BlockMesh(int meshCount, Array3D<int> blockMeshIdOffsets, List<(FcMesh Mesh, int UniqueMeshIndex)> meshes, short[] blockMeshIds)
     {
         Debug.Assert(meshes.Count == meshCount, $"{nameof(meshes)} should have {meshCount} elements.");
 
@@ -78,16 +78,16 @@ public struct BlockMesh
     public readonly IReadOnlyList<short> BlockMeshIdsList => _blockMeshIds;
 
     /// <summary>
-    /// Gets the meshes as <see cref="ReadOnlySpan{T}"/>, call <see cref="GameMeshInfo.DeduplicateMeshes"/> to initialize UniqueMeshIndex.
+    /// Gets the meshes as <see cref="ReadOnlySpan{T}"/>.
     /// </summary>
     /// <value>The meshes as <see cref="ReadOnlySpan{T}"/>.</value>
-    public readonly ReadOnlySpan<(FcMesh Mesh, int? UniqueMeshIndex)> Meshes => CollectionsMarshal.AsSpan(_meshes);
+    public readonly ReadOnlySpan<(FcMesh Mesh, int UniqueMeshIndex)> Meshes => CollectionsMarshal.AsSpan(_meshes);
 
     /// <summary>
-    /// Gets the meshes, call <see cref="GameMeshInfo.DeduplicateMeshes"/> to initialize UniqueMeshIndex.
+    /// Gets the meshes.
     /// </summary>
     /// <value>The meshes.</value>
-    public readonly IReadOnlyList<(FcMesh Mesh, int? UniqueMeshIndex)> MeshesList => _meshes;
+    public readonly IReadOnlyList<(FcMesh Mesh, int UniqueMeshIndex)> MeshesList => _meshes;
 
     /// <summary>
     /// Creates a new <see cref="BlockMesh"/> instance.
@@ -95,8 +95,9 @@ public struct BlockMesh
     /// <param name="blocks">The <see cref="BlockData"/> to create the <see cref="BlockMesh"/> for.</param>
     /// <param name="prefabs">A <see cref="PrefabList"/> used to resolve prefab types and voxels.</param>
     /// <param name="segmentMeshes">A <see cref="ReadOnlySpan{T}"/> of <see cref="PrefabSegmentMeshes"/>, where the index corresponds to the segment id.</param>
+    /// <param name="getUnique">A method that given a mesh, gets it's unique index, and if it was already encountered, returns the stored mesh (the input list can be reused).</param>
     /// <returns>The created <see cref="BlockMesh"/>.</returns>
-    public static BlockMesh Create(BlockData blocks, PrefabList prefabs, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes)
+    public static BlockMesh Create(BlockData blocks, PrefabList prefabs, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes, Func<ValueListWithHash<FcMesh.Block>, (int UniqueIndex, ValueList<FcMesh.Block>? UniqueMesh)> getUnique)
     {
         if (blocks.Size == int3.Zero)
         {
@@ -133,13 +134,13 @@ public struct BlockMesh
         var stockPrefabs = StockBlocks.PrefabList;
 
         short[] blockMeshIds = new short[totalSegmentMeshCount];
-        var meshes = new List<(FcMesh Mesh, int? UniqueMeshIndex)>(totalSegmentMeshCount / 16);
+        var meshes = new List<(FcMesh Mesh, int UniqueMeshIndex)>(totalSegmentMeshCount / 16); // TODO: precalculate?
 
         blockMeshIds.AsSpan().Fill(-1);
 
         Stack<(ushort SegmentId, int3 Pos, ushort MeshIndex)> stack = new(blocksLength * 6);
 
-        FcMesh.Builder meshBuilder = new();
+        ValueListWithHash<FcMesh.Block> blockList = default;
 
         short meshIndex = 0; // returned
         for (int blockIndex = 0; blockIndex < blocksLength; blockIndex++)
@@ -179,7 +180,7 @@ public struct BlockMesh
                     while (stack.TryPop(out var item))
                     {
                         var currentPos = item.Pos;
-                        meshBuilder.Add(new FcMesh.Block(item.SegmentId, currentPos, item.MeshIndex));
+                        blockList.List.Add(new FcMesh.Block(item.SegmentId, currentPos, item.MeshIndex));
 
                         int currentBLockIndex = currentPos.X + ((currentPos.Y + (currentPos.Z * blocksSize.Y)) * blocksSize.X);
 
@@ -222,8 +223,38 @@ public struct BlockMesh
                         }
                     }
 
-                    meshBuilder.Drain(out var mesh);
-                    meshes.Add((mesh, null));
+                    int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                    foreach (var block in blockList.List)
+                    {
+                        minPos = int3.Min(minPos, block.Offset);
+                    }
+
+                    // make offsets zero based
+                    for (int i = blockList.List.Count - 1; i >= 0; i--)
+                    {
+                        ref var block = ref blockList.List.GetRef(i);
+                        block = new FcMesh.Block(block.SegmentId, block.Offset - minPos, block.LocalMeshIndex);
+                    }
+
+                    blockList.List.Sort();
+
+                    blockList.ComputeHash();
+
+                    var (uniqueIndex, uniqueMesh) = getUnique(blockList);
+
+                    if (uniqueMesh is null)
+                    {
+                        // new unique, blockList was added to unique mesh list
+                        meshes.Add((new FcMesh(blockList.List, minPos), uniqueIndex));
+                        blockList = default;
+                    }
+                    else
+                    {
+                        // existing mesh, blockList can be reused
+                        meshes.Add((new FcMesh(uniqueMesh.Value, minPos), uniqueIndex));
+                        blockList.List.Clear();
+                    }
+
                     meshIndex++;
                 }
             }

@@ -20,7 +20,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
 
     private int _count;
     private Buffer8 _buffer = default;
-    private List<T>? _list;
+    internal List<T>? _list;
 
     public ValueList(int capacity)
     {

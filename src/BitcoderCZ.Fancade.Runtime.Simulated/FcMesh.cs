@@ -15,13 +15,12 @@ namespace BitcoderCZ.Fancade.Runtime.Simulated;
 public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
 {
     internal ValueList<Block> Blocks;
-    private readonly int _hashCode;
+    private int? _hashCode;
 
-    private FcMesh(ValueList<Block> blocks, int3 position)
+    internal FcMesh(ValueList<Block> blocks, int3 position)
     {
         Blocks = blocks;
         Position = position;
-        _hashCode = Blocks.CalculateHashCode();
     }
 
     /// <summary>
@@ -41,6 +40,12 @@ public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => Blocks.Count;
+    }
+
+    internal int HasCode
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _hashCode ??= Blocks.CalculateHashCode();
     }
 
     /// <inheritdoc/>
@@ -66,7 +71,7 @@ public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
 
     /// <inheritdoc/>
     public bool Equals(FcMesh other)
-        => _hashCode == other._hashCode && Position == other.Position && Blocks.SequenceEqual(in other.Blocks);
+        => HasCode == other.HasCode && Position == other.Position && Blocks.SequenceEqual(in other.Blocks);
 
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,7 +80,7 @@ public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
 
     /// <inheritdoc/>
     public override int GetHashCode()
-        => HashCode.Combine(_hashCode, Position);
+        => HashCode.Combine(HasCode, Position);
 
     /// <summary>
     /// Returns an enumerator that iterates through the collection.
@@ -271,10 +276,10 @@ public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
 
         /// <inheritdoc/>
         public bool Equals(FcMesh x, FcMesh y)
-            => x._hashCode == y._hashCode && x.Blocks.SequenceEqual(in y.Blocks);
+            => x.HasCode == y.HasCode && x.Blocks.SequenceEqual(in y.Blocks);
 
         /// <inheritdoc/>
         public int GetHashCode([DisallowNull] FcMesh obj)
-            => obj._hashCode;
+            => obj.HasCode;
     }
 }

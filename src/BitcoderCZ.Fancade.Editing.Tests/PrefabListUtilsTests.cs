@@ -33,7 +33,7 @@ public class PrefabListUtilsTests
 
         prefabList.RemoveEmptySegmentsFromPrefab(prefab.Id, cache: cache ? new BlockInstancesCache(prefabList.Prefabs, 1) : null);
 
-        await Assert.That(prefab).IsEqualTo(prefabClone, PrefabComparer.Instance);
+        await Assert.That<Prefab>(prefab).IsEqualTo(prefabClone, PrefabComparer.Instance);
     }
 
     [Test]

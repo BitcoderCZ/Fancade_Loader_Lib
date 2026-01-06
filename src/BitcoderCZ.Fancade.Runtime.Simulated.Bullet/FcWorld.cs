@@ -443,12 +443,10 @@ public sealed partial class FcWorld : IAstRunner
 
     private void InitObjects(ushort mainId, bool createMultiThreaded)
     {
-        _gameMesh.DeduplicateMeshes(createMultiThreaded);
-
         var stockPrefabs = StockBlocks.PrefabList;
         var usedPrefabs = PrefabUsedCache.Create(_prefabs, mainId);
 
-        var uniqueMeshInfo = new (float TotalVolume, Vector3 CenterOfMass, Vector3 SizeMin, Vector3 SizeMax, bool FoundPhysics, CompoundShape Shape)?[_gameMesh.UniqueMeshCount!.Value];
+        var uniqueMeshInfo = new (float TotalVolume, Vector3 CenterOfMass, Vector3 SizeMin, Vector3 SizeMax, bool FoundPhysics, CompoundShape Shape)?[_gameMesh.UniqueMeshCount];
 
         foreach (var prefab in stockPrefabs.Concat(_prefabs))
         {
