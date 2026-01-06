@@ -6,6 +6,7 @@ using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
 using BitcoderCZ.Maths.Vectors;
+using Microsoft.Extensions.ObjectPool;
 using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -22,6 +23,8 @@ public readonly struct BlockMesh
     /// An empty <see cref="BlockMesh"/> instance.
     /// </summary>
     public static readonly BlockMesh Empty = new BlockMesh(0, new Array3D<int>(int3.Zero), [], []);
+
+    private static readonly DefaultObjectPool<Stack<(ushort SegmentId, int3 Pos, ushort MeshIndex)>> _stackPool = new DefaultObjectPool<Stack<(ushort, int3, ushort)>>(new PooledStackPolicy<(ushort, int3, ushort)>() { DefaultCapacity = 256, });
 
     private static readonly short3[] NeighborOffsets =
     [
@@ -134,11 +137,11 @@ public readonly struct BlockMesh
         var stockPrefabs = StockBlocks.PrefabList;
 
         short[] blockMeshIds = new short[totalSegmentMeshCount];
-        var meshes = new List<(FcMesh Mesh, int UniqueMeshIndex)>(totalSegmentMeshCount / 16); // TODO: precalculate?
+        var meshes = new List<(FcMesh Mesh, int UniqueMeshIndex)>(totalSegmentMeshCount);
 
         blockMeshIds.AsSpan().Fill(-1);
 
-        Stack<(ushort SegmentId, int3 Pos, ushort MeshIndex)> stack = new(blocksLength * 6);
+        Stack<(ushort SegmentId, int3 Pos, ushort MeshIndex)> stack = _stackPool.Get();
 
         ValueListWithHash<FcMesh.Block> blockList = default;
 
@@ -259,6 +262,8 @@ public readonly struct BlockMesh
                 }
             }
         }
+
+        _stackPool.Return(stack);
 
         return new BlockMesh(meshIndex, blockMeshIdOffsets, meshes, blockMeshIds);
 
