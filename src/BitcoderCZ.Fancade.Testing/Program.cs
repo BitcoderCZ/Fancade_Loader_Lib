@@ -9,12 +9,12 @@ using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 
 Game game;
-using (var file = File.OpenRead("/home/bitcoder/Downloads/rick.fcg"))
+using (var file = File.OpenRead("/home/bitcoder/Downloads/60851784770864E1.fcg"))
 {
     game = Game.LoadCompressed(file);
 }
 
-ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "New Level").Id;
+ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "Monster Tracks").Id;
 
 Console.WriteLine("Parsing ast");
 var ast = FcAST.Parse(game.Prefabs, levelId);
@@ -22,10 +22,10 @@ var ast = FcAST.Parse(game.Prefabs, levelId);
 var ctx = new MyRuntimeCtx();
 Console.WriteLine("Building level");
 FcWorld world;
-while (true)
-{
+//while (true)
+//{
     world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx, timeout: Timeout.InfiniteTimeSpan), true);
-}
+//}
 
 for (int i = 0; i < 60; i++)
 {
