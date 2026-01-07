@@ -462,15 +462,14 @@ public sealed partial class FcWorld : IAstRunner
                 var objectId = (FcObject)_objectIdCounter++;
                 short objectInPrefabMeshIndex = (short)i;
 
-                meshInfo.GetMesh(i, out var mesh, out int? uniqueMeshIndex);
-                Debug.Assert(uniqueMeshIndex is not null);
+                meshInfo.GetMesh(i, out var mesh, out int uniqueMeshIndex);
 
-                if (uniqueMeshInfo[uniqueMeshIndex.Value] is null)
+                if (uniqueMeshInfo[uniqueMeshIndex] is null)
                 {
                     InitUnique(meshInfo, prefab, i);
                 }
 
-                var (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, shape) = uniqueMeshInfo[uniqueMeshIndex.Value]!.Value;
+                var (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, shape) = uniqueMeshInfo[uniqueMeshIndex]!.Value;
                 centerOfMass += (Vector3)mesh.Position;
                 sizeMin += (Vector3)mesh.Position;
                 sizeMax += (Vector3)mesh.Position;
@@ -512,8 +511,7 @@ public sealed partial class FcWorld : IAstRunner
 
         void InitUnique(BlockMesh meshInfo, Prefab prefab, int meshIndex)
         {
-            meshInfo.GetMesh(meshIndex, out var mesh, out int? uniqueMeshIndex);
-            Debug.Assert(uniqueMeshIndex is not null);
+            meshInfo.GetMesh(meshIndex, out var mesh, out int uniqueMeshIndex);
 
             var blocks = prefab.Blocks;
             ushort[] blocksArray = blocks.Array.Array;
@@ -827,7 +825,7 @@ public sealed partial class FcWorld : IAstRunner
                 }
             }
 
-            uniqueMeshInfo[uniqueMeshIndex.Value] = (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, compoundShape);
+            uniqueMeshInfo[uniqueMeshIndex] = (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, compoundShape);
         }
     }
 

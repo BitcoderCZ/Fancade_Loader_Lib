@@ -45,7 +45,11 @@ public sealed class PrefabSegmentMeshes
         MinPosition = minPosition;
         MaxPosition = maxPosition;
 
-        PrefabSegmentMesh.Assign(ref _connectsOnSide, connectsOnSide);
+        // PrefabSegmentMeshes.Empty
+        if (!connectsOnSide.IsEmpty)
+        {
+            PrefabSegmentMesh.Assign(ref _connectsOnSide, connectsOnSide);
+        }
     }
 
     /// <summary>

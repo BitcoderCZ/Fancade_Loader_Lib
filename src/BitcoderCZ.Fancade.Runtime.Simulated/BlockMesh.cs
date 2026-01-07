@@ -343,7 +343,7 @@ public readonly struct BlockMesh
         => _meshes[meshIndex].Mesh.Positions;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void GetMesh(int meshIndex, out FcMesh mesh, out int? uniqueMeshIndex)
+    public readonly void GetMesh(int meshIndex, out FcMesh mesh, out int uniqueMeshIndex)
     {
         var item = _meshes[meshIndex];
         mesh = item.Mesh;
