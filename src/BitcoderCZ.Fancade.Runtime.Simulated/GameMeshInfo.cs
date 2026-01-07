@@ -4,9 +4,12 @@
 
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
+using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
 using BitcoderCZ.Maths.Vectors;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using static BitcoderCZ.Fancade.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
@@ -14,7 +17,7 @@ namespace BitcoderCZ.Fancade.Runtime.Simulated;
 /// <summary>
 /// Stores the meshes of a game.
 /// </summary>
-public readonly struct GameMeshInfo
+public struct GameMeshInfo
 {
     private static readonly
 #if NET9_0_OR_GREATER
@@ -25,6 +28,7 @@ public readonly struct GameMeshInfo
         _initLock = new();
 
     private static (ushort Id, BlockMesh Mesh)[]? stockBlockMeshes;
+    private static List<ValueList<FcMesh.Block>>? stockUniqueMeshes;
     private static PrefabSegmentMeshes[]? stockSegmentMeshes;
     private static bool stockInitialized = false;
 
@@ -32,33 +36,44 @@ public readonly struct GameMeshInfo
     private readonly PrefabSegmentMeshes[] _segmentMeshes;
     private readonly (int3 Min, int3 Max)[] _prefabMeshBounds;
 
+    private List<ValueList<FcMesh.Block>> _uniqueMeshes;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="GameMeshInfo"/> struct.
     /// </summary>
     /// <param name="blockMeshes">A dictionary of prefab id to <see cref="BlockMesh"/>.</param>
     /// <param name="segmentMeshes">A <see cref="PrefabSegmentMeshes"/> array, where the index corresponds to the segment id.</param>
     /// <param name="prefabMeshBounds">An array,of voxel mesh bounds of a prefab, where the index corresponds to the segment id.</param>
-    public GameMeshInfo(Dictionary<ushort, BlockMesh> blockMeshes, PrefabSegmentMeshes[] segmentMeshes, (int3 Min, int3 Max)[] prefabMeshBounds)
+    /// <param name="uniqueMeshes">List of unique meshes.</param>
+    public GameMeshInfo(Dictionary<ushort, BlockMesh> blockMeshes, PrefabSegmentMeshes[] segmentMeshes, (int3 Min, int3 Max)[] prefabMeshBounds, List<ValueList<FcMesh.Block>> uniqueMeshes)
     {
         _blockMeshes = blockMeshes;
         _segmentMeshes = segmentMeshes;
         _prefabMeshBounds = prefabMeshBounds;
+        _uniqueMeshes = uniqueMeshes;
     }
+
+    /// <summary>
+    /// Gets the amount of unique meshes.
+    /// </summary>
+    /// <value>The amount of unique meshess.</value>
+    public readonly int UniqueMeshCount => _uniqueMeshes.Count;
 
     /// <summary>
     /// Creates a new instance of the <see cref="GameMeshInfo"/>.
     /// </summary>
     /// <param name="prefabs"><see cref="PrefabList"/> of the game.</param>
     /// <param name="mainPrefabId">Id of the main(open) prefab.</param>
+    /// <param name="createMultiThreaded">Whether to use multiple threads to create the <see cref="GameMeshInfo"/>.</param>
     /// <returns>The created <see cref="GameMeshInfo"/>.</returns>
-    public static GameMeshInfo Create(PrefabList prefabs, ushort mainPrefabId)
+    public static GameMeshInfo Create(PrefabList prefabs, ushort mainPrefabId, bool createMultiThreaded = true)
     {
         if (prefabs.IdOffset != RawGame.CurrentNumbStockPrefabs)
         {
             ThrowArgumentException($"{nameof(prefabs)}.{nameof(prefabs.IdOffset)} must be equal to {nameof(RawGame)}.{nameof(RawGame.CurrentNumbStockPrefabs)}.", nameof(prefabs));
         }
 
-        InitStock();
+        InitStock(createMultiThreaded);
 
         Dictionary<ushort, BlockMesh> blockMeshes = new Dictionary<ushort, BlockMesh>(stockBlockMeshes.Length + prefabs.PrefabCount);
         PrefabSegmentMeshes[] segmentMeshes = new PrefabSegmentMeshes[stockSegmentMeshes.Length + prefabs.SegmentCount];
@@ -77,34 +92,132 @@ public readonly struct GameMeshInfo
             blockMeshes.Add(id, mesh);
         }
 
-        foreach (var prefab in prefabs.OrderBy(prefab => prefab.Id))
+        var uniqueMeshes = new List<ValueList<FcMesh.Block>>(stockUniqueMeshes.Count + 512);
+        uniqueMeshes.AddRange(stockUniqueMeshes);
+
+        if (createMultiThreaded)
         {
-            if (prefab.Id == mainPrefabId || prefab.Type != PrefabType.Level)
-            {
-                blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, prefabs, segmentMeshes));
-            }
-            else
-            {
-                blockMeshes.Add(prefab.Id, BlockMesh.Empty);
-            }
+#if NET9_0_OR_GREATER
+            Lock blockMeshesLock = new();
+            Lock uniqueMeshesLock = new();
+#else
+            object blockMeshesLock = new();
+            object uniqueMeshesLock = new();
+#endif
 
-            int3 min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
-            int3 max = new int3(int.MinValue, int.MinValue, int.MinValue);
-
-            foreach (var (segment, segmentId) in prefab.EnumerateWithId())
+            var lookup = new ConcurrentDictionary<ValueListWithHash<FcMesh.Block>, int>(stockUniqueMeshes.Select(static (mesh, index) =>
             {
-                var segmentMesh = segmentMeshes[segmentId];
-                min = int3.Min(min, (segment.PosInPrefab * 8) + segmentMesh.MinPosition);
-                max = int3.Max(max, (segment.PosInPrefab * 8) + segmentMesh.MaxPosition);
-            }
+                ValueListWithHash<FcMesh.Block> list = default;
+                list.List = mesh;
+                list.ComputeHash();
+                return new KeyValuePair<ValueListWithHash<FcMesh.Block>, int>(list, index);
+            }));
 
-            foreach (var (_, segmentId) in prefab.EnumerateWithId())
+            Parallel.ForEach(prefabs.OrderBy(prefab => prefab.Id), prefab =>
             {
-                prefabMeshBounds[segmentId] = (min, max);
+                BlockMesh blockMesh = prefab.Type is PrefabType.Level && prefab.Id != mainPrefabId
+                    ? BlockMesh.Empty
+                    : BlockMesh.Create(prefab.Blocks, prefabs, segmentMeshes, mesh =>
+                    {
+                        int index = lookup.GetOrAdd(mesh, static (mesh, item) =>
+                        {
+                            var (uniqueMeshes, uniqueMeshesLock) = item;
+                            lock (uniqueMeshesLock)
+                            {
+                                uniqueMeshes.Add(mesh.List);
+                                return uniqueMeshes.Count - 1;
+                            }
+                        }, (uniqueMeshes, uniqueMeshesLock));
+
+                        var uniqueMesh = uniqueMeshes[index];
+                        if (ReferenceEquals(mesh.List._list, uniqueMesh._list))
+                        {
+                            // new mesh/buffer only, so list can be reused
+                            return (index, null);
+                        }
+                        else
+                        {
+                            // existing mesh
+                            return (index, uniqueMesh);
+                        }
+                    });
+
+                lock (blockMeshesLock)
+                {
+                    blockMeshes.Add(prefab.Id, blockMesh);
+                }
+
+                int3 min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                int3 max = new int3(int.MinValue, int.MinValue, int.MinValue);
+
+                foreach (var (segment, segmentId) in prefab.EnumerateWithId())
+                {
+                    var segmentMesh = segmentMeshes[segmentId];
+                    min = int3.Min(min, (segment.PosInPrefab * 8) + segmentMesh.MinPosition);
+                    max = int3.Max(max, (segment.PosInPrefab * 8) + segmentMesh.MaxPosition);
+                }
+
+                foreach (var (_, segmentId) in prefab.EnumerateWithId())
+                {
+                    prefabMeshBounds[segmentId] = (min, max);
+                }
+            });
+        }
+        else
+        {
+            var lookup = new Dictionary<ValueListWithHash<FcMesh.Block>, int>(stockUniqueMeshes.Select(static (mesh, index) =>
+            {
+                ValueListWithHash<FcMesh.Block> list = default;
+                list.List = mesh;
+                list.ComputeHash();
+                return new KeyValuePair<ValueListWithHash<FcMesh.Block>, int>(list, index);
+            }));
+
+            foreach (var prefab in prefabs.OrderBy(prefab => prefab.Id))
+            {
+                if (prefab.Id == mainPrefabId || prefab.Type != PrefabType.Level)
+                {
+                    blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, prefabs, segmentMeshes, mesh =>
+                    {
+                        ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, mesh, out bool exists);
+
+                        if (!exists)
+                        {
+                            index = uniqueMeshes.Count;
+                            uniqueMeshes.Add(mesh.List);
+
+                            if (mesh.List._list is not null)
+                            {
+                                return (index, null);
+                            }
+                        }
+
+                        return (index, uniqueMeshes[index]);
+                    }));
+                }
+                else
+                {
+                    blockMeshes.Add(prefab.Id, BlockMesh.Empty);
+                }
+
+                int3 min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                int3 max = new int3(int.MinValue, int.MinValue, int.MinValue);
+
+                foreach (var (segment, segmentId) in prefab.EnumerateWithId())
+                {
+                    var segmentMesh = segmentMeshes[segmentId];
+                    min = int3.Min(min, (segment.PosInPrefab * 8) + segmentMesh.MinPosition);
+                    max = int3.Max(max, (segment.PosInPrefab * 8) + segmentMesh.MaxPosition);
+                }
+
+                foreach (var (_, segmentId) in prefab.EnumerateWithId())
+                {
+                    prefabMeshBounds[segmentId] = (min, max);
+                }
             }
         }
 
-        return new GameMeshInfo(blockMeshes, segmentMeshes, prefabMeshBounds);
+        return new GameMeshInfo(blockMeshes, segmentMeshes, prefabMeshBounds, uniqueMeshes);
     }
 
     /// <summary>
@@ -131,9 +244,19 @@ public readonly struct GameMeshInfo
     public (int3 Min, int3 Max) GetPrefabMeshBounds(ushort id)
         => _prefabMeshBounds[id];
 
-    [MemberNotNull(nameof(stockBlockMeshes), nameof(stockSegmentMeshes))]
-    private static void InitStock()
+    public readonly ValueList<FcMesh.Block> GetUniqueMesh(int uniqueMeshIndex)
+        => _uniqueMeshes![uniqueMeshIndex];
+
+    [MemberNotNull(nameof(stockBlockMeshes), nameof(stockSegmentMeshes), nameof(stockUniqueMeshes))]
+    private static void InitStock(bool createMultiThreaded)
     {
+        if (stockInitialized)
+        {
+            Debug.Assert(stockBlockMeshes is not null, $"{nameof(stockBlockMeshes)} should not be null after initialization.");
+            Debug.Assert(stockSegmentMeshes is not null, $"{nameof(stockSegmentMeshes)} should not be null after initialization.");
+            return;
+        }
+
         lock (_initLock)
         {
             if (stockInitialized)
@@ -143,25 +266,102 @@ public readonly struct GameMeshInfo
                 return;
             }
 
-            stockInitialized = true;
-
             var stockPrefabs = StockBlocks.PrefabList;
 
             stockBlockMeshes = new (ushort, BlockMesh)[stockPrefabs.PrefabCount];
+            stockUniqueMeshes = new(32); // todo: actual capacity
             stockSegmentMeshes = new PrefabSegmentMeshes[stockPrefabs.SegmentCount];
 
-            for (ushort i = 0; i < stockSegmentMeshes.Length; i++)
+            if (createMultiThreaded)
             {
-                stockSegmentMeshes[i] = PrefabSegmentMeshes.Create(stockPrefabs.GetSegment(i));
+                Parallel.For(0, stockSegmentMeshes.Length, i =>
+                {
+                    stockSegmentMeshes[i] = PrefabSegmentMeshes.Create(stockPrefabs.GetSegment((ushort)i));
+                });
+            }
+            else
+            {
+                for (ushort i = 0; i < stockSegmentMeshes.Length; i++)
+                {
+                    stockSegmentMeshes[i] = PrefabSegmentMeshes.Create(stockPrefabs.GetSegment(i));
+                }
             }
 
             PrefabList emptyList = new();
 
-            int prefabIndex = 0;
-            foreach (var prefab in stockPrefabs.OrderBy(prefab => prefab.Id))
+            if (createMultiThreaded)
             {
-                stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, emptyList, stockSegmentMeshes));
+#if NET9_0_OR_GREATER
+                Lock uniqueMeshesLock = new();
+#else
+                object uniqueMeshesLock = new();
+#endif
+
+                var lookup = new ConcurrentDictionary<ValueListWithHash<FcMesh.Block>, int>(/*uniqueMeshes.Capacity*/);
+
+                Parallel.ForEach(
+                    stockPrefabs.OrderBy(prefab => prefab.Id)
+#if NET9_0_OR_GREATER
+                    .Index(),
+#else
+                    .Select((prefab, index) => (index, prefab)),
+#endif
+                    item =>
+                {
+                    var (prefabIndex, prefab) = item;
+                    stockBlockMeshes[prefabIndex] = (prefab.Id, BlockMesh.Create(prefab.Blocks, emptyList, stockSegmentMeshes, mesh =>
+                        {
+                            int index = lookup.GetOrAdd(mesh, static (mesh, uniqueMeshesLock) =>
+                            {
+                                lock (uniqueMeshesLock)
+                                {
+                                    stockUniqueMeshes.Add(mesh.List);
+                                    return stockUniqueMeshes.Count - 1;
+                                }
+                            }, uniqueMeshesLock);
+
+                            var uniqueMesh = stockUniqueMeshes[index];
+                            if (ReferenceEquals(mesh.List._list, uniqueMesh._list))
+                            {
+                                // new mesh/buffer only, so list can be reused
+                                return (index, null);
+                            }
+                            else
+                            {
+                                // existing mesh
+                                return (index, uniqueMesh);
+                            }
+                        }));
+                });
             }
+            else
+            {
+                var lookup = new Dictionary<ValueListWithHash<FcMesh.Block>, int>(stockUniqueMeshes.Capacity);
+
+                int prefabIndex = 0;
+                foreach (var prefab in stockPrefabs.OrderBy(prefab => prefab.Id))
+                {
+                    stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, emptyList, stockSegmentMeshes, mesh =>
+                    {
+                        ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, mesh, out bool exists);
+
+                        if (!exists)
+                        {
+                            index = stockUniqueMeshes.Count;
+                            stockUniqueMeshes.Add(mesh.List);
+
+                            if (mesh.List._list is not null)
+                            {
+                                return (index, null);
+                            }
+                        }
+
+                        return (index, stockUniqueMeshes[index]);
+                    }));
+                }
+            }
+
+            stockInitialized = true;
         }
     }
 }

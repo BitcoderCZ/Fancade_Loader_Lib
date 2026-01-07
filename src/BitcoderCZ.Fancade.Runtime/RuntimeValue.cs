@@ -164,6 +164,8 @@ public readonly struct RuntimeValue : IEquatable<RuntimeValue>
             _ => throw new ArgumentException(nameof(type)),
         };
 
+    // TODO: GetValueOfType<T>
+
     /// <inheritdoc/>
     public bool Equals(RuntimeValue other)
         => this == other;

@@ -11,11 +11,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade.Editing</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>4.0.0-develop.21</Version>
+    <Version>4.0.0-develop.24</Version>
     <Description>Additional utils for easier editing of fancade games.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <NoWarn>SA1201</NoWarn>
   </PropertyGroup>
 	
 	<PropertyGroup>
@@ -50,9 +51,13 @@
 
   <ItemGroup>
     <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
-    <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
+    <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="PolySharp" Version="1.15.0">
       <PrivateAssets>all</PrivateAssets>
@@ -66,9 +71,9 @@
 
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
     <PackageReference Include="System.Collections.Immutable" Version="9.0.9" />
-	<Reference Include="Bcl.CollectionsMarshal">
-		<HintPath>..\..\libs\Bcl.CollectionsMarshal.dll</HintPath>
-	</Reference>
+    <Reference Include="Bcl.CollectionsMarshal">
+      <HintPath>..\..\libs\Bcl.CollectionsMarshal.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

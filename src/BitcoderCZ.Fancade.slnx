@@ -15,5 +15,7 @@
   <Project Path="BitcoderCZ.Fancade.Runtime/BitcoderCZ.Fancade.Runtime.csproj" />
   <Project Path="BitcoderCZ.Fancade.Tests.Common/BitcoderCZ.Fancade.Tests.Common.csproj" />
   <Project Path="BitcoderCZ.Fancade.Tests/BitcoderCZ.Fancade.Tests.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Testing/BitcoderCZ.Fancade.Testing.csproj" />
+  <Project Path="BitcoderCZ.Fancade.Benchmarks/BitcoderCZ.Fancade.Benchmarks.csproj" />
   <Project Path="BitcoderCZ.Fancade/BitcoderCZ.Fancade.csproj" />
 </Solution>

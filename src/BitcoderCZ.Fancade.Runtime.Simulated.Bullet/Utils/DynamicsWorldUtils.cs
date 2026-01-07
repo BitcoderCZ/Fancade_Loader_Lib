@@ -3,6 +3,9 @@
 // </copyright>
 
 using BitcoderCZ.BulletSharp;
+using BitcoderCZ.BulletSharp.Collision.CollisionDispatch;
+using BitcoderCZ.BulletSharp.Dynamics;
+using BitcoderCZ.BulletSharp.LinearMath;
 using System.Numerics;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet.Utils;
@@ -18,15 +21,13 @@ internal static class DynamicsWorldUtils
 
         // Using a motion state is recommended,
         // it provides interpolation capabilities and only synchronizes "active" objects
-        var myMotionState = new DefaultMotionState(startTransform);
+        var myMotionState = new DefaultMotionState(Transform.FromMatrix4x4(in startTransform), Transform.Identity);
 
-        Vector3 localInertia = shape.CalculateLocalInertia(mass);
+        shape.CalculateLocalInertia(mass, out var localInertia);
 
         RigidBody body;
-        using (var rbInfo = new RigidBodyConstructionInfo(mass, myMotionState, shape, localInertia))
-        {
-            body = new RigidBody(rbInfo);
-        }
+        var rbInfo = new RigidBodyConstructionInfo(mass, myMotionState, shape, localInertia);
+        body = new RigidBody(in rbInfo);
 
         world.AddRigidBody(body);
 
@@ -38,13 +39,11 @@ internal static class DynamicsWorldUtils
         const float StaticMass = 0;
 
         RigidBody body;
-        using (var rbInfo = new RigidBodyConstructionInfo(StaticMass, null, shape)
+        var rbInfo = new RigidBodyConstructionInfo(StaticMass, null, shape)
         {
-            StartWorldTransform = startTransform,
-        })
-        {
-            body = new RigidBody(rbInfo);
-        }
+            StartWorldTransform = Transform.FromMatrix4x4(in startTransform),
+        };
+        body = new RigidBody(in rbInfo);
 
         world.AddRigidBody(body);
 

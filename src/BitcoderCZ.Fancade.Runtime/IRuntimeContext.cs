@@ -10,10 +10,6 @@ namespace BitcoderCZ.Fancade.Runtime;
 /// <summary>
 /// Methods used by <see cref="IAstRunner"/>s to interact with the game.
 /// </summary>
-/// <remarks>
-/// Implementations of this interface must ensure that none of its methods throw exceptions.  
-/// Consumers of this interface are not required to handle exceptions.
-/// </remarks>
 public interface IRuntimeContext : IRuntimeContextBase
 {
     /// <summary>
@@ -79,11 +75,12 @@ public interface IRuntimeContext : IRuntimeContextBase
     /// Creates a copy of an object.
     /// </summary>
     /// <param name="original">The original object.</param>
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
     /// <returns>The copy.</returns>
-    FcObject CreateObject(FcObject original);
+    FcObject CreateObject(FcObject original, EnvironmentPosition blockPosition);
 
     /// <summary>
-    /// Destroys an object created by <see cref="CreateObject(FcObject)"/>.
+    /// Destroys an object created by <see cref="CreateObject(FcObject, EnvironmentPosition)"/>.
     /// </summary>
     /// <param name="object">The object to destroy.</param>
     void DestroyObject(FcObject @object);

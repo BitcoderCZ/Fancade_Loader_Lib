@@ -36,40 +36,4 @@ public static class ExeUtils
         var builder = new PrefabBlockBuilder(prefab);
         return builder;
     }
-
-    public static FcAST Compile(CodeWriter writer, PrefabList prefabs, ushort? mainPrefabId = null)
-    {
-        writer.Flush();
-        var prefab = (Prefab)writer.Placer.Builder.Build(int3.Zero);
-
-        Debug.Assert(prefabs.ContainsPrefab(prefab.Id));
-        prefabs.AddImplicitConnections();
-
-        return FcAST.Parse(prefabs, mainPrefabId ?? prefab.Id);
-    }
-
-    public static FcAST Compile(CodeWriter writer)
-        => Compile(writer, out _);
-
-    public static FcAST Compile(CodeWriter writer, out PrefabList prefabs)
-    {
-        writer.Flush();
-        return Compile(writer.Placer.Builder, out prefabs);
-    }
-
-    public static FcAST Compile(BlockBuilder builder, out PrefabList prefabs)
-    {
-        prefabs = new PrefabList([(Prefab)builder.Build(int3.Zero)]);
-
-        prefabs.AddImplicitConnections();
-
-        return FcAST.Parse(prefabs, RawGame.CurrentNumbStockPrefabs);
-    }
-
-    public static FcAST Compile(PrefabList prefabs)
-    {
-        prefabs.AddImplicitConnections();
-
-        return FcAST.Parse(prefabs, RawGame.CurrentNumbStockPrefabs);
-    }
 }

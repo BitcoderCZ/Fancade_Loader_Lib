@@ -38,7 +38,6 @@ public sealed partial class FcAstCompiler
     private readonly FcEnvironment[] _environments;
     private readonly StringBuilder _writerBuilder;
     private readonly IndentedTextWriter _writer;
-    private readonly FrozenDictionary<ushort, PrefabTerminalInfo>? _terminalInfos;
 
     private readonly StatementExecutionMode _executionMode;
     private readonly TimeSpan _timeout;
@@ -60,7 +59,6 @@ public sealed partial class FcAstCompiler
     {
         _executionMode = options.StatementExecutionMode;
         _timeout = options.Timeout;
-        _terminalInfos = options.TerminalInfos;
 
         if (_executionMode is StatementExecutionMode.StateMachine)
         {
@@ -154,13 +152,22 @@ public sealed partial class FcAstCompiler
             MetadataReference.CreateFromFile(Assembly.Load("netstandard").Location),
             MetadataReference.CreateFromFile(typeof(IRuntimeContext).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(int3).Assembly.Location),
-            MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Numerics.Vectors.dll")), // does not work in unity
             MetadataReference.CreateFromFile(typeof(Vector3).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(System.Diagnostics.Stopwatch).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(SignalType).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(Ranking).Assembly.Location),
             .. additionalReferences,
         ];
+
+        try
+        {
+            // does not work in unity
+            var vectorsRef = MetadataReference.CreateFromFile(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "System.Numerics.Vectors.dll"));
+            references = references.Append(vectorsRef);
+        }
+        catch
+        {
+        }
 
         CSharpCompilation compilation = CSharpCompilation.Create(
             assemblyName,
@@ -221,6 +228,9 @@ public sealed partial class FcAstCompiler
 
     private static void WriteEnvironmentPosition(int environmentIndex, int3 blockPos, IndentedTextWriter writer)
         => writer.WriteInv($"new EnvironmentPosition(_environments[{environmentIndex}], new int3({blockPos.X}, {blockPos.Y}, {blockPos.Z}))");
+
+    private static void WriteScreenInfo(IndentedTextWriter writer)
+        => writer.Write($"new global::BitcoderCZ.Fancade.Runtime.Utils.ScreenInfo(_ctx.{nameof(IRuntimeContextBase.ScreenSize)})");
 
     private static string GetStateStoreVarName(int environmentIndex, int3 blockPos, string suffix)
         => $"store_{environmentIndex}_{blockPos.X}_{blockPos.Y}_{blockPos.Z}_{suffix}";
@@ -307,7 +317,7 @@ public sealed partial class FcAstCompiler
             _writer.Indent++;
             foreach (var env in _environments)
             {
-                _writer.WriteLineInv($"new CompFcEnvironment({env.PrefabId}, {env.Index}, {env.OuterEnvironmentIndex}, new {nameof(int3)}({env.OuterPosition.X}, {env.OuterPosition.Y}, {env.OuterPosition.Z})),");
+                _writer.WriteLineInv($"new CompFcEnvironment({env.PrefabId}, {env.Index}, {env.OuterEnvironmentIndex}, new {nameof(int3)}({env.OuterPosition.X}, {env.OuterPosition.Y}, {env.OuterPosition.Z}), {(env.IsObject ? "true" : "false")}),");
             }
 
             _writer.Indent--;
@@ -503,8 +513,6 @@ public sealed partial class FcAstCompiler
             var nonVoidNodes = new Stack<(SyntaxTerminal Terminal, int EnvironmentIndex, SignalType Type)>();
             if (_executionMode is StatementExecutionMode.StateMachine)
             {
-                var terminalInfos = _terminalInfos!;
-
                 using (_writer.CurlyIndent("private void Run(int entryTerminal)"))
                 {
                     // TODO: pool stacks
@@ -810,17 +818,19 @@ public sealed partial class FcAstCompiler
 
             internal sealed class CompFcEnvironment : IFcEnvironment
             {
-                public CompFcEnvironment(ushort prefabId, int index, int outerEnvironmentIndex, int3 outerPosition)
+                public CompFcEnvironment(ushort prefabId, int index, int outerEnvironmentIndex, int3 outerPosition, bool isObject)
                 {
                     PrefabId = prefabId;
                     Index = index;
                     OuterEnvironmentIndex = outerEnvironmentIndex;
                     OuterPosition = outerPosition;
+                    IsObject = isObject;
                 }
                 public ushort PrefabId { get; }
                 public int Index { get; }
                 public int OuterEnvironmentIndex { get; }
                 public int3 OuterPosition { get; }
+                public bool IsObject { get; }
             }
 
             internal static class NumberUtils
@@ -1292,12 +1302,6 @@ public sealed partial class FcAstCompiler
             get;
             init;
         }
-
-        /// <summary>
-        /// Gets the <see cref="PrefabTerminalInfo"/>s, required if <see cref="StatementExecutionMode"/> is <see cref="StatementExecutionMode.StateMachine"/>.
-        /// </summary>
-        /// <value>The <see cref="PrefabTerminalInfo"/>s.</value>
-        public required FrozenDictionary<ushort, PrefabTerminalInfo>? TerminalInfos { get; init; }
 
         /// <summary>
         /// Gets a value indicating whether the transpiled code should be human readable, <see langword="false"/> by default.

@@ -10,7 +10,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade.Runtime.Compiled</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>1.0.0-develop.15</Version>
+    <Version>1.0.0-develop.23</Version>
     <Description>Compile fancade scripts for faster execution.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -50,17 +50,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="/"/>
+    <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
-    <PackageReference Include="hamarb123.Analyzers" Version="1.2.1">
+    <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="9.0.9" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.1" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="PolySharp" Version="1.15.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

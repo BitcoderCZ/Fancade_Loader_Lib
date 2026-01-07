@@ -184,7 +184,7 @@ public sealed class FcCamera
 
             float fovHorizontalTemp;
             float fovVerticalTemp;
-            if (!screen.Portrait)
+            if (!screen.IsPortrait)
             {
                 float temp = HorizontalFov / screen.AspectRatio;
                 VerticalFov = HorizontalFov;
@@ -239,7 +239,7 @@ public sealed class FcCamera
             const float Near = 1f;
             const float Far = 200f;
 
-            if (screen.Landscape)
+            if (screen.IsLandscape)
             {
                 float right = Zoom / screen.AspectRatio;
                 float left = -Zoom / screen.AspectRatio;

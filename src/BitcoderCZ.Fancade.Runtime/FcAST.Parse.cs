@@ -231,7 +231,7 @@ public sealed partial class FcAST
                     connectionsTo.Add(connection.To, connection);
                 }
 
-                return _ast = new FcAST(Prefab.Id, _globalCtx.PrefabInfos[Prefab.Id].TerminalInfo, [.. _notConnectedVoidInputs], _nodes.Where(item => item.Value is StatementSyntax).Select(item => new KeyValuePair<int3, StatementSyntax>(item.Key, (StatementSyntax)item.Value)).ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs], connectionsFrom.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()), connectionsTo.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()));
+                return _ast = new FcAST(Prefab.Id, Prefab.Type, _globalCtx.PrefabInfos[Prefab.Id].TerminalInfo, [.. _notConnectedVoidInputs], _nodes.Where(item => item.Value is StatementSyntax).Select(item => new KeyValuePair<int3, StatementSyntax>(item.Key, (StatementSyntax)item.Value)).ToFrozenDictionary(), _globalCtx.GlobalVariables, _variables, [.. _voidInputs], [.. _nonVoidOutputs], connectionsFrom.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()), connectionsTo.ToFrozenDictionary(item => item.Key, item => item.Value.ToImmutableArray()));
             }
         }
 
@@ -370,6 +370,12 @@ public sealed partial class FcAST
 
                 var infos = _globalCtx.PrefabInfos[id].TerminalInfo;
 
+                var customStatement = new CustomStatementSyntax(id, pos, GetOutVoidConnections(pos), _globalCtx.PrefabInfos[id].ParseCtx.AST, []);
+                node = customStatement;
+
+                _nodes.Add(pos, node);
+
+                // create connectedInputTerminals after adding node to _nodes to prevent stack overflow due to connections to self
                 var connectedInputTerminals = ImmutableArray.CreateBuilder<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)>(2);
 
                 foreach (var info in infos.InputTerminals)
@@ -385,10 +391,7 @@ public sealed partial class FcAST
                     }
                 }
 
-                var customStatement = new CustomStatementSyntax(id, pos, GetOutVoidConnections(pos), _globalCtx.PrefabInfos[id].ParseCtx.AST, connectedInputTerminals.DrainToImmutable());
-                node = customStatement;
-
-                _nodes.Add(pos, node);
+                customStatement.ConnectedInputTerminals = connectedInputTerminals.DrainToImmutable();
 
                 foreach (var termPos in customStatement.InputVoidTerminals)
                 {

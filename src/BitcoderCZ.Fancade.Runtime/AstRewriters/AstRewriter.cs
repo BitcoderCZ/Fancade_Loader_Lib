@@ -47,7 +47,7 @@ internal abstract class AstRewriter
             nonVoidOutputs.Add((connection, newTerminal));
         }
 
-        rewritten = new FcAST(ast.PrefabId, ast.TerminalInfo, ast.EntryPointTerminals, statements.ToFrozenDictionary(), ast.GlobalVariables, ast.Variables, ast.VoidInputs, nonVoidOutputs.DrainToImmutable(), ast.ConnectionsFrom, ast.ConnectionsTo);
+        rewritten = new FcAST(ast.PrefabId, ast.PrefabType, ast.TerminalInfo, ast.EntryPointTerminals, statements.ToFrozenDictionary(), ast.GlobalVariables, ast.Variables, ast.VoidInputs, nonVoidOutputs.DrainToImmutable(), ast.ConnectionsFrom, ast.ConnectionsTo);
 
         RewrittenAsts[ast.PrefabId] = rewritten;
 

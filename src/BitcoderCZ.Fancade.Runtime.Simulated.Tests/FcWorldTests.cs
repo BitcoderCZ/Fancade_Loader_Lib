@@ -31,9 +31,9 @@ public class FcWorldTests
             writer.Inspect(LessThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(0.6f)));
         }, null);
 
-        var compiled = Compile(writer, out var prefabs);
+        var tester = AstRunnerTester.CreatePhysics(writer, options: new() { RunFor = 121, });
 
-        await Assert.That(compiled).Inspects([new(true) { Count = 2 }], runFor: 121, physics: (prefab.Id, prefabs));
+        await Assert.That(tester).Inspects(new(true) { Count = 2 });
     }
 
     [Test]
@@ -56,9 +56,9 @@ public class FcWorldTests
             writer.Inspect(LessThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(0.6f)));
         }, null);
 
-        var compiled = Compile(writer, out var prefabs);
+        var tester = AstRunnerTester.CreatePhysics(writer, options: new() { RunFor = 121, });
 
-        await Assert.That(compiled).Inspects([new(true) { Count = 2 }], runFor: 121, physics: (prefab.Id, prefabs));
+        await Assert.That(tester).Inspects(new(true) { Count = 2 });
     }
 
     [Test]
@@ -76,9 +76,9 @@ public class FcWorldTests
             writer.Inspect(GreaterThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(1.4f)));
         }, null);
 
-        var compiled = Compile(writer, out var prefabs);
+        var tester = AstRunnerTester.CreatePhysics(writer, options: new() { RunFor = 121, });
 
-        await Assert.That(compiled).Inspects([new(true) { Count = 2 }], runFor: 121, physics: (prefab.Id, prefabs));
+        await Assert.That(tester).Inspects(new(true) { Count = 2 });
     }
 
     [Test]
@@ -102,9 +102,9 @@ public class FcWorldTests
             writer.Inspect(GetPos(terminal.Wrap()).Rotation);
         }, null);
 
-        var compiled = Compile(writer, out var prefabs);
+        var tester = AstRunnerTester.CreatePhysics(writer, options: new() { RunFor = 121, });
 
-        await Assert.That(compiled).Inspects([new(Quaternion.CreateFromYawPitchRoll(0f, -45f * (float.Pi / 180f), 0f)) { Count = 1 }], runFor: 121, physics: (prefab.Id, prefabs));
+        await Assert.That(tester).Inspects(new(Quaternion.CreateFromYawPitchRoll(0f, -45f * (float.Pi / 180f), 0f)) { Count = 1 });
     }
 
     [Test]
@@ -120,9 +120,9 @@ public class FcWorldTests
         var terminal = new AbsolutePositionTerminal(new int3(4, 2, 1)) { VoxelPosition = byte3.Zero };
         writer.Inspect(GetPos(terminal.Wrap()).Position);
 
-        var compiled = Compile(writer, out var prefabs);
+        var tester = AstRunnerTester.CreatePhysics(writer);
 
-        await Assert.That(compiled).Inspects([new(new Vector3(4.5f, 2.5f, 1.5f)) { Frequency = InspectFrequency.EveryFrame }], physics: (prefab.Id, prefabs));
+        await Assert.That(tester).Inspects(new(new Vector3(4.5f, 2.5f, 1.5f)) { Frequency = InspectFrequency.EveryFrame });
     }
 
     [Test]
@@ -138,9 +138,9 @@ public class FcWorldTests
         var terminal = new AbsolutePositionTerminal(new int3(4, 0, 0)) { VoxelPosition = byte3.Zero };
         writer.Inspect(GetPos(terminal.Wrap()).Position);
 
-        var compiled = Compile(writer, out var prefabs);
+        var tester = AstRunnerTester.CreatePhysics(writer);
 
-        await Assert.That(compiled).Inspects([new(new Vector3(4.5f, 0.5f, 1f)) { Frequency = InspectFrequency.EveryFrame }], physics: (prefab.Id, prefabs));
+        await Assert.That(tester).Inspects(new(new Vector3(4.5f, 0.5f, 1f)) { Frequency = InspectFrequency.EveryFrame });
     }
 
     [Test]
@@ -181,9 +181,9 @@ public class FcWorldTests
         var size = GetSize(terminal.Wrap());
         writer.Inspect(SubtractVectors(size.Max, size.Min));
 
-        var compiled = Compile(writer, prefabs, level.Id);
+        var tester = AstRunnerTester.CreatePhysics(writer, prefabs, level.Id);
 
-        await Assert.That(compiled).Inspects([new(new Vector3(1f, 1f, 1f)) { Frequency = InspectFrequency.EveryFrame }], physics: (level.Id, prefabs));
+        await Assert.That(tester).Inspects(new(new Vector3(1f, 1f, 1f)) { Frequency = InspectFrequency.EveryFrame });
     }
 
     [Test]
@@ -204,9 +204,9 @@ public class FcWorldTests
         var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = byte3.One };
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
 
-        var compiled = Compile(writer, prefabs, level.Id);
+        var tester = AstRunnerTester.CreatePhysics(writer, prefabs, level.Id);
 
-        await Assert.That(compiled).Inspects([new(new FcObject(1)) { Frequency = InspectFrequency.EveryFrame }], physics: (level.Id, prefabs));
+        await Assert.That(tester).Inspects(new(new FcObject(1)) { Frequency = InspectFrequency.EveryFrame });
     }
 
     [Test]
@@ -232,8 +232,8 @@ public class FcWorldTests
         var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = new byte3(2, 1, 1) };
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
 
-        var compiled = Compile(writer, prefabs, level.Id);
+        var tester = AstRunnerTester.CreatePhysics(writer, prefabs, level.Id);
 
-        await Assert.That(compiled).Inspects([new(new FcObject(2)) { Frequency = InspectFrequency.EveryFrame }], physics: (level.Id, prefabs));
+        await Assert.That(tester).Inspects(new(new FcObject(2)) { Frequency = InspectFrequency.EveryFrame });
     }
 }

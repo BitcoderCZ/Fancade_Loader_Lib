@@ -37,7 +37,7 @@ public sealed class CustomStatementSyntax : StatementSyntax
     /// Gets the input connections to this node.
     /// </summary>
     /// <value>Input connections to this node.</value>
-    public ImmutableArray<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)> ConnectedInputTerminals { get; }
+    public ImmutableArray<(byte3 TerminalPosition, SyntaxTerminal? ConnectedTerminal)> ConnectedInputTerminals { get; internal set; }
 
     /// <inheritdoc/>
     public override IEnumerable<byte3> InputVoidTerminals => AST.VoidInputs.Select(con => con.OutsideTerminal);

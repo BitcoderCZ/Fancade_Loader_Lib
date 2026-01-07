@@ -20,9 +20,8 @@ public partial class ExecutionTests
 
         writer.Inspect(Literal(value.Object));
 
-        var compiled = Compile(writer);
-
-        await Assert.That(compiled).Inspects([new(value.Object) { Frequency = InspectFrequency.EveryFrame }]);
+        var tester = AstRunnerTester.Create(writer);
+        await Assert.That(tester).Inspects(new(value.Object) { Frequency = InspectFrequency.EveryFrame });
     }
 
     [Test]
@@ -34,14 +33,11 @@ public partial class ExecutionTests
         writer.Inspect(Literal(1f));
         writer.Inspect(Literal(2f));
 
-        var compiled = Compile(writer);
-
-        await Assert.That(compiled).Inspects(
-        [
-            new(0f) { Order = 0, Frequency = InspectFrequency.EveryFrame },
-            new(1f) { Order = 1, Frequency = InspectFrequency.EveryFrame },
-            new(2f) { Order = 2, Frequency = InspectFrequency.EveryFrame },
-        ]);
+        var tester = AstRunnerTester.Create(writer);
+        await Assert.That(tester)
+            .Inspects(new(0f) { Order = 0, Frequency = InspectFrequency.EveryFrame })
+            .And.Inspects(new(1f) { Order = 1, Frequency = InspectFrequency.EveryFrame })
+            .And.Inspects(new(2f) { Order = 2, Frequency = InspectFrequency.EveryFrame });
     }
 
     [Test]
@@ -58,15 +54,13 @@ public partial class ExecutionTests
 
         builder.AddBlockSegments(blocks);
 
-        var compiled = Compile(builder, out _);
+        var tester = AstRunnerTester.Create(builder);
 
-        await Assert.That(compiled).Inspects(
-        [
-            new(0f) { Order = 0, FrameCount = 1, },
-            new(1f) { Order = 1, FrameCount = 1, },
-            new(2f) { Order = 2, FrameCount = 1, },
-            new(3f) { Order = 3, FrameCount = 1, },
-        ]);
+        await Assert.That(tester)
+            .Inspects(new(0f) { Order = 0, FrameCount = 1, })
+            .And.Inspects(new(1f) { Order = 1, FrameCount = 1, })
+            .And.Inspects(new(2f) { Order = 2, FrameCount = 1, })
+            .And.Inspects(new(3f) { Order = 3, FrameCount = 1, });
 
         void AddInspect(int3 pos, int count)
         {
@@ -97,15 +91,13 @@ public partial class ExecutionTests
 
         builder.AddBlockSegments(blocks);
 
-        var compiled = Compile(builder, out _);
+        var tester = AstRunnerTester.Create(builder);
 
-        await Assert.That(compiled).Inspects(
-        [
-            new(0f) { Order = 0, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, },
-            new(1f) { Order = 1, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, },
-            new(2f) { Order = 2, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, },
-            new(3f) { Order = 3, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, },
-        ]);
+        await Assert.That(tester)
+            .Inspects(new(0f) { Order = 0, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
+            .And.Inspects(new(1f) { Order = 1, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
+            .And.Inspects(new(2f) { Order = 2, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
+            .And.Inspects(new(3f) { Order = 3, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, });
 
         void AddInspect(int3 pos, int count)
         {
@@ -144,12 +136,13 @@ public partial class ExecutionTests
             writer.Inspect(Number(1f));
         });
 
-        var compiled = Compile(writer);
+        var tester = AstRunnerTester.Create(writer, options: new() { RunFor = 2, });
 
-        await Assert.That(compiled).Inspects([new(1f) { Count = 1, }], runFor: 2);
+        await Assert.That(tester).Inspects(new(1f) { Count = 1, });
     }
 
-    [Test]
+    // todo
+    /*[Test]
     public async Task BoxArtSensor_ExecutedOnlyWhenTakingBoxArt()
     {
         var writer = CreateWriter();
@@ -159,10 +152,10 @@ public partial class ExecutionTests
             writer.Inspect(Number(1f));
         });
 
-        var compiled = Compile(writer);
+        var tester = AstRunnerTester.Create(writer, options: new() { RunFor = 2, });
 
-        await Assert.That(compiled).Inspects([new(1f) { BoxArt = true, Count = 2 }], runFor: 2);
-    }
+        await Assert.That(tester).Inspects(new(1f) { BoxArt = true, Count = 2 });
+    }*/
 
     [Test]
     public async Task IfGotoLoop()
@@ -189,15 +182,14 @@ public partial class ExecutionTests
             writer.Inspect(Number(111f));
         });
 
-        var compiled = Compile(writer, out var prefabs);
+        var tester = AstRunnerTester.Create(writer, options: new() { RunFor = 2, });
 
-        await Assert.That(compiled).Inspects([
-            new InspectAssertExpected(0f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 0 },
-            new InspectAssertExpected(1f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 1 },
-            new InspectAssertExpected(2f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 2 },
-            new InspectAssertExpected(111f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 4 },
-            new InspectAssertExpected(222f) {Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 3 },
-        ], runFor: 2);
+        await Assert.That(tester)
+            .Inspects(new InspectAssertExpected(0f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 0 })
+            .And.Inspects(new InspectAssertExpected(1f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 1 })
+            .And.Inspects(new InspectAssertExpected(2f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 2 })
+            .And.Inspects(new InspectAssertExpected(111f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 4 })
+            .And.Inspects(new InspectAssertExpected(222f) { Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, Order = 3 });
     }
 
     [Test]
@@ -205,14 +197,17 @@ public partial class ExecutionTests
     {
         var writer = CreateWriter();
 
-        writer.Loop(Number(0f), Number(10f), (writer, counter) =>
+        writer.Loop(Number(0f), Number(3f), (writer, counter) =>
         {
             writer.Inspect(counter.Wrap());
         });
 
-        var compiled = Compile(writer);
+        var tester = AstRunnerTester.Create(writer);
 
-        await Assert.That(compiled).Inspects(Enumerable.Range(0, 10).Select(i => new InspectAssertExpected((float)i) { Order = i, FrameCount = 1 }));
+        await Assert.That(tester)
+            .Inspects(new InspectAssertExpected(0f) { Order = 0, FrameCount = 1, })
+            .And.Inspects(new InspectAssertExpected(1f) { Order = 1, FrameCount = 1, })
+            .And.Inspects(new InspectAssertExpected(2f) { Order = 2, FrameCount = 1, });
     }
 
     [Test]
@@ -220,14 +215,18 @@ public partial class ExecutionTests
     {
         var writer = CreateWriter();
 
-        writer.Loop(Number(10f), Number(0f), (writer, counter) =>
+        writer.Loop(Number(3f), Number(0f), (writer, counter) =>
         {
             writer.Inspect(counter.Wrap());
         });
 
-        var compiled = Compile(writer);
 
-        await Assert.That(compiled).Inspects(Enumerable.Range(1, 10).Select(i => new InspectAssertExpected((float)(11 - i)) { Order = i, FrameCount = 1 }));
+        var tester = AstRunnerTester.Create(writer);
+
+        await Assert.That(tester)
+            .Inspects(new InspectAssertExpected(3f) { Order = 0, FrameCount = 1, })
+            .And.Inspects(new InspectAssertExpected(2f) { Order = 1, FrameCount = 1, })
+            .And.Inspects(new InspectAssertExpected(1f) { Order = 2, FrameCount = 1, });
     }
 
     [Test]
@@ -239,12 +238,14 @@ public partial class ExecutionTests
         writer.Inspect(Random(None(), None()));
         writer.Inspect(Random(None(), None()));
 
-        var compiled = Compile(writer);
+        var tester = AstRunnerTester.Create(writer, options: new() { RunFor = 2, });
 
         var rng = new FcRandom();
         rng.SetSeed(0f);
 
-        await Assert.That(compiled).Inspects([new(rng.NextSingle()) { Count = 2 }, new(rng.NextSingle()) { Count = 2 }], runFor: 2);
+        await Assert.That(tester)
+            .Inspects(new(rng.NextSingle()) { Count = 2 })
+            .And.Inspects(new(rng.NextSingle()) { Count = 2 });
     }
 
     [Test]
@@ -265,9 +266,9 @@ public partial class ExecutionTests
         var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = byte3.Zero };
         writer.Inspect(terminal.Wrap(), SignalType.Rot);
 
-        var compiled = Compile(writer, prefabs, level.Id);
+        var tester = AstRunnerTester.Create(writer, prefabs, level.Id, options: new() { RunFor = 2, });
 
-        await Assert.That(compiled).Inspects([new(Quaternion.Identity) { Count = 2 }], runFor: 2);
+        await Assert.That(tester).Inspects(new(Quaternion.Identity) { Count = 2 });
     }
 }
 

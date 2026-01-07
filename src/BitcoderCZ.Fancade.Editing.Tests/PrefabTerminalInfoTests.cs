@@ -14,7 +14,7 @@ public class PrefabTerminalInfoTests
     {
         var terminals = CreateTerminalsWithBlockConnection(new byte3(terminalPosX, terminalPosY, terminalPosZ));
 
-        await Assert.That(terminals.Terminals).IsEmpty();
+        await Assert.That(terminals.Terminals.IsEmpty).IsTrue();
     }
 
     [Test]

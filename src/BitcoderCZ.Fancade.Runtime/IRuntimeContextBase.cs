@@ -4,6 +4,7 @@
 
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
+using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
 
@@ -12,10 +13,6 @@ namespace BitcoderCZ.Fancade.Runtime;
 /// <summary>
 /// Base methods used by <see cref="IAstRunner"/>s to interact with the game.
 /// </summary>
-/// <remarks>
-/// Implementations of this interface must ensure that none of its methods throw exceptions.  
-/// Consumers of this interface are not required to handle exceptions.
-/// </remarks>
 public interface IRuntimeContextBase
 {
     /// <summary>
@@ -135,15 +132,17 @@ public interface IRuntimeContextBase
     /// Creates a button and gets if it was pressed last frame.
     /// </summary>
     /// <param name="type">Type of the button.</param>
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
     /// <returns><see langword="true"/> if the button was pressed last frame; otherwise, <see langword="false"/>.</returns>
-    bool GetButtonPressed(ButtonType type);
+    bool GetButtonPressed(ButtonType type, EnvironmentPosition blockPosition);
 
     /// <summary>
     /// Creates a joystick and gets it's direction last frame.
     /// </summary>
     /// <param name="type">Type of the joystick.</param>
+    /// <param name="blockPosition">Environment and position of the block currently being executed.</param>
     /// <returns>The joystick's direction last frame.</returns>
-    Vector3 GetJoystickDirection(JoystickType type);
+    Vector3 GetJoystickDirection(JoystickType type, EnvironmentPosition blockPosition);
 
     // **************************************** Math ****************************************
 

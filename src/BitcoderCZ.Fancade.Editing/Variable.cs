@@ -52,6 +52,8 @@ public readonly struct Variable : IEquatable<Variable>
     /// <value><see langword="true"/> if the variable is global or saved; otherwise, <see langword="false"/>.</value>
     public bool IsGlobal => Name.StartsWith('$') || Name.StartsWith('!');
 
+    // TODO: IsSaved
+
     /// <summary>Returns a value that indicates whether the 2 <see cref="Variable"/>s are equal.</summary>
     /// <param name="left">The first <see cref="Variable"/> to compare.</param>
     /// <param name="right">The second <see cref="Variable"/> to compare.</param>

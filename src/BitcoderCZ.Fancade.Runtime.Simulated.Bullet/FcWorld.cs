@@ -2,12 +2,19 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.BulletSharp;
+using BitcoderCZ.BulletSharp.Collision.BroadphaseCollision;
+using BitcoderCZ.BulletSharp.Collision.CollisionDispatch;
+using BitcoderCZ.BulletSharp.Collision.CollisionShapes;
+using BitcoderCZ.BulletSharp.Collision.NarrowPhaseCollision;
+using BitcoderCZ.BulletSharp.Dynamics;
+using BitcoderCZ.BulletSharp.Dynamics.Constraints;
+using BitcoderCZ.BulletSharp.LinearMath;
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet.Utils;
 using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
+using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -24,7 +31,7 @@ public sealed partial class FcWorld : IAstRunner
 {
     private readonly DiscreteDynamicsWorld _world;
 
-    private readonly BulletRuntimeContext _runtimeCtx;
+    private BulletRuntimeContext _runtimeCtx;
 
     private readonly IAstRunner _runner;
 
@@ -34,7 +41,7 @@ public sealed partial class FcWorld : IAstRunner
 
     private readonly PrefabList _prefabs;
 
-    private readonly GameMeshInfo _gameMesh;
+    private GameMeshInfo _gameMesh;
 
     private readonly List<RuntimeObject> _objects = [];
 
@@ -48,20 +55,22 @@ public sealed partial class FcWorld : IAstRunner
 
     private readonly Dictionary<(int Type, Vector3 Size), CollisionShape> _collisionShapeCache = [];
 
+    private int _maximumObjectCount = 4096;
+
     private int _objectIdCounter = 1;
 
     private int _constraintIdCounter = 1;
 
     private int _disposed;
 
-    private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId)
+    private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId, bool createMultiThreaded)
     {
         _runtimeCtx = new BulletRuntimeContext(this, runtimeContext);
         _runner = runnerFactory(_runtimeCtx);
         _prefabs = prefabs;
         _mainPrefab = mainId;
 
-        var collisionConf = new DefaultCollisionConfiguration();
+        var collisionConf = new DefaultCollisionConfiguration(new());
         var dispatcher = new CollisionDispatcher(collisionConf);
         var broadphase = new DbvtBroadphase();
         var solver = new SequentialImpulseConstraintSolver();
@@ -74,9 +83,9 @@ public sealed partial class FcWorld : IAstRunner
         _groundPlane.UserIndex = FcObject.Null.Value;
         _groundPlane.Restitution = 1f;
 
-        _gameMesh = GameMeshInfo.Create(prefabs, mainId);
+        _gameMesh = GameMeshInfo.Create(prefabs, mainId, createMultiThreaded);
 
-        InitObjects(mainId);
+        InitObjects(mainId, createMultiThreaded);
 
         _world.UpdateAabbs();
     }
@@ -109,11 +118,32 @@ public sealed partial class FcWorld : IAstRunner
     /// <value>Objects as a <see cref="ReadOnlySpan{T}"/>.</value>
     public ReadOnlySpan<RuntimeObject> ObjectsSpan => CollectionsMarshal.AsSpan(_objects);
 
+    /// <summary>
+    /// Gets the <see cref="DiscreteDynamicsWorld"/>.
+    /// </summary>
+    /// <value>The <see cref="DiscreteDynamicsWorld"/> used by the <see cref="FcWorld"/>.</value>
+    public DiscreteDynamicsWorld BulletWorld => _world;
+
     /// <inheritdoc/>
     public IEnumerable<Variable> GlobalVariables => _runner.GlobalVariables;
 
     /// <inheritdoc/>
     public int EnvironmentCount => _runner.EnvironmentCount;
+
+    /// <summary>
+    /// Gets or sets the maximum allowed amount of user create objects, 4096 by default.
+    /// </summary>
+    /// <value>The maximum amount of objects created using <see cref="IRuntimeContext.CreateObject(FcObject, EnvironmentPosition)"/> before <see cref="TooManyObjectsException"/> is thrown.</value>
+    public int MaximumObjectCount
+    {
+        get => _maximumObjectCount;
+        set
+        {
+            ThrowHelper.ThrowIfNegative(value);
+
+            _maximumObjectCount = value;
+        }
+    }
 
     /// <summary>
     /// Creates a new instance of the <see cref="FcWorld"/> class.
@@ -122,8 +152,9 @@ public sealed partial class FcWorld : IAstRunner
     /// <param name="prefabs">The game's prefabs.</param>
     /// <param name="runtimeContext">The <see cref="IRuntimeContextBase"/> to use.</param>
     /// <param name="runnerFactory">A func to create a <see cref="IAstRunner"/> given a <see cref="IRuntimeContext"/>.</param>
+    /// <param name="createMultiThreaded">Whether to use multiple threads to create the <see cref="FcWorld"/>.</param>
     /// <returns>The created <see cref="FcWorld"/>.</returns>
-    public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory)
+    public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, bool createMultiThreaded = true)
     {
         ThrowIfNull(runtimeContext, nameof(runtimeContext));
         ThrowIfNull(runnerFactory, nameof(runnerFactory));
@@ -133,7 +164,7 @@ public sealed partial class FcWorld : IAstRunner
             ThrowArgumentException($"{nameof(prefabs)}.{nameof(prefabs.IdOffset)} must be equal to {nameof(RawGame)}.{nameof(RawGame.CurrentNumbStockPrefabs)}.", nameof(prefabs));
         }
 
-        return new FcWorld(runtimeContext, runnerFactory, prefabs, prefabId);
+        return new FcWorld(runtimeContext, runnerFactory, prefabs, prefabId, createMultiThreaded);
     }
 
     /// <summary>
@@ -197,7 +228,7 @@ public sealed partial class FcWorld : IAstRunner
             int idA = bodyA?.UserIndex ?? -1;
             int idB = bodyB?.UserIndex ?? -1;
 
-            Vector3 normalOnB = strongestPoint.NormalWorldOnB;
+            Vector3 normalOnB = strongestPoint._normalWorldOnB;
 
             if (idA != -1 && TryGetObject((FcObject)idA, out var rA) && rA.RigidBody.IsActive)
             {
@@ -278,7 +309,7 @@ public sealed partial class FcWorld : IAstRunner
             int idA = bodyA?.UserIndex ?? -1;
             int idB = bodyB?.UserIndex ?? -1;
 
-            Vector3 normalOnB = strongestPoint.NormalWorldOnB;
+            Vector3 normalOnB = strongestPoint._normalWorldOnB;
 
             if (idA != -1 && TryGetObject((FcObject)idA, out var rA) && rA.RigidBody.IsActive)
             {
@@ -330,11 +361,10 @@ public sealed partial class FcWorld : IAstRunner
         for (int i = 0; i < _constraints.Count; i++)
         {
             var con = _constraints[i];
-            Debug.Assert(con.Userobject is FcConstraint, $"The Userobject should be a {nameof(FcConstraint)}.");
+            Debug.Assert(con.UserConstraintPtr is FcConstraint, $"The UserConstraintPtr should be a {nameof(FcConstraint)}.");
 
-            _idToConstraint.Remove((FcConstraint)con.Userobject);
+            _idToConstraint.Remove((FcConstraint)con.UserConstraintPtr);
             _world.RemoveConstraint(con);
-            con.Dispose();
         }
 
         _constraints.Clear();
@@ -350,55 +380,26 @@ public sealed partial class FcWorld : IAstRunner
 
     /// <inheritdoc/>
     public void Dispose()
-    {
-        if (Interlocked.Exchange(ref _disposed, 1) == 1)
-        {
-            return;
-        }
-
-        foreach (var shape in _collisionShapeCache)
-        {
-            shape.Value.Dispose();
-        }
-
-        foreach (var obj in _objects)
-        {
-            obj.Dispose();
-        }
-
-        foreach (var con in _constraints)
-        {
-            con.Dispose();
-        }
-
-        _groundPlane.Dispose();
-
-        _world.Dispose();
-    }
+        => _runtimeCtx = null!;
 
     private static RigidBody BulletCreate(Vector3 position, Quaternion rotation, FcObject id)
     {
-        CompoundShape shape = new CompoundShape(true, 0);
-
-        var motionState = new DefaultMotionState(Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position));
-
-        Vector3 localInertia = shape.CalculateLocalInertia(0f);
+        var motionState = new DefaultMotionState(Transform.FromMatrix4x4(Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position)), Transform.Identity);
 
         RigidBody body;
-        using (var rbInfo = new RigidBodyConstructionInfo(0f, motionState, shape, localInertia)
+        var rbInfo = new RigidBodyConstructionInfo(0f, motionState, null!, Vector3.Zero)
         {
             Friction = 0.5f,
-        })
-        {
-            body = new RigidBody(rbInfo);
-        }
+        };
+
+        body = new RigidBody(in rbInfo);
 
         body.UserIndex = id.Value;
 
         return body;
     }
 
-    private static (short3 Min, short3 Max) GetMeshBounds(Voxels voxels, PrefabSegmentMeshes mesh, byte meshIndex)
+    /*private static (short3 Min, short3 Max) GetMeshBounds(Voxels voxels, PrefabSegmentMeshes mesh, byte meshIndex)
     {
         short3 min = new short3(short.MaxValue, short.MaxValue, short.MaxValue);
         short3 max = new short3(short.MinValue, short.MinValue, short.MinValue);
@@ -438,12 +439,14 @@ public sealed partial class FcWorld : IAstRunner
         }
 
         return (min, max);
-    }
+    }*/
 
-    private void InitObjects(ushort mainId)
+    private void InitObjects(ushort mainId, bool createMultiThreaded)
     {
         var stockPrefabs = StockBlocks.PrefabList;
         var usedPrefabs = PrefabUsedCache.Create(_prefabs, mainId);
+
+        var uniqueMeshInfo = new (float TotalVolume, Vector3 CenterOfMass, Vector3 SizeMin, Vector3 SizeMax, bool FoundPhysics, CompoundShape Shape)?[_gameMesh.UniqueMeshCount];
 
         foreach (var prefab in stockPrefabs.Concat(_prefabs))
         {
@@ -459,82 +462,18 @@ public sealed partial class FcWorld : IAstRunner
                 var objectId = (FcObject)_objectIdCounter++;
                 short objectInPrefabMeshIndex = (short)i;
 
-                var insideSize = prefab.Blocks.Array.Size;
+                meshInfo.GetMesh(i, out var mesh, out int? uniqueMeshIndex);
+                Debug.Assert(uniqueMeshIndex is not null);
 
-                ushort[] blocks = prefab.Blocks.Array.Array;
-
-                float totalVolume = 0f;
-                Vector3 centerOfMass = Vector3.Zero;
-                Vector3 sizeMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-                Vector3 sizeMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
-
-                bool foundPhysics = false;
-
-                int index = 0;
-                for (int z = 0; z < insideSize.Z; z++)
+                if (uniqueMeshInfo[uniqueMeshIndex.Value] is null)
                 {
-                    for (int y = 0; y < insideSize.Y; y++)
-                    {
-                        for (int x = 0; x < insideSize.X; x++, index++)
-                        {
-                            ushort blockId = blocks[index];
-
-                            if (blockId == 0)
-                            {
-                                continue;
-                            }
-
-                            var currentSegment = _prefabs.GetSegmentOrStock(blockId);
-                            var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
-                            var currentSegmentMesh = _gameMesh.GetSegmentMesh(blockId);
-
-                            if (currentPrefab.Type == PrefabType.Physics)
-                            {
-                                for (int meshIndex = 0; meshIndex < currentSegmentMesh.MeshCount; meshIndex++)
-                                {
-                                    if (meshInfo.BlockMeshIds[meshIndex + meshInfo.BlockMeshIdOffsets[index]] != objectInPrefabMeshIndex)
-                                    {
-                                        continue;
-                                    }
-
-                                    foundPhysics = true;
-
-                                    var (boundsMin, boundsMax) = GetMeshBounds(currentSegment.Voxels, currentSegmentMesh, (byte)meshIndex);
-
-                                    Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
-                                    float volume = size.X * size.Y * size.Z;
-                                    totalVolume += volume;
-
-                                    Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + new Vector3(x, y, z);
-                                    Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + new Vector3(x + 0.125f, y + 0.125f, z + 0.125f);
-
-                                    centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
-
-                                    sizeMin = Vector3.Min(sizeMin, worldBoundsMin);
-                                    sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
-                                }
-                            }
-                            else if (currentPrefab.Type == PrefabType.Normal)
-                            {
-                                for (int meshIndex = 0; meshIndex < currentSegmentMesh.MeshCount; meshIndex++)
-                                {
-                                    if (meshInfo.BlockMeshIds[meshIndex + meshInfo.BlockMeshIdOffsets[index]] != objectInPrefabMeshIndex)
-                                    {
-                                        continue;
-                                    }
-
-                                    centerOfMass += new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
-                                    totalVolume++;
-
-                                    sizeMin = Vector3.Min(sizeMin, new Vector3(x, y, z));
-                                    sizeMax = Vector3.Max(sizeMax, new Vector3(x + 1f, y + 1f, z + 1f));
-
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    InitUnique(meshInfo, prefab, i);
                 }
+
+                var (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, shape) = uniqueMeshInfo[uniqueMeshIndex.Value]!.Value;
+                centerOfMass += (Vector3)mesh.Position;
+                sizeMin += (Vector3)mesh.Position;
+                sizeMax += (Vector3)mesh.Position;
 
                 Vector3 pos = centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume);
                 float mass = totalVolume;
@@ -550,7 +489,12 @@ public sealed partial class FcWorld : IAstRunner
                 _objects.Add(rObject);
                 _idToObject.Add(rObject.Id, rObject);
 
-                AddColliders(rObject);
+                rigidBody.SetCollisionShape(shape);
+                if (foundPhysics)
+                {
+                    shape.CalculateLocalInertia(mass, out var localInertia);
+                    rigidBody.SetMassProps(mass, localInertia);
+                }
 
                 if (rObject.IsVisible)
                 {
@@ -565,6 +509,326 @@ public sealed partial class FcWorld : IAstRunner
         }
 
         InitConnectedObjects(usedPrefabs);
+
+        void InitUnique(BlockMesh meshInfo, Prefab prefab, int meshIndex)
+        {
+            meshInfo.GetMesh(meshIndex, out var mesh, out int? uniqueMeshIndex);
+            Debug.Assert(uniqueMeshIndex is not null);
+
+            var blocks = prefab.Blocks;
+            ushort[] blocksArray = blocks.Array.Array;
+
+            float totalVolume = 0f;
+            Vector3 centerOfMass = Vector3.Zero;
+            Vector3 sizeMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            Vector3 sizeMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+
+            bool foundPhysics = false;
+
+            foreach (var block in mesh)
+            {
+                var pos = mesh.Position + block.Offset;
+
+                int index = blocks.Index(pos);
+                ushort blockId = blocksArray[index];
+
+                if (blockId is 0)
+                {
+                    continue;
+                }
+
+                var currentSegment = _prefabs.GetSegmentOrStock(blockId);
+                var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
+                var currentSegmentMesh = _gameMesh.GetSegmentMesh(blockId);
+
+                if (currentPrefab.Type is PrefabType.Physics or PrefabType.Normal)
+                {
+                    bool foundMesh = false;
+
+                    for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
+                    {
+                        if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
+                        {
+                            continue;
+                        }
+
+                        if (currentPrefab.Type == PrefabType.Physics)
+                        {
+                            foundPhysics = true;
+
+                            var currentMesh = currentSegmentMesh.Meshes[segmentMeshIndex];
+                            var boundsMin = currentMesh.MinPos;
+                            var boundsMax = currentMesh.MaxPos;
+                            Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
+                            float volume = size.X * size.Y * size.Z;
+                            totalVolume += volume;
+
+                            Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + (Vector3)pos;
+                            Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + (Vector3)pos + new Vector3(0.125f);
+
+                            centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
+
+                            sizeMin = Vector3.Min(sizeMin, worldBoundsMin);
+                            sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
+                        }
+                        else
+                        {
+                            if (foundMesh)
+                            {
+                                continue;
+                            }
+
+                            centerOfMass += (Vector3)pos + new Vector3(0.5f);
+                            totalVolume++;
+
+                            sizeMin = Vector3.Min(sizeMin, (Vector3)pos);
+                            sizeMax = Vector3.Max(sizeMax, (Vector3)pos + Vector3.One);
+
+                            foundMesh = true;
+                        }
+                    }
+                }
+            }
+
+            var compoundShape = new CompoundShape(true, 0);
+            Vector3 shapePos = (centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume)) - (Vector3)mesh.Position;
+            centerOfMass -= (Vector3)mesh.Position;
+            sizeMin -= (Vector3)mesh.Position;
+            sizeMax -= (Vector3)mesh.Position;
+
+            foreach (var block in mesh)
+            {
+                var pos = mesh.Position + block.Offset;
+
+                int index = blocks.Index(pos);
+                ushort blockId = blocksArray[index];
+
+                if (blockId is 0)
+                {
+                    continue;
+                }
+
+                var currentSegment = _prefabs.GetSegmentOrStock(blockId);
+                var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
+                var currentSegmentMesh = _gameMesh.GetSegmentMesh(blockId);
+
+                if (currentPrefab.Collider == PrefabCollider.None || currentSegmentMesh.MeshCount == 0)
+                {
+                    continue;
+                }
+
+                for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
+                {
+                    if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
+                    {
+                        continue;
+                    }
+
+                    var currentMesh = currentSegmentMesh.Meshes[segmentMeshIndex];
+                    var boundsMin = currentMesh.MinPos;
+                    var boundsMax = currentMesh.MaxPos;
+
+                    Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
+
+                    Vector3 offset = (size * 0.5f) + ((Vector3)boundsMin * 0.125f) + (Vector3)block.Offset - shapePos;
+
+                    //uint connectsToSideBitfield = 0;
+                    int colliderType;
+                    switch (currentPrefab.Collider)
+                    {
+                        case PrefabCollider.Sphere:
+                            {
+                                colliderType = 2;
+                                size = new Vector3(MathF.Max(MathF.Max(size.X, size.Y), size.Z));
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+                                //connectsToSideBitfield = 0;
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
+                            }
+
+                            break;
+                        case PrefabCollider.Box:
+                            {
+                                // todo: stretch the box if possible
+                                /*for (int sideIndex = 0; sideIndex < 6; sideIndex++)
+                                {
+                                    int3 neighborPos = new int3(-1, -1, -1);
+                                    bool neighborIsAnotherBlock;
+
+                                    switch (sideIndex)
+                                    {
+                                        case 0:
+                                            if (currentPos.X < insideSize.X - 1)
+                                            {
+                                                neighborPos = currentPos + new int3(1, 0, 0);
+                                            }
+
+                                            neighborIsAnotherBlock = boundsMax.X == 7;
+                                            break;
+                                        case 1:
+                                            if (currentPos.X > 1)
+                                            {
+                                                neighborPos = currentPos + new int3(-1, 0, 0);
+                                            }
+
+                                            neighborIsAnotherBlock = boundsMin.X == 0;
+                                            break;
+                                        case 2:
+                                            if (currentPos.Y < insideSize.Y - 1)
+                                            {
+                                                neighborPos = currentPos + new int3(0, 1, 0);
+                                            }
+
+                                            neighborIsAnotherBlock = boundsMax.Y == 7;
+                                            break;
+                                        case 3:
+                                            if (currentPos.Y > 1)
+                                            {
+                                                neighborPos = currentPos + new int3(0, -1, 0);
+                                            }
+
+                                            neighborIsAnotherBlock = boundsMin.Y == 0;
+                                            break;
+                                        case 4:
+                                            if (currentPos.Z < insideSize.Z - 1)
+                                            {
+                                                neighborPos = currentPos + new int3(0, 0, 1);
+                                            }
+
+                                            neighborIsAnotherBlock = boundsMax.Z == 7;
+                                            break;
+                                        default:
+                                            Debug.Assert(sideIndex == 5, $"{nameof(sideIndex)} should be in the range 0-5.");
+                                            if (currentPos.Z > 1)
+                                            {
+                                                neighborPos = currentPos + new int3(0, 0, -1);
+                                            }
+
+                                            neighborIsAnotherBlock = boundsMin.Z == 0;
+                                            break;
+                                    }
+
+                                    if (neighborPos == new int3(-1, -1, -1) || !neighborIsAnotherBlock)
+                                    {
+                                        continue;
+                                    }
+
+                                    int neighborIndex = neighborPos.ToIndex(insideSize.X, insideSize.Y);
+                                    ushort neighborId = blocks[neighborIndex];
+
+                                    if (neighborId == 0 || _prefabs.GetPrefabOrStock(_prefabs.GetSegmentOrStock(neighborId).PrefabId).Collider != PrefabCollider.Box)
+                                    {
+                                        continue;
+                                    }
+
+                                    var neighborSegmentMeshes = _gameMesh.GetSegmentMesh(neighborId);
+
+                                    if (neighborSegmentMeshes.MeshCount > 0)
+                                    {
+                                        int neighborMeshIndexToUse = -1;
+                                        for (int neighborMeshIndex = 0; neighborMeshIndex < neighborSegmentMeshes.MeshCount; neighborMeshIndex++)
+                                        {
+                                            if (blockMesh.BlockMeshIds[neighborMeshIndex + blockMesh.BlockMeshIdOffsets[neighborIndex]] == rObject.InPrefabMeshIndex)
+                                            {
+                                                //var (neighborBoundsMin, neighborBoundsMax) = GetMeshBounds(_prefabs.GetSegmentOrStock(neighborId).Voxels, neighborSegmentMeshes, (byte)neighborMeshIndex);
+                                                var neighborMesh = neighborSegmentMeshes.Meshes[neighborMeshIndex];
+                                                var neighborBoundsMin = neighborMesh.MinPos;
+                                                var neighborBoundsMax = neighborMesh.MaxPos;
+
+                                                if (sideIndex < 6)
+                                                {
+                                                    int sideShifted = 1 << sideIndex;
+
+                                                    if ((sideShifted & 0b11) == 0)
+                                                    {
+                                                        if ((sideShifted & 0b1100) == 0)
+                                                        {
+                                                            if ((((boundsMin.X == neighborBoundsMin.X) &&
+                                                                (boundsMax.X == neighborBoundsMax.X)) &&
+                                                                (boundsMin.Y == neighborBoundsMin.Y)) &&
+                                                                (boundsMax.Y == neighborBoundsMax.Y))
+                                                            {
+                                                                neighborMeshIndexToUse = neighborMeshIndex;
+                                                            }
+                                                        }
+                                                        else if ((boundsMin.X == neighborBoundsMin.X) &&
+                                                            (boundsMax.X == neighborBoundsMax.X))
+                                                        {
+                                                            if ((boundsMin.Z == neighborBoundsMin.Z) &&
+                                                                (boundsMax.Z == neighborBoundsMax.Z))
+                                                            {
+                                                                neighborMeshIndexToUse = neighborMeshIndex;
+                                                            }
+                                                        }
+                                                    }
+                                                    else if ((boundsMin.Y == neighborBoundsMin.Y) &&
+                                                        (boundsMax.Y == neighborBoundsMax.Y))
+                                                    {
+                                                        if ((boundsMin.Z == neighborBoundsMin.Z) &&
+                                                           (boundsMax.Z == neighborBoundsMax.Z))
+                                                        {
+                                                            neighborMeshIndexToUse = neighborMeshIndex;
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    neighborMeshIndexToUse = neighborMeshIndex;
+                                                }
+                                            }
+                                        }
+
+                                        if (neighborMeshIndexToUse != -1)
+                                        {
+                                            //if (currentSegmentMeshes.Meshes[meshIndex].GetSideBitfield(sideIndex) == neighborSegmentMeshes.Meshes////[neighborMeshIndexToUse].GetSideBitfield(sideIndex ^ 1))
+                                            //{
+                                            //    connectsToSideBitfield |= (uint)(1L << (sideIndex & 0b111111));
+                                            //}
+                                        }
+                                    }
+                                }
+    */
+                                colliderType = 1;
+                            }
+
+                            break;
+                        default:
+                            {
+                                Debug.Assert(currentPrefab.Collider == PrefabCollider.None, $"{nameof(currentPrefab)}.{nameof(currentPrefab.Collider)} should be valid.");
+                                colliderType = 3;
+#pragma warning disable IDE0059 // Unnecessary assignment of a value
+                                //connectsToSideBitfield = 0;
+#pragma warning restore IDE0059 // Unnecessary assignment of a value
+                            }
+
+                            break;
+                    }
+
+                    if (!_collisionShapeCache.TryGetValue((colliderType, size), out var shape))
+                    {
+                        switch (colliderType)
+                        {
+                            case 1:
+                                shape = new BoxShape(size * 0.5f);
+                                break;
+                            case 2:
+                                shape = new SphereShape(size.X * 0.5f);
+                                break;
+                            default:
+                                continue;
+                        }
+
+                        _collisionShapeCache.Add((colliderType, size), shape);
+                    }
+
+                    var trans = Transform.Identity;
+                    trans.Translation = offset;
+
+                    compoundShape.AddChildShape(in trans, shape);
+                }
+            }
+
+            uniqueMeshInfo[uniqueMeshIndex.Value] = (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, compoundShape);
+        }
     }
 
     private void InitConnectedObjects(PrefabUsedCache usedPrefabs)
@@ -596,280 +860,69 @@ public sealed partial class FcWorld : IAstRunner
 
             foreach (var connection in prefab.Connections)
             {
-                if (connection.IsFromOutside)
+                AddConnection(prefab, meshInfo, connection);
+            }
+        }
+
+        void AddConnection(Prefab prefab, BlockMesh meshInfo, Connection connection)
+        {
+            if (connection.IsFromOutside)
+            {
+                if (terminalInfos[prefab.Id].InputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
                 {
-                    continue;
+                    return; // normal connection to outside
                 }
 
-                ushort blockId = prefab.Blocks.GetBlockOrDefault(connection.From);
-                ushort segmentId = prefab.Blocks.GetBlockOrDefault(connection.From + (connection.FromVoxel / 8));
-
-                if (blockId == 0 || segmentId == 0)
+                // self connection
+                for (int i = _runner.EnvironmentCount - 1; i >= 0; i--)
                 {
-                    continue;
-                }
-
-                var terminalInfo = terminalInfos[blockId];
-                var segmentMeshes = _gameMesh.GetSegmentMesh(segmentId);
-
-                if (!terminalInfo.OutputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
-                {
-                    int localMeshIndex = segmentMeshes.VoxelMeshIndex[Voxels.Index(connection.FromVoxel % 8, 0)];
-                    if (localMeshIndex == 255)
+                    var env = _runner.GetEnvironment(i);
+                    if (env.PrefabId == prefab.Id)
                     {
-                        // connected to empty voxel
-                        continue;
+                        var outerPrefab = _prefabs.GetPrefabOrStock(_runner.GetEnvironment(env.OuterEnvironmentIndex).PrefabId);
+
+                        AddConnection(outerPrefab, _gameMesh.GetBlockMesh(outerPrefab.Id), new Connection(env.OuterPosition, default, connection.FromVoxel, default));
                     }
+                }
 
-                    int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(meshInfo.Size.X, meshInfo.Size.Y)]];
+                return;
+            }
 
-                    var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
+            ushort blockId = prefab.Blocks.GetBlockOrDefault(connection.From);
+            ushort segmentId = prefab.Blocks.GetBlockOrDefault(connection.From + (connection.FromVoxel / 8));
 
-                    if (obj is not null)
-                    {
+            if (blockId == 0 || segmentId == 0)
+            {
+                return;
+            }
+
+            var terminalInfo = terminalInfos[blockId];
+            var segmentMeshes = _gameMesh.GetSegmentMesh(segmentId);
+
+            if (!terminalInfo.OutputTerminals.Any(terminal => terminal.Position == connection.FromVoxel))
+            {
+                int localMeshIndex = segmentMeshes.VoxelMeshIndex[Voxels.Index(connection.FromVoxel % 8, 0)];
+                if (localMeshIndex == 255)
+                {
+                    // connected to empty voxel
+                    return;
+                }
+
+                int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(meshInfo.Size.X, meshInfo.Size.Y)]];
+
+                var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
+
+                if (obj is not null)
+                {
 #if RELEASE
                         _connectorToObject[(prefab.Id, connection.From, (byte3)connection.FromVoxel)] = obj.Id;
 #else
-                        if (!_connectorToObject.TryAdd((prefab.Id, connection.From, connection.FromVoxel), obj.Id))
-                        {
-                            Debug.Assert(_connectorToObject[(prefab.Id, connection.From, connection.FromVoxel)] == obj.Id, "If a connector as already been added, it should be the same one that was to be added.");
-                        }
-#endif
-                    }
-                }
-            }
-        }
-    }
-
-    private void AddColliders(RuntimeObject rObject)
-    {
-        var prefab = _prefabs.GetPrefabOrStock(rObject.OutsidePrefabId);
-        var blockMesh = _gameMesh.GetBlockMesh(rObject.OutsidePrefabId);
-
-        var insideSize = prefab.Blocks.Array.Size;
-        int insideLength = insideSize.X * insideSize.Y * insideSize.Z;
-
-        ushort[] blocks = prefab.Blocks.Array.Array;
-        Debug.Assert(blocks.Length == insideLength, $"{nameof(blocks)}.Length should be equal to {nameof(insideLength)}.");
-        for (int insideIndex = 0; insideIndex < insideLength; insideIndex++)
-        {
-            ushort blockId = blocks[insideIndex];
-
-            if (blockId == 0)
-            {
-                continue;
-            }
-
-            var currentSegment = _prefabs.GetSegmentOrStock(blockId);
-            var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
-            var currentSegmentMeshes = _gameMesh.GetSegmentMesh(blockId);
-
-            if (currentPrefab.Collider == PrefabCollider.None || currentSegmentMeshes.MeshCount == 0)
-            {
-                continue;
-            }
-
-            var currentPos = int3.FromIndex(insideIndex, insideSize.X, insideSize.Y);
-
-            for (int meshIndex = 0; meshIndex < currentSegmentMeshes.MeshCount; meshIndex++)
-            {
-                if (blockMesh.BlockMeshIds[meshIndex + blockMesh.BlockMeshIdOffsets[insideIndex]] != rObject.InPrefabMeshIndex)
-                {
-                    continue;
-                }
-
-                var (boundsMin, boundsMax) = GetMeshBounds(currentSegment.Voxels, currentSegmentMeshes, (byte)meshIndex);
-
-                Vector3 size = (Vector3)((boundsMax - boundsMin) + int3.One) * 0.125f;
-
-                Vector3 offset = ((size * 0.5f) + ((Vector3)boundsMin * 0.125f) + (Vector3)currentPos) - rObject.Start.Position;
-
-                uint connectsToSideBitfield = 0;
-                int colliderType;
-                switch (currentPrefab.Collider)
-                {
-                    case PrefabCollider.Sphere:
-                        {
-                            colliderType = 2;
-                            float sizeMax = MathF.Max(MathF.Max(size.X, size.Y), size.Z);
-                            size = new Vector3(sizeMax, sizeMax, sizeMax);
-#pragma warning disable IDE0059 // Unnecessary assignment of a value
-                            connectsToSideBitfield = 0;
-#pragma warning restore IDE0059 // Unnecessary assignment of a value
-                        }
-
-                        break;
-                    case PrefabCollider.Box:
-                        {
-                            for (int sideIndex = 0; sideIndex < 6; sideIndex++)
-                            {
-                                int3 neighborPos = new int3(-1, -1, -1);
-                                bool neighborIsAnotherBlock;
-
-                                switch (sideIndex)
-                                {
-                                    case 0:
-                                        if (currentPos.X < insideSize.X - 1)
-                                        {
-                                            neighborPos = currentPos + new int3(1, 0, 0);
-                                        }
-
-                                        neighborIsAnotherBlock = boundsMax.X == 7;
-                                        break;
-                                    case 1:
-                                        if (currentPos.X > 1)
-                                        {
-                                            neighborPos = currentPos + new int3(-1, 0, 0);
-                                        }
-
-                                        neighborIsAnotherBlock = boundsMin.X == 0;
-                                        break;
-                                    case 2:
-                                        if (currentPos.Y < insideSize.Y - 1)
-                                        {
-                                            neighborPos = currentPos + new int3(0, 1, 0);
-                                        }
-
-                                        neighborIsAnotherBlock = boundsMax.Y == 7;
-                                        break;
-                                    case 3:
-                                        if (currentPos.Y > 1)
-                                        {
-                                            neighborPos = currentPos + new int3(0, -1, 0);
-                                        }
-
-                                        neighborIsAnotherBlock = boundsMin.Y == 0;
-                                        break;
-                                    case 4:
-                                        if (currentPos.Z < insideSize.Z - 1)
-                                        {
-                                            neighborPos = currentPos + new int3(0, 0, 1);
-                                        }
-
-                                        neighborIsAnotherBlock = boundsMax.Z == 7;
-                                        break;
-                                    default:
-                                        Debug.Assert(sideIndex == 5, $"{nameof(sideIndex)} should be in the range 0-5.");
-                                        if (currentPos.Z > 1)
-                                        {
-                                            neighborPos = currentPos + new int3(0, 0, -1);
-                                        }
-
-                                        neighborIsAnotherBlock = boundsMin.Z == 0;
-                                        break;
-                                }
-
-                                if (neighborPos == new int3(-1, -1, -1) || !neighborIsAnotherBlock)
-                                {
-                                    continue;
-                                }
-
-                                int neighborIndex = neighborPos.ToIndex(insideSize.X, insideSize.Y);
-                                ushort neighborId = blocks[neighborIndex];
-
-                                if (neighborId == 0 || _prefabs.GetPrefabOrStock(_prefabs.GetSegmentOrStock(neighborId).PrefabId).Collider != PrefabCollider.Box)
-                                {
-                                    continue;
-                                }
-
-                                var neighborSegmentMeshes = _gameMesh.GetSegmentMesh(neighborId);
-
-                                if (neighborSegmentMeshes.MeshCount > 0)
-                                {
-                                    int neighborMeshIndexToUse = -1;
-                                    for (int neighborMeshIndex = 0; neighborMeshIndex < neighborSegmentMeshes.MeshCount; neighborMeshIndex++)
-                                    {
-                                        if (blockMesh.BlockMeshIds[neighborMeshIndex + blockMesh.BlockMeshIdOffsets[neighborIndex]] == rObject.InPrefabMeshIndex)
-                                        {
-                                            var (neighborBoundsMin, neighborBoundsMax) = GetMeshBounds(_prefabs.GetSegmentOrStock(neighborId).Voxels, neighborSegmentMeshes, (byte)neighborMeshIndex);
-
-                                            if (sideIndex < 6)
-                                            {
-                                                int sideShifted = 1 << sideIndex;
-
-                                                if ((sideShifted & 0b11) == 0)
-                                                {
-                                                    if ((sideShifted & 0b1100) == 0)
-                                                    {
-                                                        if ((((boundsMin.X == neighborBoundsMin.X) &&
-                                                            (boundsMax.X == neighborBoundsMax.X)) &&
-                                                            (boundsMin.Y == neighborBoundsMin.Y)) &&
-                                                            (boundsMax.Y == neighborBoundsMax.Y))
-                                                        {
-                                                            neighborMeshIndexToUse = neighborMeshIndex;
-                                                        }
-                                                    }
-                                                    else if ((boundsMin.X == neighborBoundsMin.X) &&
-                                                        (boundsMax.X == neighborBoundsMax.X))
-                                                    {
-                                                        if ((boundsMin.Z == neighborBoundsMin.Z) &&
-                                                            (boundsMax.Z == neighborBoundsMax.Z))
-                                                        {
-                                                            neighborMeshIndexToUse = neighborMeshIndex;
-                                                        }
-                                                    }
-                                                }
-                                                else if ((boundsMin.Y == neighborBoundsMin.Y) &&
-                                                    (boundsMax.Y == neighborBoundsMax.Y))
-                                                {
-                                                    if ((boundsMin.Z == neighborBoundsMin.Z) &&
-                                                       (boundsMax.Z == neighborBoundsMax.Z))
-                                                    {
-                                                        neighborMeshIndexToUse = neighborMeshIndex;
-                                                    }
-                                                }
-                                            }
-                                            else
-                                            {
-                                                neighborMeshIndexToUse = neighborMeshIndex;
-                                            }
-                                        }
-                                    }
-
-                                    if (neighborMeshIndexToUse != -1)
-                                    {
-                                        if (currentSegmentMeshes.Meshes[meshIndex].GetSideBitfield(sideIndex) == neighborSegmentMeshes.Meshes[neighborMeshIndexToUse].GetSideBitfield(sideIndex ^ 1))
-                                        {
-                                            connectsToSideBitfield |= (uint)(1L << (sideIndex & 0b111111));
-                                        }
-                                    }
-                                }
-                            }
-
-                            colliderType = 1;
-                        }
-
-                        break;
-                    default:
-                        {
-                            Debug.Assert(currentPrefab.Collider == PrefabCollider.None, $"{nameof(currentPrefab)}.{nameof(currentPrefab.Collider)} should be valid.");
-                            colliderType = 3;
-#pragma warning disable IDE0059 // Unnecessary assignment of a value
-                            connectsToSideBitfield = 0;
-#pragma warning restore IDE0059 // Unnecessary assignment of a value
-                        }
-
-                        break;
-                }
-
-                if (!_collisionShapeCache.TryGetValue((colliderType, size), out var shape))
-                {
-                    switch (colliderType)
+                    if (!_connectorToObject.TryAdd((prefab.Id, connection.From, connection.FromVoxel), obj.Id))
                     {
-                        case 1:
-                            shape = new BoxShape(size * 0.5f);
-                            break;
-                        case 2:
-                            shape = new SphereShape(size.X * 0.5f);
-                            break;
-                        default:
-                            continue;
+                        Debug.Assert(_connectorToObject[(prefab.Id, connection.From, connection.FromVoxel)] == obj.Id, "If a connector has already been added, it should be the same one that was to be added.");
                     }
-
-                    _collisionShapeCache.Add((colliderType, size), shape);
+#endif
                 }
-
-                ((CompoundShape)rObject.RigidBody.CollisionShape).AddChildShape(Matrix4x4.CreateTranslation(offset), shape);
             }
         }
     }
@@ -909,7 +962,7 @@ public sealed partial class FcWorld : IAstRunner
             return false;
         }
 
-        ushort segmentId = prefab.Blocks.GetBlockOrDefault(pos);
+        ushort segmentId = prefab.Blocks.GetBlockOrDefault(pos + (voxelPos / 8));
 
         if (segmentId == 0)
         {
@@ -920,7 +973,7 @@ public sealed partial class FcWorld : IAstRunner
         var meshInfo = _gameMesh.GetBlockMesh(prefab.Id);
         var segmentMeshes = _gameMesh.GetSegmentMesh(segmentId);
 
-        int meshIndex = meshInfo.GetMeshAtPos(pos, segmentMeshes.VoxelMeshIndex[Voxels.Index(voxelPos, 0)]);
+        int meshIndex = meshInfo.GetMeshAtPos(pos, segmentMeshes.VoxelMeshIndex[Voxels.Index(voxelPos % 8, 0)]);
 
         var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
 

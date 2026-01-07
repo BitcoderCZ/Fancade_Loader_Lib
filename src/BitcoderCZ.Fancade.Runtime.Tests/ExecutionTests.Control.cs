@@ -17,14 +17,12 @@ public partial class ExecutionTests
             writer.Inspect(index.Wrap());
         });
 
-        var compiled = Compile(writer);
+        var tester = AstRunnerTester.Create(writer);
 
-        await Assert.That(compiled).Inspects(
-        [
-            new(0f) { Order = 0, Frequency = InspectFrequency.EveryFrame },
-            new(1f) { Order = 1, Frequency = InspectFrequency.EveryFrame },
-            new(2f) { Order = 2, Frequency = InspectFrequency.EveryFrame },
-        ]);
+        await Assert.That(tester)
+            .Inspects(new(0f) { Order = 0, Frequency = InspectFrequency.EveryFrame, })
+            .And.Inspects(new(1f) { Order = 1, Frequency = InspectFrequency.EveryFrame, })
+            .And.Inspects(new(2f) { Order = 2, Frequency = InspectFrequency.EveryFrame, });
     }
 
     [Test]
@@ -37,14 +35,12 @@ public partial class ExecutionTests
             writer.Inspect(index.Wrap());
         });
 
-        var compiled = Compile(writer);
+        var tester = AstRunnerTester.Create(writer);
 
-        await Assert.That(compiled).Inspects(
-        [
-            new(3f) { Order = 0, Frequency = InspectFrequency.EveryFrame },
-            new(2f) { Order = 1, Frequency = InspectFrequency.EveryFrame },
-            new(1f) { Order = 2, Frequency = InspectFrequency.EveryFrame },
-        ]);
+        await Assert.That(tester)
+            .Inspects(new(3f) { Order = 0, Frequency = InspectFrequency.EveryFrame, })
+            .And.Inspects(new(2f) { Order = 1, Frequency = InspectFrequency.EveryFrame, })
+            .And.Inspects(new(1f) { Order = 2, Frequency = InspectFrequency.EveryFrame, });
     }
 
     [Test]
@@ -60,13 +56,11 @@ public partial class ExecutionTests
         @false: null);
         writer.Inspect(Number(2f));
 
-        var compiled = Compile(writer);
+        var tester = AstRunnerTester.Create(writer);
 
-        await Assert.That(compiled).Inspects(
-        [
-            new(1f) { Order = 0, Frequency = InspectFrequency.EveryFrame },
-            new(2f) { Order = 1, Frequency = InspectFrequency.EveryFrame },
-        ]);
+        await Assert.That(tester)
+            .Inspects(new(1f) { Order = 0, Frequency = InspectFrequency.EveryFrame, })
+            .And.Inspects(new(2f) { Order = 1, Frequency = InspectFrequency.EveryFrame, });
     }
 
     [Test]
@@ -80,12 +74,10 @@ public partial class ExecutionTests
         });
         writer.Inspect(Number(2f));
 
-        var compiled = Compile(writer);
+        var tester = AstRunnerTester.Create(writer, options: new() { RunFor = 2, });
 
-        await Assert.That(compiled).Inspects(
-        [
-            new(1f) { Order = 0, Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, },
-            new(2f) { Order = 1, Frequency = InspectFrequency.EveryFrame, FrameCount = 1, Count = 2 },
-        ], runFor: 2);
+        await Assert.That(tester)
+            .Inspects(new(1f) { Order = 0, Frequency = InspectFrequency.OnlyOnOneFrame, Count = 1, })
+            .And.Inspects(new(2f) { Order = 1, Frequency = InspectFrequency.EveryFrame, FrameCount = 1, Count = 2 });
     }
 }
