@@ -2,8 +2,10 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
@@ -15,7 +17,7 @@ public sealed class PrefabSegmentMeshes
     /// <summary>
     /// An empty <see cref="PrefabSegmentMeshes"/> instance.
     /// </summary>
-    public static readonly PrefabSegmentMeshes Empty = new PrefabSegmentMeshes(0, new byte[8 * 8 * 8], [], int3.Zero, int3.Zero);
+    public static readonly PrefabSegmentMeshes Empty = new PrefabSegmentMeshes(0, new byte[8 * 8 * 8], [], int3.Zero, int3.Zero, []);
 
     private static readonly short3[] NeighborOffsets =
     [
@@ -31,7 +33,9 @@ public sealed class PrefabSegmentMeshes
 
     private readonly PrefabSegmentMesh[] _meshes;
 
-    private PrefabSegmentMeshes(int meshCount, byte[] voxelMeshIndex, PrefabSegmentMesh[] meshes, int3 minPosition, int3 maxPosition)
+    private readonly PrefabSegmentMesh.Array6<ulong> _connectsOnSide;
+
+    private PrefabSegmentMeshes(int meshCount, byte[] voxelMeshIndex, PrefabSegmentMesh[] meshes, int3 minPosition, int3 maxPosition, ReadOnlySpan<ulong> connectsOnSide)
     {
         Debug.Assert(voxelMeshIndex.Length == 8 * 8 * 8, $"{nameof(voxelMeshIndex)} should be {8 * 8 * 8} elements long.");
 
@@ -40,6 +44,8 @@ public sealed class PrefabSegmentMeshes
         _meshes = meshes;
         MinPosition = minPosition;
         MaxPosition = maxPosition;
+
+        PrefabSegmentMesh.Assign(ref _connectsOnSide, connectsOnSide);
     }
 
     /// <summary>
@@ -155,7 +161,72 @@ public sealed class PrefabSegmentMeshes
             }
         }
 
-        return new PrefabSegmentMeshes(meshCount, voxelMeshIndex, ChunkVoxels(meshCount, voxelMeshIndex, voxels), min, max);
+        Span<ulong> connectsOnSide = stackalloc ulong[6];
+
+        for (int sideIndex = 0; sideIndex < 6; sideIndex++)
+        {
+            int layer = Voxels.GetOuterLayerIndexForSide(sideIndex);
+
+            ulong sideGlue = 0;
+
+            for (int layerY = 0; layerY < Voxels.Size; layerY++)
+            {
+                for (int layerX = 0; layerX < Voxels.Size; layerX++)
+                {
+                    int3 voxelPos = Voxels.MapLayerPosToVoxelPos(sideIndex, layer, layerX, layerY);
+                    voxelIndex = Voxels.Index(voxelPos, 0);
+                    int voxelSideIndex = Voxels.Index(voxelPos, sideIndex);
+
+                    VoxelFace face = new VoxelFace(voxels.GetRawFace(voxelSideIndex));
+                    byte faceX = voxels.GetRawFace(voxelIndex);
+                    if (face.HasGlue && faceX != 0)
+                    {
+                        sideGlue |= 1ul << (layerX + (layerY * Voxels.Size));
+                    }
+                }
+            }
+
+            connectsOnSide[sideIndex] = sideGlue;
+        }
+
+        return new PrefabSegmentMeshes(meshCount, voxelMeshIndex, ChunkVoxels(meshCount, voxelMeshIndex, voxels), min, max, connectsOnSide);
+    }
+
+    /// <summary>
+    /// Gets which voxels on a given side have glue.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <listheader>
+    ///     <term>Side axis</term>
+    ///     <description>Indexing formula for face</description>
+    /// </listheader>
+    /// <item>
+    ///     <term>X</term>
+    ///     <description>z + y * <see cref="Voxels.Size"/></description>
+    /// </item>
+    /// <item>
+    ///     <term>Y</term>
+    ///     <description>x + z * <see cref="Voxels.Size"/>.</description>
+    /// </item>
+    /// <item>
+    ///     <term>Z</term>
+    ///     <description>x + y * <see cref="Voxels.Size"/>.</description>
+    /// </item>
+    /// </list>
+    /// </remarks>
+    /// <param name="sideIndex">Index of the side, 0 = +X, 1 = -X, 2 = +Y, 3 = -Y, 4 = +Z, 5 = -Z.</param>
+    /// <returns>64 bit array, where 0 - does not have glue, 1 - has glue.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ulong GetSideGlue(int sideIndex)
+    {
+#if NET8_0_OR_GREATER
+        return _connectsOnSide[sideIndex];
+#else
+        ThrowHelper.ThrowIfGreaterThanOrEqualToOrNegative(sideIndex, 6, nameof(sideIndex));
+
+        return Unsafe.Add(ref Unsafe.AsRef(in _connectsOnSide._element0), sideIndex);
+#endif
     }
 
     private static PrefabSegmentMesh[] ChunkVoxels(int meshCount, byte[] voxelMeshIndex, Voxels voxels)

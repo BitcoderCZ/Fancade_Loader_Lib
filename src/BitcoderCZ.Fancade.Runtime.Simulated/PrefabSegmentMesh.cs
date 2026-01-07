@@ -84,7 +84,7 @@ public readonly struct PrefabSegmentMesh
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void Assign<T>(ref Array6<T> field, ReadOnlySpan<T> param)
+    internal static void Assign<T>(ref Array6<T> field, ReadOnlySpan<T> param)
     {
         Debug.Assert(param.Length >= 6, $"{nameof(param)} should have at least 6 elements.");
 
@@ -103,13 +103,13 @@ public readonly struct PrefabSegmentMesh
 
 #if NET8_0_OR_GREATER
     [InlineArray(6)]
-    private struct Array6<T>
+    internal struct Array6<T>
     {
         private T _element0;
     }
 #else
     [StructLayout(LayoutKind.Sequential)]
-    private struct Array6<T>
+    internal struct Array6<T>
     {
         public T _element0;
         public T _element1;
