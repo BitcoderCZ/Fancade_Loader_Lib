@@ -518,7 +518,7 @@ public sealed partial class FcWorld : IAstRunner
             foreach (var block in mesh)
             {
                 var meshPos = block.Offset;
-                var blockPos = mesh.Position;
+                var blockPos = mesh.Position + meshPos;
 
                 int index = blocks.Index(blockPos);
                 ushort blockId = blocksArray[index];
@@ -589,7 +589,7 @@ public sealed partial class FcWorld : IAstRunner
             foreach (var block in mesh)
             {
                 var meshPos = block.Offset;
-                var blockPos = mesh.Position;
+                var blockPos = mesh.Position + meshPos;
 
                 int index = blocks.Index(blockPos);
                 ushort blockId = blocksArray[index];
