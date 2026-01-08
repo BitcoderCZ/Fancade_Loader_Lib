@@ -18,7 +18,7 @@ public sealed class RuntimeObject
 {
     private float _mass = 1f;
 
-    internal RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Quaternion rot, Vector3 sizeMin, Vector3 sizeMax, float mass, bool visible, bool @fixed)
+    internal RuntimeObject(FcObject id, int uniqueMeshIndex, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Quaternion rot, Vector3 sizeMin, Vector3 sizeMax, float mass, bool visible, bool @fixed)
     {
         if (id == FcObject.Null)
         {
@@ -28,6 +28,7 @@ public sealed class RuntimeObject
         ThrowIfNegative(inPrefabMeshIndex);
 
         Id = id;
+        UniqueMeshIndex = uniqueMeshIndex;
         OutsidePrefabId = outsidePrefabId;
         InPrefabMeshIndex = inPrefabMeshIndex;
         RigidBody = rigidBody;
@@ -40,9 +41,10 @@ public sealed class RuntimeObject
         IsVisible = visible;
     }
 
-    private RuntimeObject(FcObject id, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Quaternion rot, StartValues start, Vector3 sizeMin, Vector3 sizeMax, float mass, bool isVisible, bool isUserCreated)
+    private RuntimeObject(FcObject id, int uniqueMeshIndex, ushort outsidePrefabId, short inPrefabMeshIndex, RigidBody rigidBody, Vector3 pos, Quaternion rot, StartValues start, Vector3 sizeMin, Vector3 sizeMax, float mass, bool isVisible, bool isUserCreated)
     {
         Id = id;
+        UniqueMeshIndex = uniqueMeshIndex;
         OutsidePrefabId = outsidePrefabId;
         InPrefabMeshIndex = inPrefabMeshIndex;
         RigidBody = rigidBody;
@@ -61,6 +63,12 @@ public sealed class RuntimeObject
     /// </summary>
     /// <value>Id of the object.</value>
     public FcObject Id { get; }
+
+    /// <summary>
+    /// Gets the index of the mesh used by this object.
+    /// </summary>
+    /// <value>Index of the mesh used by this object.</value>
+    public int UniqueMeshIndex { get; }
 
     /// <summary>
     /// Gets the id of the prefab the object is in.
@@ -182,7 +190,7 @@ public sealed class RuntimeObject
 
     internal RuntimeObject Clone(FcObject newId, RigidBody newBody, bool userCreated)
     {
-        var newObject = new RuntimeObject(newId, OutsidePrefabId, InPrefabMeshIndex, newBody, Pos + Vector3.One, Rot, Start, SizeMin, SizeMax, Mass, true, userCreated);
+        var newObject = new RuntimeObject(newId, UniqueMeshIndex, OutsidePrefabId, InPrefabMeshIndex, newBody, Pos + Vector3.One, Rot, Start, SizeMin, SizeMax, Mass, true, userCreated);
 
         return newObject;
     }

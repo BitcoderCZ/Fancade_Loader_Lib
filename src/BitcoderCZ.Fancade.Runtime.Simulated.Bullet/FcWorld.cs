@@ -483,7 +483,7 @@ public sealed partial class FcWorld : IAstRunner
                 var rigidBody = BulletCreate(pos, Quaternion.Identity, objectId);
                 rigidBody.UpdateInertiaTensor();
 
-                RuntimeObject rObject = new(objectId, prefab.Id, objectInPrefabMeshIndex, rigidBody, pos, Quaternion.Identity, sizeMin, sizeMax, mass, prefab.Id == mainId, !foundPhysics);
+                RuntimeObject rObject = new(objectId, uniqueMeshIndex, prefab.Id, objectInPrefabMeshIndex, rigidBody, pos, Quaternion.Identity, sizeMin, sizeMax, mass, prefab.Id == mainId, !foundPhysics);
 
                 _objects.Add(rObject);
                 _idToObject.Add(rObject.Id, rObject);
