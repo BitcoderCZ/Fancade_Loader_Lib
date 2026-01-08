@@ -446,7 +446,7 @@ public sealed partial class FcWorld : IAstRunner
         var stockPrefabs = StockBlocks.PrefabList;
         var usedPrefabs = PrefabUsedCache.Create(_prefabs, mainId);
 
-        var uniqueMeshInfo = new (float TotalVolume, Vector3 CenterOfMass, Vector3 SizeMin, Vector3 SizeMax, bool FoundPhysics, CompoundShape Shape)?[_gameMesh.UniqueMeshCount];
+        var uniqueMeshInfo = new (float TotalVolume, Vector3 Position, Vector3 SizeMin, Vector3 SizeMax, bool FoundPhysics, CompoundShape Shape)?[_gameMesh.UniqueMeshCount];
 
         foreach (var prefab in stockPrefabs.Concat(_prefabs))
         {
@@ -469,16 +469,8 @@ public sealed partial class FcWorld : IAstRunner
                     InitUnique(meshInfo, prefab, i);
                 }
 
-                var (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, shape) = uniqueMeshInfo[uniqueMeshIndex]!.Value;
-                //centerOfMass += (Vector3)mesh.Position;
-                sizeMin += (Vector3)mesh.Position;
-                sizeMax += (Vector3)mesh.Position;
-
-                Vector3 pos = (centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume)) + (Vector3)mesh.Position;
-                float mass = totalVolume;
-
-                sizeMin -= pos;
-                sizeMax -= pos;
+                var (mass, pos, sizeMin, sizeMax, foundPhysics, shape) = uniqueMeshInfo[uniqueMeshIndex]!.Value;
+                pos += (Vector3)mesh.Position;
 
                 var rigidBody = BulletCreate(pos, Quaternion.Identity, objectId);
                 rigidBody.UpdateInertiaTensor();
@@ -525,9 +517,10 @@ public sealed partial class FcWorld : IAstRunner
 
             foreach (var block in mesh)
             {
-                var pos = mesh.Position + block.Offset;
+                var meshPos = block.Offset;
+                var blockPos = mesh.Position;
 
-                int index = blocks.Index(pos);
+                int index = blocks.Index(blockPos);
                 ushort blockId = blocksArray[index];
 
                 if (blockId is 0)
@@ -561,8 +554,8 @@ public sealed partial class FcWorld : IAstRunner
                             float volume = size.X * size.Y * size.Z;
                             totalVolume += volume;
 
-                            Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + (Vector3)pos;
-                            Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + (Vector3)pos + new Vector3(0.125f);
+                            Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + (Vector3)blockPos;
+                            Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + (Vector3)blockPos + new Vector3(0.125f);
 
                             centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
 
@@ -576,11 +569,11 @@ public sealed partial class FcWorld : IAstRunner
                                 continue;
                             }
 
-                            centerOfMass += (Vector3)pos + new Vector3(0.5f);
+                            centerOfMass += (Vector3)blockPos + new Vector3(0.5f);
                             totalVolume++;
 
-                            sizeMin = Vector3.Min(sizeMin, (Vector3)pos);
-                            sizeMax = Vector3.Max(sizeMax, (Vector3)pos + Vector3.One);
+                            sizeMin = Vector3.Min(sizeMin, (Vector3)blockPos);
+                            sizeMax = Vector3.Max(sizeMax, (Vector3)blockPos + Vector3.One);
 
                             foundMesh = true;
                         }
@@ -589,16 +582,16 @@ public sealed partial class FcWorld : IAstRunner
             }
 
             var compoundShape = new CompoundShape(true, 0);
-            Vector3 shapePos = (centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume)) - (Vector3)mesh.Position;
-            centerOfMass -= (Vector3)mesh.Position;
-            sizeMin -= (Vector3)mesh.Position;
-            sizeMax -= (Vector3)mesh.Position;
+            Vector3 shapePos = centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume);
+            sizeMin -= shapePos;
+            sizeMax -= shapePos;
 
             foreach (var block in mesh)
             {
-                var pos = mesh.Position + block.Offset;
+                var meshPos = block.Offset;
+                var blockPos = mesh.Position;
 
-                int index = blocks.Index(pos);
+                int index = blocks.Index(blockPos);
                 ushort blockId = blocksArray[index];
 
                 if (blockId is 0)
@@ -628,7 +621,7 @@ public sealed partial class FcWorld : IAstRunner
 
                     Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
 
-                    Vector3 offset = (size * 0.5f) + ((Vector3)boundsMin * 0.125f) + (Vector3)block.Offset - shapePos;
+                    Vector3 offset = (size * 0.5f) + ((Vector3)boundsMin * 0.125f) + (Vector3)blockPos - shapePos;
 
                     //uint connectsToSideBitfield = 0;
                     int colliderType;
@@ -825,7 +818,7 @@ public sealed partial class FcWorld : IAstRunner
                 }
             }
 
-            uniqueMeshInfo[uniqueMeshIndex] = (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, compoundShape);
+            uniqueMeshInfo[uniqueMeshIndex] = (totalVolume, shapePos, sizeMin, sizeMax, foundPhysics, compoundShape);
         }
     }
 
