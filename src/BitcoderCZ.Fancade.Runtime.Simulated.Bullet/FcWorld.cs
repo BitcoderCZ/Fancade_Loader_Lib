@@ -818,7 +818,7 @@ public sealed partial class FcWorld : IAstRunner
                 }
             }
 
-            uniqueMeshInfo[uniqueMeshIndex] = (totalVolume, shapePos, sizeMin, sizeMax, foundPhysics, compoundShape);
+            uniqueMeshInfo[uniqueMeshIndex] = (totalVolume, shapePos - (Vector3)mesh.Position, sizeMin, sizeMax, foundPhysics, compoundShape);
         }
     }
 
