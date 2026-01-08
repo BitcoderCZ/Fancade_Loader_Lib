@@ -470,11 +470,11 @@ public sealed partial class FcWorld : IAstRunner
                 }
 
                 var (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, shape) = uniqueMeshInfo[uniqueMeshIndex]!.Value;
-                centerOfMass += (Vector3)mesh.Position;
+                //centerOfMass += (Vector3)mesh.Position;
                 sizeMin += (Vector3)mesh.Position;
                 sizeMax += (Vector3)mesh.Position;
 
-                Vector3 pos = centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume);
+                Vector3 pos = (centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume)) + (Vector3)mesh.Position;
                 float mass = totalVolume;
 
                 sizeMin -= pos;

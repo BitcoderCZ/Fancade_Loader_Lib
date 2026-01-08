@@ -9,12 +9,12 @@ using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 
 Game game;
-using (var file = File.OpenRead("/home/bitcoder/Downloads/60851784770864E1.fcg"))
+using (var file = File.OpenRead("/home/bitcoder/Downloads/XVEHG2U1IG9RW77C.fcg"))
 {
     game = Game.LoadCompressed(file);
 }
 
-ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "Monster Tracks").Id;
+ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "Level 3").Id;
 
 Console.WriteLine("Parsing ast");
 var ast = FcAST.Parse(game.Prefabs, levelId);
