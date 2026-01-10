@@ -236,7 +236,7 @@ public sealed class FcCamera
         Matrix4x4 projection;
         if (Ortho == 1f)
         {
-            const float Near = 1f;
+            const float Near = 2f;
             const float Far = 200f;
 
             if (screen.IsLandscape)
