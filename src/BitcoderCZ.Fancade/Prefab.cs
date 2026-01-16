@@ -356,7 +356,12 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     public PrefabSegment this[int3 index]
     {
         get => _segments[index];
-        set => _segments[index] = ValidateSegment(value, nameof(value));
+        set
+        {
+            ValidatePos(index, nameof(index));
+            _segments[index] = ValidateSegment(value, nameof(value));
+            Size = int3.Max(Size, index + int3.One);
+        }
     }
 
     /// <summary>
