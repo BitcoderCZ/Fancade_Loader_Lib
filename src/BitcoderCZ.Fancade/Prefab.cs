@@ -360,6 +360,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         {
             ValidatePos(index, nameof(index));
             _segments[index] = ValidateSegment(value, nameof(value));
+            value.PosInPrefab = index; // only change pos if successfully added
             Size = int3.Max(Size, index + int3.One);
         }
     }

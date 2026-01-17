@@ -546,7 +546,7 @@ public static class PrefabUtils
 
             foreach (var (pos, voxels) in BlockVoxelsGenerator.CreateScript(sizeInBlocks, colorStyle))
             {
-                prefab.Add(new PrefabSegment(prefab.Id, pos, voxels));
+                prefab[pos] = new PrefabSegment(prefab.Id, pos, voxels);
             }
 
             return prefab;
