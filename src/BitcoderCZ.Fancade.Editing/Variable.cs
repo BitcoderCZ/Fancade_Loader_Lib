@@ -52,7 +52,17 @@ public readonly struct Variable : IEquatable<Variable>
     /// <value><see langword="true"/> if the variable is global or saved; otherwise, <see langword="false"/>.</value>
     public bool IsGlobal => Name.StartsWith('$') || Name.StartsWith('!');
 
-    // TODO: IsSaved
+    /// <summary>
+    /// Gets a value indicating whether the variable is saved.
+    /// </summary>
+    /// <value><see langword="true"/> if the variable is saved; otherwise, <see langword="false"/>.</value>
+    public bool IsSaved => Name.StartsWith('!');
+
+    /// <summary>
+    /// Gets the name, without global/saved prefix.
+    /// </summary>
+    /// <value>Name, without global/saved prefix.</value>
+    public ReadOnlySpan<char> NameWithoutPrefix => Name.AsSpan(IsGlobal ? 1 : 0);
 
     /// <summary>Returns a value that indicates whether the 2 <see cref="Variable"/>s are equal.</summary>
     /// <param name="left">The first <see cref="Variable"/> to compare.</param>
