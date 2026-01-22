@@ -63,7 +63,7 @@ public sealed partial class FcWorld : IAstRunner
 
     private int _disposed;
 
-    private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId, bool createMultiThreaded)
+    private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId, bool createScriptMesh, bool createMultiThreaded)
     {
         _runtimeCtx = new BulletRuntimeContext(this, runtimeContext);
         _runner = runnerFactory(_runtimeCtx);
@@ -83,7 +83,7 @@ public sealed partial class FcWorld : IAstRunner
         _groundPlane.UserIndex = FcObject.Null.Value;
         _groundPlane.Restitution = 1f;
 
-        _gameMesh = GameMeshInfo.Create(prefabs, mainId, createMultiThreaded);
+        _gameMesh = GameMeshInfo.Create(prefabs, mainId, createScriptMesh, createMultiThreaded);
 
         InitObjects(mainId, createMultiThreaded);
 
@@ -152,9 +152,10 @@ public sealed partial class FcWorld : IAstRunner
     /// <param name="prefabs">The game's prefabs.</param>
     /// <param name="runtimeContext">The <see cref="IRuntimeContextBase"/> to use.</param>
     /// <param name="runnerFactory">A func to create a <see cref="IAstRunner"/> given a <see cref="IRuntimeContext"/>.</param>
+    /// <param name="createScriptMesh">Whether to create mesh for script blocks.</param>
     /// <param name="createMultiThreaded">Whether to use multiple threads to create the <see cref="FcWorld"/>.</param>
     /// <returns>The created <see cref="FcWorld"/>.</returns>
-    public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, bool createMultiThreaded = true)
+    public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, bool createScriptMesh, bool createMultiThreaded = true)
     {
         ThrowIfNull(runtimeContext, nameof(runtimeContext));
         ThrowIfNull(runnerFactory, nameof(runnerFactory));
@@ -164,7 +165,7 @@ public sealed partial class FcWorld : IAstRunner
             ThrowArgumentException($"{nameof(prefabs)}.{nameof(prefabs.IdOffset)} must be equal to {nameof(RawGame)}.{nameof(RawGame.CurrentNumbStockPrefabs)}.", nameof(prefabs));
         }
 
-        return new FcWorld(runtimeContext, runnerFactory, prefabs, prefabId, createMultiThreaded);
+        return new FcWorld(runtimeContext, runnerFactory, prefabs, prefabId, createScriptMesh, createMultiThreaded);
     }
 
     /// <summary>

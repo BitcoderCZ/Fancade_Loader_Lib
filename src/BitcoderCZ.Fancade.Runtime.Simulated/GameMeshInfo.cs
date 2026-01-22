@@ -38,7 +38,7 @@ public struct GameMeshInfo
     private readonly PrefabSegmentMeshes[] _segmentMeshes;
     private readonly (int3 Min, int3 Max)[] _prefabMeshBounds;
 
-    private List<UniqueMesh> _uniqueMeshes;
+    private readonly List<UniqueMesh> _uniqueMeshes;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GameMeshInfo"/> struct.
@@ -66,9 +66,10 @@ public struct GameMeshInfo
     /// </summary>
     /// <param name="prefabs"><see cref="PrefabList"/> of the game.</param>
     /// <param name="mainPrefabId">Id of the main(open) prefab.</param>
+    /// <param name="createScriptMesh">Whether to create mesh for script blocks.</param>
     /// <param name="createMultiThreaded">Whether to use multiple threads to create the <see cref="GameMeshInfo"/>.</param>
     /// <returns>The created <see cref="GameMeshInfo"/>.</returns>
-    public static GameMeshInfo Create(PrefabList prefabs, ushort mainPrefabId, bool createMultiThreaded = true)
+    public static GameMeshInfo Create(PrefabList prefabs, ushort mainPrefabId, bool createScriptMesh, bool createMultiThreaded = true)
     {
         if (prefabs.IdOffset != RawGame.CurrentNumbStockPrefabs)
         {
@@ -119,7 +120,7 @@ public struct GameMeshInfo
             {
                 BlockMesh blockMesh = prefab.Type is PrefabType.Level && prefab.Id != mainPrefabId
                     ? BlockMesh.Empty
-                    : BlockMesh.Create(prefab.Blocks, prefabs, segmentMeshes, (mesh, meshIndex) =>
+                    : BlockMesh.Create(prefab.Blocks, createScriptMesh, prefabs, segmentMeshes, (mesh, meshIndex) =>
                     {
                         int index = lookup.GetOrAdd(mesh, static (mesh, item) =>
                         {
@@ -179,7 +180,7 @@ public struct GameMeshInfo
             {
                 if (prefab.Id == mainPrefabId || prefab.Type != PrefabType.Level)
                 {
-                    blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, prefabs, segmentMeshes, (mesh, meshIndex) =>
+                    blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, createScriptMesh, prefabs, segmentMeshes, (mesh, meshIndex) =>
                     {
                         ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, mesh, out bool exists);
 
@@ -317,7 +318,7 @@ public struct GameMeshInfo
                     item =>
                 {
                     var (prefabIndex, prefab) = item;
-                    stockBlockMeshes[prefabIndex] = (prefab.Id, BlockMesh.Create(prefab.Blocks, emptyList, stockSegmentMeshes, (mesh, meshIndex) =>
+                    stockBlockMeshes[prefabIndex] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, stockSegmentMeshes, (mesh, meshIndex) =>
                         {
                             int index = lookup.GetOrAdd(mesh, static (mesh, item) =>
                             {
@@ -351,7 +352,7 @@ public struct GameMeshInfo
                 int prefabIndex = 0;
                 foreach (var prefab in stockPrefabs.OrderBy(prefab => prefab.Id))
                 {
-                    stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, emptyList, stockSegmentMeshes, (mesh, meshIndex) =>
+                    stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, stockSegmentMeshes, (mesh, meshIndex) =>
                     {
                         ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, mesh, out bool exists);
 
