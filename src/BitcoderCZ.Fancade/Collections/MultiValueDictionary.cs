@@ -4,7 +4,7 @@
 
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Collections;
 

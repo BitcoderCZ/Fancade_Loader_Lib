@@ -14,13 +14,13 @@ using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet.Utils;
 using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
-using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
+using BitcoderCZ.Utils;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 

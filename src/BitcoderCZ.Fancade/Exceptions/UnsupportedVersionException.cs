@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using BitcoderCZ.Fancade.Raw;
 
 namespace BitcoderCZ.Fancade.Exceptions;
@@ -27,4 +28,13 @@ public sealed class UnsupportedVersionException : Exception
     /// </summary>
     /// <value>Version of the game.</value>
     public int Version { get; private set; }
+
+    /// <summary>
+    /// Throws the <see cref="UnsupportedVersionException"/>.
+    /// </summary>
+    /// <param name="version">Version of the game.</param>
+    /// <exception cref="UnsupportedVersionException">Always thrown.</exception>
+    [DoesNotReturn]
+    public static void Throw(int version)
+        => throw new UnsupportedVersionException(version);
 }

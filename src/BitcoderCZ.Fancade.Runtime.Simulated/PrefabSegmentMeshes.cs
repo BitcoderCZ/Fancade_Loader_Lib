@@ -2,7 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.Fancade.Utils;
+using BitcoderCZ.Buffers;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -33,7 +33,7 @@ public sealed class PrefabSegmentMeshes
 
     private readonly PrefabSegmentMesh[] _meshes;
 
-    private readonly PrefabSegmentMesh.Array6<ulong> _connectsOnSide;
+    private readonly FixedArray6<ulong> _connectsOnSide;
 
     private PrefabSegmentMeshes(int meshCount, byte[] voxelMeshIndex, PrefabSegmentMesh[] meshes, int3 minPosition, int3 maxPosition, ReadOnlySpan<ulong> connectsOnSide)
     {
@@ -48,7 +48,7 @@ public sealed class PrefabSegmentMeshes
         // PrefabSegmentMeshes.Empty
         if (!connectsOnSide.IsEmpty)
         {
-            PrefabSegmentMesh.Assign(ref _connectsOnSide, connectsOnSide);
+            _connectsOnSide = FixedArray6.Create(connectsOnSide);
         }
     }
 
@@ -223,15 +223,7 @@ public sealed class PrefabSegmentMeshes
     /// <returns>64 bit array, where 0 - does not have glue, 1 - has glue.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong GetSideGlue(int sideIndex)
-    {
-#if NET8_0_OR_GREATER
-        return _connectsOnSide[sideIndex];
-#else
-        ThrowHelper.ThrowIfGreaterThanOrEqualToOrNegative(sideIndex, 6, nameof(sideIndex));
-
-        return Unsafe.Add(ref Unsafe.AsRef(in _connectsOnSide._element0), sideIndex);
-#endif
-    }
+        => _connectsOnSide.GetElement(sideIndex);
 
     private static PrefabSegmentMesh[] ChunkVoxels(int meshCount, byte[] voxelMeshIndex, Voxels voxels)
     {

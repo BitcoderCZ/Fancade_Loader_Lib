@@ -4,7 +4,7 @@
 
 using BitcoderCZ.Fancade.Editing.Scripting.TerminalStores;
 using System.Diagnostics.CodeAnalysis;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Utils;
 

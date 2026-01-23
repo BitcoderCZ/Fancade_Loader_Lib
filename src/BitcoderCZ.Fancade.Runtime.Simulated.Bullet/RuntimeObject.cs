@@ -7,7 +7,7 @@ using BitcoderCZ.BulletSharp.Common;
 using BitcoderCZ.BulletSharp.Dynamics;
 using System.Diagnostics;
 using System.Numerics;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 

@@ -5,7 +5,7 @@
 using BitcoderCZ.Fancade.Partial;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;
 

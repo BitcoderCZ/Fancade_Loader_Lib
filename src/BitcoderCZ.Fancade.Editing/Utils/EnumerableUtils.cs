@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Collections;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace System.Linq;

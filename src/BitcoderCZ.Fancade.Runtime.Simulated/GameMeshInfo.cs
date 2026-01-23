@@ -10,7 +10,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 using UniqueMesh = (BitcoderCZ.Fancade.Runtime.Simulated.Utils.ValueList<BitcoderCZ.Fancade.Runtime.Simulated.FcMesh.Block> Mesh, ushort PrefabId, int MeshIndex);
 

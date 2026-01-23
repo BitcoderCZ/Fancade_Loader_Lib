@@ -8,8 +8,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
-using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
+using BitcoderCZ.Utils;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 

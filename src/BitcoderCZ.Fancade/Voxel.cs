@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using BitcoderCZ.Buffers;
 using BitcoderCZ.Fancade.Utils;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -20,7 +21,7 @@ public struct Voxel : IEquatable<Voxel>
     /// Colors of the sides of the voxel in the following order:
     /// <para>+X, -X, +Y, -Y, +Z, -Z.</para>
     /// </summary>
-    public Array6<byte> Colors;
+    public FixedArray6<byte> Colors;
 
     /// <summary>
     /// <see langword="true"/> if the side does NOT have glue/"lego" on it - connects to other voxels; otherwise, <see langword="false"/>. 
@@ -28,7 +29,7 @@ public struct Voxel : IEquatable<Voxel>
     /// <remarks>
     /// In the same order as <see cref="Colors"/>.
     /// </remarks>
-    public Array6<bool> Attribs;
+    public FixedArray6<bool> Attribs;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Voxel"/> struct.
@@ -83,7 +84,7 @@ public struct Voxel : IEquatable<Voxel>
     /// Determined in the same way as in Fancade: checks only the first face (+X).
     /// </remarks>
     /// <value><see langword="true"/> if this voxel is empty; otherwise, <see langword="false"/>.</value>
-    public readonly bool IsEmpty => Colors[0] == 0 && Attribs[0] == false;
+    public readonly bool IsEmpty => Colors.GetElement(0) == 0 && Attribs.GetElement(0) == false;
 
     /// <summary>
     /// Gets or sets the face of the voxel at the specified index (sets both color and glue).
@@ -95,7 +96,7 @@ public struct Voxel : IEquatable<Voxel>
     /// <returns>The face at <paramref name="faceIndex"/>.</returns>
     public VoxelFace this[int faceIndex]
     {
-        readonly get => new VoxelFace((FcColor)Colors[faceIndex], !Attribs[faceIndex]);
+        readonly get => new VoxelFace((FcColor)Colors.GetElement(faceIndex), !Attribs.GetElement(faceIndex));
         set
         {
             Colors[faceIndex] = (byte)value.Color;
@@ -135,12 +136,12 @@ public struct Voxel : IEquatable<Voxel>
 
         for (int i = 0; i < 6; i++)
         {
-            hash.Add(Colors[i]);
+            hash.Add(Colors.GetElement(i));
         }
 
         for (int i = 0; i < 6; i++)
         {
-            hash.Add(Attribs[i]);
+            hash.Add(Attribs.GetElement(i));
         }
 
         return hash.ToHashCode();
@@ -171,7 +172,7 @@ public struct Voxel : IEquatable<Voxel>
                 builder.Append(", ");
             }
 
-            builder.Append(Colors[i]);
+            builder.Append(Colors.GetElement(i));
         }
 
         builder.Append("; Attribs: ");
@@ -183,71 +184,11 @@ public struct Voxel : IEquatable<Voxel>
                 builder.Append(", ");
             }
 
-            builder.Append(Attribs[i]);
+            builder.Append(Attribs.GetElement(i));
         }
 
         builder.Append(']');
 
         return builder.ToString();
     }
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Value array with 6 items.
-    /// </summary>
-    /// <typeparam name="T">The item type.</typeparam>
-    [InlineArray(6)]
-#pragma warning disable CA1034 // Nested types should not be visible
-#pragma warning disable CA1815 // Override equals and operator equals on value types
-    public struct Array6<T>
-#pragma warning restore CA1815
-#pragma warning restore CA1034
-        where T : unmanaged
-    {
-#pragma warning disable IDE0044 // Add readonly modifier
-        private T _element0;
-#pragma warning restore IDE0044
-    }
-#else
-    /// <summary>
-    /// Value array with 6 items.
-    /// </summary>
-    /// <typeparam name="T">The item type.</typeparam>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Array6<T>
-    {
-#pragma warning disable IDE0044
-#pragma warning disable CS0169
-        private T _element0;
-        private T _element1;
-        private T _element2;
-        private T _element3;
-        private T _element4;
-        private T _element5;
-#pragma warning restore CS0169
-#pragma warning restore IDE0044
-
-        /// <summary>
-        /// Gets or sets the value at <paramref name="index"/>.
-        /// </summary>
-        /// <param name="index">Index of the value to get/set.</param>
-        /// <returns>The value at <paramref name="index"/>.</returns>
-        public T this[int index]
-        {
-            readonly get
-            {
-                ThrowHelper.ThrowIfGreaterThanOrEqualToOrNegative(index, 6, nameof(index));
-
-                return Unsafe.Add(ref Unsafe.AsRef(in _element0), index);
-            }
-
-            set
-            {
-                ThrowHelper.ThrowIfGreaterThanOrEqualToOrNegative(index, 6, nameof(index));
-
-                Unsafe.Add(ref _element0, index) = value;
-            }
-        }
-    }
-#endif
 }

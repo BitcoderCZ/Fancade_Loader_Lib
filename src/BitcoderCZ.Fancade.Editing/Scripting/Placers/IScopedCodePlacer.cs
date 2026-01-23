@@ -3,7 +3,7 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Editing.Utils;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Placers;
 

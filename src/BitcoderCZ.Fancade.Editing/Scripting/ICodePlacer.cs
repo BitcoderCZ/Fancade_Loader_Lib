@@ -4,7 +4,7 @@
 
 using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
 using BitcoderCZ.Fancade.Editing.Scripting.TerminalStores;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting;
 
@@ -66,7 +66,7 @@ public static class ICodePlacerUtils
     /// <param name="to">The second <see cref="ITerminalStore"/>.</param>
     public static void Connect(this ICodePlacer placer, ITerminalStore from, ITerminalStore to)
     {
-        ThrowIfNull(placer, nameof(placer));
+        ThrowIfNull(placer);
 
         if (from is NopTerminalStore or null || to is NopTerminalStore or null)
         {
@@ -87,7 +87,7 @@ public static class ICodePlacerUtils
     /// <param name="to">The second <see cref="ITerminal"/>.</param>
     public static void Connect(this ICodePlacer placer, ITerminalStore from, ITerminal to)
     {
-        ThrowIfNull(placer, nameof(placer));
+        ThrowIfNull(placer);
 
         if (from is NopTerminalStore or null || to is NopTerminal)
         {
@@ -108,7 +108,7 @@ public static class ICodePlacerUtils
     /// <param name="to">The second <see cref="ITerminalStore"/>.</param>
     public static void Connect(this ICodePlacer placer, ITerminal from, ITerminalStore to)
     {
-        ThrowIfNull(placer, nameof(placer));
+        ThrowIfNull(placer);
 
         if (from is NopTerminal || to is NopTerminalStore or null)
         {

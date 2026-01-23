@@ -4,6 +4,7 @@
 
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime.Compiled")]
 [assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime.Tests")]
 [assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime.Tests.Common")]
 

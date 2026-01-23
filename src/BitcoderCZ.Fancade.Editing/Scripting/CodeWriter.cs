@@ -10,7 +10,7 @@ using BitcoderCZ.Fancade.Editing.Scripting.TerminalStores;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Editing.Utils;
 using System.Diagnostics;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting;
 

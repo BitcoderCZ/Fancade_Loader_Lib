@@ -7,8 +7,9 @@ using System.Buffers.Binary;
 using System.ComponentModel;
 using System.Globalization;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Builders;
 
@@ -411,7 +412,7 @@ public sealed class EditorScriptBlockBuilder : BlockBuilder
         public void WriteSingle(float value)
         {
             Span<byte> buffer = stackalloc byte[sizeof(float)];
-            BinaryPrimitives.WriteUInt32LittleEndian(buffer, UnsafeUtils.BitCast<float, uint>(value));
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer, Unsafe.As<float, uint>(ref value));
             WriteSpan(buffer);
         }
 
