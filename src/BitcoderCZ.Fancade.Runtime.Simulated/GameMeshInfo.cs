@@ -120,7 +120,7 @@ public struct GameMeshInfo
             {
                 BlockMesh blockMesh = prefab.Type is PrefabType.Level && prefab.Id != mainPrefabId
                     ? BlockMesh.Empty
-                    : BlockMesh.Create(prefab.Blocks, createScriptMesh, prefabs, segmentMeshes, (mesh, meshIndex) =>
+                    : BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, segmentMeshes, (mesh, meshIndex) =>
                     {
                         int index = lookup.GetOrAdd(mesh, static (mesh, item) =>
                         {
@@ -180,7 +180,7 @@ public struct GameMeshInfo
             {
                 if (prefab.Id == mainPrefabId || prefab.Type != PrefabType.Level)
                 {
-                    blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, createScriptMesh, prefabs, segmentMeshes, (mesh, meshIndex) =>
+                    blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, segmentMeshes, (mesh, meshIndex) =>
                     {
                         ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, mesh, out bool exists);
 
