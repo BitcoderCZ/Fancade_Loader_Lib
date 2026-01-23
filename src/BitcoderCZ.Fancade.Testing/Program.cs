@@ -9,12 +9,12 @@ using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 
 Game game;
-using (var file = File.OpenRead("/home/bitcoder/Downloads/XVEHG2U1IG9RW77C.fcg"))
+using (var file = File.OpenRead("/home/bitcoder/Downloads/85PFJ0XPAJFJVLG8.fcg"))
 {
     game = Game.LoadCompressed(file);
 }
 
-ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "Level 3").Id;
+ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "Level 1").Id;
 
 Console.WriteLine("Parsing ast");
 var ast = FcAST.Parse(game.Prefabs, levelId);
@@ -24,8 +24,17 @@ Console.WriteLine("Building level");
 FcWorld world;
 //while (true)
 //{
-    world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx, timeout: Timeout.InfiniteTimeSpan), true);
+world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx, timeout: Timeout.InfiniteTimeSpan), true);
 //}
+
+var gameMesh = world.GameMeshInfo;
+for (int uniqueMeshIndex = 0; uniqueMeshIndex < gameMesh.UniqueMeshCount; uniqueMeshIndex++)
+{
+    var (prefabId, meshIndex) = gameMesh.GetUniqueMeshFirstOccurrence(uniqueMeshIndex);
+    var blockMesh = gameMesh.GetBlockMesh(prefabId);
+
+    blockMesh.GetMesh(meshIndex, out var mesh, out _);
+}
 
 for (int i = 0; i < 60; i++)
 {

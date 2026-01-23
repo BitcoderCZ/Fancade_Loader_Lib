@@ -633,3 +633,9 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
     }
 #endif
 }
+
+internal sealed class ValueListDebugView<T>
+    where T : unmanaged, IEquatable<T>
+{
+    private readonly ValueList
+}
