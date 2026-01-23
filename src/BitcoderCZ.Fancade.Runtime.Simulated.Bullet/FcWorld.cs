@@ -465,6 +465,11 @@ public sealed partial class FcWorld : IAstRunner
 
                 meshInfo.GetMesh(i, out var mesh, out int uniqueMeshIndex);
 
+                if (mesh.Count is 0)
+                {
+                    continue;
+                }
+
                 if (uniqueMeshInfo[uniqueMeshIndex] is null)
                 {
                     InitUnique(meshInfo, prefab, i);
