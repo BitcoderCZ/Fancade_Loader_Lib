@@ -183,20 +183,31 @@ public readonly struct BlockMesh
                 }
             }
 
-            int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
-            foreach (var block in blockList.List)
+            int3 minPos;
+            if (blockList.List.Count is 0)
             {
-                minPos = int3.Min(minPos, block.Offset);
+                minPos = int3.Zero;
             }
-
-            // make offsets zero based
-            for (int i = blockList.List.Count - 1; i >= 0; i--)
+            else
             {
-                ref var block = ref blockList.List.GetRef(i);
-                block = new FcMesh.Block(block.SegmentId, block.Offset - minPos, block.LocalMeshIndex);
-            }
+                minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                foreach (var block in blockList.List)
+                {
+                    minPos = int3.Min(minPos, block.Offset);
+                }
 
-            blockList.List.Sort();
+                // make offsets zero based
+                if (minPos != int3.Zero)
+                {
+                    for (int i = blockList.List.Count - 1; i >= 0; i--)
+                    {
+                        ref var block = ref blockList.List.GetRef(i);
+                        block = new FcMesh.Block(block.SegmentId, block.Offset - minPos, block.LocalMeshIndex);
+                    }
+                }
+
+                blockList.List.Sort();
+            }
 
             blockList.ComputeHash();
 
