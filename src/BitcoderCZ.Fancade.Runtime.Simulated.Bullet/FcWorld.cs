@@ -538,51 +538,48 @@ public sealed partial class FcWorld : IAstRunner
                 var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
                 var currentSegmentMesh = _gameMesh.GetSegmentMesh(blockId);
 
-                if (currentPrefab.Type is PrefabType.Physics or PrefabType.Normal)
-                {
-                    bool foundMesh = false;
+                bool foundMesh = false;
 
-                    for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
+                for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
+                {
+                    if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
                     {
-                        if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
+                        continue;
+                    }
+
+                    if (currentPrefab.Type == PrefabType.Physics)
+                    {
+                        foundPhysics = true;
+
+                        var currentMesh = currentSegmentMesh.Meshes[segmentMeshIndex];
+                        var boundsMin = currentMesh.MinPos;
+                        var boundsMax = currentMesh.MaxPos;
+                        Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
+                        float volume = size.X * size.Y * size.Z;
+                        totalVolume += volume;
+
+                        Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + (Vector3)blockPos;
+                        Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + (Vector3)blockPos + new Vector3(0.125f);
+
+                        centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
+
+                        sizeMin = Vector3.Min(sizeMin, worldBoundsMin);
+                        sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
+                    }
+                    else
+                    {
+                        if (foundMesh)
                         {
                             continue;
                         }
 
-                        if (currentPrefab.Type == PrefabType.Physics)
-                        {
-                            foundPhysics = true;
+                        centerOfMass += (Vector3)blockPos + new Vector3(0.5f);
+                        totalVolume++;
 
-                            var currentMesh = currentSegmentMesh.Meshes[segmentMeshIndex];
-                            var boundsMin = currentMesh.MinPos;
-                            var boundsMax = currentMesh.MaxPos;
-                            Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
-                            float volume = size.X * size.Y * size.Z;
-                            totalVolume += volume;
+                        sizeMin = Vector3.Min(sizeMin, (Vector3)blockPos);
+                        sizeMax = Vector3.Max(sizeMax, (Vector3)blockPos + Vector3.One);
 
-                            Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + (Vector3)blockPos;
-                            Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + (Vector3)blockPos + new Vector3(0.125f);
-
-                            centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
-
-                            sizeMin = Vector3.Min(sizeMin, worldBoundsMin);
-                            sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
-                        }
-                        else
-                        {
-                            if (foundMesh)
-                            {
-                                continue;
-                            }
-
-                            centerOfMass += (Vector3)blockPos + new Vector3(0.5f);
-                            totalVolume++;
-
-                            sizeMin = Vector3.Min(sizeMin, (Vector3)blockPos);
-                            sizeMax = Vector3.Max(sizeMax, (Vector3)blockPos + Vector3.One);
-
-                            foundMesh = true;
-                        }
+                        foundMesh = true;
                     }
                 }
             }
@@ -609,7 +606,7 @@ public sealed partial class FcWorld : IAstRunner
                 var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
                 var currentSegmentMesh = _gameMesh.GetSegmentMesh(blockId);
 
-                if (currentPrefab.Collider == PrefabCollider.None || currentSegmentMesh.MeshCount == 0)
+                if (currentPrefab.Collider is PrefabCollider.None || currentSegmentMesh.MeshCount == 0)
                 {
                     continue;
                 }
