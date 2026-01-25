@@ -18,11 +18,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BitcoderCZ.Fancade.Editing\BitcoderCZ.Fancade.Editing.csproj" />
-    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Compiled\BitcoderCZ.Fancade.Runtime.Compiled.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Editing\BitcoderCZ.Fancade.Editing.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Runtime.Compiled\BitcoderCZ.Fancade.Runtime.Compiled.csproj" />
     <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Tests.Common\BitcoderCZ.Fancade.Runtime.Tests.Common.csproj" />
-    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime\BitcoderCZ.Fancade.Runtime.csproj" />
-    <ProjectReference Include="..\BitcoderCZ.Fancade\BitcoderCZ.Fancade.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Runtime\BitcoderCZ.Fancade.Runtime.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade\BitcoderCZ.Fancade.csproj" />
   </ItemGroup>
 
 </Project>

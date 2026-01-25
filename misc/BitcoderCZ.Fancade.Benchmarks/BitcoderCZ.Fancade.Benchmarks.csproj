@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../BitcoderCZ.Fancade.Runtime.Simulated.Bullet/BitcoderCZ.Fancade.Runtime.Simulated.Bullet.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Runtime.Simulated.Bullet/BitcoderCZ.Fancade.Runtime.Simulated.Bullet.csproj" />
   </ItemGroup>
 
 </Project>

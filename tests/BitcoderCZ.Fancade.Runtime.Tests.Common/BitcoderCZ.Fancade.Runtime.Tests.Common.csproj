@@ -12,9 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Compiled\BitcoderCZ.Fancade.Runtime.Compiled.csproj" />
-    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Simulated.Bullet\BitcoderCZ.Fancade.Runtime.Simulated.Bullet.csproj" />
-    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime\BitcoderCZ.Fancade.Runtime.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Runtime.Compiled\BitcoderCZ.Fancade.Runtime.Compiled.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Runtime.Simulated.Bullet\BitcoderCZ.Fancade.Runtime.Simulated.Bullet.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Runtime\BitcoderCZ.Fancade.Runtime.csproj" />
   </ItemGroup>
 
 </Project>
