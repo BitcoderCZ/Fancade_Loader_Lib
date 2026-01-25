@@ -32,6 +32,11 @@ public static partial class PlaceBlockHelper
         PartialPrefab block;
         bool hasSetting = true;
 
+        if (value is float3 f3)
+        {
+            value = (Vector3)f3;
+        }
+
         switch (value)
         {
             case bool b:
@@ -41,7 +46,6 @@ public static partial class PlaceBlockHelper
             case float:
                 block = StockBlocks.Values.Number.Prefab;
                 break;
-            case float3:
             case Vector3:
                 block = StockBlocks.Values.Vector.Prefab;
                 break;
@@ -63,7 +67,7 @@ public static partial class PlaceBlockHelper
                 case float:
                     settingType = SettingType.Float;
                     break;
-                case float3 or Vector3 or Rotation:
+                case Vector3 or Rotation:
                     settingType = SettingType.Vec3;
                     break;
                 default:
@@ -71,7 +75,7 @@ public static partial class PlaceBlockHelper
                     return;
             }
 
-            prefab.Settings[pos] = new PrefabSettings(new PrefabSetting(settingType, value));
+            prefab.Settings[pos] = new PrefabSettings(new PrefabSetting(0, settingType, value));
         }
     }
 }

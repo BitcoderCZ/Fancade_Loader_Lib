@@ -150,7 +150,7 @@ public class GameTests
         BlockData blocks = new BlockData();
         blocks.SetBlock(new int3(1, 1, 1), 5);
 
-        game.Prefabs.AddPrefab(new Prefab(RawGame.CurrentNumbStockPrefabs, "ABC", PrefabCollider.Box, PrefabType.Script, FcColor.Gray4, true, blocks, [new(int3.One, PrefabSettings.Empty.WithValueAt(5, new(SettingType.Int, 10)))], [new Connection(int3.One, int3.One * 2, byte3.Zero, byte3.One)], [new PrefabSegment(RawGame.CurrentNumbStockPrefabs, int3.Zero)]));
+        game.Prefabs.AddPrefab(new Prefab(RawGame.CurrentNumbStockPrefabs, "ABC", PrefabCollider.Box, PrefabType.Script, FcColor.Gray4, true, blocks, [new(int3.One, PrefabSettings.Empty.Add(new(5, SettingType.Int, 10)))], [new Connection(int3.One, int3.One * 2, byte3.Zero, byte3.One)], [new PrefabSegment(RawGame.CurrentNumbStockPrefabs, int3.Zero)]));
 
         using (var ms = new MemoryStream())
         {
@@ -191,7 +191,7 @@ public class GameTests
         BlockData blocks = new BlockData();
         blocks.SetBlock(new int3(1, 1, 1), 5);
 
-        game.Prefabs.AddPrefab(new Prefab(RawGame.CurrentNumbStockPrefabs, "ABC", PrefabCollider.Box, PrefabType.Script, FcColor.Gray4, true, blocks, [new(int3.One, PrefabSettings.Empty.WithValueAt(5, new(SettingType.Int, 10)))], [new Connection(int3.One, int3.One * 2, byte3.Zero, byte3.One)], [new PrefabSegment(RawGame.CurrentNumbStockPrefabs, int3.Zero)]));
+        game.Prefabs.AddPrefab(new Prefab(RawGame.CurrentNumbStockPrefabs, "ABC", PrefabCollider.Box, PrefabType.Script, FcColor.Gray4, true, blocks, [new(int3.One, PrefabSettings.Empty.Add(new(5, SettingType.Int, 10)))], [new Connection(int3.One, int3.One * 2, byte3.Zero, byte3.One)], [new PrefabSegment(RawGame.CurrentNumbStockPrefabs, int3.Zero)]));
 
         using (var ms = new MemoryStream())
         {

@@ -9,7 +9,7 @@ using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
 
 Game game;
-using (var file = File.OpenRead("/home/bitcoder/Downloads/85PFJ0XPAJFJVLG8.fcg"))
+using (var file = File.OpenRead("/home/bitcoder/Downloads/697490CB4D4A8AFF"))
 {
     game = Game.LoadCompressed(file);
 }

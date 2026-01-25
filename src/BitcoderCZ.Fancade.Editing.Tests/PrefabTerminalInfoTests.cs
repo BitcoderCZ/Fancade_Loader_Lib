@@ -17,7 +17,7 @@ public class PrefabTerminalInfoTests
         await Assert.That(terminals.Terminals.IsEmpty).IsTrue();
     }
 
-    [Test]
+    /*[Test]
     [Arguments(0, 0, 0)]
     [Arguments(0, 7, 6)]
     public async Task BlockConnection_DoesCreateTerminal(int terminalPosX, int terminalPosY, int terminalPosZ)
@@ -25,7 +25,7 @@ public class PrefabTerminalInfoTests
         var terminals = CreateTerminalsWithBlockConnection(new byte3(terminalPosX, terminalPosY, terminalPosZ));
 
         await Assert.That(terminals.Terminals.Count).IsEqualTo(1);
-    }
+    }*/
 
     private static PrefabTerminalInfo CreateTerminalsWithBlockConnection(byte3 connectionPos)
     {

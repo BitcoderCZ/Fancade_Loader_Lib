@@ -64,41 +64,32 @@ public readonly struct PrefabTerminalInfo
                 continue;
             }
 
-            // TODO: only use index 0?
-            foreach (var item in settings)
+            if (!settings.TryGetTerminalName(0, out string? terminalName, out var settingType))
             {
-                if (item is not { } setting)
-                {
-                    continue;
-                }
-
-                if (setting.Type < SettingType.VoidTerminal)
-                {
-                    continue;
-                }
-
-                var (type, isInput) = SettingTypeUtils.ToTerminalSignalType(setting.Type);
-
-                TerminalDirection dir = prefab.GetTerminalDirection((byte3)pos);
-
-                // isInput always true for terminals of custom prefabs for... reasons???
-                if (prefab.Id >= RawGame.CurrentNumbStockPrefabs)
-                {
-                    isInput = dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX;
-                }
-                else
-                {
-                    if (type == SignalType.Void && dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX)
-                    {
-                        isInput = true;
-                    }
-                }
-
-                infoBuilder.Add(new TerminalInfo((byte3)pos, type, dir, isInput)
-                {
-                    Name = setting.Value as string,
-                });
+                continue;
             }
+
+            var (type, isInput) = SettingTypeUtils.ToTerminalSignalType(settingType);
+
+            TerminalDirection dir = prefab.GetTerminalDirection((byte3)pos);
+
+            // isInput always true for terminals of custom prefabs for... reasons???
+            if (prefab.Id >= RawGame.CurrentNumbStockPrefabs)
+            {
+                isInput = dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX;
+            }
+            else
+            {
+                if (type == SignalType.Void && dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX)
+                {
+                    isInput = true;
+                }
+            }
+
+            infoBuilder.Add(new TerminalInfo((byte3)pos, type, dir, isInput)
+            {
+                Name = terminalName,
+            });
         }
 
         return new PrefabTerminalInfo(infoBuilder.DrainToImmutable());
@@ -129,6 +120,7 @@ public readonly struct PrefabTerminalInfo
     /// <param name="prefab">The <see cref="Prefab"/> to create the <see cref="PrefabTerminalInfo"/> from.</param>
     /// <param name="getPrefab">Gets a <see cref="Prefab"/>, from a segment id.</param>
     /// <returns>The <see cref="PrefabTerminalInfo"/> created from <paramref name="prefab"/>.</returns>
+    // todo: is this actually necesary, or is CreateFromSettingsOnly enough
     public static PrefabTerminalInfo Create(Prefab prefab, Func<ushort, Prefab?> getPrefab)
     {
         ImmutableArray<TerminalInfo>.Builder infoBuilder = ImmutableArray.CreateBuilder<TerminalInfo>(2);
@@ -140,41 +132,32 @@ public readonly struct PrefabTerminalInfo
                 continue;
             }
 
-            // TODO: only use index 0?
-            foreach (var item in settings)
+            if (!settings.TryGetTerminalName(0, out string? terminalName, out var settingType))
             {
-                if (item is not { } setting)
-                {
-                    continue;
-                }
-
-                if (setting.Type < SettingType.VoidTerminal)
-                {
-                    continue;
-                }
-
-                var (type, isInput) = SettingTypeUtils.ToTerminalSignalType(setting.Type);
-
-                TerminalDirection dir = prefab.GetTerminalDirection((byte3)pos);
-
-                // isInput always true for terminals of custom prefabs for... reasons???
-                if (prefab.Id >= RawGame.CurrentNumbStockPrefabs)
-                {
-                    isInput = dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX;
-                }
-                else
-                {
-                    if (type == SignalType.Void && dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX)
-                    {
-                        isInput = true;
-                    }
-                }
-
-                infoBuilder.Add(new TerminalInfo((byte3)pos, type, dir, isInput)
-                {
-                    Name = setting.Value as string,
-                });
+                continue;
             }
+
+            var (type, isInput) = SettingTypeUtils.ToTerminalSignalType(settingType);
+
+            TerminalDirection dir = prefab.GetTerminalDirection((byte3)pos);
+
+            // isInput always true for terminals of custom prefabs for... reasons???
+            if (prefab.Id >= RawGame.CurrentNumbStockPrefabs)
+            {
+                isInput = dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX;
+            }
+            else
+            {
+                if (type == SignalType.Void && dir is TerminalDirection.PositiveZ or TerminalDirection.NegativeX)
+                {
+                    isInput = true;
+                }
+            }
+
+            infoBuilder.Add(new TerminalInfo((byte3)pos, type, dir, isInput)
+            {
+                Name = terminalName,
+            });
         }
 
         foreach (var connection in prefab.Connections)
@@ -185,16 +168,17 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    var terminalType = ResolveBlockTerminalType(insidePrefab, (byte3)connection.ToVoxel, getPrefab);
-                    var terminalDirection = prefab.GetTerminalDirection((byte3)connection.FromVoxel);
+                    var terminalType = ResolveBlockTerminalType(insidePrefab, connection.ToVoxel, getPrefab);
+                    var terminalDirection = prefab.GetTerminalDirection(connection.FromVoxel);
 
                     // TODO: find how fancade actually does this
-                    if (terminalType is SignalType.Obj && terminalDirection is not TerminalDirection.NegativeX)
+                    // sometimes incorrectly identifies object connections to self as terminals, better to just ignore object connections
+                    if (terminalType is SignalType.Obj/* && terminalDirection is not TerminalDirection.NegativeX)*/)
                     {
                         continue;
                     }
 
-                    infoBuilder.Add(new TerminalInfo((byte3)connection.FromVoxel, terminalType, terminalDirection, true));
+                    infoBuilder.Add(new TerminalInfo(connection.FromVoxel, terminalType, terminalDirection, true));
                 }
             }
             else if (connection.IsToOutside && !infoBuilder.Any(terminal => terminal.Position == connection.ToVoxel))
@@ -203,7 +187,7 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    infoBuilder.Add(new TerminalInfo((byte3)connection.ToVoxel, ResolveBlockTerminalType(insidePrefab, (byte3)connection.FromVoxel, getPrefab), prefab.GetTerminalDirection((byte3)connection.ToVoxel), false));
+                    infoBuilder.Add(new TerminalInfo(connection.ToVoxel, ResolveBlockTerminalType(insidePrefab, connection.FromVoxel, getPrefab), prefab.GetTerminalDirection(connection.ToVoxel), false));
                 }
             }
         }
@@ -255,23 +239,9 @@ public readonly struct PrefabTerminalInfo
             return SignalType.Error;
         }
 
-        if (prefab.Settings.TryGetValue(terminalPos, out var settings))
+        if (prefab.Settings.TryGetValue(terminalPos, out var settings) && settings.TryGetTerminalName(0, out _, out var settingType))
         {
-            // TODO: only use index 0?
-            foreach (var item in settings)
-            {
-                if (item is not { } setting)
-                {
-                    continue;
-                }
-
-                if (setting.Type < SettingType.VoidTerminal)
-                {
-                    continue;
-                }
-
-                return SettingTypeUtils.ToTerminalSignalType(setting.Type).SignalType;
-            }
+            return SettingTypeUtils.ToTerminalSignalType(settingType).SignalType;
         }
 
         // TODO: incorrectly identifies object connections to self as terminals
@@ -283,7 +253,7 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    return ResolveBlockTerminalType(insidePrefab, (byte3)connection.ToVoxel, getPrefab, depth + 1);
+                    return ResolveBlockTerminalType(insidePrefab, connection.ToVoxel, getPrefab, depth + 1);
                 }
             }
             else if (connection.IsToOutside && connection.ToVoxel == terminalPos)
@@ -292,7 +262,7 @@ public readonly struct PrefabTerminalInfo
 
                 if (insidePrefab is not null)
                 {
-                    return ResolveBlockTerminalType(insidePrefab, (byte3)connection.FromVoxel, getPrefab, depth + 1);
+                    return ResolveBlockTerminalType(insidePrefab, connection.FromVoxel, getPrefab, depth + 1);
                 }
             }
         }

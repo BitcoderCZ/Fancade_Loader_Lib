@@ -71,10 +71,8 @@ public sealed partial class FcAST
                             if (id is 46 or 48 or 50 or 52 or 54 or 56)
                             {
                                 // get variable
-                                if (ctx.TryGetSetting(pos, 0, out var variableNameObj))
+                                if (ctx.TryGetStringSetting(pos, 0, out string? varName))
                                 {
-                                    string varName = (string)variableNameObj.Value;
-
                                     if (varName.StartsWith('$') || varName.StartsWith('!'))
                                     {
                                         variables.Add(new Variable(varName, (SignalType)((id - 46) + 2)));
@@ -84,10 +82,8 @@ public sealed partial class FcAST
                             else if (id is 428 or 430 or 432 or 434 or 436 or 438)
                             {
                                 // set variable
-                                if (ctx.TryGetSetting(pos, 0, out var variableNameObj))
+                                if (ctx.TryGetStringSetting(pos, 0, out string? varName))
                                 {
-                                    string varName = (string)variableNameObj.Value;
-
                                     if (varName.StartsWith('$') || varName.StartsWith('!'))
                                     {
                                         variables.Add(new Variable(varName, (SignalType)((id - 428) + 2)));
@@ -160,9 +156,9 @@ public sealed partial class FcAST
                             {
                                 // get variable
                                 string varName;
-                                if (TryGetSetting(pos, 0, out var variableNameObj))
+                                if (TryGetStringSetting(pos, 0, out string? varNameStr))
                                 {
-                                    varName = (string)variableNameObj.Value;
+                                    varName = varNameStr;
 
                                     if (varName.StartsWith('$') || varName.StartsWith('!'))
                                     {
@@ -180,9 +176,9 @@ public sealed partial class FcAST
                             {
                                 // set variable
                                 string varName;
-                                if (TryGetSetting(pos, 0, out var variableNameObj))
+                                if (TryGetStringSetting(pos, 0, out string? varNameStr))
                                 {
-                                    varName = (string)variableNameObj.Value;
+                                    varName = varNameStr;
 
                                     if (varName.StartsWith('$') || varName.StartsWith('!'))
                                     {
@@ -462,15 +458,20 @@ public sealed partial class FcAST
             return null;
         }
 
-        public bool TryGetSetting(int3 pos, int index, out PrefabSetting setting)
-        {
-            if (Prefab.Settings.TryGetValue(pos, out var settings))
-            {
-                return settings.TryGetValue(index, out setting);
-            }
+        public bool TryGetSettings(int3 pos, out PrefabSettings settings)
+            => Prefab.Settings.TryGetValue(pos, out settings);
 
-            setting = default;
-            return false;
+        public bool TryGetStringSetting(int3 pos, int index, [MaybeNullWhen(false)] out string value)
+        {
+            value = null;
+            return Prefab.Settings.TryGetValue(pos, out var settings) && settings.TryGetStringValue(index, out value);
+        }
+
+        public bool TryGetNumericSetting<T>(int3 pos, int index, out T value)
+            where T : unmanaged
+        {
+            value = default;
+            return Prefab.Settings.TryGetValue(pos, out var settings) && settings.TryGetNumericValue(index, out value);
         }
 
         public ImmutableArray<Connection> GetOutVoidConnections(int3 pos)

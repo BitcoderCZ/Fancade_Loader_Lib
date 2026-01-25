@@ -48,7 +48,8 @@ public sealed class PrefabBlockBuilder : BlockBuilder
             SettingRecord set = settings[i];
             _prefab.Settings[set.Block.Position] = _prefab.Settings
                 .GetValueOrDefault(set.Block.Position, PrefabSettings.Empty)
-                .WithValueAt(set.SettingIndex, new PrefabSetting(
+                .Add(new PrefabSetting(
+                    checked((byte)set.SettingIndex),
                     set.Value switch
                     {
                         byte => SettingType.Byte,

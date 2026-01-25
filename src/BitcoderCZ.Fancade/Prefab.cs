@@ -491,11 +491,11 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
                         {
                             var pos = blockData.Index(i);
 
-                            if (!settings.TryGetValue(pos, out var prefabSettings) || !prefabSettings.Contains(setI))
-                            {
-                                // Wasn't found
-                                // TODO: settings.Add(getStockSetting(id, setI))
-                            }
+                            // if (!settings.TryGetValue(pos, out var prefabSettings) || !prefabSettings.Contains(setI))
+                            // {
+                            //     // Wasn't found
+                            //     // TODO: settings.Add(getStockSetting(id, setI))
+                            // }
                         }
                     }
 #pragma warning restore CA1508

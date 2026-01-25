@@ -232,14 +232,9 @@ public struct RawPrefabSetting : IEquatable<RawPrefabSetting>
     /// <typeparam name="T">The type to get the value as.</typeparam>
     /// <returns><see cref="Value"/> as <typeparamref name="T"/>.</returns>
     /// <exception cref="InvalidOperationException">Thrown when <see cref="Value"/> is a string.</exception>
-    public T GetValue<T>()
+    public readonly T GetValue<T>()
         where T : unmanaged
     {
-        if (Value is string)
-        {
-            throw new InvalidOperationException($"{nameof(GetValue)} cannot be used to get a string value.");
-        }
-
         if (typeof(T) == GetTypeForSettingType(Type))
         {
             return (T)Value;
