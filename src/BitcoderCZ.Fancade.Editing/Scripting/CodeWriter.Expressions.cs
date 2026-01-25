@@ -1029,7 +1029,7 @@ public sealed partial class CodeWriter
 
             public ITerminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(_variable.Type));
+                var block = writer._codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(_type));
 
                 using (writer.ExpressionBlock())
                 {
