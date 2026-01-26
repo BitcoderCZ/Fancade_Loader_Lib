@@ -2,10 +2,11 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using BitcoderCZ.Fancade.Exceptions;
 using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Runtime.InteropServices;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Raw;
 
@@ -149,7 +150,7 @@ public class RawGame
 
         if (fileVersion > CurrentFileVersion || fileVersion < 26)
         {
-            ThrowUnsupportedVersionException(fileVersion);
+            UnsupportedVersionException.Throw(fileVersion);
         }
         else if (fileVersion == 26)
         {

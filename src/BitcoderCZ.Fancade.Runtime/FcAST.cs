@@ -7,7 +7,7 @@ using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime;
 

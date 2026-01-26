@@ -33,13 +33,13 @@ public class CreateFcWorld
     [Benchmark]
     public FcWorld Create()
     {
-        return FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => runner);
+        return FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => runner, false);
     }
 
     [Benchmark]
     public FcWorld CreateSingleThread()
     {
-        return FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => runner, createMultiThreaded: false);
+        return FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => runner, false, createMultiThreaded: false);
     }
 
     private sealed class MyCtx : IRuntimeContext

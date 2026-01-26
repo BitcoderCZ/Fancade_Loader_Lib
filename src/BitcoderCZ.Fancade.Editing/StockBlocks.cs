@@ -99,7 +99,8 @@ public static class StockBlocks
                                 {
                                     prefab.Settings[terminal.Position] = prefab.Settings
                                         .GetValueOrDefault(terminal.Position, PrefabSettings.Empty)
-                                        .WithValueAt(0, new PrefabSetting(
+                                        .Add(new PrefabSetting(
+                                            0,
                                             SettingTypeUtils.FromTerminalSignalType(terminal.SignalType, terminal.Type == TerminalType.In),
                                             terminal.Name ?? TerminalDef.GetDefaultName(terminal.SignalType)));
                                 }

@@ -3,7 +3,7 @@
 // </copyright>
 
 using BitcoderCZ.Maths.Vectors;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing;
 

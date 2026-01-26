@@ -6,7 +6,7 @@ using BitcoderCZ.Fancade.Partial;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;
 

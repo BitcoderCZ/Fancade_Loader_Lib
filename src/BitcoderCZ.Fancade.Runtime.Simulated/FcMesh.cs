@@ -3,14 +3,18 @@
 // </copyright>
 
 using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
 using BitcoderCZ.Maths.Vectors;
+using BitcoderCZ.Utils;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated;
 
+[DebuggerTypeProxy(typeof(FcMeshDebugView))]
+[DebuggerDisplay("Position = {Position}; Count = {Count}")]
 [StructLayout(LayoutKind.Auto)]
 public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
 {
@@ -97,6 +101,7 @@ public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
     readonly IEnumerator IEnumerable.GetEnumerator()
         => GetEnumerator();
 
+    [DebuggerDisplay("SegmentId = {SegmentId}; Offset = {Offset}; LocalMeshIndex = {LocalMeshIndex}")]
     [StructLayout(LayoutKind.Auto)]
     public readonly struct Block : IEquatable<Block>, IComparable<Block>
     {
@@ -282,4 +287,20 @@ public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
         public int GetHashCode([DisallowNull] FcMesh obj)
             => obj.HasCode;
     }
+}
+
+internal sealed class FcMeshDebugView
+{
+    private readonly FcMesh _mesh;
+
+    public FcMeshDebugView(FcMesh mesh)
+    {
+        ThrowHelper.ThrowIfNull(mesh);
+
+        _mesh = mesh;
+    }
+
+    public int3 Position => _mesh.Position;
+
+    public FcMesh.Block[] Blocks => [.. _mesh.Blocks];
 }

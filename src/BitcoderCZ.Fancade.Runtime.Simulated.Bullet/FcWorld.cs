@@ -14,13 +14,13 @@ using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet.Utils;
 using BitcoderCZ.Fancade.Runtime.Simulated.Utils;
-using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
+using BitcoderCZ.Utils;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 
@@ -63,7 +63,7 @@ public sealed partial class FcWorld : IAstRunner
 
     private int _disposed;
 
-    private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId, bool createMultiThreaded)
+    private FcWorld(IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, PrefabList prefabs, ushort mainId, bool createScriptMesh, bool createMultiThreaded)
     {
         _runtimeCtx = new BulletRuntimeContext(this, runtimeContext);
         _runner = runnerFactory(_runtimeCtx);
@@ -83,7 +83,7 @@ public sealed partial class FcWorld : IAstRunner
         _groundPlane.UserIndex = FcObject.Null.Value;
         _groundPlane.Restitution = 1f;
 
-        _gameMesh = GameMeshInfo.Create(prefabs, mainId, createMultiThreaded);
+        _gameMesh = GameMeshInfo.Create(prefabs, mainId, createScriptMesh, createMultiThreaded);
 
         InitObjects(mainId, createMultiThreaded);
 
@@ -152,9 +152,10 @@ public sealed partial class FcWorld : IAstRunner
     /// <param name="prefabs">The game's prefabs.</param>
     /// <param name="runtimeContext">The <see cref="IRuntimeContextBase"/> to use.</param>
     /// <param name="runnerFactory">A func to create a <see cref="IAstRunner"/> given a <see cref="IRuntimeContext"/>.</param>
+    /// <param name="createScriptMesh">Whether to create mesh for script blocks.</param>
     /// <param name="createMultiThreaded">Whether to use multiple threads to create the <see cref="FcWorld"/>.</param>
     /// <returns>The created <see cref="FcWorld"/>.</returns>
-    public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, bool createMultiThreaded = true)
+    public static FcWorld Create(ushort prefabId, PrefabList prefabs, IRuntimeContextBase runtimeContext, Func<IRuntimeContext, IAstRunner> runnerFactory, bool createScriptMesh, bool createMultiThreaded = true)
     {
         ThrowIfNull(runtimeContext, nameof(runtimeContext));
         ThrowIfNull(runnerFactory, nameof(runnerFactory));
@@ -164,7 +165,7 @@ public sealed partial class FcWorld : IAstRunner
             ThrowArgumentException($"{nameof(prefabs)}.{nameof(prefabs.IdOffset)} must be equal to {nameof(RawGame)}.{nameof(RawGame.CurrentNumbStockPrefabs)}.", nameof(prefabs));
         }
 
-        return new FcWorld(runtimeContext, runnerFactory, prefabs, prefabId, createMultiThreaded);
+        return new FcWorld(runtimeContext, runnerFactory, prefabs, prefabId, createScriptMesh, createMultiThreaded);
     }
 
     /// <summary>
@@ -446,7 +447,7 @@ public sealed partial class FcWorld : IAstRunner
         var stockPrefabs = StockBlocks.PrefabList;
         var usedPrefabs = PrefabUsedCache.Create(_prefabs, mainId);
 
-        var uniqueMeshInfo = new (float TotalVolume, Vector3 CenterOfMass, Vector3 SizeMin, Vector3 SizeMax, bool FoundPhysics, CompoundShape Shape)?[_gameMesh.UniqueMeshCount];
+        var uniqueMeshInfo = new (float TotalVolume, Vector3 Position, Vector3 SizeMin, Vector3 SizeMax, bool FoundPhysics, CompoundShape Shape)?[_gameMesh.UniqueMeshCount];
 
         foreach (var prefab in stockPrefabs.Concat(_prefabs))
         {
@@ -462,29 +463,25 @@ public sealed partial class FcWorld : IAstRunner
                 var objectId = (FcObject)_objectIdCounter++;
                 short objectInPrefabMeshIndex = (short)i;
 
-                meshInfo.GetMesh(i, out var mesh, out int? uniqueMeshIndex);
-                Debug.Assert(uniqueMeshIndex is not null);
+                meshInfo.GetMesh(i, out var mesh, out int uniqueMeshIndex);
 
-                if (uniqueMeshInfo[uniqueMeshIndex.Value] is null)
+                if (mesh.Count is 0)
+                {
+                    continue;
+                }
+
+                if (uniqueMeshInfo[uniqueMeshIndex] is null)
                 {
                     InitUnique(meshInfo, prefab, i);
                 }
 
-                var (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, shape) = uniqueMeshInfo[uniqueMeshIndex.Value]!.Value;
-                centerOfMass += (Vector3)mesh.Position;
-                sizeMin += (Vector3)mesh.Position;
-                sizeMax += (Vector3)mesh.Position;
-
-                Vector3 pos = centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume);
-                float mass = totalVolume;
-
-                sizeMin -= pos;
-                sizeMax -= pos;
+                var (mass, pos, sizeMin, sizeMax, foundPhysics, shape) = uniqueMeshInfo[uniqueMeshIndex]!.Value;
+                pos += (Vector3)mesh.Position;
 
                 var rigidBody = BulletCreate(pos, Quaternion.Identity, objectId);
                 rigidBody.UpdateInertiaTensor();
 
-                RuntimeObject rObject = new(objectId, prefab.Id, objectInPrefabMeshIndex, rigidBody, pos, Quaternion.Identity, sizeMin, sizeMax, mass, prefab.Id == mainId, !foundPhysics);
+                RuntimeObject rObject = new(objectId, uniqueMeshIndex, prefab.Id, objectInPrefabMeshIndex, rigidBody, pos, Quaternion.Identity, sizeMin, sizeMax, mass, prefab.Id == mainId, !foundPhysics);
 
                 _objects.Add(rObject);
                 _idToObject.Add(rObject.Id, rObject);
@@ -512,8 +509,7 @@ public sealed partial class FcWorld : IAstRunner
 
         void InitUnique(BlockMesh meshInfo, Prefab prefab, int meshIndex)
         {
-            meshInfo.GetMesh(meshIndex, out var mesh, out int? uniqueMeshIndex);
-            Debug.Assert(uniqueMeshIndex is not null);
+            meshInfo.GetMesh(meshIndex, out var mesh, out int uniqueMeshIndex);
 
             var blocks = prefab.Blocks;
             ushort[] blocksArray = blocks.Array.Array;
@@ -527,9 +523,10 @@ public sealed partial class FcWorld : IAstRunner
 
             foreach (var block in mesh)
             {
-                var pos = mesh.Position + block.Offset;
+                var meshPos = block.Offset;
+                var blockPos = mesh.Position + meshPos;
 
-                int index = blocks.Index(pos);
+                int index = blocks.Index(blockPos);
                 ushort blockId = blocksArray[index];
 
                 if (blockId is 0)
@@ -541,66 +538,63 @@ public sealed partial class FcWorld : IAstRunner
                 var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
                 var currentSegmentMesh = _gameMesh.GetSegmentMesh(blockId);
 
-                if (currentPrefab.Type is PrefabType.Physics or PrefabType.Normal)
-                {
-                    bool foundMesh = false;
+                bool foundMesh = false;
 
-                    for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
+                for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
+                {
+                    if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
                     {
-                        if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
+                        continue;
+                    }
+
+                    if (currentPrefab.Type == PrefabType.Physics)
+                    {
+                        foundPhysics = true;
+
+                        var currentMesh = currentSegmentMesh.Meshes[segmentMeshIndex];
+                        var boundsMin = currentMesh.MinPos;
+                        var boundsMax = currentMesh.MaxPos;
+                        Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
+                        float volume = size.X * size.Y * size.Z;
+                        totalVolume += volume;
+
+                        Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + (Vector3)blockPos;
+                        Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + (Vector3)blockPos + new Vector3(0.125f);
+
+                        centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
+
+                        sizeMin = Vector3.Min(sizeMin, worldBoundsMin);
+                        sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
+                    }
+                    else
+                    {
+                        if (foundMesh)
                         {
                             continue;
                         }
 
-                        if (currentPrefab.Type == PrefabType.Physics)
-                        {
-                            foundPhysics = true;
+                        centerOfMass += (Vector3)blockPos + new Vector3(0.5f);
+                        totalVolume++;
 
-                            var currentMesh = currentSegmentMesh.Meshes[segmentMeshIndex];
-                            var boundsMin = currentMesh.MinPos;
-                            var boundsMax = currentMesh.MaxPos;
-                            Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
-                            float volume = size.X * size.Y * size.Z;
-                            totalVolume += volume;
+                        sizeMin = Vector3.Min(sizeMin, (Vector3)blockPos);
+                        sizeMax = Vector3.Max(sizeMax, (Vector3)blockPos + Vector3.One);
 
-                            Vector3 worldBoundsMin = ((Vector3)boundsMin * 0.125f) + (Vector3)pos;
-                            Vector3 worldBoundsMax = ((Vector3)boundsMax * 0.125f) + (Vector3)pos + new Vector3(0.125f);
-
-                            centerOfMass += ((size * 0.5f) + worldBoundsMin) * volume;
-
-                            sizeMin = Vector3.Min(sizeMin, worldBoundsMin);
-                            sizeMax = Vector3.Max(sizeMax, worldBoundsMax);
-                        }
-                        else
-                        {
-                            if (foundMesh)
-                            {
-                                continue;
-                            }
-
-                            centerOfMass += (Vector3)pos + new Vector3(0.5f);
-                            totalVolume++;
-
-                            sizeMin = Vector3.Min(sizeMin, (Vector3)pos);
-                            sizeMax = Vector3.Max(sizeMax, (Vector3)pos + Vector3.One);
-
-                            foundMesh = true;
-                        }
+                        foundMesh = true;
                     }
                 }
             }
 
             var compoundShape = new CompoundShape(true, 0);
-            Vector3 shapePos = (centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume)) - (Vector3)mesh.Position;
-            centerOfMass -= (Vector3)mesh.Position;
-            sizeMin -= (Vector3)mesh.Position;
-            sizeMax -= (Vector3)mesh.Position;
+            Vector3 shapePos = centerOfMass * 1f / ((totalVolume == 0.0f) ? 1.0f : totalVolume);
+            sizeMin -= shapePos;
+            sizeMax -= shapePos;
 
             foreach (var block in mesh)
             {
-                var pos = mesh.Position + block.Offset;
+                var meshPos = block.Offset;
+                var blockPos = mesh.Position + meshPos;
 
-                int index = blocks.Index(pos);
+                int index = blocks.Index(blockPos);
                 ushort blockId = blocksArray[index];
 
                 if (blockId is 0)
@@ -612,7 +606,7 @@ public sealed partial class FcWorld : IAstRunner
                 var currentPrefab = _prefabs.GetPrefabOrStock(currentSegment.PrefabId);
                 var currentSegmentMesh = _gameMesh.GetSegmentMesh(blockId);
 
-                if (currentPrefab.Collider == PrefabCollider.None || currentSegmentMesh.MeshCount == 0)
+                if (currentPrefab.Collider is PrefabCollider.None || currentSegmentMesh.MeshCount == 0)
                 {
                     continue;
                 }
@@ -630,7 +624,7 @@ public sealed partial class FcWorld : IAstRunner
 
                     Vector3 size = (Vector3)(boundsMax - boundsMin + int3.One) * 0.125f;
 
-                    Vector3 offset = (size * 0.5f) + ((Vector3)boundsMin * 0.125f) + (Vector3)block.Offset - shapePos;
+                    Vector3 offset = (size * 0.5f) + ((Vector3)boundsMin * 0.125f) + (Vector3)blockPos - shapePos;
 
                     //uint connectsToSideBitfield = 0;
                     int colliderType;
@@ -827,7 +821,7 @@ public sealed partial class FcWorld : IAstRunner
                 }
             }
 
-            uniqueMeshInfo[uniqueMeshIndex.Value] = (totalVolume, centerOfMass, sizeMin, sizeMax, foundPhysics, compoundShape);
+            uniqueMeshInfo[uniqueMeshIndex] = (totalVolume, shapePos - (Vector3)mesh.Position, sizeMin, sizeMax, foundPhysics, compoundShape);
         }
     }
 

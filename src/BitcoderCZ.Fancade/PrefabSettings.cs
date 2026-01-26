@@ -2,28 +2,31 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using BitcoderCZ.Buffers;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using static BitcoderCZ.Utils.ThrowHelper;
+using SettingsCollection = BitcoderCZ.Buffers.ImmutableInlineArray<BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
 
 namespace BitcoderCZ.Fancade;
 
 /// <summary>
 /// An optimized collection of <see cref="PrefabSetting"/>s.
 /// </summary>
-public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<PrefabSettings>
+[StructLayout(LayoutKind.Auto)]
+public readonly struct PrefabSettings : IReadOnlyCollection<PrefabSetting>, IEquatable<PrefabSettings>
 {
     /// <summary>
     /// An empty <see cref="PrefabSettings"/> instance.
     /// </summary>
     public static readonly PrefabSettings Empty = default;
 
-    // a lot of blocks have only 1 setting, so don't allocate an array for them
-    private readonly PrefabSetting? _firstSetting;
-
-    private readonly PrefabSetting?[]? _settings;
+    // a lot of blocks have only 1-2 setting, so don't allocate an array for them
+    private readonly SettingsCollection _settings;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrefabSettings"/> struct with a single item.
@@ -31,90 +34,41 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
     /// <param name="setting">The item to be assigned to the <see cref="PrefabSettings"/>.</param>
     public PrefabSettings(PrefabSetting setting)
     {
-        _firstSetting = setting;
-        _settings = null;
+        _settings = ImmutableInlineArray.Create<FixedArray2<PrefabSetting>, PrefabSetting>(setting);
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrefabSettings"/> struct.
     /// </summary>
     /// <param name="settings">The collection whose elements are copied to the new <see cref="PrefabSettings"/>.</param>
-    public PrefabSettings(IEnumerable<PrefabSetting?> settings)
+    public PrefabSettings(params ReadOnlySpan<PrefabSetting> settings)
+    {
+        _settings = ImmutableInlineArray.Create<FixedArray2<PrefabSetting>, PrefabSetting>(settings);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PrefabSettings"/> struct.
+    /// </summary>
+    /// <param name="settings">The collection whose elements are copied to the new <see cref="PrefabSettings"/>.</param>
+    [OverloadResolutionPriority(-1)]
+    public PrefabSettings(IEnumerable<PrefabSetting> settings)
     {
         if (settings is PrefabSettings ps)
         {
-            _firstSetting = ps._firstSetting;
-            _settings = (PrefabSetting?[]?)ps._settings?.Clone();
+            _settings = ps._settings;
             return;
         }
 
-        // TODO: most likely will be an array, but still could probably be optimized
-        int count = settings.Count();
-
-        if (count == 0)
-        {
-            _firstSetting = null;
-            _settings = null;
-        }
-        else if (count == 1)
-        {
-            _firstSetting = settings.First();
-            _settings = null;
-        }
-        else
-        {
-            _firstSetting = default;
-
-            _settings = new PrefabSetting?[count - 1];
-
-            int index = -1;
-            foreach (var setting in settings)
-            {
-                if (index == -1)
-                {
-                    _firstSetting = setting;
-                }
-                else
-                {
-                    _settings[index] = setting;
-                }
-
-                index++;
-            }
-        }
+        _settings = ImmutableInlineArray.CreateRange<FixedArray2<PrefabSetting>, PrefabSetting>(settings);
     }
 
     private PrefabSettings(IEnumerable<RawPrefabSetting> settings)
     {
-        _firstSetting = default;
-        _settings = null;
-
-        foreach (var setting in settings)
-        {
-            if (setting.Index == 0)
-            {
-                _firstSetting = new(setting.Type, setting.Value);
-                continue;
-            }
-
-            int index = setting.Index - 1;
-
-            if (_settings is null)
-            {
-                _settings = new PrefabSetting?[index + 1];
-            }
-            else if (_settings.Length < index + 1)
-            {
-                Array.Resize(ref _settings, index + 1);
-            }
-
-            _settings[index] = new(setting.Type, setting.Value);
-        }
+        _settings = ImmutableInlineArray.CreateRange<FixedArray2<PrefabSetting>, PrefabSetting>(settings.Select(setting => new PrefabSetting(setting.Index, setting.Type, setting.Value)));
     }
 
-    private PrefabSettings(PrefabSetting? firstSetting, PrefabSetting?[]? settings)
+    private PrefabSettings(SettingsCollection settings)
     {
-        _firstSetting = firstSetting;
         _settings = settings;
     }
 
@@ -122,44 +76,13 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
     /// Gets a value indicating whether the <see cref="PrefabSettings"/> has any items.
     /// </summary>
     /// <value><see langword="true"/> if the <see cref="PrefabSettings"/> contains 1 or more items; otherwise, <see langword="false"/>.</value>
-    public bool Any => _firstSetting is not null || _settings is not null;
+    public bool Any => _settings.Count > 0;
 
     /// <summary>
     /// Gets the number of items in the <see cref="PrefabSettings"/>.
     /// </summary>
     /// <value>Number of items in the <see cref="PrefabSettings"/>.</value>
-    public int Count => _settings is null
-        ? _firstSetting is null
-            ? 0
-            : 1
-        : _settings.Length + 1;
-
-    /// <summary>
-    /// Gets the <see cref="PrefabSetting"/> at the specified index.
-    /// </summary>
-    /// <param name="index">Index of the <see cref="PrefabSetting"/>.</param>
-    /// <returns>The <see cref="PrefabSetting"/> at <paramref name="index"/>; or <see langword="null"/> if <paramref name="index"/> is out of bounds or no setting is at <paramref name="index"/>.</returns>
-    public PrefabSetting? this[int index]
-    {
-        get
-        {
-            if (index < 0)
-            {
-                return null;
-            }
-
-            if (index == 0)
-            {
-                return _firstSetting;
-            }
-            else if (_settings is not null && index - 1 < _settings.Length)
-            {
-                return _settings[index - 1];
-            }
-
-            return null;
-        }
-    }
+    public int Count => _settings.Count;
 
     /// <summary>Returns a value that indicates whether the 2 <see cref="PrefabSettings"/> are equal.</summary>
     /// <param name="left">The first <see cref="PrefabSettings"/> to compare.</param>
@@ -190,180 +113,122 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
     /// <returns>The converted <see cref="RawPrefabSetting"/>s.</returns>
     public IEnumerable<RawPrefabSetting> ToRaw(int3 position)
     {
-        if (!Any)
+        foreach (var setting in _settings)
         {
-            yield break;
-        }
-
-        if (_firstSetting is { } fistSetting)
-        {
-            yield return new RawPrefabSetting(0, fistSetting.Type, (ushort3)position, fistSetting.Value);
-        }
-
-        if (_settings is not null)
-        {
-            for (int i = 0; i < _settings.Length; i++)
-            {
-                var item = _settings[i];
-                if (item is { } setting)
-                {
-                    yield return new RawPrefabSetting((byte)(i + 1), setting.Type, (ushort3)position, setting.Value);
-                }
-            }
+            yield return new RawPrefabSetting(setting.Index, setting.Type, (ushort3)position, setting.Value);
         }
     }
 
     /// <summary>
-    /// Creates a copy of the <see cref="PrefabSettings"/> with the specified value at the specified index.
+    /// Gets if the <see cref="PrefabSettings"/> contains the specified setting.
     /// </summary>
-    /// <param name="index">Index to set <paramref name="value"/> at.</param>
-    /// <param name="value">The new value.</param>
+    /// <param name="value">The setting to locate in the <see cref="PrefabSettings"/>.</param>
+    /// <returns><see langword="true"/> if the <see cref="PrefabSettings"/> contains the setting; otherwise, <see langword="false"/>.</returns>
+    public bool Contains(PrefabSetting value)
+        => _settings.Contains(value);
+
+    /// <summary>
+    /// Creates a copy of the <see cref="PrefabSettings"/> with the specified value.
+    /// </summary>
+    /// <param name="value">The value to add.</param>
     /// <returns>The new <see cref="PrefabSettings"/>.</returns>
-    public PrefabSettings WithValueAt(int index, PrefabSetting value)
-    {
-        if (index < 0)
-        {
-            ThrowArgumentOutOfRangeException(nameof(index), $"nameof(index) must be non-negative.");
-        }
-
-        int count = Count;
-        if (count == 0)
-        {
-            if (index == 0)
-            {
-                return new PrefabSettings(value);
-            }
-            else
-            {
-                var settings = new PrefabSetting?[index];
-                settings[index - 1] = value;
-                return new PrefabSettings(null, settings);
-            }
-        }
-
-        if (index == 0)
-        {
-            return new PrefabSettings(value, (PrefabSetting?[]?)_settings?.Clone());
-        }
-        else if (_settings is null)
-        {
-            var settings = new PrefabSetting?[index];
-            settings[index - 1] = value;
-            return new PrefabSettings(_firstSetting, settings);
-        }
-        else
-        {
-            var settings = new PrefabSetting?[Math.Max(index, _settings.Length)];
-            _settings.AsSpan().CopyTo(settings);
-            settings[index - 1] = value;
-            return new PrefabSettings(_firstSetting, settings);
-        }
-    }
+    public PrefabSettings Add(PrefabSetting value)
+        => new PrefabSettings(_settings.Add(value));
 
     /// <summary>
-    /// Creates a copy of the <see cref="PrefabSettings"/> with the value at the specified index removed.
+    /// Creates a copy of the <see cref="PrefabSettings"/> without the specified value.
     /// </summary>
-    /// <param name="index">Index to remove the value at.</param>
+    /// <param name="value">The value to remove.</param>
+    /// <param name="removed">Indicates whether the value was found and removed.</param>
     /// <returns>The new <see cref="PrefabSettings"/>.</returns>
-    public PrefabSettings WithoutValueAt(int index)
-    {
-        if (index < 0)
-        {
-            ThrowArgumentOutOfRangeException(nameof(index), $"nameof(index) must be non-negative.");
-        }
-
-        int count = Count;
-        if (count == 0 || index >= count)
-        {
-            return this; // nothing to remove
-        }
-
-        if (index == 0)
-        {
-            return new PrefabSettings(null, (PrefabSetting?[]?)_settings?.Clone());
-        }
-        else if (_settings is null)
-        {
-            return this; // nothing to remove
-        }
-        else if (index == _settings.Length)
-        {
-            int newArrayLength;
-            for (newArrayLength = _settings.Length - 2; newArrayLength >= 0; newArrayLength--)
-            {
-                if (_settings[newArrayLength] is not null)
-                {
-                    break;
-                }
-            }
-
-            var settings = new PrefabSetting?[newArrayLength + 1];
-            _settings.AsSpan(0, settings.Length).CopyTo(settings);
-
-            return new PrefabSettings(_firstSetting, settings);
-        }
-        else
-        {
-            var settings = new PrefabSetting?[_settings.Length];
-            for (int i = 0; i < _settings.Length; i++)
-            {
-                if (i != index - 1)
-                {
-                    settings[i] = _settings[i];
-                }
-            }
-
-            return new PrefabSettings(_firstSetting, settings);
-        }
-    }
+    public PrefabSettings Remove(PrefabSetting value, out bool removed)
+        => new PrefabSettings(_settings.Remove(value, EqualityComparer<PrefabSetting>.Default, out removed));
 
     /// <summary>
-    /// Gets if the <see cref="PrefabSettings"/> contains a setting at the specified index.
+    /// Attempts to get the value at the specified index as <typeparamref name="T"/>.
+    /// <para>
+    /// To get a <see cref="string"/> value, use <see cref="TryGetStringValue"/> or <see cref="TryGetTerminalName"/>.
+    /// </para>
     /// </summary>
-    /// <param name="index">The index to get the presence of a <see cref="PrefabSetting"/> of.</param>
-    /// <returns><see langword="true"/> if a <see cref="PrefabSetting"/> exists at <paramref name="index"/>; otherwise, <see langword="false"/>.</returns>
-    public bool Contains(int index)
+    /// <remarks>
+    /// If <typeparamref name="T"/> is not the corresponding <see cref="SettingType"/> of <see cref="Type"/>, the value is bitcasted to <typeparamref name="T"/>.
+    /// </remarks>
+    /// <param name="index">Index of the value to get.</param>
+    /// <param name="value">The retreived value.</param>
+    /// <typeparam name="T">The type to get the value as.</typeparam>
+    /// <returns><see langword="true"/> if a numerical value was present at the specified index; otherwise, <see langword="false"/>.</returns>
+    public bool TryGetNumericValue<T>(int index, out T value)
+        where T : unmanaged
     {
-        if (index < 0)
+        foreach (var setting in _settings)
         {
-            return false;
+            if (setting.Index == index && setting.Value is not string)
+            {
+                value = setting.GetValue<T>();
+                return true;
+            }
         }
 
-        if (index == 0)
-        {
-            return _firstSetting is not null;
-        }
-        else if (_settings is not null && index - 1 < _settings.Length)
-        {
-            return _settings[index - 1] is not null;
-        }
-
+        value = default;
         return false;
     }
 
     /// <summary>
-    /// Attempts to retrieve the setting at the specified index.
+    /// Attempts to get the string value at the specified index.
+    /// <para>
+    /// To get a terminal name, use <see cref="TryGetTerminalName"/>.
+    /// To get a numeric value, use <see cref="TryGetNumericValue"/>.
+    /// </para>
     /// </summary>
-    /// <param name="index">The index of the setting to retrieve.</param>
-    /// <param name="setting">The setting at the specified index.</param>
-    /// <returns><see langword="true"/> if a setting exists at the specified index; otherwise, <see langword="false"/>.</returns>
-    public bool TryGetValue(int index, out PrefabSetting setting)
+    /// <param name="index">Index of the value to get.</param>
+    /// <param name="value">The retreived value.</param>
+    /// <returns><see langword="true"/> if a string value was present at the specified index; otherwise, <see langword="false"/>.</returns>
+    public bool TryGetStringValue(int index, [MaybeNullWhen(false)] out string value)
     {
-        var item = this[index];
-
-        if (item is not null)
+        foreach (var setting in _settings)
         {
-            setting = item.Value;
-            return true;
+            if (setting.Index == index && setting.Type is SettingType.String)
+            {
+                value = setting.GetValueAsString()!;
+                return true;
+            }
         }
 
-        setting = default;
+        value = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Attempts to get the terminal name at the specified index.
+    /// <para>
+    /// To get a string, use <see cref="TryGetStringValue"/>.
+    /// To get a numeric value, use <see cref="TryGetNumericValue"/>.
+    /// </para>
+    /// </summary>
+    /// <param name="index">Index of the value to get.</param>
+    /// <param name="name">The retreived terminal name.</param>
+    /// <param name="type">Type of the retreived setting.</param>
+    /// <returns><see langword="true"/> if a string value was present at the specified index; otherwise, <see langword="false"/>.</returns>
+    public bool TryGetTerminalName(int index, [MaybeNullWhen(false)] out string name, out SettingType type)
+    {
+        foreach (var setting in _settings)
+        {
+            if (setting.Index == index && setting.Type > SettingType.String)
+            {
+                name = setting.GetValueAsString()!;
+                type = setting.Type;
+                return true;
+            }
+        }
+
+        name = null;
+        type = default;
         return false;
     }
 
     /// <inheritdoc/>
-    public IEnumerator<PrefabSetting?> GetEnumerator()
-        => new Enumerator(this);
+    public IEnumerator<PrefabSetting> GetEnumerator()
+        => new Enumerator(_settings.GetEnumerator());
 
     /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator()
@@ -396,9 +261,7 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
     /// </summary>
     public struct Builder
     {
-        private PrefabSetting? _firstSetting;
-
-        private PrefabSetting?[]? _settings;
+        private SettingsCollection.Builder _builder;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Builder"/> struct.
@@ -406,113 +269,52 @@ public readonly struct PrefabSettings : IEnumerable<PrefabSetting?>, IEquatable<
         /// <param name="initialCapacity">The initial capacity of the <see cref="Builder"/>.</param>
         public Builder(int initialCapacity)
         {
-            if (initialCapacity < 0)
-            {
-                ThrowArgumentOutOfRangeException(nameof(initialCapacity), $"{nameof(initialCapacity)} must be non-negative.");
-            }
-
-            if (initialCapacity > 1)
-            {
-                _settings = new PrefabSetting?[initialCapacity - 1];
-            }
+            _builder = new SettingsCollection.Builder(initialCapacity);
         }
 
         /// <summary>
-        /// Sets the setting at the specified index.
+        /// Adds a setting.
         /// </summary>
-        /// <param name="index">Index of the setting to set.</param>
-        /// <param name="value">The new setting.</param>
-        public void SetValueAt(int index, PrefabSetting value)
-        {
-            if (index < 0)
-            {
-                ThrowArgumentOutOfRangeException(nameof(index), $"{nameof(index)} must be non-negative.");
-            }
-
-            if (index == 0)
-            {
-                _firstSetting = value;
-                return;
-            }
-
-            int settingsIndex = index - 1;
-            if (_settings is null)
-            {
-                _settings = new PrefabSetting?[settingsIndex + 1];
-            }
-            else if (_settings.Length <= settingsIndex)
-            {
-                Array.Resize(ref _settings, settingsIndex + 1);
-            }
-
-            _settings[settingsIndex] = value;
-        }
+        /// <param name="value">The setting to add.</param>
+        public void Add(PrefabSetting value)
+            => _builder.Add(value);
 
         /// <summary>
         /// Builds the <see cref="PrefabSettings"/> from the contents of the <see cref="Builder"/> and clears the contents of the <see cref="Builder"/>.
         /// </summary>
         /// <returns>The built <see cref="PrefabSettings"/>.</returns>
         public PrefabSettings BuildAndClear()
-        {
-            var settings = new PrefabSettings(_firstSetting, _settings);
-            Clear();
-            return settings;
-        }
+            => new PrefabSettings(_builder.DrainToImmutable());
 
         /// <summary>
         /// Clears the contents of the <see cref="Builder"/>.
         /// </summary>
         public void Clear()
-        {
-            _firstSetting = null;
-            _settings = null;
-        }
+            => _builder.Clear();
     }
 
-    private struct Enumerator : IEnumerator<PrefabSetting?>
+    private struct Enumerator : IEnumerator<PrefabSetting>
     {
-        private readonly PrefabSettings _settings;
-        private int _index = -2;
-        private PrefabSetting? _value;
+        private SettingsCollection.Enumerator _enumerator;
 
-        public Enumerator(PrefabSettings settings)
+        public Enumerator(SettingsCollection.Enumerator enumerator)
         {
-            _settings = settings;
+            _enumerator = enumerator;
         }
 
         /// <inheritdoc/>
-        public readonly PrefabSetting? Current => _value;
+        public readonly PrefabSetting Current => _enumerator.Current;
 
         /// <inheritdoc/>
-        readonly object? IEnumerator.Current => Current;
+        readonly object IEnumerator.Current => Current;
 
         /// <inheritdoc/>
         public bool MoveNext()
-        {
-            _index++;
-
-            if (_index == -1)
-            {
-                _value = _settings._firstSetting;
-                return _value is not null || _settings._settings is not null;
-            }
-
-            if (_settings._settings is not null && _index < _settings._settings.Length)
-            {
-                _value = _settings._settings[_index];
-                return true;
-            }
-
-            _value = null;
-            return false;
-        }
+            => _enumerator.MoveNext();
 
         /// <inheritdoc/>
         public void Reset()
-        {
-            _index = -2;
-            _value = null;
-        }
+            => _enumerator.Reset();
 
         /// <inheritdoc/>
         public readonly void Dispose()

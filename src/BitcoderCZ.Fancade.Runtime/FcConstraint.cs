@@ -2,7 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime;
 

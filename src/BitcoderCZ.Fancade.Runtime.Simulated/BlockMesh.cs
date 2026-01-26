@@ -96,11 +96,12 @@ public readonly struct BlockMesh
     /// Creates a new <see cref="BlockMesh"/> instance.
     /// </summary>
     /// <param name="blocks">The <see cref="BlockData"/> to create the <see cref="BlockMesh"/> for.</param>
+    /// <param name="createScriptMesh">Whether to create mesh for script blocks.</param>
     /// <param name="prefabs">A <see cref="PrefabList"/> used to resolve prefab types and voxels.</param>
     /// <param name="segmentMeshes">A <see cref="ReadOnlySpan{T}"/> of <see cref="PrefabSegmentMeshes"/>, where the index corresponds to the segment id.</param>
-    /// <param name="getUnique">A method that given a mesh, gets it's unique index, and if it was already encountered, returns the stored mesh (the input list can be reused).</param>
+    /// <param name="getUnique">A method that given a mesh (blocks, mesh index), gets it's unique index, and if it was already encountered, returns the stored mesh (the input list can be reused).</param>
     /// <returns>The created <see cref="BlockMesh"/>.</returns>
-    public static BlockMesh Create(BlockData blocks, PrefabList prefabs, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes, Func<ValueListWithHash<FcMesh.Block>, (int UniqueIndex, ValueList<FcMesh.Block>? UniqueMesh)> getUnique)
+    public static BlockMesh Create(BlockData blocks, bool createScriptMesh, PrefabList prefabs, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes, Func<ValueListWithHash<FcMesh.Block>, int, (int UniqueIndex, ValueList<FcMesh.Block>? UniqueMesh)> getUnique)
     {
         if (blocks.Size == int3.Zero)
         {
@@ -110,7 +111,7 @@ public readonly struct BlockMesh
         var blocksSize = blocks.Array.Size;
         int blocksLength = blocksSize.X * blocksSize.Y * blocksSize.Z;
 
-        int totalSegmentMeshCount = 0;
+        int totalSegmentMeshCount = createScriptMesh ? 1 : 0;
 
         var blockMeshIdOffsets = new Array3D<int>(blocksSize);
 
@@ -121,7 +122,7 @@ public readonly struct BlockMesh
 
             ushort segmentId = blocksArray[i];
 
-            if (segmentId == 0 || (segmentId < RawGame.CurrentNumbStockPrefabs ? StockBlocks.IsScriptSegment(segmentId) : prefabs.GetPrefab(prefabs.GetSegment(segmentId).PrefabId).Type == PrefabType.Script))
+            if (segmentId == 0 || (!createScriptMesh && (segmentId < RawGame.CurrentNumbStockPrefabs ? StockBlocks.IsScriptSegment(segmentId) : prefabs.GetPrefab(prefabs.GetSegment(segmentId).PrefabId).Type == PrefabType.Script)))
             {
                 continue;
             }
@@ -145,7 +146,88 @@ public readonly struct BlockMesh
 
         ValueListWithHash<FcMesh.Block> blockList = default;
 
-        short meshIndex = 0; // returned
+        if (createScriptMesh)
+        {
+            const int ScriptMeshIndex = 0;
+
+            for (int blockIndex = 0; blockIndex < blocksLength; blockIndex++)
+            {
+                ushort blockId = blocksArray[blockIndex];
+
+                if (blockId is 0)
+                {
+                    continue;
+                }
+
+                int3 blockPos = blocks.Array.Index(blockIndex);
+
+                var segment = GetSegment(blockId);
+
+                var prefab = GetPrefab(segment.PrefabId);
+
+                var segmentMesh = segmentMeshes[blockId];
+
+                if (prefab.Type is not PrefabType.Script)
+                {
+                    continue;
+                }
+
+                int currentBLockIndex = blockPos.X + ((blockPos.Y + (blockPos.Z * blocksSize.Y)) * blocksSize.X);
+
+                for (int segmentMeshIndex = 0; segmentMeshIndex < segmentMesh.MeshCount; segmentMeshIndex++)
+                {
+                    Debug.Assert(blockMeshIds[segmentMeshIndex + blockMeshIdOffsets[blockIndex]] is -1);
+                    blockMeshIds[blockMeshIdOffsets[currentBLockIndex] + segmentMeshIndex] = ScriptMeshIndex;
+
+                    blockList.List.Add(new FcMesh.Block(blockId, blockPos, (ushort)segmentMeshIndex));
+                }
+            }
+
+            int3 minPos;
+            if (blockList.List.Count is 0)
+            {
+                minPos = int3.Zero;
+            }
+            else
+            {
+                minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                foreach (var block in blockList.List)
+                {
+                    minPos = int3.Min(minPos, block.Offset);
+                }
+
+                // make offsets zero based
+                if (minPos != int3.Zero)
+                {
+                    for (int i = blockList.List.Count - 1; i >= 0; i--)
+                    {
+                        ref var block = ref blockList.List.GetRef(i);
+                        block = new FcMesh.Block(block.SegmentId, block.Offset - minPos, block.LocalMeshIndex);
+                    }
+                }
+
+                blockList.List.Sort();
+            }
+
+            blockList.ComputeHash();
+
+            var (uniqueIndex, uniqueMesh) = getUnique(blockList, ScriptMeshIndex);
+
+            if (uniqueMesh is null)
+            {
+                // new unique, blockList was added to unique mesh list
+                meshes.Add((new FcMesh(blockList.List, minPos), uniqueIndex));
+                blockList = default;
+            }
+            else
+            {
+                // existing mesh, blockList can be reused
+                meshes.Add((new FcMesh(uniqueMesh.Value, minPos), uniqueIndex));
+                blockList.List.Clear();
+            }
+        }
+
+        short meshIndex = createScriptMesh ? (short)1 : (short)0; // returned
         for (int blockIndex = 0; blockIndex < blocksLength; blockIndex++)
         {
             ushort blockId = blocksArray[blockIndex];
@@ -163,103 +245,101 @@ public readonly struct BlockMesh
 
             var segmentMesh = segmentMeshes[blockId];
 
-            if (prefab.Type == PrefabType.Script)
+            if (prefab.Type is PrefabType.Script)
             {
-                // TODO
+                continue;
             }
-            else
+
+            for (int segmentMeshIndex = 0; segmentMeshIndex < segmentMesh.MeshCount; segmentMeshIndex++)
             {
-                for (int segmentMeshIndex = 0; segmentMeshIndex < segmentMesh.MeshCount; segmentMeshIndex++)
+                if (blockMeshIds[segmentMeshIndex + blockMeshIdOffsets[blockIndex]] != -1)
                 {
-                    if (blockMeshIds[segmentMeshIndex + blockMeshIdOffsets[blockIndex]] != -1)
+                    continue;
+                }
+
+                Debug.Assert(stack.Count == 0, $"{nameof(stack)} should be empty.");
+
+                stack.Push((blockId, blockPos, (ushort)segmentMeshIndex));
+
+                while (stack.TryPop(out var item))
+                {
+                    var currentPos = item.Pos;
+                    blockList.List.Add(new FcMesh.Block(item.SegmentId, currentPos, item.MeshIndex));
+
+                    int currentBLockIndex = currentPos.X + ((currentPos.Y + (currentPos.Z * blocksSize.Y)) * blocksSize.X);
+
+                    ushort currentBlockId = blocksArray[currentBLockIndex];
+
+                    blockMeshIds[blockMeshIdOffsets[currentBLockIndex] + item.MeshIndex] = meshIndex;
+
+                    for (int sideIndex = 0; sideIndex < 6; sideIndex++)
                     {
-                        continue;
-                    }
+                        int3 neighborPos = currentPos + NeighborOffsets[sideIndex];
 
-                    Debug.Assert(stack.Count == 0, $"{nameof(stack)} should be empty.");
-
-                    stack.Push((blockId, blockPos, (ushort)segmentMeshIndex));
-
-                    while (stack.TryPop(out var item))
-                    {
-                        var currentPos = item.Pos;
-                        blockList.List.Add(new FcMesh.Block(item.SegmentId, currentPos, item.MeshIndex));
-
-                        int currentBLockIndex = currentPos.X + ((currentPos.Y + (currentPos.Z * blocksSize.Y)) * blocksSize.X);
-
-                        ushort currentBlockId = blocksArray[currentBLockIndex];
-
-                        blockMeshIds[blockMeshIdOffsets[currentBLockIndex] + item.MeshIndex] = meshIndex;
-
-                        for (int sideIndex = 0; sideIndex < 6; sideIndex++)
+                        if (!neighborPos.InBounds(blocksSize.X, blocksSize.Y, blocksSize.Z))
                         {
-                            int3 neighborPos = currentPos + NeighborOffsets[sideIndex];
+                            continue;
+                        }
 
-                            if (!neighborPos.InBounds(blocksSize.X, blocksSize.Y, blocksSize.Z))
+                        int neighborIndex = neighborPos.X + ((neighborPos.Y + (neighborPos.Z * blocksSize.Y)) * blocksSize.X);
+
+                        ushort neighborId = blocksArray[neighborIndex];
+
+                        int neighborMeshCount = segmentMeshes[neighborId].MeshCount;
+
+                        if (neighborId is 0 ||
+                            GetPrefab(GetSegment(neighborId).PrefabId).Type is PrefabType.Script ||
+                            neighborMeshCount is 0)
+                        {
+                            continue;
+                        }
+
+                        int neighborMaxMeshCountUpToPos = blockMeshIdOffsets[neighborIndex];
+
+                        for (ushort neighborMeshIndex = 0; neighborMeshIndex < neighborMeshCount; neighborMeshIndex++)
+                        {
+                            if (blockMeshIds[neighborMeshIndex + neighborMaxMeshCountUpToPos] is -1 &&
+                                Glues(currentBlockId, item.MeshIndex, sideIndex, neighborId, neighborMeshIndex, segmentMeshes))
                             {
-                                continue;
-                            }
-
-                            int neighborIndex = neighborPos.X + ((neighborPos.Y + (neighborPos.Z * blocksSize.Y)) * blocksSize.X);
-
-                            ushort neighborId = blocksArray[neighborIndex];
-
-                            int neighborMeshCount = segmentMeshes[neighborId].MeshCount;
-
-                            if (neighborId == 0 ||
-                                GetPrefab(GetSegment(neighborId).PrefabId).Type == PrefabType.Script ||
-                                neighborMeshCount == 0)
-                            {
-                                continue;
-                            }
-
-                            int neighborMaxMeshCountUpToPos = blockMeshIdOffsets[neighborIndex];
-
-                            for (ushort neighborMeshIndex = 0; neighborMeshIndex < neighborMeshCount; neighborMeshIndex++)
-                            {
-                                if (blockMeshIds[neighborMeshIndex + neighborMaxMeshCountUpToPos] == -1 &&
-                                    Glues(currentBlockId, item.MeshIndex, sideIndex, neighborId, neighborMeshIndex, segmentMeshes))
-                                {
-                                    stack.Push((neighborId, neighborPos, neighborMeshIndex));
-                                }
+                                stack.Push((neighborId, neighborPos, neighborMeshIndex));
                             }
                         }
                     }
-
-                    int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
-                    foreach (var block in blockList.List)
-                    {
-                        minPos = int3.Min(minPos, block.Offset);
-                    }
-
-                    // make offsets zero based
-                    for (int i = blockList.List.Count - 1; i >= 0; i--)
-                    {
-                        ref var block = ref blockList.List.GetRef(i);
-                        block = new FcMesh.Block(block.SegmentId, block.Offset - minPos, block.LocalMeshIndex);
-                    }
-
-                    blockList.List.Sort();
-
-                    blockList.ComputeHash();
-
-                    var (uniqueIndex, uniqueMesh) = getUnique(blockList);
-
-                    if (uniqueMesh is null)
-                    {
-                        // new unique, blockList was added to unique mesh list
-                        meshes.Add((new FcMesh(blockList.List, minPos), uniqueIndex));
-                        blockList = default;
-                    }
-                    else
-                    {
-                        // existing mesh, blockList can be reused
-                        meshes.Add((new FcMesh(uniqueMesh.Value, minPos), uniqueIndex));
-                        blockList.List.Clear();
-                    }
-
-                    meshIndex++;
                 }
+
+                int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                foreach (var block in blockList.List)
+                {
+                    minPos = int3.Min(minPos, block.Offset);
+                }
+
+                // make offsets zero based
+                for (int i = blockList.List.Count - 1; i >= 0; i--)
+                {
+                    ref var block = ref blockList.List.GetRef(i);
+                    block = new FcMesh.Block(block.SegmentId, block.Offset - minPos, block.LocalMeshIndex);
+                }
+
+                blockList.List.Sort();
+
+                blockList.ComputeHash();
+
+                var (uniqueIndex, uniqueMesh) = getUnique(blockList, meshIndex);
+
+                if (uniqueMesh is null)
+                {
+                    // new unique, blockList was added to unique mesh list
+                    meshes.Add((new FcMesh(blockList.List, minPos), uniqueIndex));
+                    blockList = default;
+                }
+                else
+                {
+                    // existing mesh, blockList can be reused
+                    meshes.Add((new FcMesh(uniqueMesh.Value, minPos), uniqueIndex));
+                    blockList.List.Clear();
+                }
+
+                meshIndex++;
             }
         }
 
@@ -343,7 +423,7 @@ public readonly struct BlockMesh
         => _meshes[meshIndex].Mesh.Positions;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void GetMesh(int meshIndex, out FcMesh mesh, out int? uniqueMeshIndex)
+    public readonly void GetMesh(int meshIndex, out FcMesh mesh, out int uniqueMeshIndex)
     {
         var item = _meshes[meshIndex];
         mesh = item.Mesh;

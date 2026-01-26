@@ -6,7 +6,7 @@ using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Utils;
 using System.Numerics;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Input;
 

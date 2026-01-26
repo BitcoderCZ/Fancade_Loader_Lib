@@ -5,7 +5,7 @@
 using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Exceptions;
 using BitcoderCZ.Maths.Vectors;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing;
 
@@ -257,7 +257,7 @@ public static class PrefabUtils
 
         (fromVoxel, toVoxel) = VectorUtils.MinMax(fromVoxel, toVoxel);
 
-        if (!HasOverlap(fromVoxel, toVoxel, int3.Zero, (int3.One * 8 * Prefab.MaxSize) - 1))
+        if (!HasOverlap(fromVoxel, toVoxel, int3.Zero, (int3.One * 8 * prefab.Size) - 1))
         {
             return;
         }
@@ -277,6 +277,50 @@ public static class PrefabUtils
                         if (!segment.Voxels[pos].IsEmpty)
                         {
                             segment.Voxels.SetColorUnchecked(pos, sideIndex, color);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+     /// <summary>
+    /// Sets the glue of a side of voxels in a specified region.
+    /// </summary>
+    /// <param name="prefab">The prefab to fill.</param>
+    /// <param name="fromVoxel">The start position of the fill, inclusive.</param>
+    /// <param name="toVoxel">The end position of the fill, inclusive.</param>
+    /// <param name="sideIndex">Index of the side to set the color.</param>
+    /// <param name="glue">The glue state to set.</param>
+    public static void FillGlue(this Prefab prefab, int3 fromVoxel, int3 toVoxel, int sideIndex, bool glue)
+    {
+        if (sideIndex < 0 || sideIndex > 5)
+        {
+            ThrowArgumentOutOfRangeException(nameof(sideIndex), $"{nameof(sideIndex)} must be between 0 and 5.");
+        }
+
+        (fromVoxel, toVoxel) = VectorUtils.MinMax(fromVoxel, toVoxel);
+
+        if (!HasOverlap(fromVoxel, toVoxel, int3.Zero, (int3.One * 8 * prefab.Size) - 1))
+        {
+            return;
+        }
+
+        fromVoxel = ClampVoxelToPrefab(fromVoxel);
+        toVoxel = ClampVoxelToPrefab(toVoxel);
+
+        for (int z = fromVoxel.Z; z <= toVoxel.Z; z++)
+        {
+            for (int y = fromVoxel.Y; y <= toVoxel.Y; y++)
+            {
+                for (int x = fromVoxel.X; x <= toVoxel.X; x++)
+                {
+                    if (prefab.TryGetValue(VoxelToSegment(new int3(x, y, z)), out var segment) && !segment.Voxels.IsEmpty)
+                    {
+                        var pos = new int3(x, y, z) % 8;
+                        if (!segment.Voxels[pos].IsEmpty)
+                        {
+                            segment.Voxels.SetGlueUnchecked(pos, sideIndex, glue);
                         }
                     }
                 }
@@ -502,7 +546,7 @@ public static class PrefabUtils
 
             foreach (var (pos, voxels) in BlockVoxelsGenerator.CreateScript(sizeInBlocks, colorStyle))
             {
-                prefab.Add(new PrefabSegment(prefab.Id, pos, voxels));
+                prefab[pos] = new PrefabSegment(prefab.Id, pos, voxels);
             }
 
             return prefab;

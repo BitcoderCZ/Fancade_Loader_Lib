@@ -7,7 +7,7 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Numerics;
 using System.Text;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;
 

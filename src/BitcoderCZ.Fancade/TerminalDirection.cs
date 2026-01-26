@@ -4,7 +4,7 @@
 
 using BitcoderCZ.Maths.Vectors;
 using System.ComponentModel;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;
 
@@ -67,7 +67,7 @@ public static class TerminalDirectionUtils
     /// <returns>The <see cref="TerminalDirection"/> of the terminal at <paramref name="terminalPosition"/>.</returns>
     public static TerminalDirection GetTerminalDirection(this Prefab prefab, byte3 terminalPosition)
     {
-        ThrowIfNull(prefab, nameof(prefab));
+        ThrowIfNull(prefab);
 
         var dir = TerminalDirection.PositiveZ;
         int3 iPos = terminalPosition;

@@ -14,24 +14,33 @@ namespace BitcoderCZ.Fancade;
 /// </summary>
 public readonly struct PrefabSetting : IEquatable<PrefabSetting>
 {
+    private readonly byte _index;
     private readonly SettingType _type;
     private readonly object _value;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrefabSetting"/> struct.
     /// </summary>
+    /// <param name="index">Index of this setting.</param>
     /// <param name="type">Type of this setting.</param>
     /// <param name="value">Value of this setting.</param>
-    public PrefabSetting(SettingType type, object value)
+    public PrefabSetting(byte index, SettingType type, object value)
     {
         if (!RawPrefabSetting.IsValueValid(value, type))
         {
             throw new ArgumentException($"Type of value '{value?.GetType()?.FullName ?? "null"}' isn't valid for type '{type}'", nameof(value));
         }
 
+        _index = index;
         _type = type;
         _value = value;
     }
+
+    /// <summary>
+    /// Gets the index of this setting.
+    /// </summary>
+    /// <value>Index of this setting.</value>
+    public readonly byte Index => _index;
 
     /// <summary>
     /// Gets the type of this setting.
@@ -60,7 +69,7 @@ public readonly struct PrefabSetting : IEquatable<PrefabSetting>
         => left.Type != right.Type || !Equals(left.Value, right.Value);
 
     /// <summary>
-    /// Gets the value as <typeparamref name="T"/>. If <see cref="Value"/> is a <see cref="string"/> returns <see langword="default"/>.
+    /// Gets the value as <typeparamref name="T"/>. To get <see cref="Value"/> as <see cref="string"/>, use <see cref="GetValueAsString"/>.
     /// </summary>
     /// <remarks>
     /// If <typeparamref name="T"/> is not the corresponding <see cref="SettingType"/> of <see cref="Type"/>, <see cref="Value"/> is bitcasted to <typeparamref name="T"/>.
@@ -70,11 +79,6 @@ public readonly struct PrefabSetting : IEquatable<PrefabSetting>
     public T GetValue<T>()
         where T : unmanaged
     {
-        if (Value is string)
-        {
-            return default;
-        }
-
         if (typeof(T) == RawPrefabSetting.GetTypeForSettingType(Type))
         {
             return (T)Value;
@@ -109,6 +113,13 @@ public readonly struct PrefabSetting : IEquatable<PrefabSetting>
 
         return MemoryMarshal.Read<T>(buffer);
     }
+
+    /// <summary>
+    /// Gets the value as <see cref="string"/>.
+    /// </summary>
+    /// <returns><see cref="Value"/> as <see cref="string"/>.</returns>
+    public string? GetValueAsString()
+        => Value as string;
 
     /// <summary>
     /// Returns the string representation of the current instance.

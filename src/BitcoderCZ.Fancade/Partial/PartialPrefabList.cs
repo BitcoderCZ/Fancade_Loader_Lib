@@ -7,7 +7,7 @@ using BitcoderCZ.Maths.Vectors;
 using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 #pragma warning disable CA1716
 namespace BitcoderCZ.Fancade.Partial;

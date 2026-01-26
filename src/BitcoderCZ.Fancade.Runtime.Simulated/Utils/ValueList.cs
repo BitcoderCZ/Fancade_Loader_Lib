@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Utils;
 
@@ -349,7 +349,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
 
         comparer ??= Comparer<T>.Default;
 
-        #if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER
         if (_count <= BufferCapacity)
         {
             BufferSpan[.._count].Sort(comparer);
@@ -371,7 +371,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
 
             return;
         }
-        #endif
+#endif
 
         IntroSort(0, _count - 1, 2 * FloorLog2(_count), comparer);
 
@@ -632,4 +632,18 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
             => MemoryMarshal.CreateSpan(ref array._element0, BufferCapacity);
     }
 #endif
+}
+
+internal sealed class ValueListDebugView<T>
+    where T : unmanaged, IEquatable<T>
+{
+    private readonly ValueList<T> _list;
+
+    public ValueListDebugView(ValueList<T> list)
+    {
+        _list = list;
+    }
+
+    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+    public T[] Items => [.. _list];
 }

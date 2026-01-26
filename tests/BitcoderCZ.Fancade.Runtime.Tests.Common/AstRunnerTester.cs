@@ -154,7 +154,7 @@ public sealed class AstRunnerTester
                         var item = factory(this, physicsCtx, assemblyLoadContext);
                         runnerName = item.RunnerName;
                         return item.Runner;
-                    });
+                    }, false);
                 }
                 else
                 {

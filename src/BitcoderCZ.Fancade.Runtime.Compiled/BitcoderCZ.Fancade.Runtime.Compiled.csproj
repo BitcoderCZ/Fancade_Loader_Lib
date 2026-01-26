@@ -10,7 +10,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade.Runtime.Compiled</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>1.0.0-develop.23</Version>
+    <Version>1.0.0-develop.25</Version>
     <Description>Compile fancade scripts for faster execution.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -54,14 +54,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
+    <PackageReference Include="BitcoderCZ.Maths" Version="1.2.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.1" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.2" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

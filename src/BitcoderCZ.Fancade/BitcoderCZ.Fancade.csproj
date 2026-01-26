@@ -12,7 +12,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>4.0.0-develop.16</Version>
+    <Version>4.0.0-develop.21</Version>
     <Description>C# lib for loading, saving and modifying games for Fancade.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -40,12 +40,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BitcoderCZ.Maths" Version="1.1.0" />
+    <PackageReference Include="BitcoderCZ.Buffers" Version="1.7.0" />
+    <PackageReference Include="BitcoderCZ.Maths" Version="1.2.0" />
+    <PackageReference Include="BitcoderCZ.Utils" Version="1.0.0" />
     <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -62,7 +64,7 @@
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageReference Include="zlib.net-mutliplatform" Version="1.1.0" />
-	  <PackageReference Include="System.Collections.Immutable" Version="10.0.1" />
+	  <PackageReference Include="System.Collections.Immutable" Version="10.0.2" />
 		<Reference Include="Bcl.CollectionsMarshal">
 			<HintPath>..\..\libs\Bcl.CollectionsMarshal.dll</HintPath>
 		</Reference>

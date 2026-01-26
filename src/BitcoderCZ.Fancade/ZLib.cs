@@ -9,7 +9,7 @@ using System.IO.Compression;
 using ComponentAce.Compression.Libs.zlib;
 #endif
 
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;
 

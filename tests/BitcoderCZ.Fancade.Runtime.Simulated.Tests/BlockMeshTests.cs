@@ -20,7 +20,7 @@ public class BlockMeshTests
         level.Blocks.SetPrefab(new int3(0, 0, 0), prefabGlue);
         level.Blocks.SetPrefab(new int3(1, 0, 0), prefabNotGlue);
 
-        var blockMesh = GameMeshInfo.Create(prefabs, level.Id).GetBlockMesh(level.Id);
+        var blockMesh = GameMeshInfo.Create(prefabs, level.Id, false).GetBlockMesh(level.Id);
         await Assert.That(blockMesh.MeshCount).IsEqualTo(2);
     }
 
@@ -39,7 +39,7 @@ public class BlockMeshTests
         level.Blocks.SetPrefab(new int3(0, 0, 0), prefabNotGlue);
         level.Blocks.SetPrefab(new int3(1, 0, 0), prefabGlue);
 
-        var blockMesh = GameMeshInfo.Create(prefabs, level.Id).GetBlockMesh(level.Id);
+        var blockMesh = GameMeshInfo.Create(prefabs, level.Id, false).GetBlockMesh(level.Id);
         await Assert.That(blockMesh.MeshCount).IsEqualTo(2);
     }
 
@@ -56,7 +56,7 @@ public class BlockMeshTests
         level.Blocks.SetPrefab(new int3(0, 0, 0), prefabNotGlue);
         level.Blocks.SetPrefab(new int3(1, 0, 0), prefabNotGlue);
 
-        var blockMesh = GameMeshInfo.Create(prefabs, level.Id).GetBlockMesh(level.Id);
+        var blockMesh = GameMeshInfo.Create(prefabs, level.Id, false).GetBlockMesh(level.Id);
         await Assert.That(blockMesh.MeshCount).IsEqualTo(2);
     }
 
@@ -73,7 +73,7 @@ public class BlockMeshTests
         level.Blocks.SetPrefab(new int3(0, 0, 0), prefabGlue);
         level.Blocks.SetPrefab(new int3(1, 0, 0), prefabGlue);
 
-        var blockMesh = GameMeshInfo.Create(prefabs, level.Id).GetBlockMesh(level.Id);
+        var blockMesh = GameMeshInfo.Create(prefabs, level.Id, false).GetBlockMesh(level.Id);
         await Assert.That(blockMesh.MeshCount).IsEqualTo(1);
     }
 

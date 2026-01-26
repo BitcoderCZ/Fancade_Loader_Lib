@@ -6,7 +6,7 @@ using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Builders;
 
@@ -133,7 +133,8 @@ public sealed class GameFileBlockBuilder : BlockBuilder
             SettingRecord set = settings[i];
             prefab.Settings[set.Block.Position] = prefab.Settings
                 .GetValueOrDefault(set.Block.Position, PrefabSettings.Empty)
-                .WithValueAt(set.SettingIndex, new PrefabSetting(
+                .Add(new PrefabSetting(
+                    checked((byte)set.SettingIndex),
                     set.Value switch
                     {
                         byte => SettingType.Byte,

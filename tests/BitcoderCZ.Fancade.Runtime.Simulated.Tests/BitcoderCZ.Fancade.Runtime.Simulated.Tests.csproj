@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" Version="1.12.43" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Editing\BitcoderCZ.Fancade.Editing.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Runtime.Simulated.Bullet\BitcoderCZ.Fancade.Runtime.Simulated.Bullet.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Runtime.Simulated\BitcoderCZ.Fancade.Runtime.Simulated.csproj" />
+    <ProjectReference Include="..\BitcoderCZ.Fancade.Runtime.Tests.Common\BitcoderCZ.Fancade.Runtime.Tests.Common.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade.Runtime\BitcoderCZ.Fancade.Runtime.csproj" />
+    <ProjectReference Include="..\BitcoderCZ.Fancade.Tests.Common\BitcoderCZ.Fancade.Tests.Common.csproj" />
+    <ProjectReference Include="../../src/BitcoderCZ.Fancade\BitcoderCZ.Fancade.csproj" />
+  </ItemGroup>
+
+</Project>

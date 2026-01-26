@@ -8,7 +8,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
-using static BitcoderCZ.Fancade.Utils.ThrowHelper;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;
 
@@ -356,7 +356,13 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     public PrefabSegment this[int3 index]
     {
         get => _segments[index];
-        set => _segments[index] = ValidateSegment(value, nameof(value));
+        set
+        {
+            ValidatePos(index, nameof(index));
+            _segments[index] = ValidateSegment(value, nameof(value));
+            value.PosInPrefab = index; // only change pos if successfully added
+            Size = int3.Max(Size, index + int3.One);
+        }
     }
 
     /// <summary>
@@ -485,11 +491,11 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
                         {
                             var pos = blockData.Index(i);
 
-                            if (!settings.TryGetValue(pos, out var prefabSettings) || !prefabSettings.Contains(setI))
-                            {
-                                // Wasn't found
-                                // TODO: settings.Add(getStockSetting(id, setI))
-                            }
+                            // if (!settings.TryGetValue(pos, out var prefabSettings) || !prefabSettings.Contains(setI))
+                            // {
+                            //     // Wasn't found
+                            //     // TODO: settings.Add(getStockSetting(id, setI))
+                            // }
                         }
                     }
 #pragma warning restore CA1508
