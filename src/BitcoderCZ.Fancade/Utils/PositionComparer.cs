@@ -6,7 +6,7 @@ using BitcoderCZ.Maths.Vectors;
 
 namespace BitcoderCZ.Fancade.Utils;
 
-internal sealed class PositionComparer : IComparer<int3>
+internal sealed class PositionComparer : IComparer<int3>, IComparer<byte3>
 {
     public static readonly PositionComparer Instance = new();
 
@@ -15,6 +15,18 @@ internal sealed class PositionComparer : IComparer<int3>
     }
 
     public int Compare(int3 x, int3 y)
+    {
+        int cmpZ = x.Z.CompareTo(y.Z);
+        if (cmpZ != 0)
+        {
+            return cmpZ;
+        }
+
+        int cmpY = x.Y.CompareTo(y.Y);
+        return cmpY != 0 ? cmpY : x.X.CompareTo(y.X);
+    }
+
+    public int Compare(byte3 x, byte3 y)
     {
         int cmpZ = x.Z.CompareTo(y.Z);
         if (cmpZ != 0)

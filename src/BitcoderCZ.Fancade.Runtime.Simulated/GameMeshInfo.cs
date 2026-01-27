@@ -19,6 +19,7 @@ namespace BitcoderCZ.Fancade.Runtime.Simulated;
 /// <summary>
 /// Stores the meshes of a game.
 /// </summary>
+// todo: this really should be a class
 public struct GameMeshInfo
 {
     private static readonly

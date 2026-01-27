@@ -44,7 +44,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
                 {
                     for (int x = 0; x < blocks.Size.X; x++)
                     {
-                        int3 pos = new int3(x, y, z);
+                        var pos = new int3(x, y, z);
 
                         if (blocks.GetBlockUnchecked(pos) == blockId)
                         {

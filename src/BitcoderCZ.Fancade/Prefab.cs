@@ -3,6 +3,7 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Raw;
+using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
@@ -21,6 +22,11 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
     /// The maximum allowed size for a prefab in each axis.
     /// </summary>
     public const int MaxSize = 4;
+
+    /// <summary>
+    /// The maximum allowed ammount of segments in a prefab.
+    /// </summary>
+    public const int MaxSegmentCount = MaxSize * MaxSize * MaxSize;
 
     private readonly Dictionary<int3, PrefabSegment> _segments;
 
@@ -190,14 +196,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
         get => _name;
         set
         {
-            if (string.IsNullOrEmpty(value))
-            {
-                ThrowArgumentException($"{nameof(Name)} cannot be null or empty.", nameof(value));
-            }
-            else if (Encoding.UTF8.GetByteCount(value) > 255)
-            {
-                ThrowArgumentException($"{nameof(Name)}, when UTF-8 encoded, cannot be longer than 255 bytes.", nameof(value));
-            }
+            Validator.FancadeStringNonEmpty(value);
 
             _name = value;
         }
@@ -771,7 +770,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
             {
                 for (int x = 0; x < Size.X; x++)
                 {
-                    int3 pos = new int3(x, y, z);
+                    var pos = new int3(x, y, z);
 
                     if (pos == key)
                     {
@@ -804,7 +803,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
             {
                 for (int x = 0; x < MaxSize; x++)
                 {
-                    int3 pos = new int3(x, y, z);
+                    var pos = new int3(x, y, z);
 
                     if (pos == key)
                     {
@@ -972,7 +971,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
 
     private int3 ShiftToZero()
     {
-        int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+        var minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
 
         foreach (var pos in _segments.Keys)
         {
@@ -985,7 +984,7 @@ public sealed class Prefab : IDictionary<int3, PrefabSegment>, ICloneable
             {
                 for (int x = minPos.X; x < MaxSize; x++)
                 {
-                    int3 pos = new int3(x, y, z);
+                    var pos = new int3(x, y, z);
 
                     if (_segments.TryGetValue(pos, out var segment))
                     {
