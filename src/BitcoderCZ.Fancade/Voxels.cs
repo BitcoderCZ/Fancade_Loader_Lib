@@ -14,7 +14,7 @@ namespace BitcoderCZ.Fancade;
 /// <summary>
 /// Represents the mesh of a <see cref="PrefabSegment"/>.
 /// </summary>
-public readonly struct Voxels : ICloneable
+public readonly struct Voxels : IReadOnlyVoxels, ICloneable
 {
     /// <summary>
     /// Amount of voxels in one dimension.

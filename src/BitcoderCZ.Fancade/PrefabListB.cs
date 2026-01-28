@@ -25,9 +25,10 @@ public sealed class PrefabListB
 {
     private static readonly int StockSegmentCount = Raw.RawGame.CurrentNumbStockPrefabs;
     private const int DefaultCustomCapacity = 512;
+    private static readonly int DefaultCapacity = StockSegmentCount + DefaultCustomCapacity;
 
-    private readonly ListPrefab?[] _prefabs;
-    private readonly SegmentData[] _segments;
+    private ListPrefab?[] _prefabs;
+    private SegmentData[] _segments;
 
     // make setable
     private int _permanentIdCounter = StockSegmentCount + (1024 * 4);
@@ -54,11 +55,31 @@ public sealed class PrefabListB
         _segments = segments;
     }
 
-    public int CustomPrefabCount => _customPrefabCount;
+    public int CustomPrefabCount
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _customPrefabCount;
+    }
 
-    public int TotalSegmentCount => StockSegmentCount + _customSegmentCount;
+    public int TotalSegmentCount
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => StockSegmentCount + _customSegmentCount;
+    }
 
-    public int CustomSegmentCount => _customSegmentCount;
+    public int CustomSegmentCount
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _customSegmentCount;
+    }
+
+    public int CustomSegmentCapacity
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => TotalSegmentCapacity - StockSegmentCount;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => TotalSegmentCapacity = value + StockSegmentCount;
+    }
 
     public PrefabEnumerable AllPrefabs => new(_prefabs, 0, StockSegmentCount + _customSegmentCount);
 
@@ -83,6 +104,27 @@ public sealed class PrefabListB
     public SegmentEnumerable CustomSegments => new(_segments, StockSegmentCount, _customSegmentCount);
 
     public Span<SegmentData> CustomSegmentsSpan => _segments[StockSegmentCount..(StockSegmentCount + _customSegmentCount)];
+
+    internal int TotalSegmentCapacity
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _segments.Length;
+        set
+        {
+            ThrowHelper.ThrowIfLessThan(value, TotalSegmentCount);
+
+            if (value != _segments.Length)
+            {
+                var newSegments = new SegmentData[value];
+                Array.Copy(_segments, newSegments, TotalSegmentCount);
+                _segments = newSegments;
+
+                var newPrefabs = new ListPrefab?[value];
+                Array.Copy(_prefabs, newPrefabs, TotalSegmentCount);
+                _prefabs = newPrefabs;
+            }
+        }
+    }
 
     // TODO: extension method in editing
     public static PrefabListB CreateStock()
@@ -156,9 +198,6 @@ public sealed class PrefabListB
     public SegmentData GetSegment(int segmentId)
         => _segments[segmentId];
 
-    public ref SegmentData GetSegmentRefUnsafe(int segmentId)
-        => ref _segments[segmentId];
-
     public bool TryGetPrefab(int prefabId, [MaybeNullWhen(false)] out ListPrefab prefab)
     {
         if (!PrefabIdInBounds(prefabId) || (prefab = _prefabs[prefabId]) is null)
@@ -170,11 +209,11 @@ public sealed class PrefabListB
         return true;
     }
 
-    public bool TryGeSegment(int segmentId, out SegmentData segment)
+    public bool TryGeSegment(int segmentId, [MaybeNullWhen(false)] out SegmentData segment)
     {
         if (!SegmentIdInBounds(segmentId))
         {
-            segment = default;
+            segment = null;
             return false;
         }
 
@@ -185,7 +224,6 @@ public sealed class PrefabListB
     public ListPrefab AddPrefab(string name, PrefabType type, PrefabCollider collider)
         => AddPrefab(name, type, collider, FcColorUtils.DefaultBackgroundColor, PrefabTerminalInfo.Empty, [byte3.Zero]);
 
-    // TODO: resize if needed
     public ListPrefab AddPrefab(string name, PrefabType type, PrefabCollider collider, FcColor backgroundColor, PrefabTerminalInfo terminals, ReadOnlySpan<byte3> segmentPositions)
     {
         Validator.FancadeStringNonEmpty(name);
@@ -194,6 +232,11 @@ public sealed class PrefabListB
         ValidateAndSortSegments(segmentPositions, ref sortedSegmentPositions);
 
         var prefab = new ListPrefab(this, TotalSegmentCount, Interlocked.Increment(ref _permanentIdCounter), name, type, collider, backgroundColor, terminals);
+
+        if (prefab.Id + segmentPositions.Length >= _segments.Length)
+        {
+            Grow(TotalSegmentCount + prefab.Id + segmentPositions.Length);
+        }
 
         _prefabs[prefab.Id] = prefab;
 
@@ -224,7 +267,6 @@ public sealed class PrefabListB
     public ListPrefab InsertPrefab(int id, string name, PrefabType type, PrefabCollider collider)
         => InsertPrefab(id, name, type, collider, FcColorUtils.DefaultBackgroundColor, PrefabTerminalInfo.Empty, [byte3.Zero]);
 
-    // TODO: resize if needed
     public ListPrefab InsertPrefab(int id, string name, PrefabType type, PrefabCollider collider, FcColor backgroundColor, PrefabTerminalInfo terminals, ReadOnlySpan<byte3> segmentPositions)
     {
         EnsureCustom(id);
@@ -243,6 +285,11 @@ public sealed class PrefabListB
 
         Span<byte3> sortedSegmentPositions = stackalloc byte3[Prefab.MaxSegmentCount];
         ValidateAndSortSegments(segmentPositions, ref sortedSegmentPositions);
+
+        if (id + segmentPositions.Length >= _segments.Length)
+        {
+            Grow(TotalSegmentCount + id + segmentPositions.Length);
+        }
 
         ShiftBlockIds(id, segmentPositions.Length);
 
@@ -265,6 +312,46 @@ public sealed class PrefabListB
 
         return prefab;
     }
+
+    /// <summary>
+    /// Ensures that the capacity of this list is at least the specified <paramref name="customSegmentCount"/>.
+    /// </summary>
+    /// <param name="customSegmentCount">The minimum capacity to ensure.</param>
+    /// <returns>The new custom segment capacity.</returns>
+    public int EnsureCapacity(int customSegmentCount)
+    {
+        ThrowHelper.ThrowIfNegative(customSegmentCount);
+
+        int capacity = Math.Max(_segments.Length, customSegmentCount + StockSegmentCount);
+
+        if (_segments.Length < capacity)
+        {
+            Grow(capacity);
+        }
+
+        return CustomSegmentCapacity;
+    }
+
+    public void Clear()
+    {
+        foreach (var prefab in _prefabs.AsSpan(StockSegmentCount, _customSegmentCount))
+        {
+            if (prefab is not null)
+            {
+                prefab._owner = null;
+            }
+        }
+
+        _prefabs.AsSpan(StockSegmentCount).Clear();
+        _segments.AsSpan(StockSegmentCount).Clear();
+        _customPrefabCount = 0;
+        _customSegmentCount = 0;
+
+        ValidateState();
+    }
+
+    internal void Grow(int totalSegmentCapacity)
+        => TotalSegmentCapacity = GetNewCapacity(totalSegmentCapacity);
 
     // todo: update - allows chaning multiple segments at a time
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -314,6 +401,22 @@ public sealed class PrefabListB
 
             lastValue = pos;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int GetNewCapacity(int totalSegmentCapacity)
+    {
+        Debug.Assert(_segments.Length < totalSegmentCapacity);
+
+        int newCapacity = _segments.Length == StockSegmentCount ? DefaultCapacity : 2 * _segments.Length;
+
+        // If the computed capacity is still less than specified, set to the original argument.
+        if (newCapacity < totalSegmentCapacity)
+        {
+            newCapacity = totalSegmentCapacity;
+        }
+
+        return newCapacity;
     }
 
     private void ShiftBlockIds(int idShiftStart, int shiftAmount)
@@ -375,12 +478,12 @@ public sealed class PrefabListB
         }
 
         // "air"
-        Debug.Assert(_segments[0] == default);
+        Debug.Assert(_segments[0] is { PrefabId: 0 });
 
         // segments are valid up to count
         for (int i = 1; i < _segments.Length; i++)
         {
-            Debug.Assert(_segments[i] != default == (i < StockSegmentCount + _customSegmentCount));
+            Debug.Assert((_segments[i] is not null) == (i < StockSegmentCount + _customSegmentCount));
         }
 
         // validate prefab cound and segment order
@@ -568,10 +671,13 @@ public sealed class PrefabListB
     }
 
     [StructLayout(LayoutKind.Auto)]
-    public struct SegmentData : IEquatable<SegmentData>
+    public class SegmentData : IEquatable<SegmentData>
     {
+        private Voxels _voxels;
+        private Voxels _visibleVoxels;
+
         public SegmentData(int prefabId, byte3 posInPrefab, Voxels voxels)
-            : this(prefabId, posInPrefab, voxels, Voxels.Empty)
+            : this(prefabId, posInPrefab, voxels, Fancade.Voxels.Empty)
         {
         }
 
@@ -579,7 +685,7 @@ public sealed class PrefabListB
         {
             PrefabId = prefabId;
             PosInPrefab = posInPrefab;
-            Voxels = voxels;
+            _voxels = voxels;
             VisibleFaces = visibleFaces;
         }
 
@@ -587,25 +693,48 @@ public sealed class PrefabListB
 
         public byte3 PosInPrefab { get; internal set; }
 
-        public Voxels Voxels { get; set; }
+        public ReadOnlyVoxels Voxels => new(_voxels);
 
-        public Voxels VisibleFaces { get; private set; }
+        public Voxels WritableVoxels
+        {
+            get
+            {
+                if (PrefabId < StockSegmentCount)
+                {
+                    ThrowHelper.ThrowInvalidOperationException("Cannot get writable voxels of a stock prefab.");
+                }
+
+                return _voxels;
+            }
+
+            set
+            {
+                if (PrefabId < StockSegmentCount)
+                {
+                    ThrowHelper.ThrowInvalidOperationException("Cannot set the voxels of a stock prefab.");
+                }
+
+                _voxels = value;
+            }
+        }
+
+        public ReadOnlyVoxels VisibleFaces => new(_visibleVoxels);
 
         public object? UserData { get; set; }
 
         public static bool operator ==(SegmentData left, SegmentData right)
-            => left.PrefabId == right.PrefabId && left.PosInPrefab == right.PosInPrefab;
+            => left?.Equals(right) ?? ReferenceEquals(left, right);
 
         public static bool operator !=(SegmentData left, SegmentData right)
             => !(left == right);
 
-        public readonly bool Equals(SegmentData other)
-            => this == other;
+        public bool Equals(SegmentData? other)
+            => other is not null && PrefabId == other.PrefabId && PosInPrefab == other.PosInPrefab;
 
-        public readonly override int GetHashCode()
+        public override int GetHashCode()
             => HashCode.Combine(PrefabId, PosInPrefab);
 
-        public readonly override bool Equals(object? obj)
+        public override bool Equals(object? obj)
             => obj is SegmentData other && Equals(other);
     }
 }
