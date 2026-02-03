@@ -40,7 +40,7 @@ public sealed class BlockDataComparer : IEqualityComparer<BlockData>
             {
                 for (int x = 0; x < a.Size.X; x++)
                 {
-                    if (a.GetBlockUnchecked(new int3(x, y, z)) != b.GetBlockUnchecked(new int3(x, y, z)))
+                    if (a.GetBlockUnsafe(new int3(x, y, z)) != b.GetBlockUnsafe(new int3(x, y, z)))
                     {
                         return false;
                     }

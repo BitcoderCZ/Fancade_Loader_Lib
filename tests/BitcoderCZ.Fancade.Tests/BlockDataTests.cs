@@ -15,8 +15,8 @@ public class BlockDataTests
         await Assert.That(blockData.Size).IsEqualTo(new int3(5, 5, 5));
         using (Assert.Multiple())
         {
-            await Assert.That(blockData.GetBlock(new int3(2, 2, 2))).IsEqualTo((ushort)42);
-            await Assert.That(blockData.GetBlock(new int3(1, 1, 1))).IsEqualTo((ushort)0);
+            await Assert.That(blockData.GetBlockInBounds(new int3(2, 2, 2))).IsEqualTo((ushort)42);
+            await Assert.That(blockData.GetBlockInBounds(new int3(1, 1, 1))).IsEqualTo((ushort)0);
         }
     }
 
@@ -42,7 +42,7 @@ public class BlockDataTests
         blockData.Move(new int3(0, 0, 0));
 
         await Assert.That(blockData.Size).IsEqualTo(new int3(4, 4, 4));
-        await Assert.That(blockData.GetBlock(new int3(1, 1, 1))).IsEqualTo((ushort)42);
+        await Assert.That(blockData.GetBlockInBounds(new int3(1, 1, 1))).IsEqualTo((ushort)42);
     }
 
     [Test]
@@ -59,10 +59,10 @@ public class BlockDataTests
         await Assert.That(blockData.Size).IsEqualTo(new int3(4, 3, 3));
         using (Assert.Multiple())
         {
-            await Assert.That(blockData.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blockData.GetBlock(new int3(1, 1, 1))).IsEqualTo((ushort)0);
-            await Assert.That(blockData.GetBlock(new int3(2, 1, 1))).IsEqualTo((ushort)2);
-            await Assert.That(blockData.GetBlock(new int3(3, 2, 2))).IsEqualTo((ushort)3);
+            await Assert.That(blockData.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blockData.GetBlockInBounds(new int3(1, 1, 1))).IsEqualTo((ushort)0);
+            await Assert.That(blockData.GetBlockInBounds(new int3(2, 1, 1))).IsEqualTo((ushort)2);
+            await Assert.That(blockData.GetBlockInBounds(new int3(3, 2, 2))).IsEqualTo((ushort)3);
         }
     }
 
@@ -102,7 +102,7 @@ public class BlockDataTests
         blockData.TrimNegative();
 
         await Assert.That(blockData.Size).IsEqualTo(new int3(1, 4, 3));
-        await Assert.That(blockData.GetBlock(new int3(0, 2, 0))).IsEqualTo((ushort)99);
+        await Assert.That(blockData.GetBlockInBounds(new int3(0, 2, 0))).IsEqualTo((ushort)99);
     }
 
     [Test]
@@ -114,7 +114,7 @@ public class BlockDataTests
         blockData.TrimNegative(trimY: true);
 
         await Assert.That(blockData.Size).IsEqualTo(new int3(1, 2, 3));
-        await Assert.That(blockData.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)99);
+        await Assert.That(blockData.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)99);
     }
 
     [Test]
@@ -136,7 +136,7 @@ public class BlockDataTests
         blockData.Trim();
 
         await Assert.That(blockData.Size).IsEqualTo(new int3(2, 3, 4));
-        await Assert.That(blockData.GetBlock(new int3(1, 2, 3))).IsEqualTo((ushort)99);
+        await Assert.That(blockData.GetBlockInBounds(new int3(1, 2, 3))).IsEqualTo((ushort)99);
     }
 
     [Test]

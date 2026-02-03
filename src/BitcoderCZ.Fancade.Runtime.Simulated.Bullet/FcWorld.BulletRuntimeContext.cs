@@ -106,7 +106,7 @@ public sealed partial class FcWorld
 
                 var (min, max) = _world._gameMesh.GetPrefabMeshBounds(environment.PrefabId);
 
-                var segment = _world._prefabs.GetSegmentOrStock(_world._prefabs.GetPrefab(_world._mainPrefab).Blocks.GetBlockOrDefault(environment.OuterPosition));
+                var segment = _world._prefabs.GetSegmentOrStock(_world._prefabs.GetPrefab(_world._mainPrefab).Blocks.GetBlock(environment.OuterPosition));
 
                 // prefab pos + size / 2
                 Vector3 pos = (Vector3)(environment.OuterPosition - segment.PosInPrefab) + ((((Vector3)((max - min) + int3.One) * 0.5f) + (Vector3)min) * 0.125f);

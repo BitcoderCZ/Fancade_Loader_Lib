@@ -66,7 +66,7 @@ public sealed partial class FcAST
                         {
                             var pos = new int3(x, y, z);
 
-                            ushort id = blocks.GetBlockUnchecked(pos);
+                            ushort id = blocks.GetBlockUnsafe(pos);
 
                             if (id is 46 or 48 or 50 or 52 or 54 or 56)
                             {
@@ -150,7 +150,7 @@ public sealed partial class FcAST
                         {
                             var pos = new int3(x, y, z);
 
-                            ushort id = blocks.GetBlockUnchecked(pos);
+                            ushort id = blocks.GetBlockUnsafe(pos);
 
                             if (id is 46 or 48 or 50 or 52 or 54 or 56)
                             {
@@ -250,7 +250,7 @@ public sealed partial class FcAST
                     {
                         var pos = new int3(x, y, z);
 
-                        if (blocks.GetBlockUnchecked(pos) != 0)
+                        if (blocks.GetBlockUnsafe(pos) != 0)
                         {
                             TryCreateNode(pos, out _);
                         }
@@ -262,7 +262,7 @@ public sealed partial class FcAST
             {
                 if (connection.IsToOutside)
                 {
-                    ushort id = blocks.GetBlockOrDefault(connection.From);
+                    ushort id = blocks.GetBlock(connection.From);
 
                     if (id != 0)
                     {
@@ -298,7 +298,7 @@ public sealed partial class FcAST
                 return false;
             }
 
-            ushort id = Prefab.Blocks.GetBlockOrDefault(pos);
+            ushort id = Prefab.Blocks.GetBlock(pos);
 
             if (id != 0 && id < RawGame.CurrentNumbStockPrefabs)
             {
@@ -420,7 +420,7 @@ public sealed partial class FcAST
             => TryGetOrCreateNode(pos, out var node) ? node : null;
 
         public SyntaxTerminal? GetTerminal(int3 pos, byte3 voxelPos)
-             => _globalCtx.PrefabInfos.TryGetValue(Prefab.Blocks.GetBlockOrDefault(pos), out var info) && !info.TerminalInfo.Terminals.Any(terminal => terminal.Position == voxelPos)
+             => _globalCtx.PrefabInfos.TryGetValue(Prefab.Blocks.GetBlock(pos), out var info) && !info.TerminalInfo.Terminals.Any(terminal => terminal.Position == voxelPos)
                 ? null
                 : TryGetOrCreateNode(pos, out var node)
                 ? new SyntaxTerminal(node, voxelPos)
@@ -442,7 +442,7 @@ public sealed partial class FcAST
 
                         if (terminal is null)
                         {
-                            ushort id = Prefab.Blocks.GetBlockOrDefault(connection.From);
+                            ushort id = Prefab.Blocks.GetBlock(connection.From);
 
                             if (id != 0)
                             {
@@ -489,7 +489,7 @@ public sealed partial class FcAST
 
                 if (connection.IsToOutside)
                 {
-                    ushort id = Prefab.Blocks.GetBlockOrDefault(connection.From);
+                    ushort id = Prefab.Blocks.GetBlock(connection.From);
 
                     if (id == 0)
                     {
@@ -514,7 +514,7 @@ public sealed partial class FcAST
                 }
                 else
                 {
-                    ushort id = Prefab.Blocks.GetBlockOrDefault(connection.To);
+                    ushort id = Prefab.Blocks.GetBlock(connection.To);
 
                     if (id == 0)
                     {

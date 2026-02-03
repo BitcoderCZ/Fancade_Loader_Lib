@@ -114,19 +114,19 @@ public class GameTests
 
         var blocks = game.Prefabs.GetPrefab(idOff).Blocks;
 
-        await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)(idOff + 1));
-        await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)(idOff + 2));
-        await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)(idOff + 3));
-        await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)(idOff + 4));
-        await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)(idOff + 5));
-        await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)(idOff + 6));
+        await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)(idOff + 1));
+        await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)(idOff + 2));
+        await Assert.That(blocks.GetBlockInBounds(new int3(2, 0, 0))).IsEqualTo((ushort)(idOff + 3));
+        await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)(idOff + 4));
+        await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)(idOff + 5));
+        await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 2))).IsEqualTo((ushort)(idOff + 6));
 
-        var seg0 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(0, 0, 0)));
-        var seg1 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(1, 0, 0)));
-        var seg2 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(2, 0, 0)));
-        var seg3 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(0, 0, 1)));
-        var seg4 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(1, 0, 1)));
-        var seg5 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(0, 0, 2)));
+        var seg0 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 0)));
+        var seg1 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(1, 0, 0)));
+        var seg2 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(2, 0, 0)));
+        var seg3 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 1)));
+        var seg4 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(1, 0, 1)));
+        var seg5 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 2)));
 
         await Assert.That(seg0.PrefabId).IsEqualTo((ushort)(idOff + 1));
         await Assert.That(seg0.PosInPrefab).IsEqualTo(new int3(0, 0, 0));

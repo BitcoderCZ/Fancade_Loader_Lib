@@ -153,7 +153,7 @@ public static class PrefabListUtils
                     for (int x = 0; x < blocks.Size.X; x++)
                     {
                         var pos = new int3(x, y, z);
-                        ushort id = blocks.GetBlockUnchecked(pos);
+                        ushort id = blocks.GetBlockUnsafe(pos);
 
                         if (id == 0)
                         {
@@ -197,7 +197,7 @@ public static class PrefabListUtils
             var otherPosVoxel = (pos * Voxels.Size) + terminal.Position + (terminal.Direction.GetOffset() * 2);
             var otherPos = VoxelToBlock(otherPosVoxel);
 
-            ushort otherId = blocks.GetBlockOrDefault(otherPos);
+            ushort otherId = blocks.GetBlock(otherPos);
             if (otherId == 0)
             {
                 otherBlockPos = default;

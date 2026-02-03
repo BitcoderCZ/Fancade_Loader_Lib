@@ -46,7 +46,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
                     {
                         int3 pos = new int3(x, y, z);
 
-                        if (blocks.GetBlockUnchecked(pos) == blockId)
+                        if (blocks.GetBlockUnsafe(pos) == blockId)
                         {
                             positions.Add(pos);
                             IsEmpty = false;
@@ -172,7 +172,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         {
             foreach (var pos in positions)
             {
-                ushort idOld = prefab.Blocks.GetBlockOrDefault(pos + offset);
+                ushort idOld = prefab.Blocks.GetBlock(pos + offset);
 
                 if (idOld != 0 && list.TryGetPrefab(idOld, out var oldPrefab))
                 {
@@ -202,7 +202,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
             {
                 foreach (var (offset, id) in ids)
                 {
-                    ushort idOld = prefab.Blocks.GetBlockOrDefault(pos + offset);
+                    ushort idOld = prefab.Blocks.GetBlock(pos + offset);
 
                     if (idOld != 0 && list.TryGetPrefab(idOld, out var oldPrefab))
                     {
@@ -233,7 +233,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         {
             foreach (var pos in positions)
             {
-                if (prefab.Blocks.GetBlockOrDefault(pos + offset) != 0)
+                if (prefab.Blocks.GetBlock(pos + offset) != 0)
                 {
                     obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
                     return false;
@@ -259,7 +259,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
             {
                 foreach (var offset in offsets)
                 {
-                    if (prefab.Blocks.GetBlockOrDefault(pos + offset) != 0)
+                    if (prefab.Blocks.GetBlock(pos + offset) != 0)
                     {
                         obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
                         return false;
@@ -284,7 +284,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
             {
                 foreach (var offset in removeOffsets)
                 {
-                    prefab.Blocks.SetBlockUnchecked(pos + offset, 0);
+                    prefab.Blocks.SetBlockUnsafe(pos + offset, 0);
                 }
 
                 foreach (var (offset, id) in ids)

@@ -882,8 +882,8 @@ public sealed partial class FcWorld : IAstRunner
                 return;
             }
 
-            ushort blockId = prefab.Blocks.GetBlockOrDefault(connection.From);
-            ushort segmentId = prefab.Blocks.GetBlockOrDefault(connection.From + (connection.FromVoxel / 8));
+            ushort blockId = prefab.Blocks.GetBlock(connection.From);
+            ushort segmentId = prefab.Blocks.GetBlock(connection.From + (connection.FromVoxel / 8));
 
             if (blockId == 0 || segmentId == 0)
             {
@@ -956,7 +956,7 @@ public sealed partial class FcWorld : IAstRunner
             return false;
         }
 
-        ushort segmentId = prefab.Blocks.GetBlockOrDefault(pos + (voxelPos / 8));
+        ushort segmentId = prefab.Blocks.GetBlock(pos + (voxelPos / 8));
 
         if (segmentId == 0)
         {
