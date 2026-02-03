@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using System.Runtime.CompilerServices;
 using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
 using BitcoderCZ.Utils;
@@ -41,6 +42,12 @@ public sealed class ListPrefab
         _segments = new(4);
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the <see cref="ListPrefab"/> is in a <see cref="PrefabListB"/>.
+    /// </summary>
+    /// <value><see langword="true"/> if the <see cref="ListPrefab"/> is in a <see cref="PrefabListB"/>; otherwise, <see langword="false"/>.</value>
+    public bool IsInList => _owner is not null;
+
     public int Id => _id; // todo: editable when not in prefab
 
     /// <summary>
@@ -53,6 +60,8 @@ public sealed class ListPrefab
         get => _name;
         set
         {
+            EnsureCustom();
+
             Validator.FancadeStringNonEmpty(value);
 
             _name = value;
@@ -63,15 +72,21 @@ public sealed class ListPrefab
 
     public PrefabCollider Collider { get; set; }
 
-    public FcColor BackgroundColor{ get; set; }
+    public FcColor BackgroundColor { get; set; }
 
-    public PrefabTerminalInfo Terminals{ get; set; }
+    public PrefabTerminalInfo Terminals { get; set; }
 
     public List<Connection> Connections { get; } = [];
 
     public BlockData Blocks { get; } = new();
 
     public IEnumerable<KeyValuePair<byte3, int>> Segments => _segments;
+
+    public int SegmentCount
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _segments.Count;
+    }
 
     // TODO: cache?
     public int3 Size
@@ -144,6 +159,7 @@ public sealed class ListPrefab
 
     public bool RemoveSegment(byte3 posInPrefab, out int segmentId, out int3 shift)
     {
+        throw new NotImplementedException(); // _owner.RemoveSegmentInternal, ensure custom
         if (_segments.Count <= 1)
         {
             segmentId = 0;
@@ -179,6 +195,14 @@ public sealed class ListPrefab
         }
 
         return i;
+    }
+
+    private void EnsureCustom()
+    {
+        if (Id < Raw.RawGame.CurrentNumbStockPrefabs)
+        {
+            ThrowHelper.ThrowInvalidOperationException("Cannot edit a stock prefab.");
+        }
     }
 
     private int3 ShiftToZero()

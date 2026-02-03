@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using BitcoderCZ.Fancade.Exceptions;
 using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
 using BitcoderCZ.Utils;
@@ -260,6 +261,11 @@ public sealed class PrefabListB
     {
         EnsureCustom(prefab);
 
+        if (prefab._owner is not null)
+        {
+            ThrowHelper.ThrowArgumentException($"{nameof(prefab)} is already in another list.", nameof(prefab));
+        }
+
         _permanentIdCounter = Math.Max(_permanentIdCounter, prefab.PermanentId + 1);
         throw new NotImplementedException();
     }
@@ -311,6 +317,95 @@ public sealed class PrefabListB
         ValidateState();
 
         return prefab;
+    }
+
+    public bool RemovePrefab(int prefabId, BlockInstancesCache? cache = null)
+        => RemovePrefab(prefabId, out _, cache);
+
+    public bool RemovePrefab(int prefabId, [MaybeNullWhen(false)] out ListPrefab prefab, BlockInstancesCache? cache = null)
+    {
+        EnsureCustom(prefabId);
+
+        if (!TryGetPrefab(prefabId, out prefab))
+        {
+            return false;
+        }
+
+        RemovePrefabFromBlocks(prefab, cache);
+
+        if (IsLastPrefab(prefab))
+        {
+            _prefabs[prefabId] = null;
+            _segments.AsSpan(prefabId, prefab.SegmentCount).Clear();
+        }
+        else
+        {
+            ShiftBlockIds(prefabId + prefab.SegmentCount, -prefab.SegmentCount);
+        }
+
+        _customPrefabCount--;
+        _customSegmentCount -= prefab.SegmentCount;
+
+        prefab._owner = null;
+        return true;
+    }
+
+    /// <summary>
+    /// Determines if a segment can be added to a prefab.
+    /// </summary>
+    /// <param name="id">Id of the prefab.</param>
+    /// <param name="segmentPosition">Position of the segment.</param>
+    /// <param name="overwriteBlocks">
+    /// If <see langword="true"/>, block overwritting is allowed,
+    /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, <see langword="false"/> is returned.
+    /// </param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    /// <returns><see langword="true"/> if <paramref name="segmentPosition"/> can be added to the prefab; otherwise <see langword="false"/>.</returns>
+    public bool CanAddSegmentToPrefab(ushort id, int3 segmentPosition, bool overwriteBlocks, BlockInstancesCache? cache = null)
+        => TryGetPrefab(id, out var prefab) &&
+            (overwriteBlocks || CanAddIdToPrefab(id, segmentPosition, cache, out _)) &&
+            !prefab.ContainsKey(segmentPosition);
+
+    /// <summary>
+    /// Adds a segment to a prefab.
+    /// </summary>
+    /// <param name="prefabId">Id of the prefab.</param>
+    /// <param name="segmentPosition">Position of the segment to add.</param>
+    /// <param name="voxels">Voxels of the segment to add.</param>
+    /// <param name="overwriteBlocks">
+    /// If <see langword="true"/>, blocks will be overwritten,
+    /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, an <see cref="BlockObstructedException"/> will be thrown.
+    /// </param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    public int AddSegmentToPrefab(ushort prefabId, int3 segmentPosition, Voxels voxels, bool overwriteBlocks, BlockInstancesCache? cache = null)
+    {
+        EnsureCustom(prefabId);
+
+        var prefab = GetPrefab(prefabId);
+
+        return prefab
+    }
+
+    /// <summary>
+    /// Adds a segment to a prefab.
+    /// </summary>
+    /// <param name="prefabId">Id of the prefab.</param>
+    /// <param name="segmentPosition">Position of the segment to add.</param>
+    /// <param name="voxels">Voxels of the segment to add.</param>
+    /// <param name="overwriteBlocks">
+    /// If <see langword="true"/>, blocks will be overwritten,
+    /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, <see langword="false"/> is returned.
+    /// </param>
+    /// <param name="segmentId">Id of the added segment.</param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    /// <returns><see langword="true"/> if the segment was added to the prefab; otherwise <see langword="false"/>.</returns>
+    public bool TryAddSegmentToPrefab(ushort prefabId, int3 segmentPosition, Voxels voxels, bool overwriteBlocks, out int segmentId, BlockInstancesCache? cache = null)
+    {
+        EnsureCustom(prefabId);
+
+        var prefab = GetPrefab(prefabId);
+
+        prefab.TryAddSegmentToPrefab(prefabId, segmentPosition, voxels, overwriteBlocks, cache)
     }
 
     /// <summary>
@@ -456,8 +551,12 @@ public sealed class PrefabListB
 
         if (shiftAmount < 0)
         {
-            _prefabs.AsSpan(TotalSegmentCount + shiftAmount).Clear();
-            _segments.AsSpan(TotalSegmentCount + shiftAmount).Clear();
+            int clearStart = TotalSegmentCount + shiftAmount; // shiftAmount is negative
+            int clearLength = -shiftAmount;
+
+            // clear end
+            _prefabs.AsSpan(clearStart, clearLength).Clear();
+            _segments.AsSpan(clearStart, clearLength).Clear();
         }
     }
 
@@ -673,8 +772,8 @@ public sealed class PrefabListB
     [StructLayout(LayoutKind.Auto)]
     public class SegmentData : IEquatable<SegmentData>
     {
-        private Voxels _voxels;
-        private Voxels _visibleVoxels;
+        internal Voxels _voxels;
+        internal Voxels _visibleFaces;
 
         public SegmentData(int prefabId, byte3 posInPrefab, Voxels voxels)
             : this(prefabId, posInPrefab, voxels, Fancade.Voxels.Empty)
@@ -686,22 +785,22 @@ public sealed class PrefabListB
             PrefabId = prefabId;
             PosInPrefab = posInPrefab;
             _voxels = voxels;
-            VisibleFaces = visibleFaces;
+            _visibleFaces = visibleFaces;
         }
 
         public int PrefabId { get; internal set; }
 
         public byte3 PosInPrefab { get; internal set; }
 
-        public ReadOnlyVoxels Voxels => new(_voxels);
+        public ReadOnlyVoxels VoxelsView => new(_voxels);
 
-        public Voxels WritableVoxels
+        public Voxels Voxels
         {
             get
             {
                 if (PrefabId < StockSegmentCount)
                 {
-                    ThrowHelper.ThrowInvalidOperationException("Cannot get writable voxels of a stock prefab.");
+                    ThrowHelper.ThrowInvalidOperationException($"Cannot get writable voxels of a stock prefab, use {nameof(VoxelsView)} instead.");
                 }
 
                 return _voxels;
@@ -718,7 +817,7 @@ public sealed class PrefabListB
             }
         }
 
-        public ReadOnlyVoxels VisibleFaces => new(_visibleVoxels);
+        public ReadOnlyVoxels VisibleFaces => new(_visibleFaces);
 
         public object? UserData { get; set; }
 

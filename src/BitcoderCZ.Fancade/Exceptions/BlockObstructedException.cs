@@ -38,12 +38,12 @@ public sealed class BlockObstructedException : Exception
     }
 
     internal BlockObstructedException(BlockObstructionInfo info)
-        : this(info, $"Cannot place block because its position is obstructed in prefab '{info.PrefabName}' at position '{info.PrefabPosition}'.")
+        : this(info, $"Cannot place block because its position is obstructed in prefab '{info.PrefabId}' at position '{info.PrefabPosition}'.")
     {
     }
 
     internal BlockObstructedException(BlockObstructionInfo info, string message)
-        : this(info.PrefabName, info.PrefabPosition, info.ObstructedPosition, message)
+        : this(info.PrefabId, info.PrefabPosition, info.ObstructedPosition, message)
     {
     }
 

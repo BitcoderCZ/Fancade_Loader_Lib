@@ -50,7 +50,7 @@ public readonly struct ReadOnlyVoxels : IReadOnlyVoxels
     public bool IsEmpty => _voxels.IsEmpty;
 
     /// <summary>
-    /// Gets a value indicating whether all voxels in the <see cref="Voxels"/> instance are empty.
+    /// Gets a value indicating whether all voxels in the <see cref="ReadOnlyVoxels"/> instance are empty.
     /// </summary>
     /// <value><see langword="true"/> if <see cref="IsEmpty"/> is <see langword="true"/> or all of the voxels are empty; otherwise, <see langword="false"/>.</value>
     public bool AllVoxelsEmpty => _voxels.AllVoxelsEmpty;
@@ -74,10 +74,9 @@ public readonly struct ReadOnlyVoxels : IReadOnlyVoxels
     /// Writes the face glue data into a <see cref="BitArray"/>.
     /// </summary>
     /// <remarks>
-    /// <see langword="false"/> means that the face has glue; <see langword="true"/> means that the face does not have glue.
+    /// <see langword="true"/> means that the face has glue; <see langword="false"/> means that the face does not have glue.
     /// </remarks>
     /// <param name="destination">The <see cref="BitArray"/> to write into, must be at least <see cref="Voxels.VoxelCount"/> * 6 elements long.</param>
-    /// <exception cref="InvalidOperationException">Thrown when the <see cref="ReadOnlyVoxels"/> instance is empty.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="destination"/> has less than <see cref="Voxels.VoxelCount"/> * 6 elements.</exception>
     public void WriteFaceGlueInfo(BitArray destination)
         => _voxels.WriteFaceGlueInfo(destination);
@@ -86,10 +85,9 @@ public readonly struct ReadOnlyVoxels : IReadOnlyVoxels
     /// Gets the face glue data as a <see cref="BitArray"/>.
     /// </summary>
     /// <remarks>
-    /// <see langword="false"/> means that the face has glue; <see langword="true"/> means that the face does not have glue.
+    /// <see langword="true"/> means that the face has glue; <see langword="false"/> means that the face does not have glue.
     /// </remarks>
     /// <returns>The <see cref="BitArray"/> with the face data..</returns>
-    /// <exception cref="InvalidOperationException">Thrown when the <see cref="ReadOnlyVoxels"/> instance is empty.</exception>
     public BitArray GetFaceGlueInfo()
         => _voxels.GetFaceGlueInfo();
 
