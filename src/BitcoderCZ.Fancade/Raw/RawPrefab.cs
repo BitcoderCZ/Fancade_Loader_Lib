@@ -11,7 +11,7 @@ namespace BitcoderCZ.Fancade.Raw;
 /// <summary>
 /// Directly represents a fancade prefab.
 /// </summary>
-public class RawPrefab
+public partial class RawPrefab
 {
     /// <summary>
     /// The default name of a prefab.
@@ -229,10 +229,13 @@ public class RawPrefab
     /// Loads a <see cref="RawPrefab"/> from a <see cref="FcBinaryReader"/>.
     /// </summary>
     /// <param name="reader">The reader to read the <see cref="RawPrefab"/> from.</param>
+    /// <param name="options">The <see cref="LoadOptions"/>.</param>
     /// <returns>A <see cref="RawPrefab"/> read from <paramref name="reader"/>.</returns>
-    public static unsafe RawPrefab Load(FcBinaryReader reader)
+    public static RawPrefab Load(FcBinaryReader reader, LoadOptions? options = null)
     {
         ThrowIfNull(reader, nameof(reader));
+
+        var optionsVal = options ?? LoadOptions.Default;
 
         byte header0 = reader.ReadUInt8();
         byte header1 = reader.ReadUInt8();
@@ -296,7 +299,7 @@ public class RawPrefab
         }
 
         byte[]? voxels = null;
-        if (hasVoxels)
+        if (hasVoxels && (optionsVal.Flags & LoadFlags.Voxels) == LoadFlags.Voxels)
         {
             // size (8*8*8) * sides (6)
             voxels = reader.ReadBytes(8 * 8 * 8 * 6);
@@ -304,7 +307,7 @@ public class RawPrefab
 
         ushort3 insideSize = default;
         ushort[]? blocks = null;
-        if (hasBlocks)
+        if (hasBlocks && (optionsVal.Flags & LoadFlags.Blocks) == LoadFlags.Blocks)
         {
             insideSize = reader.ReadVec3US();
 
@@ -339,7 +342,7 @@ public class RawPrefab
 
         ushort numbSettings = 0;
         List<RawPrefabSetting>? settings = null;
-        if (hasSettings)
+        if (hasSettings && (optionsVal.Flags & LoadFlags.Settings) == LoadFlags.Settings)
         {
             numbSettings = reader.ReadUInt16();
 
@@ -360,7 +363,7 @@ public class RawPrefab
 
         ushort numbConnections = 0;
         List<Connection>? connections = null;
-        if (hasConnections)
+        if (hasConnections && (optionsVal.Flags & LoadFlags.Connections) == LoadFlags.Connections)
         {
             numbConnections = reader.ReadUInt16();
 
@@ -386,7 +389,7 @@ public class RawPrefab
     /// Writes a <see cref="RawPrefab"/> into a <see cref="FcBinaryWriter"/>.
     /// </summary>
     /// <param name="writer">The <see cref="FcBinaryWriter"/> to write this instance into.</param>
-    public unsafe void Save(FcBinaryWriter writer)
+    public void Save(FcBinaryWriter writer)
     {
         ThrowIfNull(writer, nameof(writer));
 

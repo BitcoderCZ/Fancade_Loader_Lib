@@ -7,27 +7,16 @@ using BitcoderCZ.Maths.Vectors;
 
 namespace BitcoderCZ.Fancade;
 
-// ContinuousBlockData // backed by Array3D
-// ContinuousBlockData // todo: name, allows negative position xz positions by storing int3 offset and adding it to position parameters
-// ChunkedBlockData
-// HybridBlockData // x lower chunks are continuous, other are in dictionary
+// ContinuousBlockData // backed by Array3D; for small levels, fast access (todo: implement allowing negative xz positons by storing int3 offset and adding it to position parameters)
+// ChunkedBlockData, very large levels, slower access (dictionary)
+// HybridBlockData // x lower chunks are continuous, other are in dictionary; large levels, fast access for lower x chunks, otherwise dictionary
 
 /// <summary>
 /// Represents a mutable 3D block data container.
 /// </summary>
+// TODO: rename unsafe to unchecked?
 public interface IBlockData
 {
-    // todo: better name
-
-    /// <summary>
-    /// Gets a value indicating whether negative X and Z positions are allowed.
-    /// </summary>
-    /// <remarks>
-    /// If <see langword="false"/>, <see cref="BoundsMin"/> is guaranteed to be at least (0, 0, 0).
-    /// </remarks>
-    /// <value><see langword="true"/> if negative X and Z positions are allowed; otherwise, <see langword="false"/>.</value>
-    bool AllowsNegativePositons { get; }
-
     /// <summary>
     /// Gets the minimum inclusive bounds of the block data.
     /// </summary>
@@ -78,6 +67,16 @@ public interface IBlockData
     /// <param name="position">The positition to place the block at.</param>
     /// <param name="id">Id of the block to place.</param>
     void SetBlock(int3 position, ushort id);
+
+    /// <summary>
+    /// "Places" a single block at the specified position.
+    /// </summary>
+    /// <remarks>
+    /// The position must be within bounds.
+    /// </remarks>
+    /// <param name="position">The positition to place the block at.</param>
+    /// <param name="id">Id of the block to place.</param>
+    void SetBlockInBounds(int3 position, ushort id);
 
     /// <summary>
     /// "Places" a single block at the specified position without resizing the underlying data storage or bounds checking.
@@ -168,32 +167,11 @@ public interface IBlockData
     /// <param name="max">The maximum (inclusive) bounds of the region to move.</param>
     void Move(int3 offset, int3 min, int3 max);
 
-    // todo: remove?
-    // /// <summary>
-    // /// Ensures that the underlying data storage can contain the specified position as a minimum bound.
-    // /// </summary>
-    // /// <remarks>
-    // /// <see cref="EnsureRegion(int3, int3)"/> should be preferred, as this method may over-allocate in certain implementations.
-    // /// <see cref="SetBlockUnsafe"/> and <see cref="GetBlockUnsafe"/> are safe to call in this region after this call.
-    // /// </remarks>
-    // /// <param name="position">The position to ensure capacity for.</param>
-    // void EnsureMinCapacity(int3 position);
-
-    // /// <summary>
-    // /// Ensures that the underlying data storage can contain the specified position as a maximum bound.
-    // /// </summary>
-    // /// <remarks>
-    // /// <see cref="EnsureRegion(int3, int3)"/> should be preferred, as this method may over-allocate in certain implementations.
-    // /// <see cref="SetBlockUnsafe"/> and <see cref="GetBlockUnsafe"/> are safe to call in this region after this call.
-    // /// </remarks>
-    // /// <param name="position">The position to ensure capacity for.</param>
-    // void EnsureMaxCapacity(int3 position);
-
     /// <summary>
     /// Reserves storage so that the specified region can be accessed safely.
     /// </summary>
     /// <remarks>
-    /// <see cref="SetBlockUnsafe"/>, <see cref="GetBlockInBounds"/> and <see cref="GetBlockUnsafe"/> are safe to call within this region after this call (with respect to bounds checking).
+    /// <see cref="SetBlockInBounds"/>, <see cref="SetBlockUnsafe"/>, <see cref="GetBlockInBounds"/> and <see cref="GetBlockUnsafe"/> are safe to call within this region after this call (with respect to bounds checking).
     /// </remarks>
     /// <param name="min">The minimum bounds (inclusive) of the region.</param>
     /// <param name="max">The maximum bounds (inclusive) of the region.</param>
