@@ -7,7 +7,7 @@ public class BlockDataTests
     [Test]
     public async Task Move_PositiveOffset_ShiftsDataCorrectly()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(4, 4, 4)));
         blockData.SetBlock(new int3(1, 1, 1), 42);
 
         blockData.Move(new int3(1, 1, 1));
@@ -23,7 +23,7 @@ public class BlockDataTests
     [Test]
     public async Task Move_NegativeOffset_ThrowsException()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(4, 4, 4)));
 
         using (Assert.Multiple())
         {
@@ -36,7 +36,7 @@ public class BlockDataTests
     [Test]
     public async Task Move_ZeroOffset_DoesNothing()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(4, 4, 4)));
         blockData.SetBlock(new int3(1, 1, 1), 42);
 
         blockData.Move(new int3(0, 0, 0));
@@ -48,7 +48,7 @@ public class BlockDataTests
     [Test]
     public async Task Move_WithStartPosition_ShiftsPartialDataCorrectly()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(3, 3, 3)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(3, 3, 3)));
 
         blockData.SetBlock(new int3(0, 0, 0), 1);
         blockData.SetBlock(new int3(1, 1, 1), 2);
@@ -69,7 +69,7 @@ public class BlockDataTests
     [Test]
     public async Task Move_WithOutOfBoundsStartPosition_ThrowsException()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(2, 2, 2)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(2, 2, 2)));
 
         using (Assert.Multiple())
         {
@@ -83,7 +83,7 @@ public class BlockDataTests
     [Test]
     public async Task Move_WithOutOfBoundsMove_ThrowsException()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(2, 2, 2)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(2, 2, 2)));
 
         using (Assert.Multiple())
         {
@@ -96,7 +96,7 @@ public class BlockDataTests
     [Test]
     public async Task TrimNegative_ShiftsBlocksToOrigin()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(4, 4, 4)));
         blockData.SetBlock(new int3(3, 2, 1), 99);
 
         blockData.TrimNegative();
@@ -108,7 +108,7 @@ public class BlockDataTests
     [Test]
     public async Task TrimNegative_TrimY_ShiftsBlocksToOrigin()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(4, 4, 4)));
         blockData.SetBlock(new int3(3, 2, 1), 99);
 
         blockData.TrimNegative(trimY: true);
@@ -120,7 +120,7 @@ public class BlockDataTests
     [Test]
     public async Task TrimNegative_EmptyArray_RemainsUnchanged()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(4, 4, 4)));
 
         blockData.TrimNegative();
 
@@ -130,7 +130,7 @@ public class BlockDataTests
     [Test]
     public async Task Trim_RemovesEmptySpace()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(5, 5, 5)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(5, 5, 5)));
         blockData.SetBlock(new int3(1, 2, 3), 99);
 
         blockData.Trim();
@@ -142,7 +142,7 @@ public class BlockDataTests
     [Test]
     public async Task Trim_EmptyArray_RemainsUnchanged()
     {
-        var blockData = new BlockData(new Array3D<ushort>(new int3(4, 4, 4)));
+        var blockData = new ArrayBlockData(new Array3D<ushort>(new int3(4, 4, 4)));
 
         blockData.Trim();
 

@@ -124,7 +124,7 @@ public class PrefabSegment : ICloneable
     /// </summary>
     /// <param name="voxels">The voxel data to convert.</param>
     /// <returns>The converted <see cref="Voxels"/>.</returns>
-    public static unsafe Voxels VoxelsFromRaw(ReadOnlySpan<byte> voxels)
+    public static Voxels VoxelsFromRaw(ReadOnlySpan<byte> voxels)
     {
         if (voxels.Length < Voxels.VoxelCount * 6)
         {
@@ -139,7 +139,7 @@ public class PrefabSegment : ICloneable
     /// </summary>
     /// <param name="voxels">The <see cref="Voxels"/> to convert.</param>
     /// <returns>The converted raw voxel data.</returns>
-    public static unsafe byte[] VoxelsToRaw(Voxels voxels)
+    public static byte[] VoxelsToRaw(Voxels voxels)
     {
         ThrowIfNull(voxels, nameof(voxels));
 
@@ -151,7 +151,7 @@ public class PrefabSegment : ICloneable
     /// </summary>
     /// <param name="voxels">The <see cref="Voxels"/> to convert.</param>
     /// <param name="destination">The destination span.</param>
-    public static unsafe void VoxelsToRaw(Voxels voxels, Span<byte> destination)
+    public static void VoxelsToRaw(Voxels voxels, Span<byte> destination)
     {
         if (destination.Length < Voxels.VoxelCount * 6)
         {

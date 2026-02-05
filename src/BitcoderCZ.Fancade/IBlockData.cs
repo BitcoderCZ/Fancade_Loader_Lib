@@ -14,7 +14,9 @@ namespace BitcoderCZ.Fancade;
 /// <summary>
 /// Represents a mutable 3D block data container.
 /// </summary>
-// TODO: rename unsafe to unchecked?
+/// <remarks>
+/// Negative XZ positions are allowed, but negative Y positions are not.
+/// </remarks>
 public interface IBlockData
 {
     /// <summary>
@@ -83,7 +85,14 @@ public interface IBlockData
     /// </summary>
     /// <param name="position">The positition to place the block at.</param>
     /// <param name="id">Id of the block to place.</param>
-    void SetBlockUnsafe(int3 position, ushort id);
+    void SetBlockUnchecked(int3 position, ushort id);
+
+    /// <summary>
+    /// Writes the <see cref="Array3D{T}"/> to the <see cref="IBlockData"/>.
+    /// </summary>
+    /// <param name="position">Position to write the <see cref="Array3D{T}"/> at.</param>
+    /// <param name="value">The <see cref="Array3D{T}"/> to write.</param>
+    void WriteRegion(int3 position, Array3D<ushort> value);
 
     /// <summary>
     /// Gets the block at the specified position.
@@ -107,7 +116,68 @@ public interface IBlockData
     /// </summary>
     /// <param name="position">Position of the block.</param>
     /// <returns>Id of the block at the specified position.</returns>
-    ushort GetBlockUnsafe(int3 position);
+    ushort GetBlockUnchecked(int3 position);
+
+    // todo: span overload
+
+    /// <summary>
+    /// Writes a region of the <see cref="IBlockData"/> to the <see cref="Array3D{T}"/>.
+    /// </summary>
+    /// <param name="sourcePosition">Position to start reading at.</param>
+    /// <param name="destination">The <see cref="Array3D{T}"/> to write to.</param>
+    /// <param name="destinationPosition">Position to start writing at.</param>
+    /// <param name="size">Size of the region to copy.</param>
+    void ReadRegion(int3 sourcePosition, Array3D<ushort> destination, int3 destinationPosition, int3 size);
+
+    /// <summary>
+    /// Writes a region of the <see cref="IBlockData"/> to the <see cref="Array3D{T}"/>.
+    /// </summary>
+    /// <param name="destination">The <see cref="Array3D{T}"/> to write to.</param>
+    /// <param name="size">Size of the region to copy.</param>
+    virtual void ReadRegion(Array3D<ushort> destination, int3 size)
+        => ReadRegion(BoundsMin, destination, int3.Zero, size);
+
+    /// <summary>
+    /// Copies a region of the <see cref="IBlockData"/> to another <see cref="IBlockData"/>.
+    /// </summary>
+    /// <param name="sourcePosition">Position to start reading at.</param>
+    /// <param name="destination">The <see cref="IBlockData"/> to write to.</param>
+    /// <param name="destinationPosition">Position to start writing at.</param>
+    /// <param name="size">Size of the region to copy.</param>
+    void CopyRegionTo(int3 sourcePosition, IBlockData destination, int3 destinationPosition, int3 size);
+
+    /// <summary>
+    /// Copies a region of the <see cref="IBlockData"/> to another <see cref="IBlockData"/>.
+    /// </summary>
+    /// <param name="destination">The <see cref="IBlockData"/> to write to.</param>
+    /// <param name="destinationPosition">Position to start writing at.</param>
+    /// <param name="size">Size of the region to copy.</param>
+    virtual void CopyRegionTo(IBlockData destination, int3 destinationPosition, int3 size)
+        => CopyRegionTo(BoundsMin, destination, destinationPosition, size);
+
+    /// <summary>
+    /// Enumerates all blocks, ignoring empty/air.
+    /// </summary>
+    /// <returns>An IEnumerable that returns all non empty blocks.</returns>
+    IEnumerable<KeyValuePair<int3, ushort>> EnumerateNonEmptyBlocks();
+
+    /// <summary>
+    /// Materializes the contents of this <see cref="IBlockData"/> as an <see cref="Array3D{T}"/>.
+    /// </summary>
+    /// <param name="clone">
+    /// When <see langword="true"/>, the returned <see cref="Array3D{T}"/> always owns its own copy of the data.
+    /// When <see langword="false"/> and the underlying storage is already an <see cref="Array3D{T}"/>,
+    /// the implementation may return it directly without allocating or copying.
+    /// </param>
+    /// <returns>
+    /// An <see cref="Array3D{T}"/> containing the blocks represented by this <see cref="IBlockData"/>.
+    /// </returns>
+    virtual Array3D<ushort> ToArray3D(bool clone)
+    {
+        var array = new Array3D<ushort>(Size);
+        ReadRegion(array, array.Size);
+        return array;
+    }
 
     /// <summary>
     /// Trims the size to the smallest size possible.
@@ -171,7 +241,7 @@ public interface IBlockData
     /// Reserves storage so that the specified region can be accessed safely.
     /// </summary>
     /// <remarks>
-    /// <see cref="SetBlockInBounds"/>, <see cref="SetBlockUnsafe"/>, <see cref="GetBlockInBounds"/> and <see cref="GetBlockUnsafe"/> are safe to call within this region after this call (with respect to bounds checking).
+    /// <see cref="SetBlockInBounds"/>, <see cref="SetBlockUnchecked"/>, <see cref="GetBlockInBounds"/> and <see cref="GetBlockUnchecked"/> are safe to call within this region after this call (with respect to bounds checking).
     /// </remarks>
     /// <param name="min">The minimum bounds (inclusive) of the region.</param>
     /// <param name="max">The maximum bounds (inclusive) of the region.</param>

@@ -46,7 +46,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
                     {
                         int3 pos = new int3(x, y, z);
 
-                        if (blocks.GetBlockUnsafe(pos) == blockId)
+                        if (blocks.GetBlockUnchecked(pos) == blockId)
                         {
                             positions.Add(pos);
                             IsEmpty = false;
@@ -284,7 +284,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
             {
                 foreach (var offset in removeOffsets)
                 {
-                    prefab.Blocks.SetBlockUnsafe(pos + offset, 0);
+                    prefab.Blocks.SetBlockUnchecked(pos + offset, 0);
                 }
 
                 foreach (var (offset, id) in ids)

@@ -1,4 +1,4 @@
-﻿// <copyright file="BlockData.cs" company="BitcoderCZ">
+﻿// <copyright file="ArrayBlockData.cs" company="BitcoderCZ">
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
@@ -9,12 +9,12 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using static BitcoderCZ.Utils.ThrowHelper;
 
-namespace BitcoderCZ.Fancade;
+namespace BitcoderCZ.Fancade.Data;
 
 /// <summary>
 /// Represents the blocks inside of a prefab.
 /// </summary>
-public class BlockData : IBlockData
+public class ArrayBlockData : IBlockData
 {
     /// <summary>
     /// The underlying array.
@@ -24,29 +24,29 @@ public class BlockData : IBlockData
     private const int BlockSize = 8;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BlockData"/> class.
+    /// Initializes a new instance of the <see cref="ArrayBlockData"/> class.
     /// </summary>
-    public BlockData()
+    public ArrayBlockData()
     {
         Array = new Array3D<ushort>(int3.One * BlockSize);
         Size = int3.Zero;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BlockData"/> class.
+    /// Initializes a new instance of the <see cref="ArrayBlockData"/> class.
     /// </summary>
     /// <param name="capacity">The initial capacity.</param>
-    public BlockData(int3 capacity)
+    public ArrayBlockData(int3 capacity)
     {
         Array = new Array3D<ushort>(capacity);
         Size = int3.Zero;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BlockData"/> class.
+    /// Initializes a new instance of the <see cref="ArrayBlockData"/> class.
     /// </summary>
     /// <param name="blocks">The blocks to set <see cref="Array"/> to, doesn't clone.</param>
-    public BlockData(Array3D<ushort> blocks)
+    public ArrayBlockData(Array3D<ushort> blocks)
     {
         ThrowIfNull(blocks, nameof(blocks));
 
@@ -56,19 +56,16 @@ public class BlockData : IBlockData
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BlockData"/> class.
+    /// Initializes a new instance of the <see cref="ArrayBlockData"/> class.
     /// </summary>
-    /// <param name="data">The <see cref="BlockData"/> to copy.</param>
-    public BlockData(BlockData data)
+    /// <param name="data">The <see cref="ArrayBlockData"/> to copy.</param>
+    public ArrayBlockData(ArrayBlockData data)
     {
         ThrowIfNull(data, nameof(data));
 
         Array = data.Array.Clone();
         Size = data.Size;
     }
-
-    /// <inheritdoc/>
-    public bool AllowsNegativePositons => false;
 
     /// <inheritdoc/>
     public int3 BoundsMin => int3.Zero;
@@ -191,14 +188,21 @@ public class BlockData : IBlockData
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetBlock(int3 position, ushort id)
     {
-        CheckLowerBounds(position, nameof(position));
+        CheckLowerBounds(position);
         EnsureSize(position + int3.One);
         SetBlockInternal(position, id);
     }
 
     /// <inheritdoc/>
+    public void SetBlockInBounds(int3 position, ushort id)
+    {
+        CheckBounds(position);
+        SetBlockInternal(position, id);
+    }
+
+    /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetBlockUnsafe(int3 position, ushort id)
+    public void SetBlockUnchecked(int3 position, ushort id)
         => SetBlockInternal(position, id);
     #endregion
 
@@ -212,7 +216,7 @@ public class BlockData : IBlockData
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort GetBlockInBounds(int3 position)
     {
-        CheckBounds(position, nameof(position));
+        CheckBounds(position);
 
         return Array.GetUnchecked(position);
     }
@@ -223,7 +227,7 @@ public class BlockData : IBlockData
     /// <param name="position">Position of the block.</param>
     /// <returns>The block at the specified position.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ushort GetBlockUnsafe(int3 position)
+    public ushort GetBlockUnchecked(int3 position)
         => Array.GetUnchecked(position);
 
     /// <summary>
@@ -233,7 +237,7 @@ public class BlockData : IBlockData
     /// <returns>The block at the specified position.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort GetBlock(int3 position)
-        => InBounds(position) ? GetBlockUnsafe(position) : (ushort)0;
+        => InBounds(position) ? GetBlockUnchecked(position) : (ushort)0;
 
     /// <summary>
     /// Gets the block at the specified position or <see langword="null"/>, if <paramref name="position"/> is out of bounds.
@@ -242,8 +246,27 @@ public class BlockData : IBlockData
     /// <returns>The block at the specified position.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort? GetBlockOrNull(int3 position)
-        => InBounds(position) ? GetBlockUnsafe(position) : null;
+        => InBounds(position) ? GetBlockUnchecked(position) : null;
     #endregion
+
+    /// <inheritdoc/>
+    public IEnumerable<KeyValuePair<int3, ushort>> EnumerateNonEmptyBlocks()
+    {
+        var array = Array;
+        var arr = array.Array;
+        for (var i = 0; i < arr.Length; i++)
+        {
+            ushort block = arr[i];
+            if (block != 0)
+            {
+                yield return new(array.Index(i), block);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public Array3D<ushort> ToArray3D(bool clone)
+        => clone ? Array.Clone() : Array;
 
     /// <summary>
     /// Trims the size to the smallest size possible.
@@ -357,7 +380,7 @@ public class BlockData : IBlockData
     }
 
     /// <summary>
-    /// Shifts and resizes the <see cref="BlockData"/>, so that it is either empty, or there are blocks on the 0 position of each of the axis.
+    /// Shifts and resizes the <see cref="ArrayBlockData"/>, so that it is either empty, or there are blocks on the 0 position of each of the axis.
     /// </summary>
     /// <param name="resize">
     /// If <see langword="true"/>, the underlying array should will be resized;
@@ -759,7 +782,7 @@ public class BlockData : IBlockData
 
     /// <inheritdoc/>
     public IBlockData Clone()
-        => new BlockData(this);
+        => new ArrayBlockData(this);
 
     #region Utils
     private static int CeilToMultiple(int value, int blockSize)
@@ -772,7 +795,7 @@ public class BlockData : IBlockData
         => new int3(CeilToMultiple(val.X, blockSize), CeilToMultiple(val.Y, blockSize), CeilToMultiple(val.Z, blockSize));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void CheckLowerBounds(int3 position, string argumentName)
+    private static void CheckLowerBounds(int3 position, [CallerArgumentExpression(nameof(position))] string argumentName = "")
     {
         if (position.X < 0 || position.Y < 0 || position.Z < 0)
         {
@@ -781,7 +804,7 @@ public class BlockData : IBlockData
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void CheckBounds(int3 position, string argumentName)
+    private void CheckBounds(int3 position, [CallerArgumentExpression(nameof(position))] string argumentName = "")
     {
         if (!InBounds(position))
         {
@@ -790,7 +813,7 @@ public class BlockData : IBlockData
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void CheckUpperBounds(int3 position, string argumentName)
+    private void CheckUpperBounds(int3 position, [CallerArgumentExpression(nameof(position))] string argumentName = "")
     {
         if (position.X >= Size.X || position.Y >= Size.Y || position.Z >= Size.Z)
         {

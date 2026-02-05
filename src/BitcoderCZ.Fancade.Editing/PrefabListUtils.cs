@@ -153,7 +153,7 @@ public static class PrefabListUtils
                     for (int x = 0; x < blocks.Size.X; x++)
                     {
                         var pos = new int3(x, y, z);
-                        ushort id = blocks.GetBlockUnsafe(pos);
+                        ushort id = blocks.GetBlockUnchecked(pos);
 
                         if (id == 0)
                         {
@@ -192,7 +192,7 @@ public static class PrefabListUtils
             connectionsTo.Clear();
         }
 
-        bool TryGetImplicitlyConnectedTerminalPos(int3 pos, TerminalInfo terminal, BlockData blocks, out int3 otherBlockPos, out byte3 otherTerminalPos)
+        bool TryGetImplicitlyConnectedTerminalPos(int3 pos, TerminalInfo terminal, ArrayBlockData blocks, out int3 otherBlockPos, out byte3 otherTerminalPos)
         {
             var otherPosVoxel = (pos * Voxels.Size) + terminal.Position + (terminal.Direction.GetOffset() * 2);
             var otherPos = VoxelToBlock(otherPosVoxel);

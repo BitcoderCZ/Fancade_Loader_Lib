@@ -693,7 +693,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 {
                     for (int x = 0; x < prefab.Blocks.Size.X; x++)
                     {
-                        if (prefab.Blocks.GetBlockUnsafe(new int3(x, y, z)) == prefabId)
+                        if (prefab.Blocks.GetBlockUnchecked(new int3(x, y, z)) == prefabId)
                         {
                             prefab.Blocks.SetBlock(new int3(x, y, z) + offset, 0);
                         }
@@ -721,7 +721,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 {
                     for (int x = 0; x < prefab.Blocks.Size.X; x++)
                     {
-                        if (prefab.Blocks.GetBlockUnsafe(new int3(x, y, z)) == prefabId)
+                        if (prefab.Blocks.GetBlockUnchecked(new int3(x, y, z)) == prefabId)
                         {
                             found = true;
 
@@ -755,7 +755,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                     {
                         int3 pos = new int3(x, y, z);
 
-                        if (prefab.Blocks.GetBlockUnsafe(pos) == prefabId)
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
                             if (prefab.Blocks.GetBlock(pos + offset) != 0)
                             {
@@ -803,7 +803,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                     {
                         int3 pos = new int3(x, y, z);
 
-                        if (prefab.Blocks.GetBlockUnsafe(pos) == prefabId)
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
                             foreach (var offset in newPositions)
                             {
@@ -841,7 +841,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                     {
                         int3 pos = new int3(x, y, z);
 
-                        if (prefab.Blocks.GetBlockUnsafe(pos) == prefabId)
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
                             ushort idOld = prefab.Blocks.GetBlock(pos + offset);
 
@@ -881,7 +881,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                     {
                         int3 pos = new int3(x, y, z);
 
-                        if (prefab.Blocks.GetBlockUnsafe(pos) == prefabId)
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
                             foreach (var (offset, id) in ids)
                             {
@@ -959,11 +959,11 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                     {
                         int3 pos = new int3(x, y, z);
 
-                        if (item.Blocks.GetBlockUnsafe(pos) == prefab.Id)
+                        if (item.Blocks.GetBlockUnchecked(pos) == prefab.Id)
                         {
                             foreach (var offset in removeOffsets)
                             {
-                                item.Blocks.SetBlockUnsafe(pos + offset, 0);
+                                item.Blocks.SetBlockUnchecked(pos + offset, 0);
                             }
 
                             foreach (var (offset, id) in ids)

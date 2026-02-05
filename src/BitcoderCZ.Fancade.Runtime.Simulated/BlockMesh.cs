@@ -95,13 +95,13 @@ public readonly struct BlockMesh
     /// <summary>
     /// Creates a new <see cref="BlockMesh"/> instance.
     /// </summary>
-    /// <param name="blocks">The <see cref="BlockData"/> to create the <see cref="BlockMesh"/> for.</param>
+    /// <param name="blocks">The <see cref="ArrayBlockData"/> to create the <see cref="BlockMesh"/> for.</param>
     /// <param name="createScriptMesh">Whether to create mesh for script blocks.</param>
     /// <param name="prefabs">A <see cref="PrefabList"/> used to resolve prefab types and voxels.</param>
     /// <param name="segmentMeshes">A <see cref="ReadOnlySpan{T}"/> of <see cref="PrefabSegmentMeshes"/>, where the index corresponds to the segment id.</param>
     /// <param name="getUnique">A method that given a mesh (blocks, mesh index), gets it's unique index, and if it was already encountered, returns the stored mesh (the input list can be reused).</param>
     /// <returns>The created <see cref="BlockMesh"/>.</returns>
-    public static BlockMesh Create(BlockData blocks, bool createScriptMesh, PrefabList prefabs, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes, Func<ValueListWithHash<FcMesh.Block>, int, (int UniqueIndex, ValueList<FcMesh.Block>? UniqueMesh)> getUnique)
+    public static BlockMesh Create(ArrayBlockData blocks, bool createScriptMesh, PrefabList prefabs, ReadOnlySpan<PrefabSegmentMeshes> segmentMeshes, Func<ValueListWithHash<FcMesh.Block>, int, (int UniqueIndex, ValueList<FcMesh.Block>? UniqueMesh)> getUnique)
     {
         if (blocks.Size == int3.Zero)
         {

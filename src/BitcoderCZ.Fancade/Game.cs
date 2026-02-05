@@ -213,7 +213,7 @@ public class Game : ICloneable
     }
 
     /// <summary>
-    /// Calls <see cref="BlockData.Trim"/> on all prefabs in <see cref="Prefabs"/>.
+    /// Calls <see cref="ArrayBlockData.Trim"/> on all prefabs in <see cref="Prefabs"/>.
     /// </summary>
     public void TrimPrefabs()
     {

@@ -66,7 +66,7 @@ public sealed partial class FcAST
                         {
                             var pos = new int3(x, y, z);
 
-                            ushort id = blocks.GetBlockUnsafe(pos);
+                            ushort id = blocks.GetBlockUnchecked(pos);
 
                             if (id is 46 or 48 or 50 or 52 or 54 or 56)
                             {
@@ -150,7 +150,7 @@ public sealed partial class FcAST
                         {
                             var pos = new int3(x, y, z);
 
-                            ushort id = blocks.GetBlockUnsafe(pos);
+                            ushort id = blocks.GetBlockUnchecked(pos);
 
                             if (id is 46 or 48 or 50 or 52 or 54 or 56)
                             {
@@ -250,7 +250,7 @@ public sealed partial class FcAST
                     {
                         var pos = new int3(x, y, z);
 
-                        if (blocks.GetBlockUnsafe(pos) != 0)
+                        if (blocks.GetBlockUnchecked(pos) != 0)
                         {
                             TryCreateNode(pos, out _);
                         }
