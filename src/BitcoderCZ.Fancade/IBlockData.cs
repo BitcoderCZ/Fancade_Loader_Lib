@@ -90,9 +90,19 @@ public interface IBlockData
     /// <summary>
     /// Writes the <see cref="Array3D{T}"/> to the <see cref="IBlockData"/>.
     /// </summary>
-    /// <param name="position">Position to write the <see cref="Array3D{T}"/> at.</param>
+    /// <param name="destinationPosition">Position to write the <see cref="Array3D{T}"/> at.</param>
     /// <param name="value">The <see cref="Array3D{T}"/> to write.</param>
-    void WriteRegion(int3 position, Array3D<ushort> value);
+    /// <param name="sourcePosition">The starting position of the region to copy from <paramref name="value"/>.</param>
+    /// <param name="size">The size of the region to copy, in elements, along each axis.</param>
+    void WriteRegion(int3 destinationPosition, Array3D<ushort> value, int3 sourcePosition, int3 size);
+
+    /// <summary>
+    /// Writes the <see cref="Array3D{T}"/> to the <see cref="IBlockData"/>.
+    /// </summary>
+    /// <param name="destinationPosition">Position to write the <see cref="Array3D{T}"/> at.</param>
+    /// <param name="value">The <see cref="Array3D{T}"/> to write.</param>
+    virtual void WriteRegion(int3 destinationPosition, Array3D<ushort> value)
+        => WriteRegion(destinationPosition, value, int3.Zero, value.Size);
 
     /// <summary>
     /// Gets the block at the specified position.

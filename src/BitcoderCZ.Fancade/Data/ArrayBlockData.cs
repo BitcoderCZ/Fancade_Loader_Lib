@@ -519,6 +519,21 @@ public class ArrayBlockData : IBlockData
         Size = int3.Zero;
     }
 
+    // todo: validate positions/size
+    /// <inheritdoc/>
+    public void WriteRegion(int3 destinationPosition, Array3D<ushort> value, int3 sourcePosition, int3 size)
+        => value.CopyTo(sourcePosition, Array, destinationPosition, size);
+
+    // todo: validate positions/size
+    /// <inheritdoc/>
+    public void ReadRegion(int3 sourcePosition, Array3D<ushort> destination, int3 destinationPosition, int3 size)
+        => Array.CopyTo(sourcePosition, destination, destinationPosition, size);
+
+    // todo: validate positions/size
+    /// <inheritdoc/>
+    public void CopyRegionTo(int3 sourcePosition, IBlockData destination, int3 destinationPosition, int3 size)
+        => destination.WriteRegion(destinationPosition, Array, sourcePosition, size);
+
     /// <summary>
     /// Moves the contents by a specified offset while ensuring the array size is sufficient.
     /// </summary>

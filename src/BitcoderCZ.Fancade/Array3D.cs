@@ -337,6 +337,76 @@ public class Array3D<T> : IEnumerable<T>
             return y >= 0 && y < newSize.Y && z >= 0 && z < newSize.Z;
         }
     }
+    
+    /// <summary>
+    /// Copies a region from this <see cref="Array3D{T}"/> to the specified destination <see cref="Array3D{T}"/>, starting at the origin of both arrays.
+    /// </summary>
+    /// <param name="destination">The destination <see cref="Array3D{T}"/> to copy data into.</param>
+    /// <param name="size">The size of the region to copy, in elements, along each axis.</param>
+    /// <remarks>
+    /// This method is equivalent to calling <see cref="CopyTo(int3, Array3D{T}, int3, int3)"/> with zero source and destination positions.
+    /// </remarks>
+    public void CopyTo(Array3D<T> destination, int3 size)
+        => CopyTo(int3.Zero, destination, int3.Zero, size);
+
+    /// <summary>
+    /// Copies a region from this <see cref="Array3D{T}"/> to the specified destination <see cref="Array3D{T}"/>, starting at the origin of both arrays.
+    /// </summary>
+    /// <param name="sourcePosition">The starting position of the region to copy from this array.</param>
+    /// <param name="destination">The destination <see cref="Array3D{T}"/> to copy data into.</param>
+    /// <param name="destinationPosition">The starting position of the region to copy into the destination array.</param>
+    /// <param name="size">The size of the region to copy, in elements, along each axis.</param>
+    public void CopyTo(int3 sourcePosition, Array3D<T> destination, int3 destinationPosition, int3 size)
+    {
+        if ((size.X | size.Y | size.Z) < 0)
+        {
+            ThrowArgumentOutOfRangeException(nameof(size));
+        }
+        else if (size == int3.Zero)
+        {
+            return;
+        }
+
+        if (!InBounds(sourcePosition) || !InBounds(sourcePosition + size - int3.One))
+        {
+            ThrowArgumentOutOfRangeException(nameof(sourcePosition));
+        }
+
+        if (!destination.InBounds(destinationPosition) || !destination.InBounds(destinationPosition + size - int3.One))
+        {
+            ThrowArgumentOutOfRangeException(nameof(destinationPosition));
+        }
+
+        int srcSizeX = Size.X;
+        int dstSizeX = destination.Size.X;
+
+        int srcLayerSize = _layerSize;
+        int dstLayerSize = destination._layerSize;
+
+        T[] srcArray = _array;
+        T[] dstArray = destination._array;
+
+        for (int z = 0; z < size.Z; z++)
+        {
+            int srcZBase =
+                ((sourcePosition.Z + z) * srcLayerSize) +
+                (sourcePosition.Y * srcSizeX) +
+                sourcePosition.X;
+
+            int dstZBase =
+                ((destinationPosition.Z + z) * dstLayerSize) +
+                (destinationPosition.Y * dstSizeX) +
+                destinationPosition.X;
+
+            for (int y = 0; y < size.Y; y++)
+            {
+                int srcIndex = srcZBase + (y * srcSizeX);
+                int dstIndex = dstZBase + (y * dstSizeX);
+
+                srcArray.AsSpan(srcIndex, size.X).CopyTo(dstArray.AsSpan(dstIndex, size.X));
+            }
+        }
+    }
 
     /// <summary>
     /// Sets the elements of the array to the default value of each element type.
