@@ -12,6 +12,7 @@ using BitcoderCZ.Fancade.Runtime.Simulated;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
+using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
 {
     var prefabs = new PrefabList();
@@ -19,15 +20,13 @@ using BitcoderCZ.Maths.Vectors;
     prefabs.AddPrefab(level);
 
     var writer = new CodeWriter(new CodeGraph.Builder());
-    // writer.Inspect(CodeWriter.Expressions.AddNumbers(CodeWriter.Expressions.AddNumbers(CodeWriter.Expressions.Number(3), CodeWriter.Expressions.Negate(CodeWriter.Expressions.Number(2))), CodeWriter.Expressions.Number(2)));
-    // writer.Inspect(CodeWriter.Expressions.None(), SignalType.Float);
-    // writer.Inspect(CodeWriter.Expressions.AddNumbers(CodeWriter.Expressions.Negate(CodeWriter.Expressions.Number(2)), CodeWriter.Expressions.Number(3)));
-    writer.RandomSeed(CodeWriter.Expressions.Number(0f));
-    writer.Inspect(CodeWriter.Expressions.Random(CodeWriter.Expressions.None(), CodeWriter.Expressions.None()));
-    writer.Inspect(CodeWriter.Expressions.Random(CodeWriter.Expressions.None(), CodeWriter.Expressions.None()));
+    writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
+    writer.Inspect(MakeVector(None(), None(), AddNumbers(None(), None())));
+    writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
+    writer.Inspect(MakeVector(None(), None(), AddNumbers(AddNumbers(None(), None()), None())));
 
     writer.Flush();
-    PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), level, int3.Zero);
+    PrefabCodeGraphEmitter.Emit(StructuredCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), level, int3.Zero);
     var game = new Game("A", "Unknown Author", "D", prefabs);
     using (var fs = File.OpenWrite("game.fcg"))
     {

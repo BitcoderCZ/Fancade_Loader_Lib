@@ -23,6 +23,11 @@ public static class PrefabCodeGraphEmitter
             blocks.ReserveRegion(blocksOffset, blocksOffset + graph.Size - int3.One);
             foreach (var node in graph.NodesSpan)
             {
+                if (node.IsEmpty)
+                {
+                    continue;
+                }
+
                 var blockPos = blocksOffset + node.Offset;
                 blocks.SetPrefab(blockPos, node.Type.Prefab);
 

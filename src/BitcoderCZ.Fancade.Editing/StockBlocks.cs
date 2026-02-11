@@ -174,6 +174,11 @@ public static class StockBlocks
         => _segmentIsScript[id];
 
     /// <summary>
+    /// Empty block/air.
+    /// </summary>
+    public static readonly BlockDef Empty = new BlockDef("Empty", 0, ScriptBlockType.NonScript, PrefabType.Normal, int3.One, TerminalBuilder.Empty);
+
+    /// <summary>
     /// The stock blocks in the templates category.
     /// </summary>
     public static class Templates

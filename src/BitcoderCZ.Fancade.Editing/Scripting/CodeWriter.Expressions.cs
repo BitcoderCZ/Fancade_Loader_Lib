@@ -58,7 +58,10 @@ public sealed partial class CodeWriter
             public SignalType Type => SignalType.Error;
 
             public Terminal WriteTo(CodeWriter writer)
-                => default;
+            {
+                writer.Builder.PlaceEmptyNode();
+                return default;
+            }
         }
 
         /// <summary>
@@ -81,7 +84,10 @@ public sealed partial class CodeWriter
             public SignalType Type => _terminal.SignalType;
 
             public Terminal WriteTo(CodeWriter writer)
-                => _terminal;
+            {
+                writer.Builder.PlaceEmptyNode();
+                return _terminal;
+            }
         }
 
         /// <summary>

@@ -36,24 +36,36 @@ public static class StructuredCodeGraphPositioner
         var rootLayout = scopeLayouts[graph.RootScope];
 
         var nodes = new PositionedNode[graph.NodeCount];
-        int depth = ApplyLayout(graph.RootScope, 0, new int3(rootLayout.WidthLeft, 0, 0), scopeLayouts, nodes, scopeDepth, layoutOptionsVal);
+        ApplyLayout(graph.RootScope, 0, new int3(rootLayout.WidthLeft, 0, 0), scopeLayouts, nodes, scopeDepth, layoutOptionsVal);
+
+        int maxDepth = 0;
+        foreach (var depth in scopeDepth)
+        {
+            maxDepth = Math.Min(maxDepth, depth);
+        }
+
+        maxDepth = -maxDepth;
 
         for (var i = 0; i < nodes.Length; i++)
         {
             var node = nodes[i];
-            var newOffset = node.Offset + new int3(0, 0, depth);
+            if (node.IsEmpty)
+            {
+                continue;
+            }
+
+            var newOffset = node.Offset + new int3(0, 0, maxDepth);
             Debug.Assert(newOffset.X >= 0);
             Debug.Assert(newOffset.Y >= 0);
             Debug.Assert(newOffset.Z >= 0);
             nodes[i] = new(newOffset, node.Type, node._settings, node._index);
         }
 
-        return new PositionedCodeGraph(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), new int3(rootLayout.GetTotalWidth(layoutOptionsVal.PaddingX), rootLayout.Height, depth));
+        return new PositionedCodeGraph(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), new int3(rootLayout.GetTotalWidth(layoutOptionsVal.PaddingX), rootLayout.Height, maxDepth));
     }
 
-    private static int ApplyLayout(CodeScope scope, int layer, int3 origin, Dictionary<CodeScope, ScopeLayout> scopeLayouts, PositionedNode[] nodes, int[] scopeDepth, LayoutOptions layoutOptions)
+    private static void ApplyLayout(CodeScope scope, int layer, int3 origin, Dictionary<CodeScope, ScopeLayout> scopeLayouts, PositionedNode[] nodes, int[] scopeDepth, LayoutOptions layoutOptions)
     {
-        // todo: track depth per X level, only move when necesary
         var thisLayout = scopeLayouts[scope];
 
         switch (scope.Type)
@@ -67,37 +79,50 @@ public static class StructuredCodeGraphPositioner
                 break;
         }
 
-        origin.Z -= (scope.FirstNodeSize ?? int3.One).Z - 1;
-
         Debug.Assert(origin.X >= 0);
 
         int3 currentPos = origin;
+
         var childEnumerator = scope._children.GetEnumerator();
         CodeScope? currentChild = childEnumerator.MoveNext() ? childEnumerator.Current : null;
 
-        int depth = 0;
+        List<CodeScope> pendingChildren = new(4);
+
         int nodeIndex = 0;
         foreach (var node in scope._nodes)
         {
+            if (node == Node.Empty)
+            {
+                SetScopeDepth(currentPos.Z);
+                currentPos.Z -= 1;
+                nodeIndex++;
+                continue;
+            }
+
+            CollectChildrenForNode(nodeIndex, ref currentChild, ref childEnumerator, pendingChildren);
+
+            int expressionDepth = GetExpressionDepth(pendingChildren);
+
+            currentPos.Z = Math.Min(currentPos.Z, GetSafePos(scopeDepth, layer, expressionDepth) - layoutOptions.GetPaddingZ(scope));
+            currentPos.Z -= node.Type.Size.Z - 1;
+
             nodes[node._index] = new PositionedNode(currentPos, node.Type, node._settings, node._index);
+            SetScopeDepth(currentPos.Z);
 
             int nodeZOffset = node.Type.Size.Z - 1;
             Debug.Assert(nodeZOffset >= 0);
 
             int zSize = node.Type.Size.Z;
 
-            if (currentChild is not null && currentChild.DeclaringNodeIndex == nodeIndex)
+            if (pendingChildren.Count > 0)
             {
-                int3 statementPos = currentPos + new int3(thisLayout.Width + layoutOptions.PaddingX, 0, layoutOptions.StatementDepthOffset + nodeZOffset);
+                int3 statementPos = currentPos + new int3(thisLayout.Width + layoutOptions.PaddingX + 1, 0, -layoutOptions.StatementDepthOffset + nodeZOffset);
                 int3 expressionPos = currentPos - new int3(layoutOptions.PaddingX, 0, -nodeZOffset);
-                int statementZSize = 0;
-                int expressionZSize = 0;
-
-                do
+                foreach (var child in pendingChildren)
                 {
                     int3 childOrigin = default;
                     int childLayer = default;
-                    switch (currentChild.Type)
+                    switch (child.Type)
                     {
                         case ScopeType.Statement:
                             childOrigin = statementPos;
@@ -109,35 +134,62 @@ public static class StructuredCodeGraphPositioner
                             break;
                     }
 
-                    int childZSize = ApplyLayout(currentChild, childLayer, childOrigin, scopeLayouts, nodes, scopeDepth, layoutOptions);
-
-                    switch (currentChild.Type)
-                    {
-                        case ScopeType.Statement:
-                            statementPos.Z -= childZSize;
-                            statementZSize += childZSize;
-                            break;
-                        case ScopeType.Expression:
-                            expressionPos.Z -= childZSize;
-                            expressionZSize += childZSize;
-                            break;
-                    }
-
-                    currentChild = childEnumerator.MoveNext() ? childEnumerator.Current : null;
-                } while (currentChild is not null && currentChild.DeclaringNodeIndex == nodeIndex);
-
-                zSize = Math.Max(zSize, Math.Max(statementZSize, expressionZSize));
+                    ApplyLayout(child, childLayer, childOrigin, scopeLayouts, nodes, scopeDepth, layoutOptions);
+                }
             }
 
-            currentPos.Z -= zSize + layoutOptions.PaddingZ;
-            depth += zSize + layoutOptions.PaddingZ;
+            pendingChildren.Clear();
+
+            currentPos.Z -= 1 + layoutOptions.GetPaddingZ(scope);
+
             nodeIndex++;
         }
 
         Debug.Assert(!childEnumerator.MoveNext());
         Debug.Assert(currentChild is null);
 
-        return depth;
+        void SetScopeDepth(int zPos)
+        {
+            scopeDepth[layer] = Math.Min(scopeDepth[layer], zPos);
+        }
+    }
+
+    private static void CollectChildrenForNode(int nodeIndex, ref CodeScope? currentChild, ref List<CodeScope>.Enumerator childEnumerator, List<CodeScope> buffer)
+    {
+        while (currentChild is not null && currentChild.DeclaringNodeIndex == nodeIndex)
+        {
+            buffer.Add(currentChild);
+
+            currentChild = childEnumerator.MoveNext() ? childEnumerator.Current : null;
+        }
+    }
+
+    private static int GetExpressionDepth(List<CodeScope> children)
+    {
+        for (int i = 0; i < children.Count; i++)
+        {
+            if (children[i].Type == ScopeType.Expression)
+            {
+                return children[i].GetFirstExpressionDepth() + 1;
+            }
+        }
+
+        return 0;
+    }
+
+    private static int GetSafePos(ReadOnlySpan<int> scopeDepth, int layer, int expressionDepth)
+        => GetSafePos(scopeDepth, (layer - expressionDepth)..(layer + 1));
+
+    // todo: account for offset caused by Empty nodes
+    private static int GetSafePos(ReadOnlySpan<int> scopeDepth, Range rangeToCheck)
+    {
+        int min = 0;
+        foreach (var numb in scopeDepth[rangeToCheck])
+        {
+            min = Math.Min(min, numb);
+        }
+
+        return min - 1;
     }
 
     private static Dictionary<CodeScope, ScopeLayout> CalculateAllLayouts(CodeScope scope, LayoutOptions layoutOptions)
@@ -151,7 +203,7 @@ public static class StructuredCodeGraphPositioner
 
     private static ScopeLayout CalculateAllLayouts(CodeScope scope, Action<CodeScope, ScopeLayout> onLayoutCalculated, LayoutOptions layoutOptions)
     {
-        var thisLayout = CalculateLayoutNodesOnly(scope, layoutOptions.PaddingZ);
+        var thisLayout = CalculateLayoutNodesOnly(scope);
 
         int statementWidth = 0;
         int expressionWidth = 0;
@@ -174,16 +226,6 @@ public static class StructuredCodeGraphPositioner
             height = Math.Max(height, childLayout.Height);
         }
 
-        if (statementWidth is not 0)
-        {
-            statementWidth += layoutOptions.PaddingX;
-        }
-
-        if (expressionWidth is not 0)
-        {
-            expressionWidth += layoutOptions.PaddingX;
-        }
-
         var layout = new ScopeLayout(thisLayout.Width, expressionWidth, statementWidth, Math.Max(thisLayout.Height, height));
 
         onLayoutCalculated(scope, layout);
@@ -191,10 +233,8 @@ public static class StructuredCodeGraphPositioner
         return layout;
     }
 
-    private static ScopeLayout CalculateLayoutNodesOnly(CodeScope scope, int paddingZ = 1)
+    private static ScopeLayout CalculateLayoutNodesOnly(CodeScope scope)
     {
-        Debug.Assert(paddingZ >= 0);
-
         int width = 0;
         int height = 0;
 
@@ -222,7 +262,7 @@ public static class StructuredCodeGraphPositioner
         /// Gets a compact <see cref="LayoutOptions"/>.
         /// </summary>
         /// <value>A <see cref="LayoutOptions"/> instance with minimum spacing.</value>
-        public static LayoutOptions Compact => new() { PaddingZ = 0, StatementDepthOffset = 0, };
+        public static LayoutOptions Compact => new() { StatementPaddingZ = 0, ExpressionPaddingZ = 0, StatementDepthOffset = 0, };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LayoutOptions"/> struct.
@@ -238,10 +278,16 @@ public static class StructuredCodeGraphPositioner
         public int PaddingX { get; init; } = 1;
 
         /// <summary>
-        /// Gets the padding between nodes on the Z axis, default is 1, minimum is 0.
+        /// Gets the padding between statement nodes on the Z axis, default is 1, minimum is 0.
         /// </summary>
-        /// <value>Padding between nodes on the Z axis.</value>
-        public int PaddingZ { get; init; } = 1;
+        /// <value>Padding between statement nodes on the Z axis.</value>
+        public int StatementPaddingZ { get; init; } = 1;
+
+        /// <summary>
+        /// Gets the padding between expression nodes on the Z axis, default is 0, minimum is 0.
+        /// </summary>
+        /// <value>Padding between expression nodes on the Z axis.</value>
+        public int ExpressionPaddingZ { get; init; } = 0;
 
         /// <summary>
         /// Gets the offset along the Z axis of child statement scopes, default is 1, minimum is 0.
@@ -252,9 +298,18 @@ public static class StructuredCodeGraphPositioner
         internal void Validate()
         {
             ThrowHelper.ThrowIfLessThan(PaddingX, 1);
-            ThrowHelper.ThrowIfNegative(PaddingZ);
+            ThrowHelper.ThrowIfNegative(StatementPaddingZ);
+            ThrowHelper.ThrowIfNegative(ExpressionPaddingZ);
             ThrowHelper.ThrowIfNegative(StatementDepthOffset);
         }
+
+        internal int GetPaddingZ(CodeScope scope)
+            => scope.Type switch
+            {
+                ScopeType.Statement => StatementPaddingZ,
+                ScopeType.Expression => ExpressionPaddingZ,
+                _ => default,
+            };
     }
 
     private readonly struct ScopeLayout

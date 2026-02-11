@@ -144,6 +144,12 @@ public readonly struct PositionedNode
     public SettingsEnumerable Settings => new SettingsEnumerable(this);
 
     /// <summary>
+    /// Gets a value indicating whether the <see cref="Node"/> is empty/air.
+    /// </summary>
+    /// <value><see langword="true"/> if the <see cref="Node"/> is empty; otherwise, <see langword="false"/>.</value>
+    public bool IsEmpty => Type is null || Type.Prefab.Id is 0;
+
+    /// <summary>
     /// Represents a region of non-script blocks that can be constructed and later connected to script nodes.
     /// </summary>
     public sealed class BlockRegion

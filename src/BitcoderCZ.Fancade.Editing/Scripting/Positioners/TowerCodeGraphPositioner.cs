@@ -45,7 +45,7 @@ public static class TowerCodeGraphPositioner
         {
             var basePos = GetTowerCoords(info.TowerIndex, info.TowerX) * info.Options.TowerSpacing;
 
-            for (; info.YLevel < info.Options.MaximumTowerHeight && info.NodeIndex < info.Nodes.Length; info.YLevel++, info.NodeIndex++)
+            for (; info.YLevel < info.Options.MaximumTowerHeight; info.YLevel++, info.NodeIndex++)
             {
                 if (!nodes.MoveNext())
                 {
@@ -53,6 +53,11 @@ public static class TowerCodeGraphPositioner
                 }
 
                 var node = nodes.Current;
+                if (node == Node.Empty)
+                {
+                    info.YLevel--;
+                    continue;
+                }
 
                 var position = new int3(basePos.X, info.YLevel, basePos.Y);
                 info.Nodes[node._index] = new PositionedNode(position, node.Type, node._settings, node._index);
@@ -61,7 +66,7 @@ public static class TowerCodeGraphPositioner
             info.YLevel = 0;
         }
 
-        breakLabel:
+    breakLabel:
 
         foreach (var child in scope.Children)
         {

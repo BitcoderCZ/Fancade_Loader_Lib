@@ -19,6 +19,15 @@ namespace BitcoderCZ.Fancade.Editing.Scripting;
 /// </summary>
 public sealed class Node
 {
+    /// <summary>
+    /// Gets the empty node instance.
+    /// </summary>
+    /// <remarks>
+    /// Can be used for padding.
+    /// </remarks>
+    /// <value>The empty node instance.</value>
+    public static Node Empty { get; } = new Node(new BlockDef("Empty", ushort.MaxValue, ScriptBlockType.NonScript, PrefabType.Normal, int3.One, TerminalBuilder.Empty), -1);
+
     internal readonly int _index;
     internal SettingsCollection _settings;
 

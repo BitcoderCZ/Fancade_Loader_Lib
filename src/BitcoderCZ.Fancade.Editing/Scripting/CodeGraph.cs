@@ -101,6 +101,15 @@ public sealed class CodeGraph
         }
 
         /// <summary>
+        /// Places an empty node.
+        /// </summary>
+        public void PlaceEmptyNode()
+        {
+            _nextNodeId++;
+            _scopeStack.Peek()._nodes.Add(Node.Empty);
+        }
+
+        /// <summary>
         /// Creates a <see cref="Node.BlockRegion"/>, for placing non script blocks.
         /// </summary>
         /// <remarks>
@@ -177,7 +186,11 @@ public sealed class CodeGraph
             }
             else if (topScope._nodes.Count is 0)
             {
-                ThrowInvalidOperationException("Cannot enter new scope when the current scope has no blocks.");
+                ThrowInvalidOperationException("Cannot enter new scope when the current scope has no node.");
+            }
+            else if (topScope._nodes[^1] == Node.Empty)
+            {
+                ThrowInvalidOperationException("Cannot enter new scope when the current scope's last node is an empty node'.");
             }
 
             var newScope = new CodeScope(ScopeType.Statement, topScope);
@@ -214,7 +227,11 @@ public sealed class CodeGraph
 
             if (topScope._nodes.Count is 0)
             {
-                ThrowInvalidOperationException("Cannot enter new scope when the current scope has no blocks.");
+                ThrowInvalidOperationException("Cannot enter new scope when the current scope has no nodes.");
+            }
+            else if (topScope._nodes[^1] == Node.Empty)
+            {
+                ThrowInvalidOperationException("Cannot enter new scope when the current scope's last node is an empty node'.");
             }
 
             var newScope = new CodeScope(ScopeType.Expression, topScope);
@@ -277,7 +294,16 @@ public sealed class CodeGraph
                 }
             }
 
-            return scope._nodes.Count == 0;
+            var lastExpressionChild = scope._children.LastOrDefault(static child => child.Type is ScopeType.Expression);
+            if (lastExpressionChild is not null)
+            {
+                while (lastExpressionChild._nodes.Last() == Node.Empty)
+                {
+                    lastExpressionChild._nodes.RemoveAt(lastExpressionChild._nodes.Count - 1);
+                }
+            }
+
+            return !scope._nodes.Any(static node => node != Node.Empty);
         }
 
         /// <summary>
@@ -354,6 +380,7 @@ public sealed class CodeScope
     internal readonly List<Node> _nodes = [];
     internal readonly List<CodeScope> _children = [];
     private int? _maxExpressionDepth;
+    private int? _firstExpressionDepth;
 
     internal CodeScope(ScopeType type)
     {
@@ -426,6 +453,27 @@ public sealed class CodeScope
 
         _maxExpressionDepth = maxExpressionDepth;
         return maxExpressionDepth;
+    }
+
+    internal int GetFirstExpressionDepth()
+    {
+        if (_firstExpressionDepth is { } firstExpressionDepth)
+        {
+            return firstExpressionDepth;
+        }
+
+        var firstExpression = _children.FirstOrDefault(static child => child.Type is ScopeType.Expression);
+        if (firstExpression is null)
+        {
+            firstExpressionDepth = 0;
+        }
+        else
+        {
+            firstExpressionDepth = 1 + firstExpression.GetFirstExpressionDepth();
+        }
+
+        _firstExpressionDepth = firstExpressionDepth;
+        return firstExpressionDepth;
     }
 
     internal int GetHorizontalSize()
