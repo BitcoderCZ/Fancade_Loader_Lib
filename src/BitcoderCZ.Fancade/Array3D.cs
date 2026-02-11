@@ -13,7 +13,7 @@ namespace BitcoderCZ.Fancade;
 /// Represents a 3D array.
 /// </summary>
 /// <typeparam name="T">The type of the items.</typeparam>
-public class Array3D<T> : IEnumerable<T>
+public class Array3D<T> : IReadOnly3DArray<T>
 {
     private int _layerSize;
     private T[] _array;
@@ -116,6 +116,9 @@ public class Array3D<T> : IEnumerable<T>
 #pragma warning disable CA1819 // Properties should not return arrays
     public T[] Array => _array;
 #pragma warning restore CA1819
+
+    /// <inheritdoc/>
+    public ReadOnlySpan<T> Data => _array;
 
     /// <summary>
     /// Gets the size of this array.

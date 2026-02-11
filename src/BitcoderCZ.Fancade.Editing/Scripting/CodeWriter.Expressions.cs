@@ -2,10 +2,10 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using Terminal = BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal;
 
 [assembly: InternalsVisibleTo("BitcoderCZ.Fancade.Runtime.Tests")]
 
@@ -38,7 +38,7 @@ public sealed partial class CodeWriter
             /// <param name="writer">The <see cref="CodeWriter"/> to write to.</param>
             /// <param name="outputIndex">Index to the terminal to get.</param>
             /// <returns>The specified terminal.</returns>
-            ITerminal WriteTo(CodeWriter writer, int outputIndex);
+            Terminal WriteTo(CodeWriter writer, int outputIndex);
         }
 
         /// <summary>
@@ -57,30 +57,30 @@ public sealed partial class CodeWriter
 
             public SignalType Type => SignalType.Error;
 
-            public ITerminal WriteTo(CodeWriter writer)
-                => NopTerminal.Instance;
+            public Terminal WriteTo(CodeWriter writer)
+                => default;
         }
 
         /// <summary>
-        /// Wraps an <see cref="ITerminal"/> as an <see cref="IExpression"/>.
+        /// Wraps an <see cref="Terminal"/> as an <see cref="IExpression"/>.
         /// </summary>
         /// <param name="terminal">The terminal to wrap.</param>
         [Obsolete($"Use {nameof(Editing.Utils.TerminalUtils)}.{nameof(Editing.Utils.TerminalUtils.Wrap)} instead.")]
-        public static IExpression WrapTerminal(ITerminal terminal)
+        public static IExpression WrapTerminal(Terminal terminal)
             => new TerminalWrapperExpression(terminal);
 
         internal sealed class TerminalWrapperExpression : IExpression
         {
-            private readonly ITerminal _terminal;
+            private readonly Terminal _terminal;
 
-            public TerminalWrapperExpression(ITerminal terminal)
+            public TerminalWrapperExpression(Terminal terminal)
             {
                 _terminal = terminal;
             }
 
             public SignalType Type => _terminal.SignalType;
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
                 => _terminal;
         }
 
@@ -96,16 +96,16 @@ public sealed partial class CodeWriter
 
         private sealed class ScreenSizeExpression : IMultiOutputExpression
         {
-            private Block? _block;
+            private Node? _block;
 
             public SignalType GetType(int outputIndex)
                 => SignalType.Float;
 
-            public ITerminal WriteTo(CodeWriter writer, int outputIndex)
+            public Terminal WriteTo(CodeWriter writer, int outputIndex)
             {
-                _block ??= writer._codePlacer.PlaceBlock(StockBlocks.Game.ScreenSize);
+                _block ??= writer._codeBuilder.Place(StockBlocks.Game.ScreenSize);
 
-                return new BlockTerminal(_block, 1 - outputIndex);
+                return new Terminal(_block, 1 - outputIndex);
             }
         }
 
@@ -119,11 +119,11 @@ public sealed partial class CodeWriter
         {
             public SignalType Type => SignalType.Vec3;
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(StockBlocks.Game.Accelerometer);
+                var block = writer._codeBuilder.Place(StockBlocks.Game.Accelerometer);
 
-                return new BlockTerminal(block, "Direction");
+                return new Terminal(block, "Direction");
             }
         }
 
@@ -137,11 +137,11 @@ public sealed partial class CodeWriter
         {
             public SignalType Type => SignalType.Float;
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(StockBlocks.Game.CurrentFrame);
+                var block = writer._codeBuilder.Place(StockBlocks.Game.CurrentFrame);
 
-                return new BlockTerminal(block, "Counter");
+                return new Terminal(block, "Counter");
             }
         }
 
@@ -159,7 +159,7 @@ public sealed partial class CodeWriter
         private sealed class GetPosExpression : IMultiOutputExpression
         {
             private readonly IExpression _object;
-            private Block? _block;
+            private Node? _block;
 
             public GetPosExpression(IExpression @object)
             {
@@ -174,21 +174,21 @@ public sealed partial class CodeWriter
                     _ => throw new UnreachableException(),
                 };
 
-            public ITerminal WriteTo(CodeWriter writer, int outputIndex)
+            public Terminal WriteTo(CodeWriter writer, int outputIndex)
             {
                 if (_block is null)
                 {
-                    _block = writer._codePlacer.PlaceBlock(StockBlocks.Objects.GetPos);
+                    _block = writer._codeBuilder.Place(StockBlocks.Objects.GetPos);
 
-                    using (writer.ExpressionBlock())
+                    using (writer.ExpressionScope())
                     {
                         var @object = _object.WriteTo(writer);
 
-                        writer._codePlacer.Connect(@object, new BlockTerminal(_block, "Object"));
+                        writer._codeBuilder.Connect(@object, new Terminal(_block, "Object"));
                     }
                 }
 
-                return new BlockTerminal(_block, 1 - outputIndex);
+                return new Terminal(_block, 1 - outputIndex);
             }
         }
 
@@ -208,7 +208,7 @@ public sealed partial class CodeWriter
         {
             private readonly IExpression _from;
             private readonly IExpression _to;
-            private Block? _block;
+            private Node? _block;
 
             public RaycastExpression(IExpression from, IExpression to)
             {
@@ -225,23 +225,23 @@ public sealed partial class CodeWriter
                     _ => throw new UnreachableException(),
                 };
 
-            public ITerminal WriteTo(CodeWriter writer, int outputIndex)
+            public Terminal WriteTo(CodeWriter writer, int outputIndex)
             {
                 if (_block is null)
                 {
-                    _block = writer._codePlacer.PlaceBlock(StockBlocks.Objects.Raycast);
+                    _block = writer._codeBuilder.Place(StockBlocks.Objects.Raycast);
 
-                    using (writer.ExpressionBlock())
+                    using (writer.ExpressionScope())
                     {
                         var from = _from.WriteTo(writer);
                         var to = _to.WriteTo(writer);
 
-                        writer._codePlacer.Connect(from, new BlockTerminal(_block, "From"));
-                        writer._codePlacer.Connect(to, new BlockTerminal(_block, "To"));
+                        writer._codeBuilder.Connect(from, new Terminal(_block, "From"));
+                        writer._codeBuilder.Connect(to, new Terminal(_block, "To"));
                     }
                 }
 
-                return new BlockTerminal(_block, 2 - outputIndex);
+                return new Terminal(_block, 2 - outputIndex);
             }
         }
 
@@ -259,7 +259,7 @@ public sealed partial class CodeWriter
         private sealed class GetSizeExpression : IMultiOutputExpression
         {
             private readonly IExpression _object;
-            private Block? _block;
+            private Node? _block;
 
             public GetSizeExpression(IExpression @object)
             {
@@ -269,21 +269,21 @@ public sealed partial class CodeWriter
             public SignalType GetType(int outputIndex)
                 => SignalType.Vec3;
 
-            public ITerminal WriteTo(CodeWriter writer, int outputIndex)
+            public Terminal WriteTo(CodeWriter writer, int outputIndex)
             {
                 if (_block is null)
                 {
-                    _block = writer._codePlacer.PlaceBlock(StockBlocks.Objects.GetSize);
+                    _block = writer._codeBuilder.Place(StockBlocks.Objects.GetSize);
 
-                    using (writer.ExpressionBlock())
+                    using (writer.ExpressionScope())
                     {
                         var @object = _object.WriteTo(writer);
 
-                        writer._codePlacer.Connect(@object, new BlockTerminal(_block, "Object"));
+                        writer._codeBuilder.Connect(@object, new Terminal(_block, "Object"));
                     }
                 }
 
-                return new BlockTerminal(_block, 1 - outputIndex);
+                return new Terminal(_block, 1 - outputIndex);
             }
         }
 
@@ -301,7 +301,7 @@ public sealed partial class CodeWriter
         private sealed class GetVelocityExpression : IMultiOutputExpression
         {
             private readonly IExpression _object;
-            private Block? _block;
+            private Node? _block;
 
             public GetVelocityExpression(IExpression @object)
             {
@@ -311,21 +311,21 @@ public sealed partial class CodeWriter
             public SignalType GetType(int outputIndex)
                 => SignalType.Vec3;
 
-            public ITerminal WriteTo(CodeWriter writer, int outputIndex)
+            public Terminal WriteTo(CodeWriter writer, int outputIndex)
             {
                 if (_block is null)
                 {
-                    _block = writer._codePlacer.PlaceBlock(StockBlocks.Physics.GetVelocity);
+                    _block = writer._codeBuilder.Place(StockBlocks.Physics.GetVelocity);
 
-                    using (writer.ExpressionBlock())
+                    using (writer.ExpressionScope())
                     {
                         var @object = _object.WriteTo(writer);
 
-                        writer._codePlacer.Connect(@object, new BlockTerminal(_block, "Object"));
+                        writer._codeBuilder.Connect(@object, new Terminal(_block, "Object"));
                     }
                 }
 
-                return new BlockTerminal(_block, 1 - outputIndex);
+                return new Terminal(_block, 1 - outputIndex);
             }
         }
 
@@ -632,18 +632,18 @@ public sealed partial class CodeWriter
 
             public SignalType Type => SignalType.Rot;
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(StockBlocks.Math.Lerp);
+                var block = writer._codeBuilder.Place(StockBlocks.Math.Lerp);
 
-                using (writer.ExpressionBlock())
+                using (writer.ExpressionScope())
                 {
-                    writer._codePlacer.Connect(_from.WriteTo(writer), new BlockTerminal(block, "From"));
-                    writer._codePlacer.Connect(_to.WriteTo(writer), new BlockTerminal(block, "To"));
-                    writer._codePlacer.Connect(_amount.WriteTo(writer), new BlockTerminal(block, "Amount"));
+                    writer._codeBuilder.Connect(_from.WriteTo(writer), new Terminal(block, "From"));
+                    writer._codeBuilder.Connect(_to.WriteTo(writer), new Terminal(block, "To"));
+                    writer._codeBuilder.Connect(_amount.WriteTo(writer), new Terminal(block, "Amount"));
                 }
 
-                return new BlockTerminal(block, "Rotation");
+                return new Terminal(block, "Rotation");
             }
         }
 
@@ -671,7 +671,7 @@ public sealed partial class CodeWriter
         {
             private readonly IExpression _screenX;
             private readonly IExpression _screenY;
-            private Block? _block;
+            private Node? _block;
 
             public ScreenToWorldExpression(IExpression screenX, IExpression screenY)
             {
@@ -682,20 +682,20 @@ public sealed partial class CodeWriter
             public SignalType GetType(int outputIndex)
                 => SignalType.Vec3;
 
-            public ITerminal WriteTo(CodeWriter writer, int outputIndex)
+            public Terminal WriteTo(CodeWriter writer, int outputIndex)
             {
                 if (_block is null)
                 {
-                    _block = writer._codePlacer.PlaceBlock(StockBlocks.Math.ScreenToWorld);
+                    _block = writer._codeBuilder.Place(StockBlocks.Math.ScreenToWorld);
 
-                    using (writer.ExpressionBlock())
+                    using (writer.ExpressionScope())
                     {
-                        writer._codePlacer.Connect(_screenX.WriteTo(writer), new BlockTerminal(_block, "Screen X"));
-                        writer._codePlacer.Connect(_screenY.WriteTo(writer), new BlockTerminal(_block, "Screen Y"));
+                        writer._codeBuilder.Connect(_screenX.WriteTo(writer), new Terminal(_block, "Screen X"));
+                        writer._codeBuilder.Connect(_screenY.WriteTo(writer), new Terminal(_block, "Screen Y"));
                     }
                 }
 
-                return new BlockTerminal(_block, 1 - outputIndex);
+                return new Terminal(_block, 1 - outputIndex);
             }
         }
 
@@ -713,7 +713,7 @@ public sealed partial class CodeWriter
         private sealed class WorldToScreenExpression : IMultiOutputExpression
         {
             private readonly IExpression _worldPos;
-            private Block? _block;
+            private Node? _block;
 
             public WorldToScreenExpression(IExpression worldPos)
             {
@@ -723,19 +723,19 @@ public sealed partial class CodeWriter
             public SignalType GetType(int outputIndex)
                 => SignalType.Float;
 
-            public ITerminal WriteTo(CodeWriter writer, int outputIndex)
+            public Terminal WriteTo(CodeWriter writer, int outputIndex)
             {
                 if (_block is null)
                 {
-                    _block = writer._codePlacer.PlaceBlock(StockBlocks.Math.WorldToScreen);
+                    _block = writer._codeBuilder.Place(StockBlocks.Math.WorldToScreen);
 
-                    using (writer.ExpressionBlock())
+                    using (writer.ExpressionScope())
                     {
-                        writer._codePlacer.Connect(_worldPos.WriteTo(writer), new BlockTerminal(_block, "World Near"));
+                        writer._codeBuilder.Connect(_worldPos.WriteTo(writer), new Terminal(_block, "World Near"));
                     }
                 }
 
-                return new BlockTerminal(_block, 1 - outputIndex);
+                return new Terminal(_block, 1 - outputIndex);
             }
         }
 
@@ -766,19 +766,19 @@ public sealed partial class CodeWriter
 
             public SignalType Type => SignalType.Vec3;
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(StockBlocks.Math.LineVsPlane);
+                var block = writer._codeBuilder.Place(StockBlocks.Math.LineVsPlane);
 
-                using (writer.ExpressionBlock())
+                using (writer.ExpressionScope())
                 {
-                    writer._codePlacer.Connect(_lineFrom.WriteTo(writer), new BlockTerminal(block, "Line From"));
-                    writer._codePlacer.Connect(_lineTo.WriteTo(writer), new BlockTerminal(block, "Line To"));
-                    writer._codePlacer.Connect(_planePoint.WriteTo(writer), new BlockTerminal(block, "Plane Point"));
-                    writer._codePlacer.Connect(_planeNormal.WriteTo(writer), new BlockTerminal(block, "Plane Normal"));
+                    writer._codeBuilder.Connect(_lineFrom.WriteTo(writer), new Terminal(block, "Line From"));
+                    writer._codeBuilder.Connect(_lineTo.WriteTo(writer), new Terminal(block, "Line To"));
+                    writer._codeBuilder.Connect(_planePoint.WriteTo(writer), new Terminal(block, "Plane Point"));
+                    writer._codeBuilder.Connect(_planeNormal.WriteTo(writer), new Terminal(block, "Plane Normal"));
                 }
 
-                return new BlockTerminal(block, "Intersection");
+                return new Terminal(block, "Intersection");
             }
         }
 
@@ -825,18 +825,18 @@ public sealed partial class CodeWriter
 
             public SignalType Type => _vector ? SignalType.Vec3 : SignalType.Rot;
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(_vector ? StockBlocks.Math.Make_Vector : StockBlocks.Math.Make_Rotation);
+                var block = writer._codeBuilder.Place(_vector ? StockBlocks.Math.Make_Vector : StockBlocks.Math.Make_Rotation);
 
-                using (writer.ExpressionBlock())
+                using (writer.ExpressionScope())
                 {
-                    writer._codePlacer.Connect(_x.WriteTo(writer), new BlockTerminal(block, 3));
-                    writer._codePlacer.Connect(_y.WriteTo(writer), new BlockTerminal(block, 2));
-                    writer._codePlacer.Connect(_z.WriteTo(writer), new BlockTerminal(block, 1));
+                    writer._codeBuilder.Connect(_x.WriteTo(writer), new Terminal(block, 3));
+                    writer._codeBuilder.Connect(_y.WriteTo(writer), new Terminal(block, 2));
+                    writer._codeBuilder.Connect(_z.WriteTo(writer), new Terminal(block, 1));
                 }
 
-                return new BlockTerminal(block, 0);
+                return new Terminal(block, 0);
             }
         }
 
@@ -866,7 +866,7 @@ public sealed partial class CodeWriter
         {
             private readonly IExpression _input;
             private readonly bool _vector;
-            private Block? _block;
+            private Node? _block;
 
             public BreakVecRotExpression(IExpression input, bool vector)
             {
@@ -877,20 +877,20 @@ public sealed partial class CodeWriter
             public SignalType GetType(int outputIndex)
                 => SignalType.Float;
 
-            public ITerminal WriteTo(CodeWriter writer, int outputIndex)
+            public Terminal WriteTo(CodeWriter writer, int outputIndex)
             {
                 if (_block is null)
                 {
-                    _block = writer._codePlacer.PlaceBlock(_vector ? StockBlocks.Math.Break_Vector : StockBlocks.Math.Break_Rotation);
+                    _block = writer._codeBuilder.Place(_vector ? StockBlocks.Math.Break_Vector : StockBlocks.Math.Break_Rotation);
 
-                    using (writer.ExpressionBlock())
+                    using (writer.ExpressionScope())
                     {
-                        ITerminal terminal = _input.WriteTo(writer);
-                        writer._codePlacer.Connect(terminal, new BlockTerminal(_block, 3));
+                        Terminal terminal = _input.WriteTo(writer);
+                        writer._codeBuilder.Connect(terminal, new Terminal(_block, 3));
                     }
                 }
 
-                return new BlockTerminal(_block, 2 - outputIndex);
+                return new Terminal(_block, 2 - outputIndex);
             }
         }
 
@@ -947,23 +947,26 @@ public sealed partial class CodeWriter
 
             public SignalType Type => _type;
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(_type switch
+                var (blockDef, settingType) = _type switch
                 {
-                    SignalType.Float => StockBlocks.Values.Number,
-                    SignalType.Vec3 => StockBlocks.Values.Vector,
-                    SignalType.Rot => StockBlocks.Values.Rotation,
-                    SignalType.Bool => (_value is bool b && b) ? StockBlocks.Values.True : StockBlocks.Values.False,
+                    SignalType.Float => (StockBlocks.Values.Number, SettingType.Float),
+                    SignalType.Vec3 => (StockBlocks.Values.Vector, SettingType.Vec3),
+                    SignalType.Rot => (StockBlocks.Values.Rotation, SettingType.Vec3),
+                    SignalType.Bool => (_value is bool b && b) ? (StockBlocks.Values.True, default) : (StockBlocks.Values.False, default),
                     _ => throw new UnreachableException(),
-                });
+                };
+
+                var block = writer._codeBuilder.Place(blockDef);
 
                 if (_type is not SignalType.Bool)
-                {
-                    writer._codePlacer.SetSetting(block, 0, _value);
+                {   
+                    var value = _value is Rotation rotation ? rotation.Value : _value;
+                    writer._codeBuilder.SetSetting(block, new(0, settingType, value));
                 }
 
-                return new BlockTerminal(block, 0);
+                return new Terminal(block, 0);
             }
         }
 
@@ -985,13 +988,13 @@ public sealed partial class CodeWriter
 
             public SignalType Type => _variable.Type.ToPointer();
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(StockBlocks.Variables.GetVariableByType(_variable.Type));
+                var block = writer._codeBuilder.Place(StockBlocks.Variables.GetVariableByType(_variable.Type));
 
-                writer._codePlacer.SetSetting(block, 0, _variable.Name);
+                writer._codeBuilder.SetSetting(block, new(0, SettingType.String, _variable.Name));
 
-                return new BlockTerminal(block, 0);
+                return new Terminal(block, 0);
             }
         }
 
@@ -1027,17 +1030,17 @@ public sealed partial class CodeWriter
 
             public SignalType Type => _type.ToPointer();
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(_type));
+                var block = writer._codeBuilder.Place(StockBlocks.Variables.ListByType(_type));
 
-                using (writer.ExpressionBlock())
+                using (writer.ExpressionScope())
                 {
-                    writer._codePlacer.Connect(_variable.WriteTo(writer), new BlockTerminal(block, "Variable"));
-                    writer._codePlacer.Connect(_index.WriteTo(writer), new BlockTerminal(block, "Index"));
+                    writer._codeBuilder.Connect(_variable.WriteTo(writer), new Terminal(block, "Variable"));
+                    writer._codeBuilder.Connect(_index.WriteTo(writer), new Terminal(block, "Index"));
                 }
 
-                return new BlockTerminal(block, "Element");
+                return new Terminal(block, "Element");
             }
         }
 
@@ -1055,7 +1058,7 @@ public sealed partial class CodeWriter
 
             public SignalType Type => _expression.GetType(_outputIndex);
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
                 => _expression.WriteTo(writer, _outputIndex);
         }
 
@@ -1072,18 +1075,18 @@ public sealed partial class CodeWriter
 
             public SignalType Type => _def.Terminals[0].SignalType;
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(_def);
+                var block = writer._codeBuilder.Place(_def);
 
-                using (writer.ExpressionBlock())
+                using (writer.ExpressionScope())
                 {
                     var inp = _inp.WriteTo(writer);
 
-                    writer._codePlacer.Connect(inp, new BlockTerminal(block, 1));
+                    writer._codeBuilder.Connect(inp, new Terminal(block, 1));
                 }
 
-                return new BlockTerminal(block, 0);
+                return new Terminal(block, 0);
             }
         }
 
@@ -1102,20 +1105,20 @@ public sealed partial class CodeWriter
 
             public SignalType Type => _def.Terminals[0].SignalType;
 
-            public ITerminal WriteTo(CodeWriter writer)
+            public Terminal WriteTo(CodeWriter writer)
             {
-                var block = writer._codePlacer.PlaceBlock(_def);
+                var block = writer._codeBuilder.Place(_def);
 
-                using (writer.ExpressionBlock())
+                using (writer.ExpressionScope())
                 {
                     var inp1 = _inp1.WriteTo(writer);
                     var inp2 = _inp2.WriteTo(writer);
 
-                    writer._codePlacer.Connect(inp1, new BlockTerminal(block, 2));
-                    writer._codePlacer.Connect(inp2, new BlockTerminal(block, 1));
+                    writer._codeBuilder.Connect(inp1, new Terminal(block, 2));
+                    writer._codeBuilder.Connect(inp2, new Terminal(block, 1));
                 }
 
-                return new BlockTerminal(block, 0);
+                return new Terminal(block, 0);
             }
         }
     }

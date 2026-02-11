@@ -2,9 +2,10 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
-using BitcoderCZ.Fancade.Editing.Scripting.TerminalStores;
 using System.Diagnostics.CodeAnalysis;
 using static BitcoderCZ.Utils.ThrowHelper;
+using Terminal = BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal;
+using TerminalStore = BitcoderCZ.Fancade.Editing.Scripting.Node.TerminalStore;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting.Utils;
 
@@ -15,7 +16,7 @@ public sealed class BreakBlockCache
 {
     private readonly int _maxUsesPerAxis;
 
-    private Block? _lastBlock;
+    private Node? _lastBlock;
     [SuppressMessage("Performance", "CA1805:Do not initialize unnecessarily", Justification = "Clarity.")]
     private bool _invalid = false;
 
@@ -28,7 +29,7 @@ public sealed class BreakBlockCache
     /// </summary>
     /// <param name="breakBlock">The initial break vector/rotation block.</param>
     /// <param name="maxUsesPerAxis">Maximum number of uses, per axis.</param>
-    public BreakBlockCache(Block? breakBlock, int maxUsesPerAxis)
+    public BreakBlockCache(Node? breakBlock, int maxUsesPerAxis)
     {
         if (maxUsesPerAxis < 1)
         {
@@ -47,7 +48,7 @@ public sealed class BreakBlockCache
     /// Sets the break vector/rotation block to use.
     /// </summary>
     /// <param name="breakBlock">The break vector/rotation block.</param>
-    public void SetNewBlock(Block breakBlock)
+    public void SetNewBlock(Node breakBlock)
     {
         _lastBlock = ValidateBlock(breakBlock, nameof(breakBlock));
         _invalid = false;
@@ -71,7 +72,7 @@ public sealed class BreakBlockCache
     /// </remarks>
     /// <param name="breakBlock">The break vector/rotation block.</param>
     /// <returns><see langword="true"/> if the block was retrieved successfully; otherwise, <see langword="false"/>.</returns>
-    public bool TryGet([NotNullWhen(true)] out Block? breakBlock)
+    public bool TryGet([NotNullWhen(true)] out Node? breakBlock)
     {
         if (_lastBlock is not null &&
             CheckAndInc(0) &&
@@ -89,12 +90,12 @@ public sealed class BreakBlockCache
     }
 
     /// <summary>
-    /// Try to get a <see cref="ITerminalStore"/> for an axis.
+    /// Try to get a <see cref="TerminalStore"/> for an axis.
     /// </summary>
     /// <param name="axis">Index of the axis.</param>
     /// <param name="store">The terminal for the axis.</param>
     /// <returns><see langword="true"/> if the terminal was retrieved successfully; otherwise, <see langword="false"/>.</returns>
-    public bool TryGetAxis(int axis, [NotNullWhen(true)] out ITerminalStore? store)
+    public bool TryGetAxis(int axis, [NotNullWhen(true)] out TerminalStore? store)
     {
         if (_lastBlock is null)
         {
@@ -110,7 +111,7 @@ public sealed class BreakBlockCache
         if (CheckAndInc(axis))
         {
             // x - 2, y - 1, z - 0
-            store = TerminalStore.CreateOut(_lastBlock, _lastBlock.Type.Terminals[2 - axis]);
+            store = TerminalStore.CreateOut(new Terminal(_lastBlock, _lastBlock.Type.Terminals[2 - axis]));
             return true;
         }
         else
@@ -120,7 +121,7 @@ public sealed class BreakBlockCache
         }
     }
 
-    private static Block? ValidateBlock(Block? breakBlock, string argumentName)
+    private static Node? ValidateBlock(Node? breakBlock, string argumentName)
     {
         if (breakBlock is null)
         {

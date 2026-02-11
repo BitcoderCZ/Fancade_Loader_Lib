@@ -113,6 +113,7 @@ public readonly struct PrefabSettings : IReadOnlyCollection<PrefabSetting>, IEqu
     /// <returns>The converted <see cref="RawPrefabSetting"/>s.</returns>
     public IEnumerable<RawPrefabSetting> ToRaw(int3 position)
     {
+        // todo: custom struct enumerable
         foreach (var setting in _settings)
         {
             yield return new RawPrefabSetting(setting.Index, setting.Type, (ushort3)position, setting.Value);
@@ -226,9 +227,16 @@ public readonly struct PrefabSettings : IReadOnlyCollection<PrefabSetting>, IEqu
         return false;
     }
 
-    /// <inheritdoc/>
-    public IEnumerator<PrefabSetting> GetEnumerator()
+    /// <summary>
+    /// Returns an enumerator that iterates through the collection.
+    /// </summary>
+    /// <returns>An enumerator that can be used to iterate through the collection.</returns>
+    public Enumerator GetEnumerator()
         => new Enumerator(_settings.GetEnumerator());
+
+    /// <inheritdoc/>
+    IEnumerator<PrefabSetting> IEnumerable<PrefabSetting>.GetEnumerator()
+        => GetEnumerator();
 
     /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator()
@@ -293,11 +301,14 @@ public readonly struct PrefabSettings : IReadOnlyCollection<PrefabSetting>, IEqu
             => _builder.Clear();
     }
 
-    private struct Enumerator : IEnumerator<PrefabSetting>
+    /// <summary>
+    /// <see cref="IEnumerator{T}"/> for <see cref="PrefabSettings"/>.
+    /// </summary>
+    public struct Enumerator : IEnumerator<PrefabSetting>
     {
         private SettingsCollection.Enumerator _enumerator;
 
-        public Enumerator(SettingsCollection.Enumerator enumerator)
+        internal Enumerator(SettingsCollection.Enumerator enumerator)
         {
             _enumerator = enumerator;
         }

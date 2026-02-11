@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace BitcoderCZ.Fancade.Tests.Common;
 
-public sealed class BlockDataComparer : IEqualityComparer<ArrayBlockData>
+public sealed class BlockDataComparer : IEqualityComparer<IBlockData>
 {
     public static readonly BlockDataComparer Instance = new();
 
@@ -12,7 +12,7 @@ public sealed class BlockDataComparer : IEqualityComparer<ArrayBlockData>
     {
     }
 
-    public bool Equals(ArrayBlockData? x, ArrayBlockData? y)
+    public bool Equals(IBlockData? x, IBlockData? y)
     {
         if (ReferenceEquals(x, y))
         {
@@ -27,10 +27,10 @@ public sealed class BlockDataComparer : IEqualityComparer<ArrayBlockData>
             SequenceEquals(x, y);
     }
 
-    public int GetHashCode([DisallowNull] ArrayBlockData obj)
+    public int GetHashCode([DisallowNull] IBlockData obj)
         => throw new InvalidOperationException();
 
-    private static bool SequenceEquals(ArrayBlockData a, ArrayBlockData b)
+    private static bool SequenceEquals(IBlockData a, IBlockData b)
     {
         Debug.Assert(a.Size == b.Size);
 
@@ -40,7 +40,8 @@ public sealed class BlockDataComparer : IEqualityComparer<ArrayBlockData>
             {
                 for (int x = 0; x < a.Size.X; x++)
                 {
-                    if (a.GetBlockUnchecked(new int3(x, y, z)) != b.GetBlockUnchecked(new int3(x, y, z)))
+                    var pos = new int3(x, y, z);
+                    if (a.GetBlock(a.BoundsMin + pos) != b.GetBlock(b.BoundsMin + pos))
                     {
                         return false;
                     }

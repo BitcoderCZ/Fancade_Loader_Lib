@@ -105,6 +105,11 @@ public class ArrayBlockData : IBlockData
     public bool InBounds(int x, int y, int z)
         => new int3(x, y, z).InBounds(Size.X, Size.Y, Size.Z);
 
+    /// <inheritdoc/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    bool IBlockData.IsInBounds(int3 position)
+        => InBounds(position);
+
     /// <summary>
     /// Converts an index into a position.
     /// </summary>
@@ -260,6 +265,22 @@ public class ArrayBlockData : IBlockData
             if (block != 0)
             {
                 yield return new(array.Index(i), block);
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public void EnumerateNonEmptyBlocks<TAction>(TAction action)
+        where TAction : IRefValueAction<ushort, int3>
+    {
+        var array = Array;
+        var arr = array.Array;
+        for (var i = 0; i < arr.Length; i++)
+        {
+            ref ushort block = ref arr[i];
+            if (block != 0)
+            {
+                action.Invoke(ref block, array.Index(i));
             }
         }
     }
@@ -519,20 +540,41 @@ public class ArrayBlockData : IBlockData
         Size = int3.Zero;
     }
 
-    // todo: validate positions/size
     /// <inheritdoc/>
-    public void WriteRegion(int3 destinationPosition, Array3D<ushort> value, int3 sourcePosition, int3 size)
-        => value.CopyTo(sourcePosition, Array, destinationPosition, size);
+    public void WriteRegion(int3 destinationPosition, IReadOnly3DArray<ushort> value, int3 sourcePosition, int3 size)
+    {
+        var max = destinationPosition + size;
+        if (max.X > Size.X || max.Y > size.Y || max.Z > Size.Z)
+        {
+            ThrowArgumentOutOfRangeException(nameof(destinationPosition));
+        }
 
-    // todo: validate positions/size
+        value.CopyTo(sourcePosition, Array, destinationPosition, size);
+    }
+
     /// <inheritdoc/>
     public void ReadRegion(int3 sourcePosition, Array3D<ushort> destination, int3 destinationPosition, int3 size)
-        => Array.CopyTo(sourcePosition, destination, destinationPosition, size);
+    {
+        var max = sourcePosition + size;
+        if (max.X > Size.X || max.Y > size.Y || max.Z > Size.Z)
+        {
+            ThrowArgumentOutOfRangeException(nameof(sourcePosition));
+        }
 
-    // todo: validate positions/size
+        Array.CopyTo(sourcePosition, destination, destinationPosition, size);
+    }
+
     /// <inheritdoc/>
     public void CopyRegionTo(int3 sourcePosition, IBlockData destination, int3 destinationPosition, int3 size)
-        => destination.WriteRegion(destinationPosition, Array, sourcePosition, size);
+    {
+        var max = sourcePosition + size;
+        if (max.X > Size.X || max.Y > size.Y || max.Z > Size.Z)
+        {
+            ThrowArgumentOutOfRangeException(nameof(sourcePosition));
+        }
+
+        destination.WriteRegion(destinationPosition, Array, sourcePosition, size);
+    }
 
     /// <summary>
     /// Moves the contents by a specified offset while ensuring the array size is sufficient.
@@ -842,14 +884,14 @@ public class ArrayBlockData : IBlockData
 
     private void Resize(int3 size, bool useBlock = true)
     {
+        Size = size;
+
         if (useBlock)
         {
             size = CeilToMultiple(size, BlockSize);
         }
 
         Array.Resize(size);
-
-        Size = size;
     }
     #endregion
 }

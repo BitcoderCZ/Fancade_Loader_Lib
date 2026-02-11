@@ -120,7 +120,7 @@ public struct GameMeshInfo
             {
                 BlockMesh blockMesh = prefab.Type is PrefabType.Level && prefab.Id != mainPrefabId
                     ? BlockMesh.Empty
-                    : BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, segmentMeshes, (mesh, meshIndex) =>
+                    : BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, ImmutableCollectionsMarshal.AsImmutableArray(segmentMeshes), (mesh, meshIndex) =>
                     {
                         int index = lookup.GetOrAdd(mesh, static (mesh, item) =>
                         {
@@ -180,7 +180,7 @@ public struct GameMeshInfo
             {
                 if (prefab.Id == mainPrefabId || prefab.Type != PrefabType.Level)
                 {
-                    blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, segmentMeshes, (mesh, meshIndex) =>
+                    blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, ImmutableCollectionsMarshal.AsImmutableArray(segmentMeshes), (mesh, meshIndex) =>
                     {
                         ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, mesh, out bool exists);
 
@@ -318,7 +318,7 @@ public struct GameMeshInfo
                     item =>
                 {
                     var (prefabIndex, prefab) = item;
-                    stockBlockMeshes[prefabIndex] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, stockSegmentMeshes, (mesh, meshIndex) =>
+                    stockBlockMeshes[prefabIndex] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, ImmutableCollectionsMarshal.AsImmutableArray(stockSegmentMeshes), (mesh, meshIndex) =>
                         {
                             int index = lookup.GetOrAdd(mesh, static (mesh, item) =>
                             {
@@ -352,7 +352,7 @@ public struct GameMeshInfo
                 int prefabIndex = 0;
                 foreach (var prefab in stockPrefabs.OrderBy(prefab => prefab.Id))
                 {
-                    stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, stockSegmentMeshes, (mesh, meshIndex) =>
+                    stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, ImmutableCollectionsMarshal.AsImmutableArray(stockSegmentMeshes), (mesh, meshIndex) =>
                     {
                         ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, mesh, out bool exists);
 

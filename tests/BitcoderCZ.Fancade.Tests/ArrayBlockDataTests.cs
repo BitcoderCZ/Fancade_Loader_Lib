@@ -1,8 +1,9 @@
-﻿using BitcoderCZ.Maths.Vectors;
+﻿using BitcoderCZ.Fancade.Data;
+using BitcoderCZ.Maths.Vectors;
 
 namespace BitcoderCZ.Fancade.Tests;
 
-public class BlockDataTests
+public class ArrayBlockDataTests
 {
     [Test]
     public async Task Move_PositiveOffset_ShiftsDataCorrectly()

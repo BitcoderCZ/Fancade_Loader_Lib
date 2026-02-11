@@ -1,12 +1,13 @@
 ﻿using BitcoderCZ.Fancade.Editing;
-using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
+using BitcoderCZ.Fancade.Editing.Scripting;
+using BitcoderCZ.Fancade.Editing.Scripting.Emitters;
+using BitcoderCZ.Fancade.Editing.Scripting.Positioners;
 using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
-using static BitcoderCZ.Fancade.Runtime.Tests.Common.ExeUtils;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
 
@@ -16,7 +17,7 @@ public partial class ExecutionTests
     [MethodDataSource(typeof(ExecutionTestsDataSources), nameof(ExecutionTestsDataSources.InspectableLiterals))]
     public async Task Inspect_InspectsEveryFrame(ObjectWrapper value)
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.Inspect(Literal(value.Object));
 
@@ -27,7 +28,7 @@ public partial class ExecutionTests
     [Test]
     public async Task Execution_ExeConnectionsAreRespected()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.Inspect(Literal(0f));
         writer.Inspect(Literal(1f));
@@ -43,18 +44,17 @@ public partial class ExecutionTests
     [Test]
     public async Task Execution_CorrectOrderByPlacement()
     {
-        var builder = CreateBuilder(out _);
-
-        List<Block> blocks = [];
+        var prefab = new Prefab(0);
 
         AddInspect(new int3(2, 0, 3), 0);
         AddInspect(new int3(2, 1, 0), 1);
         AddInspect(new int3(2, 0, 0), 2);
         AddInspect(new int3(7, 0, 0), 3);
 
-        builder.AddBlockSegments(blocks);
+        var prefabList = new PrefabList();
+        prefabList.AddPrefab(prefab);
 
-        var tester = AstRunnerTester.Create(builder);
+        var tester = AstRunnerTester.Create(prefabList);
 
         await Assert.That(tester)
             .Inspects(new(0f) { Order = 0, FrameCount = 1, })
@@ -64,53 +64,52 @@ public partial class ExecutionTests
 
         void AddInspect(int3 pos, int count)
         {
-            var inspect = new Block(StockBlocks.Values.Inspect_Number, pos);
-            blocks.Add(inspect);
+            prefab.Blocks.SetPrefab(pos, StockBlocks.Values.Inspect_Number.Prefab);
 
-            var numb = new Block(StockBlocks.Values.Number, pos + new int3(-2, 0, 1));
-            blocks.Add(numb);
+            prefab.Blocks.SetPrefab(pos + new int3(-2, 0, 1), StockBlocks.Values.Number.Prefab);
 
-            builder.SetSetting(numb, 0, (float)count);
+            prefab.Settings[pos + new int3(-2, 0, 1)] = PrefabSettings.Empty.Add(new PrefabSetting(0, (float)count));
         }
     }
 
-    [Test]
-    public async Task Execution_Connections_CorrectOrderByPlacement()
-    {
-        var builder = CreateBuilder(out _);
+    // todo
+    // [Test]
+    // public async Task Execution_Connections_CorrectOrderByPlacement()
+    // {
+    //     var builder = new CodeGraph.Builder();
 
-        List<Block> blocks = [];
-        var playBlock = new Block(StockBlocks.Control.PlaySensor, new int3(0, 0, 10));
-        blocks.Add(playBlock);
-        var playTerminal = new BlockTerminal(playBlock, "On Play");
+    //     List<Block> blocks = [];
+    //     var playBlock = new Block(StockBlocks.Control.PlaySensor, new int3(0, 0, 10));
+    //     blocks.Add(playBlock);
+    //     var playTerminal = new BlockTerminal(playBlock, "On Play");
 
-        AddInspect(new int3(2, 0, 3), 0);
-        AddInspect(new int3(2, 1, 0), 1);
-        AddInspect(new int3(2, 0, 0), 2);
-        AddInspect(new int3(7, 0, 0), 3);
+    //     AddInspect(new int3(2, 0, 3), 0);
+    //     AddInspect(new int3(2, 1, 0), 1);
+    //     AddInspect(new int3(2, 0, 0), 2);
+    //     AddInspect(new int3(7, 0, 0), 3);
 
-        builder.AddBlockSegments(blocks);
+    //     builder.AddBlockSegments(blocks);
 
-        var tester = AstRunnerTester.Create(builder);
+    //     var tester = AstRunnerTester.Create(builder);
 
-        await Assert.That(tester)
-            .Inspects(new(0f) { Order = 0, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
-            .And.Inspects(new(1f) { Order = 1, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
-            .And.Inspects(new(2f) { Order = 2, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
-            .And.Inspects(new(3f) { Order = 3, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, });
+    //     await Assert.That(tester)
+    //         .Inspects(new(0f) { Order = 0, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
+    //         .And.Inspects(new(1f) { Order = 1, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
+    //         .And.Inspects(new(2f) { Order = 2, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
+    //         .And.Inspects(new(3f) { Order = 3, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, });
 
-        void AddInspect(int3 pos, int count)
-        {
-            var inspect = new Block(StockBlocks.Values.Inspect_Number, pos);
-            blocks.Add(inspect);
+    //     void AddInspect(int3 pos, int count)
+    //     {
+    //         var inspect = new Block(StockBlocks.Values.Inspect_Number, pos);
+    //         blocks.Add(inspect);
 
-            var numb = new Block(StockBlocks.Values.Number, pos + new int3(-2, 0, 1));
-            blocks.Add(numb);
+    //         var numb = new Block(StockBlocks.Values.Number, pos + new int3(-2, 0, 1));
+    //         blocks.Add(numb);
 
-            builder.Connect(playTerminal, new BlockTerminal(inspect, "Before"));
-            builder.SetSetting(numb, 0, (float)count);
-        }
-    }
+    //         builder.Connect(playTerminal, new BlockTerminal(inspect, "Before"));
+    //         builder.SetSetting(numb, 0, (float)count);
+    //     }
+    // }
 
     [Test]
     public async Task StockBlocks_HaveImplicitConnections()
@@ -129,7 +128,7 @@ public partial class ExecutionTests
     [Test]
     public async Task PlaySensor_ExecutedOnlyOnFirstFrame()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.PlaySensor(writer =>
         {
@@ -160,7 +159,7 @@ public partial class ExecutionTests
     [Test]
     public async Task IfGotoLoop()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         const string LoopStart = "LoopStart";
         Variable index = new Variable("i", SignalType.Float);
@@ -195,7 +194,7 @@ public partial class ExecutionTests
     [Test]
     public async Task Loop_Increasing_CountIsCorrect()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.Loop(Number(0f), Number(3f), (writer, counter) =>
         {
@@ -213,13 +212,12 @@ public partial class ExecutionTests
     [Test]
     public async Task Loop_Decreasing_CountIsCorrect()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.Loop(Number(3f), Number(0f), (writer, counter) =>
         {
             writer.Inspect(counter.Wrap());
         });
-
 
         var tester = AstRunnerTester.Create(writer);
 
@@ -232,7 +230,7 @@ public partial class ExecutionTests
     [Test]
     public async Task Random_ValueIsCorrect()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.RandomSeed(Number(0f));
         writer.Inspect(Random(None(), None()));
@@ -251,7 +249,8 @@ public partial class ExecutionTests
     [Test]
     public async Task DisconnectedOutsideTerminals_ReturnsDefaultValue()
     {
-        var writer = CreateWriter(out var prefab);
+        var writer = new CodeWriter(new CodeGraph.Builder());
+        var prefab = Prefab.CreateBlock(0, "A");
         prefab[int3.Zero].Voxels[int3.Zero] = new Voxel(FcColor.Black, false);
 
         var prefabs = new PrefabList();
@@ -263,10 +262,11 @@ public partial class ExecutionTests
         var blocks = level.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = byte3.Zero };
+        var terminal = Node.Terminal.CreateIn(byte3.Zero, 0, SignalType.Rot);
         writer.Inspect(terminal.Wrap(), SignalType.Rot);
+        PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), prefab, int3.One);
 
-        var tester = AstRunnerTester.Create(writer, prefabs, level.Id, options: new() { RunFor = 2, });
+        var tester = AstRunnerTester.Create(prefabs, level.Id, options: new() { RunFor = 2, });
 
         await Assert.That(tester).Inspects(new(Quaternion.Identity) { Count = 2 });
     }

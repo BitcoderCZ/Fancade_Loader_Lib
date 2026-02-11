@@ -11,7 +11,7 @@ namespace BitcoderCZ.Fancade;
 /// <summary>
 /// Represents a fancade game, processed for easier manipulation.
 /// </summary>
-public class Game : ICloneable
+public partial class Game : ICloneable
 {
     /// <summary>
     /// The prefabs of this game.
@@ -137,11 +137,13 @@ public class Game : ICloneable
     /// Calls <see cref="RawGame.FixPrefabOrder()"/> on <paramref name="game"/>.
     /// </remarks>
     /// <param name="game">The <see cref="RawGame"/> to create this <see cref="Game"/> from.</param>
-    /// <param name="clonePrefabs">If the prefabs should be copied, if <see langword="true"/>, <paramref name="game"/> shouldn't be used anymore.</param>
+    /// <param name="options">The <see cref="FromRawOptions"/>.</param>
     /// <returns>A new instance of the <see cref="Game"/> class from a <see cref="RawGame"/>.</returns>
-    public static Game FromRaw(RawGame game, bool clonePrefabs = true)
+    public static Game FromRaw(RawGame game, FromRawOptions? options = default)
     {
         ThrowIfNull(game, nameof(game));
+
+        var optionsVal = options ?? FromRawOptions.Default;
 
         game.FixPrefabOrder();
 
@@ -165,11 +167,11 @@ public class Game : ICloneable
                 var segments = game.Prefabs
                     .Where(item => item.GroupId == prefab.GroupId);
 
-                prefabs.AddPrefab(Prefab.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), segments, game.IdOffset, idOffsetAddition, clonePrefabs));
+                prefabs.AddPrefab(Prefab.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), segments, game.IdOffset, idOffsetAddition, optionsVal.PrefabOptions));
             }
             else
             {
-                prefabs.AddPrefab(Prefab.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [prefab], game.IdOffset, idOffsetAddition, clonePrefabs));
+                prefabs.AddPrefab(Prefab.FromRaw((ushort)(i + RawGame.CurrentNumbStockPrefabs), [prefab], game.IdOffset, idOffsetAddition, optionsVal.PrefabOptions));
             }
         }
 
@@ -180,17 +182,29 @@ public class Game : ICloneable
     /// Loads a game from a reader.
     /// </summary>
     /// <param name="reader">The reader to load from.</param>
+    /// <param name="loadOptions">The <see cref="RawGame.LoadOptions"/>.</param>
+    /// <param name="fromRawOptions">The <see cref="FromRawOptions"/>.</param>
     /// <returns>The loaded game.</returns>
-    public static Game Load(FcBinaryReader reader)
-        => FromRaw(RawGame.Load(reader), false);
+    public static Game Load(FcBinaryReader reader, RawGame.LoadOptions? loadOptions = default, FromRawOptions? fromRawOptions = default)
+    {
+        var fromRawOptionsVal = fromRawOptions ?? new FromRawOptions() { PrefabOptions = new Prefab.FromRawOptions() { Clone = false } };
+
+        return FromRaw(RawGame.Load(reader, loadOptions), fromRawOptionsVal);
+    }
 
     /// <summary>
     /// Loads a game from a compressed stream.
     /// </summary>
     /// <param name="stream">The stream to load from.</param>
+    /// <param name="loadOptions">The <see cref="RawGame.LoadOptions"/>.</param>
+    /// <param name="fromRawOptions">The <see cref="FromRawOptions"/>.</param>
     /// <returns>The loaded game.</returns>
-    public static Game LoadCompressed(Stream stream)
-        => FromRaw(RawGame.LoadCompressed(stream), false);
+    public static Game LoadCompressed(Stream stream, RawGame.LoadOptions? loadOptions = default, FromRawOptions? fromRawOptions = default)
+    {
+        var fromRawOptionsVal = fromRawOptions ?? new FromRawOptions() { PrefabOptions = new Prefab.FromRawOptions() { Clone = false } };
+
+        return FromRaw(RawGame.LoadCompressed(stream, loadOptions), fromRawOptionsVal);
+    }
 
     /// <summary>
     /// Makes this game editable.
@@ -213,7 +227,7 @@ public class Game : ICloneable
     }
 
     /// <summary>
-    /// Calls <see cref="ArrayBlockData.Trim"/> on all prefabs in <see cref="Prefabs"/>.
+    /// Calls <see cref="IBlockData.Trim"/> on all prefabs in <see cref="Prefabs"/>.
     /// </summary>
     public void TrimPrefabs()
     {

@@ -1,4 +1,5 @@
-﻿using BitcoderCZ.Fancade.Raw;
+﻿using BitcoderCZ.Fancade.Data;
+using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
 
@@ -107,7 +108,7 @@ public class GameTests
             new RawPrefab(true, false, false, false, false, 0, "A", 0, 0, (byte)FcColorUtils.DefaultBackgroundColor, 0, idOff, new byte3(2, 0, 0), null, null, null, null),
         ]);
 
-        var game = Game.FromRaw(raw, true);
+        var game = Game.FromRaw(raw);
 
         await Assert.That(game.Prefabs.SegmentCount).IsEqualTo(7);
         await Assert.That(game.Prefabs.PrefabCount).IsEqualTo(4);

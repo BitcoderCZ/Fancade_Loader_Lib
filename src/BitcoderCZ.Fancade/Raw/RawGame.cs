@@ -123,8 +123,9 @@ public partial class RawGame
     /// Loads a <see cref="RawGame"/> from a zlib compressed <see cref="Stream"/>.
     /// </summary>
     /// <param name="stream">The reader to read the <see cref="RawGame"/> from.</param>
+    /// <param name="options">The <see cref="LoadOptions"/>.</param>
     /// <returns>A <see cref="RawGame"/> read from <paramref name="stream"/>.</returns>
-    public static RawGame LoadCompressed(Stream stream)
+    public static RawGame LoadCompressed(Stream stream, LoadOptions? options = null)
     {
         // decompress
         using MemoryStream ms = new MemoryStream();
@@ -134,7 +135,7 @@ public partial class RawGame
 
         using FcBinaryReader reader = new FcBinaryReader(ms);
 
-        return Load(reader);
+        return Load(reader, options);
     }
 
     /// <summary>

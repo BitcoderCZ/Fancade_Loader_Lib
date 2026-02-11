@@ -2,7 +2,6 @@
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
-using static BitcoderCZ.Fancade.Runtime.Tests.Common.ExeUtils;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
 
@@ -63,7 +62,7 @@ public partial class ExecutionTests
 
     private static async Task TestExpression(CodeWriter.IExpression expression, object expected)
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.Inspect(expression);
 

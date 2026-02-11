@@ -4,6 +4,7 @@
 
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Raw;
+using BitcoderCZ.Maths.Vectors;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -24,44 +25,49 @@ internal sealed class PrefabUsedCache
     {
         bool[] used = new bool[RawGame.CurrentNumbStockPrefabs + prefabs.SegmentCount];
 
-        var stockPrefabs = StockBlocks.PrefabList;
-
-        MarkUsed(mainId);
+        used[mainId] = true;
+        var createAction = new CreateAction(used, prefabs, StockBlocks.PrefabList);
+        prefabs.GetPrefab(mainId).Blocks.EnumerateNonEmptyBlocks(createAction);
 
         return new PrefabUsedCache(used);
+    }
 
-        void MarkUsed(ushort id)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool Used(ushort id)
+        => _used[id];
+
+    private sealed class CreateAction : IRefValueAction<ushort, int3>
+    {
+        private readonly bool[] _used;
+        private readonly PrefabList _prefabs;
+        private readonly PrefabList _stockPrefabs;
+
+        public CreateAction(bool[] used, PrefabList prefabs, PrefabList stockPrefabs)
         {
-            Debug.Assert(!used[id], $"{nameof(MarkUsed)} should not be called for already marked prefabs.");
+            _used = used;
+            _prefabs = prefabs;
+            _stockPrefabs = stockPrefabs;
+        }
 
-            used[id] = true;
+        public void Invoke(ref ushort id, int3 segmentPos)
+        {
+            if (_used[id])
+            {
+                return;
+            }
 
-            var segment = id < RawGame.CurrentNumbStockPrefabs ? stockPrefabs.GetSegment(id) : prefabs.GetSegment(id);
+            _used[id] = true;
+
+            var segment = id < RawGame.CurrentNumbStockPrefabs ? _stockPrefabs.GetSegment(id) : _prefabs.GetSegment(id);
 
             if (segment.PrefabId != id)
             {
                 return;
             }
 
-            var prefab = segment.PrefabId < RawGame.CurrentNumbStockPrefabs ? stockPrefabs.GetPrefab(segment.PrefabId) : prefabs.GetPrefab(segment.PrefabId);
+            var prefab = segment.PrefabId < RawGame.CurrentNumbStockPrefabs ? _stockPrefabs.GetPrefab(segment.PrefabId) : _prefabs.GetPrefab(segment.PrefabId);
 
-            var insideSize = prefab.Blocks.Array.Size;
-            int insideLength = insideSize.X * insideSize.Y * insideSize.Z;
-
-            ushort[] blocks = prefab.Blocks.Array.Array;
-            for (int i = 0; i < insideLength; i++)
-            {
-                ushort block = blocks[i];
-
-                if (block != 0 && !used[block])
-                {
-                    MarkUsed(block);
-                }
-            }
+            prefab.Blocks.EnumerateNonEmptyBlocks(this);
         }
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Used(ushort id)
-        => _used[id];
 }

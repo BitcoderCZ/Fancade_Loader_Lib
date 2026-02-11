@@ -41,6 +41,13 @@ public interface IBlockData
     virtual int3 Size => BoundsMax - BoundsMin + int3.One;
 
     /// <summary>
+    /// Gets whether a position is within the bounds of the <see cref="IBlockData"/>.
+    /// </summary>
+    /// <param name="position">The position to test.</param>
+    /// <returns><see langword="true"/> if <paramref name="position"/> is in bounds; otherwise, <see langword="false"/>.</returns>
+    bool IsInBounds(int3 position);
+
+    /// <summary>
     /// "Places" a prefab at the specified position.
     /// </summary>
     /// <remarks>
@@ -88,20 +95,20 @@ public interface IBlockData
     void SetBlockUnchecked(int3 position, ushort id);
 
     /// <summary>
-    /// Writes the <see cref="Array3D{T}"/> to the <see cref="IBlockData"/>.
+    /// Writes the <see cref="IReadOnly3DArray{T}"/> to the <see cref="IBlockData"/>.
     /// </summary>
-    /// <param name="destinationPosition">Position to write the <see cref="Array3D{T}"/> at.</param>
-    /// <param name="value">The <see cref="Array3D{T}"/> to write.</param>
+    /// <param name="destinationPosition">Position to write the <see cref="IReadOnly3DArray{T}"/> at.</param>
+    /// <param name="value">The <see cref="IReadOnly3DArray{T}"/> to write.</param>
     /// <param name="sourcePosition">The starting position of the region to copy from <paramref name="value"/>.</param>
     /// <param name="size">The size of the region to copy, in elements, along each axis.</param>
-    void WriteRegion(int3 destinationPosition, Array3D<ushort> value, int3 sourcePosition, int3 size);
+    void WriteRegion(int3 destinationPosition, IReadOnly3DArray<ushort> value, int3 sourcePosition, int3 size);
 
     /// <summary>
-    /// Writes the <see cref="Array3D{T}"/> to the <see cref="IBlockData"/>.
+    /// Writes the <see cref="IReadOnly3DArray{T}"/> to the <see cref="IBlockData"/>.
     /// </summary>
-    /// <param name="destinationPosition">Position to write the <see cref="Array3D{T}"/> at.</param>
-    /// <param name="value">The <see cref="Array3D{T}"/> to write.</param>
-    virtual void WriteRegion(int3 destinationPosition, Array3D<ushort> value)
+    /// <param name="destinationPosition">Position to write the <see cref="IReadOnly3DArray{T}"/> at.</param>
+    /// <param name="value">The <see cref="IReadOnly3DArray{T}"/> to write.</param>
+    virtual void WriteRegion(int3 destinationPosition, IReadOnly3DArray<ushort> value)
         => WriteRegion(destinationPosition, value, int3.Zero, value.Size);
 
     /// <summary>
@@ -170,6 +177,14 @@ public interface IBlockData
     /// </summary>
     /// <returns>An IEnumerable that returns all non empty blocks.</returns>
     IEnumerable<KeyValuePair<int3, ushort>> EnumerateNonEmptyBlocks();
+
+    /// <summary>
+    /// Enumerates all blocks, ignoring empty/air.
+    /// </summary>
+    /// <typeparam name="TAction">Type of the action.</typeparam>
+    /// <param name="action">An action to execute at every non air positon.</param>
+    void EnumerateNonEmptyBlocks<TAction>(TAction action)
+        where TAction : IRefValueAction<ushort, int3>;
 
     /// <summary>
     /// Materializes the contents of this <see cref="IBlockData"/> as an <see cref="Array3D{T}"/>.

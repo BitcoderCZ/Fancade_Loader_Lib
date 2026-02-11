@@ -192,7 +192,7 @@ public static class PrefabListUtils
             connectionsTo.Clear();
         }
 
-        bool TryGetImplicitlyConnectedTerminalPos(int3 pos, TerminalInfo terminal, ArrayBlockData blocks, out int3 otherBlockPos, out byte3 otherTerminalPos)
+        bool TryGetImplicitlyConnectedTerminalPos(int3 pos, TerminalInfo terminal, IBlockData blocks, out int3 otherBlockPos, out byte3 otherTerminalPos)
         {
             var otherPosVoxel = (pos * Voxels.Size) + terminal.Position + (terminal.Direction.GetOffset() * 2);
             var otherPos = VoxelToBlock(otherPosVoxel);

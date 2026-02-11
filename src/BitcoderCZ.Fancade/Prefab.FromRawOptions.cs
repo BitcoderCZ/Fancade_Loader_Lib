@@ -45,7 +45,7 @@ public sealed partial class Prefab
         /// <see langword="true"/> by default.
         /// </remarks>
         /// <value>If <see langword="true"/> clones Blocks, Settings and Connections; otherwise, the values are assigned directly and the raw prefabs shouldn't be used anymore.</value>
-        public bool Clone {get; init;} = true;
+        public bool Clone { get; init; } = true;
 
         /// <summary>
         /// Gets a factory method that, given a <see cref="Array3D{T}"/> creates a <see cref="IBlockData"/> instance.

@@ -8,6 +8,7 @@ using BitcoderCZ.Maths.Vectors;
 using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static BitcoderCZ.Utils.ThrowHelper;
 
@@ -147,6 +148,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
     /// <returns>A <see cref="PrefabList"/> read from <paramref name="reader"/>.</returns>
     public static PrefabList Load(FcBinaryReader reader)
     {
+        // todo: allow specifying block data factory
         ThrowIfNull(reader, nameof(reader));
 
         uint count = reader.ReadUInt32();
@@ -173,14 +175,14 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 } while (i < count && rawPrefabs[i].GroupId == groupId);
 
                 ushort id = (ushort)(startIndex + idOffset);
-                prefabs.Add(id, Prefab.FromRaw(id, rawPrefabs.Skip(startIndex).Take(i - startIndex), ushort.MaxValue, 0, false));
+                prefabs.Add(id, Prefab.FromRaw(id, rawPrefabs.Skip(startIndex).Take(i - startIndex), ushort.MaxValue, 0, new Prefab.FromRawOptions() { Clone = false, }));
 
                 i--; // incremented at the end of the loop
             }
             else
             {
                 ushort id = (ushort)(i + idOffset);
-                prefabs.Add(id, Prefab.FromRaw(id, [rawPrefabs[i]], ushort.MaxValue, 0, false));
+                prefabs.Add(id, Prefab.FromRaw(id, [rawPrefabs[i]], ushort.MaxValue, 0, new Prefab.FromRawOptions() { Clone = false, }));
             }
         }
 
@@ -998,23 +1000,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 prefabsToChangeId.Add(prefabId);
             }
 
-            ushort[] array = prefab.Blocks.Array.Array;
-
-            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
-            {
-                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
-                {
-                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
-                    {
-                        int i = prefab.Blocks.Index(new int3(x, y, z));
-
-                        if (array[i] >= id)
-                        {
-                            array[i] += amount;
-                        }
-                    }
-                }
-            }
+            prefab.Blocks.EnumerateNonEmptyBlocks(new IncreaseAfterAction(id, amount));
         }
 
         foreach (ushort prefabId in prefabsToChangeId.OrderByDescending(item => item))
@@ -1051,23 +1037,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 prefabsToChangeId.Add(prefabId);
             }
 
-            ushort[] array = prefab.Blocks.Array.Array;
-
-            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
-            {
-                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
-                {
-                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
-                    {
-                        int i = prefab.Blocks.Index(new int3(x, y, z));
-
-                        if (array[i] >= id)
-                        {
-                            array[i] -= amount;
-                        }
-                    }
-                }
-            }
+            prefab.Blocks.EnumerateNonEmptyBlocks(new DecreaseAfterAction(id, amount));
         }
 
         foreach (ushort prefabId in prefabsToChangeId.OrderBy(item => item))
@@ -1080,6 +1050,48 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
             ushort newId = (ushort)(prefabId - amount);
             prefab.Id = newId;
             _prefabs[newId] = prefab;
+        }
+    }
+
+    private readonly struct IncreaseAfterAction : IRefValueAction<ushort, int3>
+    {
+        private readonly ushort _id;
+        private readonly ushort _amount;
+
+        public IncreaseAfterAction(ushort id, ushort amount)
+        {
+            _id = id;
+            _amount = amount;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(ref ushort arg0, int3 arg1)
+        {
+            if (arg0 >= _id)
+            {
+                arg0 += _amount;
+            }
+        }
+    }
+
+    private readonly struct DecreaseAfterAction : IRefValueAction<ushort, int3>
+    {
+        private readonly ushort _id;
+        private readonly ushort _amount;
+
+        public DecreaseAfterAction(ushort id, ushort amount)
+        {
+            _id = id;
+            _amount = amount;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(ref ushort arg0, int3 arg1)
+        {
+            if (arg0 >= _id)
+            {
+                arg0 -= _amount;
+            }
         }
     }
 }

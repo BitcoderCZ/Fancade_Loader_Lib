@@ -24,7 +24,7 @@ public partial class RawGame
     }
 
     /// <summary>
-    /// Options for <see cref="RawGame.Load(FcBinaryReader, LoadOptions?)"/> and <see cref="RawGame.LoadCompressed(Stream)"/>.
+    /// Options for <see cref="RawGame.Load(FcBinaryReader, LoadOptions?)"/> and <see cref="RawGame.LoadCompressed(Stream, LoadOptions?)"/>.
     /// </summary>
     public readonly struct LoadOptions
     {
