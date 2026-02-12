@@ -27,14 +27,15 @@ public static class TowerCodeGraphPositioner
         LayoutOptions layoutOptionsVal = layoutOptions ?? LayoutOptions.Defaut;
         layoutOptionsVal.Validate();
 
-        var nodes = new PositionedNode[graph.NodeCount];
+        var nodes = new List<PositionedNode>(graph.NodeCount);
+        CollectionsMarshal.SetCount(nodes, graph.NodeCount);
         var info = new LayoutInfo(nodes, layoutOptionsVal);
 
         int3 size = new int3(((info.TowerX - 1) * layoutOptionsVal.TowerSpacing) + Prefab.MaxSize, Math.Min(layoutOptionsVal.MaximumTowerHeight, graph.NodeCount), ((info.TowerZ - 1) * layoutOptionsVal.TowerSpacing) + Prefab.MaxSize);
 
         ApplyLayout(graph.RootScope, ref info);
 
-        return new PositionedCodeGraph(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), size);
+        return PositionedCodeGraph.Create(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), size);
     }
 
     private static void ApplyLayout(CodeScope scope, ref LayoutInfo info)
@@ -148,18 +149,18 @@ public static class TowerCodeGraphPositioner
         public readonly int TowerCount;
         public readonly int TowerX;
         public readonly int TowerZ;
-        public readonly PositionedNode[] Nodes;
+        public readonly List<PositionedNode> Nodes;
 
         public int NodeIndex;
         public int TowerIndex;
         public int YLevel;
 
-        public LayoutInfo(PositionedNode[] nodes, LayoutOptions options)
+        public LayoutInfo(List<PositionedNode> nodes, LayoutOptions options)
         {
             Nodes = nodes;
             Options = options;
 
-            TowerCount = (nodes.Length + options.MaximumTowerHeight - 1) / options.MaximumTowerHeight;
+            TowerCount = (nodes.Count + options.MaximumTowerHeight - 1) / options.MaximumTowerHeight;
 
             switch (options.PlacementMode)
             {

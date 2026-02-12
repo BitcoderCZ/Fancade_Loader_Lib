@@ -215,6 +215,7 @@ public sealed partial class FcWorld : IAstRunner
                 }
             }
 
+            // TODO: now with BulletSharp it can be done
             // TODO: IsActive and Distance not needed originally, also AppliedImpulse seems to be higher with my impl, fancade uses custom collision algorithm so that might be the cause, but I can't replicate that with BulletSharp (without modifying it, which I don't want to/can't do); investigate why
             if (strongestPoint == null || maxImpulse < 0.1f || strongestPoint.Distance > -0.005f)
             {
@@ -296,6 +297,7 @@ public sealed partial class FcWorld : IAstRunner
                 }
             }
 
+            // TODO: now with BulletSharp it can be done
             // TODO: IsActive and Distance not needed originally, also AppliedImpulse seems to be higher with my impl, fancade uses custom collision algorithm so that might be the cause, but I can't replicate that with BulletSharp (without modifying it, which I don't want to/can't do); investigate why
             if (strongestPoint == null || maxImpulse < 0.1f || strongestPoint.Distance > -0.005f)
             {

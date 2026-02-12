@@ -1101,7 +1101,6 @@ public sealed partial class CodeWriter : IDisposable
     /// <exception cref="GotoRecursionException">Thrown when a recursive goto is encountered.</exception>
     public void Flush()
     {
-        // TODO: for stuff like if-true/false, return like a new scope or something, so that a label at the end of it does not get connected to something else, but ends up as null
         HashSet<string> encounteredLabels = [];
         foreach (var item in _gotos)
         {

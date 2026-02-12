@@ -381,7 +381,7 @@ public sealed partial class FcAST
                         var terminal = GetConnectedTerminal(pos, info.Position);
                         if (terminal is not null)
                         {
-                            // TODO: why did I even add null terminals in the first place?
+                            // TODO: why did I even add null terminals in the first place? // wtf was I talking about
                             connectedInputTerminals.Add((info.Position, terminal));
                         }
                     }

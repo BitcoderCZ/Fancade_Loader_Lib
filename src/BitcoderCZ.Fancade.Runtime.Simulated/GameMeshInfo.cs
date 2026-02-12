@@ -278,7 +278,7 @@ public struct GameMeshInfo
             var stockPrefabs = StockBlocks.PrefabList;
 
             stockBlockMeshes = new (ushort, BlockMesh)[stockPrefabs.PrefabCount];
-            stockUniqueMeshes = new(32); // todo: actual capacity
+            stockUniqueMeshes = new(1);
             stockSegmentMeshes = new PrefabSegmentMeshes[stockPrefabs.SegmentCount];
 
             if (createMultiThreaded)

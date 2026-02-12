@@ -35,8 +35,10 @@ public static class StructuredCodeGraphPositioner
 
         var rootLayout = scopeLayouts[graph.RootScope];
 
-        var nodes = new PositionedNode[graph.NodeCount];
-        ApplyLayout(graph.RootScope, 0, new int3(rootLayout.WidthLeft, 0, 0), scopeLayouts, nodes, scopeDepth, layoutOptionsVal);
+        var nodes = new List<PositionedNode>(graph.NodeCount);
+        CollectionsMarshal.SetCount(nodes, graph.NodeCount);
+        var nodesSpan = CollectionsMarshal.AsSpan(nodes);
+        ApplyLayout(graph.RootScope, 0, new int3(rootLayout.WidthLeft, 0, 0), scopeLayouts, nodesSpan, scopeDepth, layoutOptionsVal);
 
         int maxDepth = 0;
         foreach (var depth in scopeDepth)
@@ -46,9 +48,9 @@ public static class StructuredCodeGraphPositioner
 
         maxDepth = -maxDepth;
 
-        for (var i = 0; i < nodes.Length; i++)
+        for (var i = 0; i < nodesSpan.Length; i++)
         {
-            var node = nodes[i];
+            var node = nodesSpan[i];
             if (node.IsEmpty)
             {
                 continue;
@@ -58,13 +60,13 @@ public static class StructuredCodeGraphPositioner
             Debug.Assert(newOffset.X >= 0);
             Debug.Assert(newOffset.Y >= 0);
             Debug.Assert(newOffset.Z >= 0);
-            nodes[i] = new(newOffset, node.Type, node._settings, node._index);
+            nodesSpan[i] = new(newOffset, node.Type, node._settings, node._index);
         }
 
-        return new PositionedCodeGraph(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), new int3(rootLayout.GetTotalWidth(layoutOptionsVal.PaddingX), rootLayout.Height, maxDepth));
+        return PositionedCodeGraph.Create(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), new int3(rootLayout.GetTotalWidth(layoutOptionsVal.PaddingX), rootLayout.Height, maxDepth));
     }
 
-    private static void ApplyLayout(CodeScope scope, int layer, int3 origin, Dictionary<CodeScope, ScopeLayout> scopeLayouts, PositionedNode[] nodes, int[] scopeDepth, LayoutOptions layoutOptions)
+    private static void ApplyLayout(CodeScope scope, int layer, int3 origin, Dictionary<CodeScope, ScopeLayout> scopeLayouts, Span<PositionedNode> nodes, int[] scopeDepth, LayoutOptions layoutOptions)
     {
         var thisLayout = scopeLayouts[scope];
 
@@ -180,7 +182,7 @@ public static class StructuredCodeGraphPositioner
     private static int GetSafePos(ReadOnlySpan<int> scopeDepth, int layer, int expressionDepth)
         => GetSafePos(scopeDepth, (layer - expressionDepth)..(layer + 1));
 
-    // todo: account for offset caused by Empty nodes
+    // todo: optionally account for offset caused by Empty nodes
     private static int GetSafePos(ReadOnlySpan<int> scopeDepth, Range rangeToCheck)
     {
         int min = 0;

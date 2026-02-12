@@ -72,44 +72,42 @@ public partial class ExecutionTests
         }
     }
 
-    // todo
-    // [Test]
-    // public async Task Execution_Connections_CorrectOrderByPlacement()
-    // {
-    //     var builder = new CodeGraph.Builder();
+    [Test]
+    public async Task Execution_Connections_CorrectOrderByPlacement()
+    {
+        var prefab = Prefab.CreateLevel(0, "A");
+        var blocks = prefab.Blocks;
+        var prefabs = new PrefabList();
+        prefabs.AddPrefab(prefab);
 
-    //     List<Block> blocks = [];
-    //     var playBlock = new Block(StockBlocks.Control.PlaySensor, new int3(0, 0, 10));
-    //     blocks.Add(playBlock);
-    //     var playTerminal = new BlockTerminal(playBlock, "On Play");
+        var playBlockPos = new int3(0, 0, 10);
+        blocks.SetPrefab(playBlockPos, StockBlocks.Control.PlaySensor.Prefab);
+        var playTerminalPos = StockBlocks.Control.PlaySensor["On Play"].Position;
 
-    //     AddInspect(new int3(2, 0, 3), 0);
-    //     AddInspect(new int3(2, 1, 0), 1);
-    //     AddInspect(new int3(2, 0, 0), 2);
-    //     AddInspect(new int3(7, 0, 0), 3);
+        AddInspect(new int3(2, 0, 3), 0);
+        AddInspect(new int3(2, 1, 0), 1);
+        AddInspect(new int3(2, 0, 0), 2);
+        AddInspect(new int3(7, 0, 0), 3);
 
-    //     builder.AddBlockSegments(blocks);
+        var tester = AstRunnerTester.Create(prefabs);
 
-    //     var tester = AstRunnerTester.Create(builder);
+        await Assert.That(tester)
+            .Inspects(new(0f) { Order = 0, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
+            .And.Inspects(new(1f) { Order = 1, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
+            .And.Inspects(new(2f) { Order = 2, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
+            .And.Inspects(new(3f) { Order = 3, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, });
 
-    //     await Assert.That(tester)
-    //         .Inspects(new(0f) { Order = 0, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
-    //         .And.Inspects(new(1f) { Order = 1, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
-    //         .And.Inspects(new(2f) { Order = 2, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, })
-    //         .And.Inspects(new(3f) { Order = 3, Count = 1, Frequency = InspectFrequency.OnlyOnOneFrame, });
+        void AddInspect(int3 pos, int count)
+        {
+            blocks.SetPrefab(pos, StockBlocks.Values.Inspect_Number.Prefab);
 
-    //     void AddInspect(int3 pos, int count)
-    //     {
-    //         var inspect = new Block(StockBlocks.Values.Inspect_Number, pos);
-    //         blocks.Add(inspect);
+            var numbPos = pos + new int3(-2, 0, 1);
+            blocks.SetPrefab(numbPos, StockBlocks.Values.Number.Prefab);
 
-    //         var numb = new Block(StockBlocks.Values.Number, pos + new int3(-2, 0, 1));
-    //         blocks.Add(numb);
-
-    //         builder.Connect(playTerminal, new BlockTerminal(inspect, "Before"));
-    //         builder.SetSetting(numb, 0, (float)count);
-    //     }
-    // }
+            prefab.Connections.Add(new Connection(playBlockPos, pos, playTerminalPos, StockBlocks.Values.Inspect_Number["Before"].Position));
+            prefab.Settings[numbPos] = new PrefabSettings(new PrefabSetting(0, (float)count));
+        }
+    }
 
     [Test]
     public async Task StockBlocks_HaveImplicitConnections()
@@ -141,20 +139,20 @@ public partial class ExecutionTests
     }
 
     // todo
-    /*[Test]
-    public async Task BoxArtSensor_ExecutedOnlyWhenTakingBoxArt()
-    {
-        var writer = CreateWriter();
+    // [Test]
+    // public async Task BoxArtSensor_ExecutedOnlyWhenTakingBoxArt()
+    // {
+    //     var writer = CreateWriter();
 
-        writer.BoxArtSensor(writer =>
-        {
-            writer.Inspect(Number(1f));
-        });
+    //     writer.BoxArtSensor(writer =>
+    //     {
+    //         writer.Inspect(Number(1f));
+    //     });
 
-        var tester = AstRunnerTester.Create(writer, options: new() { RunFor = 2, });
+    //     var tester = AstRunnerTester.Create(writer, options: new() { RunFor = 2, });
 
-        await Assert.That(tester).Inspects(new(1f) { BoxArt = true, Count = 2 });
-    }*/
+    //     await Assert.That(tester).Inspects(new(1f) { BoxArt = true, Count = 2 });
+    // }
 
     [Test]
     public async Task IfGotoLoop()

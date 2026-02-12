@@ -368,6 +368,17 @@ public sealed class Node
         /// <inheritdoc/>
         public override int GetHashCode()
             => HashCode.Combine(RuntimeHelpers.GetHashCode(_nodeOrRegion), _blockPositon, _index, VoxelPosition, SignalType);
+
+        /// <summary>
+        /// Creates an object terminal at a given block position.
+        /// </summary>
+        /// <param name="region">The <see cref="BlockRegion"/> to which <paramref name="positionInRange"/> is relative to.</param>
+        /// <param name="positionInRange">Position relative to <paramref name="region"/>.</param>
+        /// <param name="voxelPositon">Voxel position on the outside prefab.</param>
+        /// <param name="signalType">Type of the terminal.</param>
+        /// <returns>The contructed terminal.</returns>
+        internal static Terminal ObjectRelative(BlockRegion region, int3 positionInRange, byte3 voxelPositon, SignalType signalType)
+            => new Terminal(region, checked((short3)positionInRange), voxelPositon, 0, signalType);
     }
 
     /// <summary>
@@ -405,7 +416,7 @@ public sealed class Node
         /// </summary>
         /// <param name="in">The input terminal.</param>
         /// <param name="out">An enumerable view of the output terminals.</param>
-        public TerminalStore(Terminal @in, OutTerminalsEnumerable @out)
+        public TerminalStore(Terminal @in, OutTerminalsCollection @out)
         {
             In = @in;
             _outTerminals = @out._outTerminals;
@@ -435,7 +446,7 @@ public sealed class Node
         /// Gets the output terminals.
         /// </summary>
         /// <value>An enumerable collection of output terminals.</value>
-        public OutTerminalsEnumerable Out => new OutTerminalsEnumerable(_outTerminals);
+        public OutTerminalsCollection Out => new OutTerminalsCollection(_outTerminals);
 
         /// <summary>
         /// Gets the number of output terminals.
@@ -471,17 +482,23 @@ public sealed class Node
             => new TerminalStore(@in.In, @out.Out);
 
         /// <summary>
-        /// Provides an allocation-free enumerable over a collection of output terminals.
+        /// A collection of terminals.
         /// </summary>
         [StructLayout(LayoutKind.Auto)]
-        public readonly struct OutTerminalsEnumerable : IEnumerable<Terminal>
+        public readonly struct OutTerminalsCollection : IReadOnlyList<Terminal>
         {
             internal readonly TerminalsOutCollection _outTerminals;
 
-            internal OutTerminalsEnumerable(TerminalsOutCollection outTerminals)
+            internal OutTerminalsCollection(TerminalsOutCollection outTerminals)
             {
                 _outTerminals = outTerminals;
             }
+
+            /// <inheritdoc/>
+            public Terminal this[int index] => _outTerminals[index];
+
+            /// <inheritdoc/>
+            public int Count => _outTerminals.Length;
 
             /// <inheritdoc cref="IEnumerable.GetEnumerator"/>
             public OutTerminalsEnumerator GetEnumerator()
