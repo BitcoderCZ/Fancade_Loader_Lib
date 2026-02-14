@@ -22,6 +22,12 @@ namespace BitcoderCZ.Fancade.Editing.Scripting;
 /// </summary>
 public sealed class CodeGraph
 {
+    /// <summary>
+    /// Gets an empty <see cref="CodeGraph"/> instance.
+    /// </summary>
+    /// <value>An empty <see cref="CodeGraph"/> instance.</value>
+    public static CodeGraph Empty { get; } = new CodeGraph(new(ScopeType.Statement), [], [], 0);
+
     internal readonly List<Node.Connection> _connections;
     internal readonly List<Node.BlockRegion> _regions;
 
