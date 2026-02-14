@@ -228,7 +228,7 @@ public struct GameMeshInfo
     /// </summary>
     /// <param name="id">Id of the prefab.</param>
     /// <returns><see cref="BlockMesh"/> for the prefab.</returns>
-    public BlockMesh GetBlockMesh(ushort id)
+    public readonly BlockMesh GetBlockMesh(ushort id)
         => _blockMeshes[id];
 
     /// <summary>
@@ -236,7 +236,7 @@ public struct GameMeshInfo
     /// </summary>
     /// <param name="id">Id of the segment.</param>
     /// <returns>The <see cref="PrefabSegmentMeshes"/> for the segment.</returns>
-    public PrefabSegmentMeshes GetSegmentMesh(ushort id)
+    public readonly PrefabSegmentMeshes GetSegmentMesh(ushort id)
         => _segmentMeshes[id];
 
     /// <summary>
@@ -244,7 +244,7 @@ public struct GameMeshInfo
     /// </summary>
     /// <param name="id">Id of the prefab.</param>
     /// <returns>Mesh bounds of the prefab.</returns>
-    public (int3 Min, int3 Max) GetPrefabMeshBounds(ushort id)
+    public readonly (int3 Min, int3 Max) GetPrefabMeshBounds(ushort id)
         => _prefabMeshBounds[id];
 
     public readonly ValueList<FcMesh.Block> GetUniqueMesh(int uniqueMeshIndex)

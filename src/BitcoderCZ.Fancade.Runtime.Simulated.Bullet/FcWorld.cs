@@ -41,7 +41,7 @@ public sealed partial class FcWorld : IAstRunner
 
     private readonly PrefabList _prefabs;
 
-    private GameMeshInfo _gameMesh;
+    private readonly GameMeshInfo _gameMesh;
 
     private readonly List<RuntimeObject> _objects = [];
 

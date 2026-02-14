@@ -53,6 +53,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
         }
     }
 
+    /// <inheritdoc/>
     public readonly int Count
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -81,6 +82,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
         }
     }
 
+    /// <inheritdoc/>
     public readonly bool IsReadOnly => false;
 
     [UnscopedRef]
@@ -91,6 +93,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
     [UnscopedRef]
     private readonly ReadOnlySpan<T> ROBufferSpan => Buffer8.AsSpan(ref Unsafe.AsRef(in _buffer));
 
+    /// <inheritdoc/>
     public T this[int index]
     {
         readonly get
@@ -124,6 +127,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
             ? ref BufferSpan[index]
             : ref CollectionsMarshal.AsSpan(_list!)[index - BufferCapacity]);
 
+    /// <inheritdoc/>
     public void Add(T item)
     {
         if (_count < BufferCapacity)
@@ -156,6 +160,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
         b = temp;
     }
 
+    /// <inheritdoc/>
     public void Clear()
     {
         BufferSpan.Clear();
@@ -163,9 +168,11 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
         _count = 0;
     }
 
+    /// <inheritdoc/>
     public readonly bool Contains(T item)
         => IndexOf(item) >= 0;
 
+    /// <inheritdoc/>
     public readonly void CopyTo(T[] array, int arrayIndex)
         => CopyTo(array.AsSpan(arrayIndex));
 
@@ -188,6 +195,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
         }
     }
 
+    /// <inheritdoc/>
     public readonly int IndexOf(T item)
     {
         if (_count == 0)
@@ -215,6 +223,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
         return -1;
     }
 
+    /// <inheritdoc/>
     public void Insert(int index, T item)
     {
         ThrowIfGreaterThanOrEqualToOrNegative(index, Count, nameof(index));
@@ -263,6 +272,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
         _count++;
     }
 
+    /// <inheritdoc/>
     public bool Remove(T item)
     {
         int index = IndexOf(item);
@@ -275,6 +285,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
         return false;
     }
 
+    /// <inheritdoc/>
     public void RemoveAt(int index)
     {
         ThrowIfGreaterThanOrEqualToOrNegative(index, _count, nameof(index));
@@ -548,6 +559,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
             _current = default!;
         }
 
+        /// <inheritdoc/>
         public readonly T Current => _current;
 
         readonly object? IEnumerator.Current
@@ -563,6 +575,7 @@ public struct ValueList<T> : IList<T>, IReadOnlyList<T>
             }
         }
 
+        /// <inheritdoc/>
         public bool MoveNext()
         {
             _index++;

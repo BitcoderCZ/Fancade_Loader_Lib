@@ -175,7 +175,6 @@ public readonly struct BlockMesh
             {
                 // new unique, blockList was added to unique mesh list
                 meshes.Add((new FcMesh(blockList.List, minPos), uniqueIndex));
-                blockList = default;
             }
             else
             {

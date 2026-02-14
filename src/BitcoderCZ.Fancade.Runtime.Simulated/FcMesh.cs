@@ -210,14 +210,16 @@ public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
             _blocks = blocks;
         }
 
+        /// <inheritdoc/>
         public readonly int3 Current => _blocks.Current.Offset + _position;
 
         readonly object IEnumerator.Current => Current;
 
+        /// <inheritdoc/>
         public bool MoveNext()
             => _blocks.MoveNext();
 
-        void IEnumerator.Reset()
+        readonly void IEnumerator.Reset()
             => ((IEnumerator)_blocks).Reset();
 
         readonly void IDisposable.Dispose()
