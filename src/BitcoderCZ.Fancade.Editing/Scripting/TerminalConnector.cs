@@ -11,7 +11,7 @@ namespace BitcoderCZ.Fancade.Editing.Scripting;
 /// </summary>
 public sealed class TerminalConnector
 {
-    private readonly CodeGraph.Builder _builder;
+    private readonly Action<TerminalStore, TerminalStore> _connect;
 
     // todo: could just be Terminal
     private TerminalStore? _firstStore;
@@ -22,8 +22,17 @@ public sealed class TerminalConnector
     /// </summary>
     /// <param name="builder">The <see cref="CodeGraph.Builder"/> used to connect terminals.</param>
     public TerminalConnector(CodeGraph.Builder builder)
+        : this(builder.Connect)
     {
-        _builder = builder;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TerminalConnector"/> class.
+    /// </summary>
+    /// <param name="connectAction">A delegate that connects 2 <see cref="TerminalStore"/>s together.</param>
+    public TerminalConnector(Action<TerminalStore, TerminalStore> connectAction)
+    {
+        _connect = connectAction;
     }
 
     /// <summary>
@@ -40,7 +49,7 @@ public sealed class TerminalConnector
     {
         if (_lastStore is { } lastStore)
         {
-            _builder.Connect(lastStore, store);
+            _connect(lastStore, store);
         }
 
         _firstStore ??= store;

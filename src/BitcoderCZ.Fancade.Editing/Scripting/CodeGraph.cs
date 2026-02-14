@@ -93,6 +93,12 @@ public sealed class CodeGraph
         public ScopeType CurrentScopeType => _scopeStack.Peek().Type;
 
         /// <summary>
+        /// Gets the amount of nodes in the currently active scope.
+        /// </summary>
+        /// <value>Amount of nodes in the currently active scope.</value>
+        public int CurrentScopeNodeCount => _scopeStack.Peek()._nodes.Count;
+
+        /// <summary>
         /// Places a new node of the specified type in the current scope.
         /// </summary>
         /// <param name="type">The block definition type to place.</param>
