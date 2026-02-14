@@ -284,7 +284,7 @@ public static class PrefabUtils
         }
     }
 
-     /// <summary>
+    /// <summary>
     /// Sets the glue of a side of voxels in a specified region.
     /// </summary>
     /// <param name="prefab">The prefab to fill.</param>

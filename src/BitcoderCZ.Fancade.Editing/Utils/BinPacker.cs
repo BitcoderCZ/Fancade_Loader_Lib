@@ -40,7 +40,7 @@ internal static class BinPacker
         Array.Sort(indices, (a, b) => sizes[b].Z.CompareTo(sizes[a].Z));
 
         int maxWidth = (int)Math.Sqrt(totalArea);
-        
+
         for (int i = 0; i < count; i++)
         {
             if (sizes[i].X > maxWidth)

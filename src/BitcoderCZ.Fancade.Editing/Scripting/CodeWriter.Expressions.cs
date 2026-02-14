@@ -967,7 +967,7 @@ public sealed partial class CodeWriter
                 var block = writer._codeBuilder.Place(blockDef);
 
                 if (_type is not SignalType.Bool)
-                {   
+                {
                     var value = _value is Rotation rotation ? rotation.Value : _value;
                     writer._codeBuilder.SetSetting(block, new(0, settingType, value));
                 }

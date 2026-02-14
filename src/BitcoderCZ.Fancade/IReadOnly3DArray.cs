@@ -51,7 +51,7 @@ public interface IReadOnly3DArray<T> : IEnumerable<T>
     /// </summary>
     /// <param name="pos">Position of the item.</param>
     /// <returns>Item at the specified position.</returns>
-    T this[int3 pos] {get;}
+    T this[int3 pos] { get; }
 
     /// <summary>
     /// Determines if the specified position is inside the bounds of this array.

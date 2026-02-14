@@ -23,7 +23,7 @@ public readonly struct PositionedNode
     internal PositionedNode(int3 offset, BlockDef type, SettingsCollection settings, int index)
     {
         Debug.Assert(type is not null);
-        
+
         Offset = offset;
         Type = type;
         _settings = settings;
@@ -33,7 +33,7 @@ public readonly struct PositionedNode
     internal PositionedNode(int3 offset, BlockDef type, PrefabSettings settings, int index)
     {
         Debug.Assert(type is not null);
-        
+
         Offset = offset;
         Type = type;
         _settings = new(settings.Count);

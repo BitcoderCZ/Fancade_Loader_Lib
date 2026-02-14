@@ -844,7 +844,7 @@ public sealed partial class CodeWriter : IDisposable
     {
         var block = _codeBuilder.Place(StockBlocks.Control.Button);
 
-        _codeBuilder.SetSetting(block,new( 0, (byte)buttonType));
+        _codeBuilder.SetSetting(block, new(0, (byte)buttonType));
 
         ConnectorAddInternal(new TerminalStore(block));
 

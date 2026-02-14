@@ -340,7 +340,7 @@ public class Array3D<T> : IReadOnly3DArray<T>
             return y >= 0 && y < newSize.Y && z >= 0 && z < newSize.Z;
         }
     }
-    
+
     /// <summary>
     /// Copies a region from this <see cref="Array3D{T}"/> to the specified destination <see cref="Array3D{T}"/>, starting at the origin of both arrays.
     /// </summary>

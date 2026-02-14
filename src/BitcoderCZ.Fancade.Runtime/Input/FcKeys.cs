@@ -36,14 +36,14 @@ public sealed class FcKeys : IReadOnlyDictionary<FcKeyCode, bool>
         get => _pressed[(int)key];
         set => _pressed[(int)key] = value;
     }
-    
+
     /// <summary>
     /// Copies the elements of the <see cref="FcKeys"/> to a <see cref="Span{T}"/>.
     /// </summary>
     /// <param name="destination">The destination <see cref="Span{T}"/>.</param>
     public void CopyTo(Span<bool> destination)
         => _pressed.AsSpan().CopyTo(destination);
-    
+
     /// <summary>
     /// Copies the elements of the <see cref="FcKeys"/> to a <see cref="Span{T}"/>.
     /// </summary>
@@ -55,7 +55,7 @@ public sealed class FcKeys : IReadOnlyDictionary<FcKeyCode, bool>
             destination[i] = new((FcKeyCode)i, _pressed[i]);
         }
     }
-    
+
     /// <summary>
     /// Copies the elements of the <see cref="FcKeys"/> to another <see cref="FcKeys"/>.
     /// </summary>
@@ -72,14 +72,14 @@ public sealed class FcKeys : IReadOnlyDictionary<FcKeyCode, bool>
     /// <inheritdoc/>
     bool IReadOnlyDictionary<FcKeyCode, bool>.ContainsKey(FcKeyCode key)
 #pragma warning disable CS0612 // Type or member is obsolete
-        => key is >= 0 and < FcKeyCode.LastValue; 
+        => key is >= 0 and < FcKeyCode.LastValue;
 #pragma warning restore CS0612 // Type or member is obsolete
 
     /// <inheritdoc/>
     bool IReadOnlyDictionary<FcKeyCode, bool>.TryGetValue(FcKeyCode key, [MaybeNullWhen(false)] out bool value)
     {
 #pragma warning disable CS0612 // Type or member is obsolete
-        if ( key is >= 0 and < FcKeyCode.LastValue)
+        if (key is >= 0 and < FcKeyCode.LastValue)
 #pragma warning restore CS0612 // Type or member is obsolete
         {
             value = this[key];
