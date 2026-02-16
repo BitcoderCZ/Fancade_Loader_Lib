@@ -327,8 +327,8 @@ public sealed class AstRunnerTester
 
     private static bool Equals(RuntimeValue a, object b, SignalType type)
     {
-        const float MaxDeltaNumber = Constants.EqualsNumbersMaxDiff;
-        const float MaxDeltaVector = Constants.EqualsVectorsMaxDiff;
+        const float MaxDeltaNumber = FancadeConstants.EqualsNumbersMaxDifference;
+        const float MaxDeltaVector = FancadeConstants.EqualsVectorsMaxDifferenceSquared;
         const float MaxDeltaRotationRadians = 0.01f;
 
         return type switch

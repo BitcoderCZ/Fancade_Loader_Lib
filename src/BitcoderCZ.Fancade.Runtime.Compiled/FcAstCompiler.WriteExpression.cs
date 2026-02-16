@@ -3,6 +3,7 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Editing;
+using BitcoderCZ.Fancade.Editing.Scripting;
 using BitcoderCZ.Fancade.Runtime.Compiled.Utils;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Syntax;
@@ -588,7 +589,7 @@ public partial class FcAstCompiler
                             WriteExpressionOrDefault(binary.Input1, SignalType.Float, environment, writer);
                             writer.Write(" - ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Float, environment, writer);
-                            writer.WriteInv($") < {Constants.EqualsNumbersMaxDiff}");
+                            writer.WriteInv($") < {FancadeConstants.EqualsNumbersMaxDifference}");
                             break;
                         case 136:
                             // equals vectors
@@ -597,7 +598,7 @@ public partial class FcAstCompiler
                             WriteExpressionOrDefault(binary.Input1, SignalType.Vec3, environment, writer);
                             writer.Write(" - ");
                             WriteExpressionOrDefault(binary.Input2, SignalType.Vec3, environment, writer);
-                            writer.WriteInv($").LengthSquared() < {Constants.EqualsVectorsMaxDiff}");
+                            writer.WriteInv($").LengthSquared() < {FancadeConstants.EqualsVectorsMaxDifferenceSquared}");
                             break;
                         case 140:
                             // equals objects

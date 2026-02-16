@@ -3,6 +3,7 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Editing;
+using BitcoderCZ.Fancade.Editing.Scripting;
 using BitcoderCZ.Fancade.Runtime.Exceptions;
 using BitcoderCZ.Fancade.Runtime.Syntax;
 using BitcoderCZ.Fancade.Runtime.Syntax.Control;
@@ -1191,8 +1192,8 @@ public sealed class Interpreter : IAstRunner
                         124 => new(input1.Float / input2.Float),
                         172 => new(FcMod(input1.Float, input2.Float)),
                         457 => new(MathF.Pow(input1.Float, input2.Float)),
-                        132 => new(MathF.Abs(input1.Float - input2.Float) < Constants.EqualsNumbersMaxDiff),
-                        136 => new((input1.Vector3 - input2.Vector3).LengthSquared() < Constants.EqualsVectorsMaxDiff),
+                        132 => new(MathF.Abs(input1.Float - input2.Float) < FancadeConstants.EqualsNumbersMaxDifference),
+                        136 => new((input1.Vector3 - input2.Vector3).LengthSquared() < FancadeConstants.EqualsVectorsMaxDifferenceSquared),
                         140 => new(input1.Int == input2.Int),
                         421 => new(input1.Bool == input2.Bool),
                         128 => new(input1.Float < input2.Float),
