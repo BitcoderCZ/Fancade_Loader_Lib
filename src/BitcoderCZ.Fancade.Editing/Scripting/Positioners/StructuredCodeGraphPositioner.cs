@@ -29,16 +29,16 @@ public static class StructuredCodeGraphPositioner
 
         layoutOptionsVal.Validate();
 
-        var scopeLayouts = CalculateAllLayouts(graph.RootScope, layoutOptionsVal);
+        var scopeLayouts = CalculateAllLayouts(graph, graph.RootScope, layoutOptionsVal);
 
         var scopeDepth = new int[graph.RootScope.GetHorizontalSize()];
 
         var rootLayout = scopeLayouts[graph.RootScope];
 
-        var nodes = new List<PositionedNode>(graph.NodeCount);
+        var nodes = new List<PositionedNodeData>(graph.NodeCount);
         CollectionsMarshal.SetCount(nodes, graph.NodeCount);
         var nodesSpan = CollectionsMarshal.AsSpan(nodes);
-        ApplyLayout(graph.RootScope, 0, new int3(rootLayout.WidthLeft, 0, 0), scopeLayouts, nodesSpan, scopeDepth, layoutOptionsVal);
+        ApplyLayout(graph, graph.RootScope, 0, new int3(rootLayout.WidthLeft, 0, 0), scopeLayouts, nodesSpan, scopeDepth, layoutOptionsVal);
 
         int maxDepth = 0;
         foreach (var depth in scopeDepth)
@@ -51,22 +51,22 @@ public static class StructuredCodeGraphPositioner
         for (var i = 0; i < nodesSpan.Length; i++)
         {
             var node = nodesSpan[i];
-            if (node.IsEmpty)
+            if (node._type is null)
             {
                 continue;
             }
 
-            var newOffset = node.Offset + new int3(0, 0, maxDepth);
+            var newOffset = node._offset + new short3(0, 0, maxDepth);
             Debug.Assert(newOffset.X >= 0);
             Debug.Assert(newOffset.Y >= 0);
             Debug.Assert(newOffset.Z >= 0);
-            nodesSpan[i] = new(newOffset, node.Type, node._settings, node._index);
+            nodesSpan[i] = new PositionedNodeData(node.Type, node._settings, newOffset);
         }
 
         return PositionedCodeGraph.Create(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), new int3(rootLayout.GetTotalWidth(layoutOptionsVal.PaddingX), rootLayout.Height, maxDepth));
     }
 
-    private static void ApplyLayout(CodeScope scope, int layer, int3 origin, Dictionary<CodeScope, ScopeLayout> scopeLayouts, Span<PositionedNode> nodes, int[] scopeDepth, LayoutOptions layoutOptions)
+    private static void ApplyLayout(CodeGraph graph, CodeScope scope, int layer, int3 origin, Dictionary<CodeScope, ScopeLayout> scopeLayouts, Span<PositionedNodeData> nodes, int[] scopeDepth, LayoutOptions layoutOptions)
     {
         var thisLayout = scopeLayouts[scope];
 
@@ -91,15 +91,17 @@ public static class StructuredCodeGraphPositioner
         List<CodeScope> pendingChildren = new(4);
 
         int nodeIndex = 0;
-        foreach (var node in scope._nodes)
+        foreach (var nodeHandle in scope._nodes)
         {
-            if (node == Node.Empty)
+            if (nodeHandle == NodeHandle.Null)
             {
                 SetScopeDepth(currentPos.Z);
                 currentPos.Z -= 1;
                 nodeIndex++;
                 continue;
             }
+
+            var node = graph.GetNode(nodeHandle, out var nodeSettings);
 
             CollectChildrenForNode(nodeIndex, ref currentChild, ref childEnumerator, pendingChildren);
 
@@ -108,7 +110,7 @@ public static class StructuredCodeGraphPositioner
             currentPos.Z = Math.Min(currentPos.Z, GetSafePos(scopeDepth, layer, expressionDepth) - layoutOptions.GetPaddingZ(scope));
             currentPos.Z -= node.Type.Size.Z - 1;
 
-            nodes[node._index] = new PositionedNode(currentPos, node.Type, node._settings, node._index);
+            nodes[nodeHandle._index] = new PositionedNodeData(node.Type, nodeSettings, (short3)currentPos);
             SetScopeDepth(currentPos.Z);
 
             int nodeZOffset = node.Type.Size.Z - 1;
@@ -136,7 +138,7 @@ public static class StructuredCodeGraphPositioner
                             break;
                     }
 
-                    ApplyLayout(child, childLayer, childOrigin, scopeLayouts, nodes, scopeDepth, layoutOptions);
+                    ApplyLayout(graph, child, childLayer, childOrigin, scopeLayouts, nodes, scopeDepth, layoutOptions);
                 }
             }
 
@@ -194,18 +196,18 @@ public static class StructuredCodeGraphPositioner
         return min - 1;
     }
 
-    private static Dictionary<CodeScope, ScopeLayout> CalculateAllLayouts(CodeScope scope, LayoutOptions layoutOptions)
+    private static Dictionary<CodeScope, ScopeLayout> CalculateAllLayouts(CodeGraph graph, CodeScope scope, LayoutOptions layoutOptions)
     {
         var map = new Dictionary<CodeScope, ScopeLayout>(32);
 
-        CalculateAllLayouts(scope, map.Add, layoutOptions);
+        CalculateAllLayouts(graph, scope, map.Add, layoutOptions);
 
         return map;
     }
 
-    private static ScopeLayout CalculateAllLayouts(CodeScope scope, Action<CodeScope, ScopeLayout> onLayoutCalculated, LayoutOptions layoutOptions)
+    private static ScopeLayout CalculateAllLayouts(CodeGraph graph, CodeScope scope, Action<CodeScope, ScopeLayout> onLayoutCalculated, LayoutOptions layoutOptions)
     {
-        var thisLayout = CalculateLayoutNodesOnly(scope);
+        var thisLayout = CalculateLayoutNodesOnly(graph, scope);
 
         int statementWidth = 0;
         int expressionWidth = 0;
@@ -213,7 +215,7 @@ public static class StructuredCodeGraphPositioner
 
         foreach (var child in scope.Children)
         {
-            var childLayout = CalculateAllLayouts(child, onLayoutCalculated, layoutOptions);
+            var childLayout = CalculateAllLayouts(graph, child, onLayoutCalculated, layoutOptions);
 
             switch (child.Type)
             {
@@ -235,13 +237,14 @@ public static class StructuredCodeGraphPositioner
         return layout;
     }
 
-    private static ScopeLayout CalculateLayoutNodesOnly(CodeScope scope)
+    private static ScopeLayout CalculateLayoutNodesOnly(CodeGraph graph, CodeScope scope)
     {
         int width = 0;
         int height = 0;
 
-        foreach (var node in scope.Nodes)
+        foreach (var nodeHandle in scope.Nodes)
         {
+            var node = graph.GetNode(nodeHandle, out _);
             height = Math.Max(height, node.Type.Size.Y);
             width = Math.Max(width, node.Type.Size.X);
         }

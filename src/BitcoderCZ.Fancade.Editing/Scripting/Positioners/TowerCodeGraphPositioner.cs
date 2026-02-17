@@ -27,12 +27,13 @@ public static class TowerCodeGraphPositioner
         LayoutOptions layoutOptionsVal = layoutOptions ?? LayoutOptions.Defaut;
         layoutOptionsVal.Validate();
 
-        var nodes = new List<PositionedNode>(graph.NodeCount);
+        var nodes = new List<PositionedNodeData>(graph.NodeCount);
         CollectionsMarshal.SetCount(nodes, graph.NodeCount);
-        var info = new LayoutInfo(nodes, layoutOptionsVal);
+        var info = new LayoutInfo(graph, nodes, layoutOptionsVal);
 
         int3 size = new int3(((info.TowerX - 1) * layoutOptionsVal.TowerSpacing) + Prefab.MaxSize, Math.Min(layoutOptionsVal.MaximumTowerHeight, graph.NodeCount), ((info.TowerZ - 1) * layoutOptionsVal.TowerSpacing) + Prefab.MaxSize);
 
+        // todo: this can now just enumerate the nodes in order, instead of using scopes
         ApplyLayout(graph.RootScope, ref info);
 
         return PositionedCodeGraph.Create(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), size);
@@ -53,15 +54,17 @@ public static class TowerCodeGraphPositioner
                     goto breakLabel;
                 }
 
-                var node = nodes.Current;
-                if (node == Node.Empty)
+                var handle = nodes.Current;
+                if (handle == NodeHandle.Null)
                 {
                     info.YLevel--;
                     continue;
                 }
 
-                var position = new int3(basePos.X, info.YLevel, basePos.Y);
-                info.Nodes[node._index] = new PositionedNode(position, node.Type, node._settings, node._index);
+                var node = info.Graph.GetNode(handle, out var nodeSettings);
+
+                var position = new short3(basePos.X, info.YLevel, basePos.Y);
+                info.Nodes[handle._index] = new PositionedNodeData(node.Type, nodeSettings, position);
             }
 
             info.YLevel = 0;
@@ -149,14 +152,16 @@ public static class TowerCodeGraphPositioner
         public readonly int TowerCount;
         public readonly int TowerX;
         public readonly int TowerZ;
-        public readonly List<PositionedNode> Nodes;
+        public readonly CodeGraph Graph;
+        public readonly List<PositionedNodeData> Nodes;
 
         public int NodeIndex;
         public int TowerIndex;
         public int YLevel;
 
-        public LayoutInfo(List<PositionedNode> nodes, LayoutOptions options)
+        public LayoutInfo(CodeGraph graph, List<PositionedNodeData> nodes, LayoutOptions options)
         {
+            Graph = graph;
             Nodes = nodes;
             Options = options;
 

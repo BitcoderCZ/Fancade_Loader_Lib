@@ -2,6 +2,7 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Maths.Vectors;
@@ -23,7 +24,7 @@ public static class PrefabCodeGraphEmitter
             blocks.ReserveRegion(blocksOffset, blocksOffset + graph.Size - int3.One);
             foreach (var node in graph.NodesSpan)
             {
-                if (node.IsEmpty)
+                if (node._type is null)
                 {
                     continue;
                 }
@@ -53,7 +54,18 @@ public static class PrefabCodeGraphEmitter
 
         foreach (var connection in graph.ConnectionSpan)
         {
-            prefab.Connections.Add(CodeGraphEmitHelper.NodeConnectionToConnection(connection, nodeIndex => blocksOffset + graph.Nodes[nodeIndex].Offset, region => position + region.Offset));
+            prefab.Connections.Add(CodeGraphEmitHelper.NodeConnectionToConnection(
+                connection, 
+                nodeHandle =>
+                {
+                    Debug.Assert(nodeHandle._graphId == graph._id);
+                    return blocksOffset + graph._nodes[nodeHandle._index].Offset;
+                },
+                regionHandle =>
+                {
+                    Debug.Assert(regionHandle._graphId == graph._id);
+                    return position + graph._regions[regionHandle._index].Offset;
+                }));
         }
 
         return size;

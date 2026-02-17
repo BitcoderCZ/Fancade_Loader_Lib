@@ -187,7 +187,7 @@ public class FcWorldTests
 
         blocks.SetPrefab(new int3(1, 1, 1), prefab);
 
-        var terminal = Terminal.CreateIn(byte3.One, 0, SignalType.Obj);
+        var terminal = Terminal.OutsideInput(byte3.One, SignalType.Obj);
         var size = GetSize(terminal.Wrap());
         writer.Inspect(SubtractVectors(size.Max, size.Min));
 
@@ -214,7 +214,7 @@ public class FcWorldTests
         var blocks = level.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
 
-        var terminal = Terminal.CreateIn(byte3.One, 0, SignalType.Obj);
+        var terminal = Terminal.OutsideInput(byte3.One, SignalType.Obj);
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
 
         PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), prefab, int3.Zero);
@@ -245,7 +245,7 @@ public class FcWorldTests
         blocks.SetBlock(new int3(0, 0, 0), 1);
         blocks.SetPrefab(new int3(1, 0, 0), prefab);
 
-        var terminal = Terminal.CreateIn(new byte3(2, 1, 1), 0, SignalType.Obj);
+        var terminal = Terminal.OutsideInput(new byte3(2, 1, 1), SignalType.Obj);
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
         PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), prefab, int3.Zero);
 

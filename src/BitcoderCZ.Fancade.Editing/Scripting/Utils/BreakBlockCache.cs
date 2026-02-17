@@ -97,7 +97,7 @@ public sealed class BreakBlockCache
     /// <returns><see langword="true"/> if the terminal was retrieved successfully; otherwise, <see langword="false"/>.</returns>
     public bool TryGetAxis(int axis, [NotNullWhen(true)] out TerminalStore? store)
     {
-        if (_lastBlock is null)
+        if (_lastBlock is not { } lastBlock)
         {
             store = null;
             return false;
@@ -111,7 +111,7 @@ public sealed class BreakBlockCache
         if (CheckAndInc(axis))
         {
             // x - 2, y - 1, z - 0
-            store = TerminalStore.CreateOut(new Terminal(_lastBlock, _lastBlock.Type.Terminals[2 - axis]));
+            store = TerminalStore.CreateOut(new Terminal(lastBlock, lastBlock.Type.Terminals[2 - axis]));
             return true;
         }
         else
@@ -128,7 +128,7 @@ public sealed class BreakBlockCache
             return breakBlock;
         }
 
-        BlockDef type = breakBlock.Type;
+        BlockDef type = breakBlock.Value.Type;
         return type == StockBlocks.Math.Break_Vector || type == StockBlocks.Math.Break_Rotation
             ? breakBlock
             : throw new ArgumentException(argumentName, $"{argumentName} must be {nameof(StockBlocks.Math.Break_Vector)} or {nameof(StockBlocks.Math.Break_Rotation)}.");

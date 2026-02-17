@@ -20,10 +20,11 @@ using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
     prefabs.AddPrefab(level);
 
     var writer = new CodeWriter(new CodeGraph.Builder());
-    writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
-    writer.Inspect(MakeVector(None(), None(), AddNumbers(None(), None())));
-    writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
-    writer.Inspect(MakeVector(None(), None(), AddNumbers(AddNumbers(None(), None()), None())));
+    writer.Inspect(Vector(new Vector3(1, 2, 3)));
+    // writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
+    // writer.Inspect(MakeVector(None(), None(), AddNumbers(None(), None())));
+    // writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
+    // writer.Inspect(MakeVector(None(), None(), AddNumbers(AddNumbers(None(), None()), None())));
 
     writer.Flush();
     PrefabCodeGraphEmitter.Emit(StructuredCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), level, int3.Zero);

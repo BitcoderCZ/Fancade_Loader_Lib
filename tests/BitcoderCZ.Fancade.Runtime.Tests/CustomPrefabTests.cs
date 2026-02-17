@@ -51,8 +51,8 @@ public class CustomPrefabTests
             inspectInput = writer.Connector.Store.In;
         }
 
-        builder.Connect(onPlay, Terminal.ObjectRelative(region, int3.Zero, fromPos, SignalType.Void));
-        builder.Connect(Terminal.ObjectRelative(region, int3.Zero, toPos, SignalType.Void), inspectInput);
+        builder.Connect(onPlay, Terminal.ObjectRelative(region.Handle, int3.Zero, fromPos, SignalType.Void));
+        builder.Connect(Terminal.ObjectRelative(region.Handle, int3.Zero, toPos, SignalType.Void), inspectInput);
 
         PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(builder.BuildAndClear()), level, int3.Zero);
 

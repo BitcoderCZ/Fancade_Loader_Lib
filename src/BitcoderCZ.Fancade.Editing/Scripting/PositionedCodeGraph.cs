@@ -18,12 +18,18 @@ namespace BitcoderCZ.Fancade.Editing.Scripting;
 /// </summary>
 public sealed class PositionedCodeGraph
 {
-    private readonly List<PositionedNode> _nodes;
-    private readonly List<PositionedNode.BlockRegion> _regions;
-    private readonly List<PositionedNode.Connection> _connections;
+    internal readonly ushort _id;
+    internal readonly List<PositionedNodeData> _nodes;
+    internal readonly List<PositionedNode.BlockRegion> _regions;
+    internal readonly List<Node.Connection> _connections;
 
-    private PositionedCodeGraph(List<PositionedNode> nodes, List<PositionedNode.BlockRegion> regions, List<PositionedNode.Connection> connections, int3 size, int3 offset)
+    private const int FirstId = ushort.MaxValue / 2;
+
+    private static int nextGraphId = FirstId - 1;
+
+    private PositionedCodeGraph(ushort id, List<PositionedNodeData> nodes, List<PositionedNode.BlockRegion> regions, List<Node.Connection> connections, int3 size, int3 offset)
     {
+        _id = id;
         _nodes = nodes;
         _regions = regions;
         _connections = connections;
@@ -44,18 +50,6 @@ public sealed class PositionedCodeGraph
     public int3 Offset { get; }
 
     /// <summary>
-    /// Gets the positioned nodes contained in the graph.
-    /// </summary>
-    /// <value>A read-only list of positioned nodes.</value>
-    public IReadOnlyList<PositionedNode> Nodes => _nodes;
-
-    /// <summary>
-    /// Gets the positioned nodes contained in the graph as a span.
-    /// </summary>
-    /// <value>A read-only span of positioned nodes.</value>
-    public ReadOnlySpan<PositionedNode> NodesSpan => CollectionsMarshal.AsSpan(_nodes);
-
-    /// <summary>
     /// Gets the <see cref="Node.BlockRegion"/>s in the <see cref="PositionedCodeGraph"/>.
     /// </summary>
     /// <value>The <see cref="Node.BlockRegion"/>s in the <see cref="PositionedCodeGraph"/>.</value>
@@ -71,16 +65,63 @@ public sealed class PositionedCodeGraph
     /// Gets the connections between nodes in the graph.
     /// </summary>
     /// <value>A read-only list of node connections.</value>
-    public IReadOnlyList<PositionedNode.Connection> Connections => _connections;
+    public IReadOnlyList<Node.Connection> Connections => _connections;
 
     /// <summary>
     /// Gets the connections between nodes in the graph as a span.
     /// </summary>
     /// <value>A read-only span of node connections.</value>
-    public ReadOnlySpan<PositionedNode.Connection> ConnectionSpan => CollectionsMarshal.AsSpan(_connections);
+    public ReadOnlySpan<Node.Connection> ConnectionSpan => CollectionsMarshal.AsSpan(_connections);
 
-    internal static PositionedCodeGraph Create(List<PositionedNode> nodes, ReadOnlySpan<Node.BlockRegion> regions, ReadOnlySpan<Node.Connection> connections, int3 size)
+    internal ReadOnlySpan<PositionedNodeData> NodesSpan => CollectionsMarshal.AsSpan(_nodes);
+
+     /// <summary>
+    /// Gets a node from the graph.
+    /// </summary>
+    /// <param name="index">Index of the node to get.</param>
+    /// <param name="settings">Settings of the node.</param>
+    /// <returns>The node.</returns>
+    public PositionedNode GetNode(int index, out NodeSettingsCollection settings)
     {
+        var data = _nodes[index];
+        if (data.Type is null)
+        {
+            settings = default;
+            return PositionedNode.Empty;
+        }
+
+        settings = new NodeSettingsCollection(data._settings);
+        return new PositionedNode(_id, (ushort)index, data.Type, data._offset);
+    }
+
+    /// <summary>
+    /// Gets a node from the graph.
+    /// </summary>
+    /// <param name="handle">Handle of the node to get.</param>
+    /// <param name="settings">Settings of the node.</param>
+    /// <returns>The node.</returns>
+    public PositionedNode GetNode(NodeHandle handle, out NodeSettingsCollection settings)
+    {
+        if (handle._graphId != _id)
+        {
+            ThrowArgumentException($"{nameof(handle)} belongs to another {nameof(CodeGraph)}.", nameof(handle));
+        }
+
+        var data = _nodes[handle._index];
+        if (data.Type is null)
+        {
+            settings = default;
+            return PositionedNode.Empty;
+        }
+
+        settings = new NodeSettingsCollection(data._settings);
+        return new PositionedNode(_id, handle._index, data.Type, data._offset);
+    }
+
+    internal static PositionedCodeGraph Create(List<PositionedNodeData> nodes, ReadOnlySpan<Node.BlockRegion> regions, ReadOnlySpan<Node.Connection> connections, int3 size)
+    {
+        var graphId = GetNextGraphId();
+
         var positions = CodeGraphEmitHelper.Pack(size, regions);
 
         var offset = positions[0];
@@ -91,19 +132,22 @@ public sealed class PositionedCodeGraph
 
         foreach (var region in regions)
         {
-            positionedRegionsSpan[region._index] = new PositionedNode.BlockRegion(region.Blocks, positions[region._index + 1], region._index);
+            positionedRegionsSpan[region._index] = new PositionedNode.BlockRegion(graphId, region._index, region.Blocks, positions[region._index + 1]);
         }
 
-        var positionedConnections = new List<PositionedNode.Connection>(connections.Length);
+        var positionedConnections = new List<Node.Connection>(connections.Length);
         CollectionsMarshal.SetCount(positionedConnections, connections.Length);
         var positionedConnectionsSpan = CollectionsMarshal.AsSpan(positionedConnections);
 
         int index = 0;
         foreach (var connection in connections)
         {
-            positionedConnectionsSpan[index++] = PositionedNode.Connection.Cast(connection, region => positionedRegions[region._index]);
+            positionedConnectionsSpan[index++] = connection.WithGraphId(graphId);
         }
 
-        return new PositionedCodeGraph(nodes, positionedRegions, positionedConnections, size, offset);
+        return new PositionedCodeGraph(graphId, nodes, positionedRegions, positionedConnections, size, offset);
     }
+
+    private static ushort GetNextGraphId()
+        => (ushort)Interlocked.Increment(ref nextGraphId);
 }

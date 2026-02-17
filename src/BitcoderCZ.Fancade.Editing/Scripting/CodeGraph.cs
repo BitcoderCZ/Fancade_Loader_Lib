@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BitcoderCZ.Buffers;
 using BitcoderCZ.Maths.Vectors;
+using BitcoderCZ.Utils;
 using static BitcoderCZ.Utils.ThrowHelper;
 using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
 using TerminalsOutBuffer = BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal>;
@@ -26,20 +27,26 @@ public sealed class CodeGraph
     /// Gets an empty <see cref="CodeGraph"/> instance.
     /// </summary>
     /// <value>An empty <see cref="CodeGraph"/> instance.</value>
-    public static CodeGraph Empty { get; } = new CodeGraph(new(ScopeType.Statement), [], [], 0);
+    public static CodeGraph Empty { get; } = new CodeGraph(0, [], new(ScopeType.Statement), [], []);
 
+    internal readonly ushort _id;
+    internal readonly List<NodeData> _nodes;
     internal readonly List<Node.Connection> _connections;
     internal readonly List<Node.BlockRegion> _regions;
 
-    internal CodeGraph(CodeScope rootScope, List<Node.BlockRegion> regions, List<Node.Connection> connections, int noedCount)
+    private static int nextGraphId = 0;
+
+    internal CodeGraph(ushort id, List<NodeData> nodes, CodeScope rootScope, List<Node.BlockRegion> regions, List<Node.Connection> connections)
     {
+        Debug.Assert(nodes is not null);
         Debug.Assert(rootScope is not null);
         Debug.Assert(connections is not null);
 
+        _id = id;
+        _nodes = nodes;
         RootScope = rootScope;
         _regions = regions;
         _connections = connections;
-        NodeCount = noedCount;
     }
 
     /// <summary>
@@ -55,16 +62,74 @@ public sealed class CodeGraph
     public IReadOnlyList<Node.BlockRegion> Regions => _regions;
 
     /// <summary>
+    /// Gets the <see cref="Node.BlockRegion"/>s in the <see cref="CodeGraph"/> as a span.
+    /// </summary>
+    /// <value>The <see cref="Node.BlockRegion"/>s in the <see cref="CodeGraph"/> as a span.</value>
+    public ReadOnlySpan<Node.BlockRegion> RegionsSpan => CollectionsMarshal.AsSpan(_regions);
+
+    /// <summary>
     /// Gets the connections between nodes in the graph.
     /// </summary>
     /// <value>Connections between nodes in the graph.</value>
     public IReadOnlyList<Node.Connection> Connections => _connections;
 
     /// <summary>
+    /// Gets the connections between nodes in the graph as a span.
+    /// </summary>
+    /// <value>Connections between nodes in the graph as a span.</value>
+    public ReadOnlySpan<Node.Connection> ConnectionsSpan => CollectionsMarshal.AsSpan(_connections);
+
+    /// <summary>
     /// Gets the total number of nodes in the graph.
     /// </summary>
     /// <value>Total number of nodes in the graph.</value>
-    public int NodeCount { get; }
+    public int NodeCount => _nodes.Count;
+
+    /// <summary>
+    /// Gets a node from the graph.
+    /// </summary>
+    /// <param name="index">Index of the node to get.</param>
+    /// <param name="settings">Settings of the node.</param>
+    /// <returns>The node.</returns>
+    public Node GetNode(int index, out NodeSettingsCollection settings)
+    {
+        var data = _nodes[index];
+        if (data.Type is null)
+        {
+            settings = default;
+            return Node.Empty;
+        }
+
+        settings = new NodeSettingsCollection(data.Settings);
+        return new Node(_id, (ushort)index, data.Type);
+    }
+
+    /// <summary>
+    /// Gets a node from the graph.
+    /// </summary>
+    /// <param name="handle">Handle of the node to get.</param>
+    /// <param name="settings">Settings of the node.</param>
+    /// <returns>The node.</returns>
+    public Node GetNode(NodeHandle handle, out NodeSettingsCollection settings)
+    {
+        if (handle._graphId != _id)
+        {
+            ThrowArgumentException($"{nameof(handle)} belongs to another {nameof(CodeGraph)}.", nameof(handle));
+        }
+
+        var data = _nodes[handle._index];
+        if (data.Type is null)
+        {
+            settings = default;
+            return Node.Empty;
+        }
+
+        settings = new NodeSettingsCollection(data.Settings);
+        return new Node(_id, handle._index, data.Type);
+    }
+
+    private static ushort GetNextGraphId()
+        => (ushort)Interlocked.Increment(ref nextGraphId);
 
     /// <summary>
     /// Builder for creating a <see cref="CodeGraph"/>.
@@ -72,10 +137,10 @@ public sealed class CodeGraph
     public sealed class Builder
     {
         private readonly Stack<CodeScope> _scopeStack = new(8);
-        private List<Node.BlockRegion> _regions = [];
-        private List<Node.Connection> _connections = [];
-        private int _nextNodeId = 0;
-        private int _nextRegionId = 0;
+        private ushort _graphId;
+        private List<NodeData> _nodes;
+        private List<Node.BlockRegion> _regions;
+        private List<Node.Connection> _connections;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Builder"/> class.
@@ -83,7 +148,7 @@ public sealed class CodeGraph
         /// </summary>
         public Builder()
         {
-            _scopeStack.Push(new CodeScope(ScopeType.Statement)); // root scope
+            Clear();
         }
 
         /// <summary>
@@ -99,26 +164,33 @@ public sealed class CodeGraph
         public int CurrentScopeNodeCount => _scopeStack.Peek()._nodes.Count;
 
         /// <summary>
+        /// Gets the amount of nodes in the root scope.
+        /// </summary>
+        /// <value>Amount of nodes in the root scope.</value>
+        public int RootScopeNodeCount => _scopeStack.Last()._nodes.Count;
+
+        /// <summary>
         /// Places a new node of the specified type in the current scope.
         /// </summary>
         /// <param name="type">The block definition type to place.</param>
         /// <returns>The newly created <see cref="Node"/>.</returns>
         public Node Place(BlockDef type)
         {
-            var node = new Node(type, _nextNodeId++);
+            var node = new Node(_graphId, (ushort)_nodes.Count, type);
+            _nodes.Add(new NodeData(type, default));
 
-            _scopeStack.Peek()._nodes.Add(node);
+            _scopeStack.Peek()._nodes.Add(node.Handle);
 
             return node;
         }
 
         /// <summary>
-        /// Places an empty node.
+        /// Places an empty node in the currently active scope.
         /// </summary>
         public void PlaceEmptyNode()
         {
-            _nextNodeId++;
-            _scopeStack.Peek()._nodes.Add(Node.Empty);
+            _nodes.Add(default);
+            _scopeStack.Peek()._nodes.Add(NodeHandle.Null);
         }
 
         /// <summary>
@@ -132,21 +204,35 @@ public sealed class CodeGraph
         public Node.BlockRegion CreateRegion(int3 size)
         {
             var array = new Array3D<ushort>(size);
-            var region = new Node.BlockRegion(array, _nextRegionId++);
+            var region = new Node.BlockRegion(_graphId, (ushort)_regions.Count, array);
             _regions.Add(region);
 
             return region;
         }
 
-#pragma warning disable CA1822 // Mark members as static - don't expose implementation details
         /// <summary>
         /// Adds a setting to a node.
         /// </summary>
         /// <param name="node">The node to set.</param>
         /// <param name="setting">The setting to add.</param>
         public void SetSetting(Node node, PrefabSetting setting)
-#pragma warning restore CA1822 // Mark members as static
-            => node._settings.Add(setting);
+            => SetSetting(node.Handle, setting);
+
+        /// <summary>
+        /// Adds a setting to a node.
+        /// </summary>
+        /// <param name="handle">The node to set.</param>
+        /// <param name="setting">The setting to add.</param>
+        public void SetSetting(NodeHandle handle, PrefabSetting setting)
+        {
+            if (handle._graphId != _graphId)
+            {
+                ThrowArgumentException($"{nameof(handle)} belongs to another {nameof(CodeGraph)}.", nameof(handle));
+            }
+
+            // need ref to item
+            CollectionsMarshal.AsSpan(_nodes)[handle._index].Settings.Add(setting);
+        }
 
         /// <summary>
         /// Connects a <see cref="Node.Terminal"/> to a <see cref="Node.Terminal"/>.
@@ -200,7 +286,7 @@ public sealed class CodeGraph
             {
                 ThrowInvalidOperationException("Cannot enter new scope when the current scope has no node.");
             }
-            else if (topScope._nodes[^1] == Node.Empty)
+            else if (topScope._nodes[^1] == default)
             {
                 ThrowInvalidOperationException("Cannot enter new scope when the current scope's last node is an empty node'.");
             }
@@ -241,7 +327,7 @@ public sealed class CodeGraph
             {
                 ThrowInvalidOperationException("Cannot enter new scope when the current scope has no nodes.");
             }
-            else if (topScope._nodes[^1] == Node.Empty)
+            else if (topScope._nodes[^1] == default)
             {
                 ThrowInvalidOperationException("Cannot enter new scope when the current scope's last node is an empty node'.");
             }
@@ -275,20 +361,31 @@ public sealed class CodeGraph
             var rootScope = _scopeStack.Last();
             Debug.Assert(rootScope.Type is ScopeType.Statement);
 
+            _ = RemoveEmptyScopes(rootScope);
+
+            var graphId = _graphId;
+            var nodes = _nodes;
+            var regions = _regions;
+            var connections = _connections;
+
+            Clear();
+
+            return new CodeGraph(graphId, nodes, rootScope, regions, connections);
+        }
+
+        /// <summary>
+        /// Clears the contents of the builder.
+        /// </summary>
+        [MemberNotNull(nameof(_nodes), nameof(_regions), nameof(_connections))]
+        public void Clear()
+        {
             _scopeStack.Clear();
             _scopeStack.Push(new CodeScope(ScopeType.Statement)); // root scope
 
-            _ = RemoveEmptyScopes(rootScope);
-
-            var regions = _regions;
-            var connections = _connections;
-            int nodeCount = _nextNodeId;
-
+            _nodes = [];
             _regions = [];
             _connections = [];
-            _nextNodeId = 0;
-
-            return new CodeGraph(rootScope, regions, connections, nodeCount);
+            _graphId = GetNextGraphId();
         }
 
         private static bool RemoveEmptyScopes(CodeScope scope)
@@ -309,13 +406,13 @@ public sealed class CodeGraph
             var lastExpressionChild = scope._children.LastOrDefault(static child => child.Type is ScopeType.Expression);
             if (lastExpressionChild is not null)
             {
-                while (lastExpressionChild._nodes.Last() == Node.Empty)
+                while (lastExpressionChild._nodes.Last() == default)
                 {
                     lastExpressionChild._nodes.RemoveAt(lastExpressionChild._nodes.Count - 1);
                 }
             }
 
-            return !scope._nodes.Any(static node => node != Node.Empty);
+            return !scope._nodes.Any(static node => node != default);
         }
 
         /// <summary>
@@ -389,7 +486,7 @@ public enum ScopeType
 /// </summary>
 public sealed class CodeScope
 {
-    internal readonly List<Node> _nodes = [];
+    internal readonly List<NodeHandle> _nodes = [];
     internal readonly List<CodeScope> _children = [];
     private int? _maxExpressionDepth;
     private int? _firstExpressionDepth;
@@ -434,15 +531,13 @@ public sealed class CodeScope
     /// Gets the nodes directly contained in this scope.
     /// </summary>
     /// <value>Nodes directly contained in the scope.</value>
-    public IReadOnlyList<Node> Nodes => _nodes;
+    public IReadOnlyList<NodeHandle> Nodes => _nodes;
 
     /// <summary>
     /// Gets the child scopes contained in this scope.
     /// </summary>
     /// <value>Child scopes contained in this scope.</value>
     public IReadOnlyList<CodeScope> Children => _children;
-
-    internal int3? FirstNodeSize => _nodes.Count > 0 ? _nodes[0].Type.Size : null;
 
     internal int GetMaxExpressionDepth()
     {

@@ -111,7 +111,7 @@ public sealed partial class CodeWriter
             {
                 _block ??= writer._codeBuilder.Place(StockBlocks.Game.ScreenSize);
 
-                return new Terminal(_block, 1 - outputIndex);
+                return new Terminal(_block.Value, 1 - outputIndex);
             }
         }
 
@@ -190,11 +190,11 @@ public sealed partial class CodeWriter
                     {
                         var @object = _object.WriteTo(writer);
 
-                        writer._codeBuilder.Connect(@object, new Terminal(_block, "Object"));
+                        writer._codeBuilder.Connect(@object, new Terminal(_block.Value, "Object"));
                     }
                 }
 
-                return new Terminal(_block, 1 - outputIndex);
+                return new Terminal(_block.Value, 1 - outputIndex);
             }
         }
 
@@ -242,12 +242,12 @@ public sealed partial class CodeWriter
                         var from = _from.WriteTo(writer);
                         var to = _to.WriteTo(writer);
 
-                        writer._codeBuilder.Connect(from, new Terminal(_block, "From"));
-                        writer._codeBuilder.Connect(to, new Terminal(_block, "To"));
+                        writer._codeBuilder.Connect(from, new Terminal(_block.Value, "From"));
+                        writer._codeBuilder.Connect(to, new Terminal(_block.Value, "To"));
                     }
                 }
 
-                return new Terminal(_block, 2 - outputIndex);
+                return new Terminal(_block.Value, 2 - outputIndex);
             }
         }
 
@@ -285,11 +285,11 @@ public sealed partial class CodeWriter
                     {
                         var @object = _object.WriteTo(writer);
 
-                        writer._codeBuilder.Connect(@object, new Terminal(_block, "Object"));
+                        writer._codeBuilder.Connect(@object, new Terminal(_block.Value, "Object"));
                     }
                 }
 
-                return new Terminal(_block, 1 - outputIndex);
+                return new Terminal(_block.Value, 1 - outputIndex);
             }
         }
 
@@ -327,11 +327,11 @@ public sealed partial class CodeWriter
                     {
                         var @object = _object.WriteTo(writer);
 
-                        writer._codeBuilder.Connect(@object, new Terminal(_block, "Object"));
+                        writer._codeBuilder.Connect(@object, new Terminal(_block.Value, "Object"));
                     }
                 }
 
-                return new Terminal(_block, 1 - outputIndex);
+                return new Terminal(_block.Value, 1 - outputIndex);
             }
         }
 
@@ -696,12 +696,12 @@ public sealed partial class CodeWriter
 
                     using (writer.ExpressionScope())
                     {
-                        writer._codeBuilder.Connect(_screenX.WriteTo(writer), new Terminal(_block, "Screen X"));
-                        writer._codeBuilder.Connect(_screenY.WriteTo(writer), new Terminal(_block, "Screen Y"));
+                        writer._codeBuilder.Connect(_screenX.WriteTo(writer), new Terminal(_block.Value, "Screen X"));
+                        writer._codeBuilder.Connect(_screenY.WriteTo(writer), new Terminal(_block.Value, "Screen Y"));
                     }
                 }
 
-                return new Terminal(_block, 1 - outputIndex);
+                return new Terminal(_block.Value, 1 - outputIndex);
             }
         }
 
@@ -737,11 +737,11 @@ public sealed partial class CodeWriter
 
                     using (writer.ExpressionScope())
                     {
-                        writer._codeBuilder.Connect(_worldPos.WriteTo(writer), new Terminal(_block, "World Near"));
+                        writer._codeBuilder.Connect(_worldPos.WriteTo(writer), new Terminal(_block.Value, "World Near"));
                     }
                 }
 
-                return new Terminal(_block, 1 - outputIndex);
+                return new Terminal(_block.Value, 1 - outputIndex);
             }
         }
 
@@ -892,11 +892,11 @@ public sealed partial class CodeWriter
                     using (writer.ExpressionScope())
                     {
                         Terminal terminal = _input.WriteTo(writer);
-                        writer._codeBuilder.Connect(terminal, new Terminal(_block, 3));
+                        writer._codeBuilder.Connect(terminal, new Terminal(_block.Value, 3));
                     }
                 }
 
-                return new Terminal(_block, 2 - outputIndex);
+                return new Terminal(_block.Value, 2 - outputIndex);
             }
         }
 

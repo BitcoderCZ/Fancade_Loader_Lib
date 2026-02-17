@@ -33,16 +33,16 @@ internal static class CodeGraphEmitHelper
         return positions;
     }
 
-    public static int3 GetAbsolutePosition(PositionedNode.Terminal terminal, Func<int, int3> getNodePosition, Func<PositionedNode.BlockRegion, int3> getRegionPosition)
+    public static int3 GetAbsolutePosition(Node.Terminal terminal, Func<NodeHandle, int3> getNodePosition, Func<BlockRegionHandle, int3> getRegionPosition)
         => terminal.Type switch
         {
-            PositionedNode.TerminalType.Node => getNodePosition(terminal.NodeIndex!.Value),
-            PositionedNode.TerminalType.OutsideInput or PositionedNode.TerminalType.OutsideOutput => FromToOutsidePosition,
-            PositionedNode.TerminalType.ObjectAbsolute => terminal.BlockPostion!.Value,
-            PositionedNode.TerminalType.ObjectRelative => getRegionPosition(terminal.Region!) + terminal.BlockPostion!.Value,
+            Node.TerminalType.Node => getNodePosition(terminal.Node!.Value),
+            Node.TerminalType.OutsideInput or Node.TerminalType.OutsideOutput => FromToOutsidePosition,
+            Node.TerminalType.ObjectAbsolute => terminal.BlockPostion!.Value,
+            Node.TerminalType.ObjectRelative => getRegionPosition(terminal.Region!.Value) + terminal.BlockPostion!.Value,
             _ => default,
         };
 
-    public static Connection NodeConnectionToConnection(PositionedNode.Connection connection, Func<int, int3> getNodePosition, Func<PositionedNode.BlockRegion, int3> getRegionPosition)
+    public static Connection NodeConnectionToConnection(Node.Connection connection, Func<NodeHandle, int3> getNodePosition, Func<BlockRegionHandle, int3> getRegionPosition)
         => new Connection(GetAbsolutePosition(connection.From, getNodePosition, getRegionPosition), GetAbsolutePosition(connection.To, getNodePosition, getRegionPosition), connection.From.VoxelPosition, connection.To.VoxelPosition);
 }

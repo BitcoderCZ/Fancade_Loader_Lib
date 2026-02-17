@@ -260,7 +260,7 @@ public partial class ExecutionTests
         var blocks = level.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
 
-        var terminal = Node.Terminal.CreateIn(byte3.Zero, 0, SignalType.Rot);
+        var terminal = Node.Terminal.OutsideInput(byte3.Zero, SignalType.Rot);
         writer.Inspect(terminal.Wrap(), SignalType.Rot);
         PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), prefab, int3.One);
 
