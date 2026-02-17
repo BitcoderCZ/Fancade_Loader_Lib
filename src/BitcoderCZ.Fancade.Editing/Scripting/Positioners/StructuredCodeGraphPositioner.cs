@@ -88,7 +88,9 @@ public static class StructuredCodeGraphPositioner
         var childEnumerator = scope._children.GetEnumerator();
         CodeScope? currentChild = childEnumerator.MoveNext() ? childEnumerator.Current : null;
 
+#pragma warning disable IDE0028 // Simplify collection initialization
         List<CodeScope> pendingChildren = new(4);
+#pragma warning restore IDE0028 // Simplify collection initialization
 
         int nodeIndex = 0;
         foreach (var nodeHandle in scope._nodes)
@@ -160,7 +162,7 @@ public static class StructuredCodeGraphPositioner
 
     private static void CollectChildrenForNode(int nodeIndex, ref CodeScope? currentChild, ref List<CodeScope>.Enumerator childEnumerator, List<CodeScope> buffer)
     {
-        while (currentChild is not null && currentChild.DeclaringNodeIndex == nodeIndex)
+        while (currentChild is not null && (currentChild.DeclaringNodeIndex == nodeIndex || currentChild.DeclaringNodeIndex is null))
         {
             buffer.Add(currentChild);
 

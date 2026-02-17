@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Maths.Vectors;
 using static BitcoderCZ.Utils.ThrowHelper;
-using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
+using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray1<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting;
 

@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BitcoderCZ.Maths.Vectors;
-using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
+using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray1<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting;
 

@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 using BitcoderCZ.Buffers;
 using BitcoderCZ.Maths.Vectors;
 using static BitcoderCZ.Utils.ThrowHelper;
-using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
+using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray1<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
 using TerminalsOutBuffer = BitcoderCZ.Buffers.FixedArray1<BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal>;
 using TerminalsOutCollection = BitcoderCZ.Buffers.ImmutableInlineArray<BitcoderCZ.Buffers.FixedArray1<BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal>, BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal>;
 
@@ -843,10 +843,10 @@ public readonly struct NodeSettingsCollection : IReadOnlyCollection<PrefabSettin
 [StructLayout(LayoutKind.Auto)]
 internal struct NodeData
 {
-    public BlockDef Type;
+    public BlockDef? Type;
     public SettingsCollection Settings;
 
-    public NodeData(BlockDef type, SettingsCollection settings)
+    public NodeData(BlockDef? type, SettingsCollection settings)
     {
         Type = type;
         Settings = settings;

@@ -12,9 +12,7 @@ using BitcoderCZ.Buffers;
 using BitcoderCZ.Maths.Vectors;
 using BitcoderCZ.Utils;
 using static BitcoderCZ.Utils.ThrowHelper;
-using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
-using TerminalsOutBuffer = BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal>;
-using TerminalsOutCollection = BitcoderCZ.Buffers.ImmutableInlineArray<BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal>, BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal>;
+using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray1<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting;
 
@@ -147,8 +145,18 @@ public sealed class CodeGraph
         /// Starts with a root statement scope.
         /// </summary>
         public Builder()
+            : this(32)
         {
-            Clear();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Builder"/> class.
+        /// Starts with a root statement scope.
+        /// </summary>
+        /// <param name="initialCapacity">The initial node capacity.</param>
+        public Builder(int initialCapacity)
+        {
+            Clear(initialCapacity);
         }
 
         /// <summary>
@@ -378,17 +386,9 @@ public sealed class CodeGraph
         /// </summary>
         [MemberNotNull(nameof(_nodes), nameof(_regions), nameof(_connections))]
         public void Clear()
-        {
-            _scopeStack.Clear();
-            _scopeStack.Push(new CodeScope(ScopeType.Statement)); // root scope
+            => Clear(0);
 
-            _nodes = [];
-            _regions = [];
-            _connections = [];
-            _graphId = GetNextGraphId();
-        }
-
-        private static bool RemoveEmptyScopes(CodeScope scope)
+        internal static bool RemoveEmptyScopes(CodeScope scope)
         {
             for (int i = scope._children.Count - 1; i >= 0; i--)
             {
@@ -398,6 +398,11 @@ public sealed class CodeGraph
                     scope._children.RemoveAt(i);
                     if (child._children.Count > 0)
                     {
+                        foreach (var childChild in child._children)
+                        {
+                            childChild.DeclaringNodeIndex = child.DeclaringNodeIndex;
+                        }
+
                         scope._children.InsertRange(i, child._children);
                     }
                 }
@@ -413,6 +418,20 @@ public sealed class CodeGraph
             }
 
             return !scope._nodes.Any(static node => node != default);
+        }
+
+        [MemberNotNull(nameof(_nodes), nameof(_regions), nameof(_connections))]
+        private void Clear(int initialCapacity)
+        {
+            _scopeStack.Clear();
+            _scopeStack.Push(new CodeScope(ScopeType.Statement)); // root scope
+
+#pragma warning disable IDE0028 // Simplify collection initialization
+            _nodes = new(initialCapacity);
+            _regions = new(0);
+            _connections = new(initialCapacity);
+#pragma warning restore IDE0028 // Simplify collection initialization
+            _graphId = GetNextGraphId();
         }
 
         /// <summary>
@@ -447,6 +466,321 @@ public sealed class CodeGraph
             private Builder? _builder;
 
             internal ExpressionScopeDisposable(Builder builder)
+            {
+                _builder = builder;
+                _builder.EnterExpressionScope();
+            }
+
+            /// <summary>
+            /// Exits the expression scope.
+            /// </summary>
+            public void Dispose()
+            {
+                // todo: should this validate that it's existing the same scope it entered?
+                _builder?.ExitExpressionScope();
+                _builder = null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builder for creating a <see cref="CodeGraph"/>, without statement scopes.
+    /// </summary>
+    public sealed class FlatBuilder
+    {
+        private readonly Stack<CodeScope> _cachedScopeStack = [];
+
+        private readonly List<Node> _nodes;
+        private ushort _graphId;
+        private List<Scripting.Node.BlockRegion> _regions;
+        private List<Scripting.Node.Connection> _connections;
+        private int _expressionDepth;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FlatBuilder"/> class.
+        /// </summary>
+        public FlatBuilder()
+            : this(32)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FlatBuilder"/> class.
+        /// </summary>
+        /// <param name="initialCapacity">Initial node capacity.</param>
+        public FlatBuilder(int initialCapacity)
+        {
+#pragma warning disable IDE0028 // Simplify collection initialization
+            _nodes = new(initialCapacity);
+#pragma warning restore IDE0028 // Simplify collection initialization
+            Clear(initialCapacity);
+        }
+
+        /// <summary>
+        /// Gets the number of nodes contained in the builder.
+        /// </summary>
+        /// <value>Number of nodes contained in the builder.</value>
+        public int NodeCount => _nodes.Count;
+
+        /// <summary>
+        /// Gets the current expression scope depth.
+        /// </summary>
+        /// <value>The current expression scope depth.</value>
+        public int CurrentExpressionDepth => _expressionDepth;
+
+        private Span<Node> NodesSpan => CollectionsMarshal.AsSpan(_nodes);
+
+        /// <summary>
+        /// Places a new node of the specified type in the current scope.
+        /// </summary>
+        /// <param name="type">The block definition type to place.</param>
+        /// <returns>The newly created <see cref="Node"/>.</returns>
+        public ref Node Place(BlockDef type)
+        {
+            ref var node = ref AddNode();
+            node = new Node(new(_graphId, (ushort)(_nodes.Count - 1)), type, _expressionDepth);
+
+            return ref node;
+        }
+
+        /// <summary>
+        /// Places an empty node in the currently active scope.
+        /// </summary>
+        /// <returns>The newly created <see cref="Node"/>.</returns>
+        public ref Node PlaceEmptyNode()
+        {
+            ref var node = ref AddNode();
+            node = new(NodeHandle.Null, null, _expressionDepth);
+            return ref node;
+        }
+
+        /// <summary>
+        /// Creates a <see cref="Scripting.Node.BlockRegion"/>, for placing non script blocks.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="Scripting.Node.Terminal.ObjectRelative(BlockRegionHandle, int3, byte3)"/> to reference blocks inside the <see cref="Scripting.Node.BlockRegion"/>.
+        /// </remarks>
+        /// <param name="size">Size of the region to create.</param>
+        /// <returns>The created <see cref="Scripting.Node.BlockRegion"/>.</returns>
+        public Scripting.Node.BlockRegion CreateRegion(int3 size)
+        {
+            var array = new Array3D<ushort>(size);
+            var region = new Scripting.Node.BlockRegion(_graphId, (ushort)_regions.Count, array);
+            _regions.Add(region);
+
+            return region;
+        }
+
+        /// <summary>
+        /// Adds a setting to a node.
+        /// </summary>
+        /// <param name="handle">The node to set.</param>
+        /// <param name="setting">The setting to add.</param>
+        public void SetSetting(NodeHandle handle, PrefabSetting setting)
+        {
+            if (handle._graphId != _graphId)
+            {
+                ThrowArgumentException($"{nameof(handle)} belongs to another {nameof(CodeGraph)}.", nameof(handle));
+            }
+
+            // need ref to item
+            CollectionsMarshal.AsSpan(_nodes)[handle._index]._settings.Add(setting);
+        }
+
+        /// <summary>
+        /// Connects a <see cref="Scripting.Node.Terminal"/> to a <see cref="Scripting.Node.Terminal"/>.
+        /// </summary>
+        /// <remarks>
+        /// Ignores connections if either terminal is null (<see cref="Scripting.Node.Terminal.IsNull"/>).
+        /// </remarks>
+        /// <param name="from">The source <see cref="Scripting.Node.Terminal"/>.</param>
+        /// <param name="to">The target <see cref="Scripting.Node.Terminal"/>.</param>
+        public void Connect(Scripting.Node.Terminal from, Scripting.Node.Terminal to)
+        {
+            if (from.IsNull || to.IsNull)
+            {
+                return;
+            }
+
+            _connections.Add(new Scripting.Node.Connection(from, to));
+        }
+
+        /// <summary>
+        /// Gets the specified node.
+        /// </summary>
+        /// <param name="handle">Handle of the node.</param>
+        /// <returns>The specified node.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref Node GetNode(NodeHandle handle)
+        {
+            if (handle._graphId != _graphId)
+            {
+                ThrowArgumentException($"{nameof(handle)} belongs to another {nameof(CodeGraph)}.", nameof(handle));
+            }
+
+            return ref GetNode(handle._index);
+        }
+
+        /// <summary>
+        /// Gets the node at the specified index.
+        /// </summary>
+        /// <param name="index">Index of the node to get.</param>
+        /// <returns>Node at the specified index.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref Node GetNode(int index)
+            => ref NodesSpan[index];
+
+        /// <summary>
+        /// Enters a new expression scope.
+        /// </summary>
+        public void EnterExpressionScope()
+            => _expressionDepth++;
+
+        /// <summary>
+        /// Exits the current expression scope.
+        /// </summary>
+        public void ExitExpressionScope()
+        {
+            if (_expressionDepth <= 0)
+            {
+                ThrowInvalidOperationException("Cannot exit an expression scope, when not inside one.");
+            }
+
+            _expressionDepth--;
+        }
+
+        /// <summary>
+        /// Builds the final <see cref="CodeGraph"/> and clears the builder for reuse.
+        /// </summary>
+        /// <returns>The constructed <see cref="CodeGraph"/>.</returns>
+        public CodeGraph BuildAndClear()
+        {
+            var scopeStack = _cachedScopeStack;
+            var rootScope = new CodeScope(ScopeType.Statement);
+            scopeStack.Push(rootScope);
+
+            var nodes = new List<NodeData>(_nodes.Count);
+            CollectionsMarshal.SetCount(nodes, _nodes.Count);
+
+            foreach (var node in NodesSpan)
+            {
+                var targetCount = node._expressionDepth + 1;
+
+                while (targetCount < scopeStack.Count)
+                {
+                    scopeStack.Pop();
+                }
+
+                while (targetCount > scopeStack.Count)
+                {
+                    var parent = scopeStack.Peek();
+                    var childScope = new CodeScope(ScopeType.Expression, parent);
+                    parent._children.Add(childScope);
+                    scopeStack.Push(childScope);
+                }
+
+                nodes[node._handle._index] = new NodeData(node.Type, node._settings);
+                scopeStack.Peek()._nodes.Add(node._handle);
+            }
+
+            scopeStack.Clear();
+
+            var graphId = _graphId;
+            var regions = _regions;
+            var connections = _connections;
+
+            Clear();
+
+            _ = Builder.RemoveEmptyScopes(rootScope);
+
+            return new CodeGraph(graphId, nodes, rootScope, regions, connections);
+        }
+
+        /// <summary>
+        /// Clears the contents of the builder.
+        /// </summary>
+        [MemberNotNull(nameof(_regions), nameof(_connections))]
+        public void Clear()
+            => Clear(0);
+
+        [MemberNotNull(nameof(_regions), nameof(_connections))]
+        private void Clear(int initialCapacity)
+        {
+#pragma warning disable IDE0028 // Simplify collection initialization
+            _nodes.Clear();
+            _regions = new(0);
+            _connections = new(initialCapacity);
+#pragma warning restore IDE0028 // Simplify collection initialization 
+            _graphId = GetNextGraphId();
+            _expressionDepth = 0;
+        }
+
+        private ref Node AddNode()
+        {
+            CollectionsMarshal.SetCount(_nodes, _nodes.Count + 1);
+            return ref NodesSpan[^1];
+        }
+
+        /// <summary>
+        /// Node of a <see cref="FlatBuilder"/>.
+        /// </summary>
+        [StructLayout(LayoutKind.Auto)]
+        public struct Node
+        {
+            /// <summary>
+            /// Type of the node; or <see langword="null"/>, if the node is empty/null.
+            /// </summary>
+            public BlockDef? Type;
+            internal readonly NodeHandle _handle;
+            internal readonly int _expressionDepth;
+            internal SettingsCollection _settings;
+
+            internal Node(NodeHandle handle, BlockDef? type, int expressionDepth)
+            {
+                _handle = handle;
+                Type = type;
+                _expressionDepth = expressionDepth;
+            }
+
+            /// <summary>
+            /// Gets the handle of the node.
+            /// </summary>
+            /// <value>Handle of the node.</value>
+            public readonly NodeHandle Handle => _handle;
+
+            /// <summary>
+            /// Gets the settings of the node.
+            /// </summary>
+            /// <value>Settings of the node.</value>
+            public readonly NodeSettingsCollection Settings => new NodeSettingsCollection(_settings);
+
+            /// <summary>
+            /// Gets the expression nesting depth of the node.
+            /// </summary>
+            /// <remarks>
+            /// A value of <c>0</c> indicates that the node belongs to the root <see cref="ScopeType.Statement"/> scope.
+            /// <para/>
+            /// A value greater than <c>0</c> indicates that the node belongs to a nested <see cref="ScopeType.Expression"/> scope, where the value represents the level of expression nesting.
+            /// </remarks>
+            /// <value>The zero-based expression nesting depth.</value>
+            public readonly int ExpressionDepth => _expressionDepth;
+
+            /// <summary>
+            /// Add a setting to the node.
+            /// </summary>
+            /// <param name="setting">The setting to add.</param>
+            public void AddSetting(PrefabSetting setting)
+                => _settings.Add(setting);
+        }
+
+        /// <summary>
+        /// Disposable helper to automatically exit an expression scope.
+        /// </summary>
+        public struct ExpressionScopeDisposable : IDisposable
+        {
+            private FlatBuilder? _builder;
+
+            internal ExpressionScopeDisposable(FlatBuilder builder)
             {
                 _builder = builder;
                 _builder.EnterExpressionScope();
@@ -500,8 +834,7 @@ public sealed class CodeScope
     {
         Type = type;
         Parent = parent;
-        DeclaringNodeIndex = parent._nodes.Count - 1;
-        Debug.Assert(DeclaringNodeIndex >= 0);
+        DeclaringNodeIndex = Math.Max(parent._nodes.Count - 1, 0);
     }
 
     /// <summary>
@@ -525,7 +858,7 @@ public sealed class CodeScope
     /// <value>
     /// The index of the declaring node in <see cref="Parent"/>'s <see cref="Nodes"/> collection; or <see langword="null"/>, if this is the root scope (<see cref="Parent"/> is <see langword="null"/>).
     /// </value>
-    public int? DeclaringNodeIndex { get; }
+    public int? DeclaringNodeIndex { get; internal set; }
 
     /// <summary>
     /// Gets the nodes directly contained in this scope.
