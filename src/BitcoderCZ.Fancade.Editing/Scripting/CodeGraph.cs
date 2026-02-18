@@ -168,6 +168,13 @@ public sealed class CodeScope
         DeclaringNodeIndex = Math.Max(parent._nodes.Count - 1, 0);
     }
 
+    internal CodeScope(ScopeType type, CodeScope parent, int declaringNodeOffset)
+    {
+        Type = type;
+        Parent = parent;
+        DeclaringNodeIndex = Math.Max(parent._nodes.Count - 1 + declaringNodeOffset, 0);
+    }
+
     /// <summary>
     /// Gets the type of this scope.
     /// </summary>

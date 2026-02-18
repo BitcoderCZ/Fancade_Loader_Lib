@@ -252,7 +252,7 @@ public sealed partial class CodeGraph
             var rootScope = _scopeStack.Last();
             Debug.Assert(rootScope.Type is ScopeType.Statement);
 
-            _ = RemoveEmptyScopes(rootScope);
+            _ = RemoveEmptyScopesAndEnsureDeclaringIndexInBounds(rootScope);
 
             var graphId = _graphId;
             var nodes = _nodes;
@@ -271,11 +271,16 @@ public sealed partial class CodeGraph
         public void Clear()
             => Clear(0);
 
-        internal static bool RemoveEmptyScopes(CodeScope scope)
+        internal static bool RemoveEmptyScopesAndEnsureDeclaringIndexInBounds(CodeScope scope)
         {
+            if (scope.Parent is not null && scope.DeclaringNodeIndex is { } declaringNodeIndex)
+            {
+                scope.DeclaringNodeIndex = Math.Max(Math.Min(declaringNodeIndex, scope.Parent._nodes.Count - 1), 0);
+            }
+
             for (int i = scope._children.Count - 1; i >= 0; i--)
             {
-                if (RemoveEmptyScopes(scope._children[i]))
+                if (RemoveEmptyScopesAndEnsureDeclaringIndexInBounds(scope._children[i]))
                 {
                     var child = scope._children[i];
                     scope._children.RemoveAt(i);

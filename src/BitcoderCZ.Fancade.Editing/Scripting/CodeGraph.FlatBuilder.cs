@@ -20,7 +20,7 @@ public sealed partial class CodeGraph
     public sealed class FlatBuilder
     {
         internal ushort _graphId;
-        
+
         private readonly List<Node> _nodes;
 
         private Stack<CodeScope>? _cachedScopeStack;
@@ -237,8 +237,15 @@ public sealed partial class CodeGraph
         /// <summary>
         /// Builds the final <see cref="CodeGraph"/> and clears the builder for reuse.
         /// </summary>
+        /// <param name="nestedExpressionsEmittedFirst">
+        /// Indicates the order in which nodes were previously emitted by the caller.
+        /// <para/>
+        /// When <c>true</c>, nodes were placed in an order from more deeply nested to less nested.
+        /// <para/>
+        /// When <c>false</c>, nodes were placed in an order from less nested to more deeply nested.
+        /// </param>
         /// <returns>The constructed <see cref="CodeGraph"/>.</returns>
-        public CodeGraph BuildAndClear()
+        public CodeGraph BuildAndClear(bool nestedExpressionsEmittedFirst)
         {
             UpdateMerged();
 
@@ -248,6 +255,8 @@ public sealed partial class CodeGraph
 
             var nodes = new List<NodeData>(_nodes.Count);
             CollectionsMarshal.SetCount(nodes, _nodes.Count);
+
+            int declaringNodeOffset = nestedExpressionsEmittedFirst ? 1 : 0;
 
             foreach (var node in NodesSpan)
             {
@@ -261,7 +270,7 @@ public sealed partial class CodeGraph
                 while (targetCount > scopeStack.Count)
                 {
                     var parent = scopeStack.Peek();
-                    var childScope = new CodeScope(ScopeType.Expression, parent);
+                    var childScope = new CodeScope(ScopeType.Expression, parent, declaringNodeOffset: declaringNodeOffset);
                     parent._children.Add(childScope);
                     scopeStack.Push(childScope);
                 }
@@ -278,7 +287,7 @@ public sealed partial class CodeGraph
 
             Clear();
 
-            _ = Builder.RemoveEmptyScopes(rootScope);
+            _ = Builder.RemoveEmptyScopesAndEnsureDeclaringIndexInBounds(rootScope);
 
             return new CodeGraph(graphId, nodes, rootScope, regions, connections);
         }
