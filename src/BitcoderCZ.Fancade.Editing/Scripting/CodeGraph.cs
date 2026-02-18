@@ -633,6 +633,13 @@ public sealed class CodeGraph
         /// <summary>
         /// Enters a new expression scope.
         /// </summary>
+        /// <returns>A disposable that exits the scope when disposed.</returns>
+        public ExpressionScopeDisposable ExpressionScope()
+            => new ExpressionScopeDisposable(this);
+
+        /// <summary>
+        /// Enters a new expression scope.
+        /// </summary>
         public void EnterExpressionScope()
             => _expressionDepth++;
 
