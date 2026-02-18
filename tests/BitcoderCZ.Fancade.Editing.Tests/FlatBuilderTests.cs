@@ -101,7 +101,7 @@ public class FlatBuilderTests
         var builder = new CodeGraph.FlatBuilder();
         builder.Place(StockBlocks.Variables.Set_Variable_Num);
 
-        var graph = builder.BuildAndClear();
+        var graph = builder.BuildAndClear(false);
 
         await Assert.That(graph.NodeCount).IsEqualTo(1);
         await Assert.That(builder.NodeCount).IsEqualTo(0);
@@ -150,7 +150,7 @@ public class FlatBuilderTests
 
         srcBuilder.WriteToAndClear(destBuilder);
 
-        var finalGraph = destBuilder.BuildAndClear();
+        var finalGraph = destBuilder.BuildAndClear(false);
 
         await Assert.That(finalGraph.NodeCount).IsEqualTo(3);
         await Assert.That(finalGraph.Connections.Count).IsEqualTo(1);
@@ -176,7 +176,7 @@ public class FlatBuilderTests
         var t2 = new Scripting.Node.Terminal(n2.Handle, def["Before"]);
 
         builder.Connect(t1, t2);
-        var graph = builder.BuildAndClear();
+        var graph = builder.BuildAndClear(false);
 
         await Assert.That(graph.Connections.Count).IsEqualTo(1);
         await Assert.That(graph.Connections[0].From).IsEqualTo(t1);
