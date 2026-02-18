@@ -19,10 +19,11 @@ public sealed partial class CodeGraph
     /// </summary>
     public sealed class FlatBuilder
     {
+        internal ushort _graphId;
+        
         private readonly List<Node> _nodes;
 
         private Stack<CodeScope>? _cachedScopeStack;
-        private ushort _graphId;
         private List<Scripting.Node.BlockRegion> _regions;
         private List<Scripting.Node.Connection> _connections;
         private int _expressionDepth;
