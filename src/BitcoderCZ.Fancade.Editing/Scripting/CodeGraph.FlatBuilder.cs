@@ -240,9 +240,9 @@ public sealed partial class CodeGraph
         /// <param name="nestedExpressionsEmittedFirst">
         /// Indicates the order in which nodes were previously emitted by the caller.
         /// <para/>
-        /// When <c>true</c>, nodes were placed in an order from more deeply nested to less nested.
+        /// When <c>true</c>, nodes were placed in an order from more deeply nested to less nested (e.g. expression before statement).
         /// <para/>
-        /// When <c>false</c>, nodes were placed in an order from less nested to more deeply nested.
+        /// When <c>false</c>, nodes were placed in an order from less nested to more deeply nested (e.g. statement before expression).
         /// </param>
         /// <returns>The constructed <see cref="CodeGraph"/>.</returns>
         public CodeGraph BuildAndClear(bool nestedExpressionsEmittedFirst)

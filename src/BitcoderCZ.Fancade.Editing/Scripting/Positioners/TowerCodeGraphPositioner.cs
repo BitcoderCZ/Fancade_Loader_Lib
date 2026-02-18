@@ -100,10 +100,10 @@ public static class TowerCodeGraphPositioner
         }
 
         /// <summary>
-        /// Gets the maximum height of a code tower, before starting another one, default is 20, minimum is 1.
+        /// Gets the maximum height of a code tower, before starting another one, default is 6, minimum is 1.
         /// </summary>
         /// <value>Gets the maximum height of a code tower.</value>
-        public int MaximumTowerHeight { get; init; } = 20;
+        public int MaximumTowerHeight { get; init; } = 6;
 
         /// <summary>
         /// Gets the spacing between the code towers, default is 4, minimum is 4.
