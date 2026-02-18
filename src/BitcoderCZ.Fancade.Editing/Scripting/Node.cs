@@ -495,6 +495,9 @@ public readonly struct Node : IEquatable<Node>
 
         internal Terminal WithGraphId(ushort graphId)
             => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, _nodeOrRegionIndex);
+
+        internal Terminal WithGraphId(ushort graphId, int indexOffset)
+            => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, (ushort)(indexOffset + _nodeOrRegionIndex));
     }
 
     /// <summary>
