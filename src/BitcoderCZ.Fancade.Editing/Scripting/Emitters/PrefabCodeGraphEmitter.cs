@@ -24,7 +24,7 @@ public static class PrefabCodeGraphEmitter
             blocks.ReserveRegion(blocksOffset, blocksOffset + graph.Size - int3.One);
             foreach (var node in graph.NodesSpan)
             {
-                if (node._type is null)
+                if (node._type is null or { Prefab: { Id: 0 } })
                 {
                     continue;
                 }
@@ -55,7 +55,7 @@ public static class PrefabCodeGraphEmitter
         foreach (var connection in graph.ConnectionSpan)
         {
             prefab.Connections.Add(CodeGraphEmitHelper.NodeConnectionToConnection(
-                connection, 
+                connection,
                 nodeHandle =>
                 {
                     Debug.Assert(nodeHandle._graphId == graph._id);

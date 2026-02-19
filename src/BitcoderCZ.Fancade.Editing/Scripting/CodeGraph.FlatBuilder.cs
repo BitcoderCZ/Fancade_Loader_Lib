@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BitcoderCZ.Maths.Vectors;
+using BitcoderCZ.Utils;
 using static BitcoderCZ.Utils.ThrowHelper;
 using SettingsCollection = BitcoderCZ.Buffers.InlineList<BitcoderCZ.Buffers.FixedArray1<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
 
@@ -26,7 +27,7 @@ public sealed partial class CodeGraph
         private Stack<CodeScope>? _cachedScopeStack;
         private List<Scripting.Node.BlockRegion> _regions;
         private List<Scripting.Node.Connection> _connections;
-        private int _expressionDepth;
+        private ushort _expressionDepth;
 
         private Dictionary<ushort, (int NodeIndex, int RegionIndex)>? _mergedBuilderOffsets;
 
@@ -195,33 +196,39 @@ public sealed partial class CodeGraph
         }
 
         /// <summary>
-        /// Writes the contents of the builder to another builder and clears this builder.
+        /// Writes the contents of the builder to another builder.
         /// </summary>
         /// <param name="destination">The destination builder.</param>
-        public void WriteToAndClear(FlatBuilder destination)
+        public void WriteTo(FlatBuilder destination)
         {
+            if (ReferenceEquals(destination, this))
+            {
+                ThrowArgumentException($"Cannot write to self.", nameof(destination));
+            }
+
             UpdateMerged();
 
             int destinationNodeCount = destination._nodes.Count;
             int destinationRegionCount = destination._regions.Count;
             int destinationConnectionsCount = destination._connections.Count;
 
+            CollectionsMarshal.SetCount(destination._nodes, destinationNodeCount + _nodes.Count);
+            CollectionsMarshal.SetCount(destination._regions, destinationRegionCount + _regions.Count);
+            CollectionsMarshal.SetCount(destination._connections, destinationConnectionsCount + _connections.Count);
+
+            var destinationNodes = destination.NodesSpan[destinationNodeCount..];
+            int index = 0;
             foreach (ref var node in NodesSpan)
             {
-                node._handle = new NodeHandle(destination._graphId, (ushort)(destinationNodeCount + node._handle._index));
+                destinationNodes[index++] = new Node(new NodeHandle(destination._graphId, (ushort)(destinationNodeCount + node._handle._index)), node.Type, node._expressionDepth);
             }
-
+            
+            var destinationRegions = destination.RegionsSpan[destinationRegionCount..];
+            index = 0;
             foreach (ref var region in RegionsSpan)
             {
-                region = new Scripting.Node.BlockRegion(destination._graphId, (ushort)(destinationRegionCount + region._index), region._blocks);
+                destinationRegions[index++] = new Scripting.Node.BlockRegion(destination._graphId, (ushort)(destinationRegionCount + region._index), region._blocks);
             }
-
-            CollectionsMarshal.SetCount(destination._nodes, destination._nodes.Count + _nodes.Count);
-            CollectionsMarshal.SetCount(destination._regions, destination._regions.Count + _regions.Count);
-            CollectionsMarshal.SetCount(destination._connections, destination._connections.Count + _connections.Count);
-
-            NodesSpan.CopyTo(destination.NodesSpan[destinationNodeCount..]);
-            RegionsSpan.CopyTo(destination.RegionsSpan[destinationRegionCount..]);
 
             // connection node and region ids get updated on build
             ConnectionsSpan.CopyTo(destination.ConnectionsSpan[destinationConnectionsCount..]);
@@ -230,6 +237,15 @@ public sealed partial class CodeGraph
             destination._mergedBuilderOffsets ??= new(4);
 #pragma warning restore IDE0028 // Simplify collection initialization
             destination._mergedBuilderOffsets.Add(_graphId, (destinationNodeCount, destinationRegionCount));
+        }
+
+        /// <summary>
+        /// Writes the contents of the builder to another builder and clears this builder.
+        /// </summary>
+        /// <param name="destination">The destination builder.</param>
+        public void WriteToAndClear(FlatBuilder destination)
+        {
+            WriteTo(destination);
 
             Clear();
         }
@@ -372,11 +388,11 @@ public sealed partial class CodeGraph
             /// Type of the node; or <see langword="null"/>, if the node is empty/null.
             /// </summary>
             public BlockDef? Type;
-            internal readonly int _expressionDepth;
+            internal readonly ushort _expressionDepth;
             internal NodeHandle _handle;
             internal SettingsCollection _settings;
 
-            internal Node(NodeHandle handle, BlockDef? type, int expressionDepth)
+            internal Node(NodeHandle handle, BlockDef? type, ushort expressionDepth)
             {
                 _handle = handle;
                 Type = type;

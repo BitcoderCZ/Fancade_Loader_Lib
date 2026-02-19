@@ -98,7 +98,11 @@ public static class StructuredCodeGraphPositioner
             if (nodeHandle == NodeHandle.Null)
             {
                 SetScopeDepth(currentPos.Z);
-                currentPos.Z -= 1;
+                if (scope.Type is ScopeType.Expression)
+                {
+                    currentPos.Z -= 1;
+                }
+                
                 nodeIndex++;
                 continue;
             }
