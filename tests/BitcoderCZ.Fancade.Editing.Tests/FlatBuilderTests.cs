@@ -130,6 +130,30 @@ public class FlatBuilderTests
     }
 
     [Test]
+    public async Task WriteToAndClear_CopiesNodeSettings()
+    {
+        var source = new CodeGraph.FlatBuilder();
+        var destination = new CodeGraph.FlatBuilder();
+
+        var type1 = StockBlocks.Variables.Set_Variable_Num;
+        var type2 = StockBlocks.Variables.Set_Variable_Vec;
+        ref var sourceNode =ref source.Place(type1);
+        var setting = new PrefabSetting(0, 32f);
+        sourceNode.AddSetting(setting);
+        destination.Place(type2);
+
+        source.WriteToAndClear(destination);
+
+        await Assert.That(destination.NodeCount).IsEqualTo(2);
+        await Assert.That(source.NodeCount).IsEqualTo(0);
+
+        var mergedNode = destination.GetNode(1);
+        await Assert.That(mergedNode.Handle.GraphId).IsEqualTo(destination._graphId);
+        await Assert.That(mergedNode.Type!.Prefab.Id).IsEqualTo(type1.Prefab.Id);
+        await Assert.That(mergedNode.Settings).IsEquivalentTo([setting]);
+    }
+
+    [Test]
     public async Task WriteToAndClear_RemapsConnectionTerminalsCorrectly()
     {
         var destBuilder = new CodeGraph.FlatBuilder();

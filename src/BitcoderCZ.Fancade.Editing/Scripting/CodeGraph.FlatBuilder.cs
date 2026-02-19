@@ -220,7 +220,7 @@ public sealed partial class CodeGraph
             int index = 0;
             foreach (ref var node in NodesSpan)
             {
-                destinationNodes[index++] = new Node(new NodeHandle(destination._graphId, (ushort)(destinationNodeCount + node._handle._index)), node.Type, node._expressionDepth);
+                destinationNodes[index++] = new Node(new NodeHandle(destination._graphId, (ushort)(destinationNodeCount + node._handle._index)), node.Type, node._expressionDepth, node._settings);
             }
             
             var destinationRegions = destination.RegionsSpan[destinationRegionCount..];
@@ -397,6 +397,14 @@ public sealed partial class CodeGraph
                 _handle = handle;
                 Type = type;
                 _expressionDepth = expressionDepth;
+            }
+
+            internal Node(NodeHandle handle, BlockDef? type, ushort expressionDepth, SettingsCollection settings)
+            {
+                _handle = handle;
+                Type = type;
+                _expressionDepth = expressionDepth;
+                _settings = settings;
             }
 
             /// <summary>
