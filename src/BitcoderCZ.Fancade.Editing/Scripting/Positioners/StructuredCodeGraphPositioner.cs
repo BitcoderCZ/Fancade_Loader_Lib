@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Maths.Vectors;
@@ -34,6 +35,23 @@ public static class StructuredCodeGraphPositioner
     /// <param name="layoutOptions">Options controlling the layout.</param>
     /// <returns>A <see cref="PositionedCodeGraph"/> representing the positioned nodes and connections.</returns>
     public static PositionedCodeGraph Layout(ReadOnlySpan<CodeGraph> graphs, LayoutOptions? layoutOptions = null)
+    {
+        var layoutOptionsVal = layoutOptions ?? LayoutOptions.Default;
+
+        layoutOptionsVal.Validate();
+
+        return CodeGraphPositionHelpers.LayoutGraphs(graphs, LayoutNodes, layoutOptionsVal);
+    }
+
+    /// <summary>
+    /// Computes the 3D positions for all nodes and connections in <see cref="CodeGraph"/>s according to the given layout options.
+    /// Places nodes on the ground, from +Z to -Z, respecting code scopes.
+    /// </summary>
+    /// <param name="graphs">The <see cref="CodeGraph"/>s to layout.</param>
+    /// <param name="layoutOptions">Options controlling the layout.</param>
+    /// <returns>A <see cref="PositionedCodeGraph"/> representing the positioned nodes and connections.</returns>
+    [OverloadResolutionPriority(-1)]
+    public static PositionedCodeGraph Layout(IEnumerable<CodeGraph> graphs, LayoutOptions? layoutOptions = null)
     {
         var layoutOptionsVal = layoutOptions ?? LayoutOptions.Default;
 
