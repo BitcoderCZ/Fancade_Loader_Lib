@@ -17,11 +17,11 @@ public sealed partial class CodeGraph
     /// </summary>
     public sealed class Builder
     {
+        internal ushort _graphId;
+        internal List<NodeData> _nodes;
+        internal List<Node.BlockRegion> _regions;
+        internal List<Node.Connection> _connections;
         private readonly Stack<CodeScope> _scopeStack = new(8);
-        private ushort _graphId;
-        private List<NodeData> _nodes;
-        private List<Node.BlockRegion> _regions;
-        private List<Node.Connection> _connections;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Builder"/> class.
@@ -306,6 +306,12 @@ public sealed partial class CodeGraph
             }
 
             return !scope._nodes.Any(static node => node != default);
+        }
+
+        internal Node GetNode(int index)
+        {
+            var data = _nodes[index];
+            return new Node(_graphId, (ushort)index, data.Type!);
         }
 
         [MemberNotNull(nameof(_nodes), nameof(_regions), nameof(_connections))]

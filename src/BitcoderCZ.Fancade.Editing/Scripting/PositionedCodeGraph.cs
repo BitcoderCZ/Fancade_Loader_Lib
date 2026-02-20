@@ -18,6 +18,12 @@ namespace BitcoderCZ.Fancade.Editing.Scripting;
 /// </summary>
 public sealed class PositionedCodeGraph
 {
+    /// <summary>
+    /// Gets an empty <see cref="PositionedCodeGraph"/> instance.
+    /// </summary>
+    /// <value>An empty <see cref="PositionedCodeGraph"/> instance.</value>
+    public static PositionedCodeGraph Empty { get; } = new PositionedCodeGraph(FirstId, [], [], [], int3.Zero, int3.Zero);
+
     internal readonly ushort _id;
     internal readonly List<PositionedNodeData> _nodes;
     internal readonly List<PositionedNode.BlockRegion> _regions;
@@ -25,7 +31,7 @@ public sealed class PositionedCodeGraph
 
     private const int FirstId = ushort.MaxValue / 2;
 
-    private static int nextGraphId = FirstId - 1;
+    private static int nextGraphId = FirstId;
 
     private PositionedCodeGraph(ushort id, List<PositionedNodeData> nodes, List<PositionedNode.BlockRegion> regions, List<Node.Connection> connections, int3 size, int3 offset)
     {

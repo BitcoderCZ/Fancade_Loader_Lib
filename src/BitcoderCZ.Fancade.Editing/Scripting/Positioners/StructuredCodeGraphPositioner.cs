@@ -24,21 +24,33 @@ public static class StructuredCodeGraphPositioner
     /// <param name="layoutOptions">Options controlling the layout.</param>
     /// <returns>A <see cref="PositionedCodeGraph"/> representing the positioned nodes and connections.</returns>
     public static PositionedCodeGraph Layout(CodeGraph graph, LayoutOptions? layoutOptions = null)
+        => Layout([graph], layoutOptions);
+
+    /// <summary>
+    /// Computes the 3D positions for all nodes and connections in <see cref="CodeGraph"/>s according to the given layout options.
+    /// Places nodes on the ground, from +Z to -Z, respecting code scopes.
+    /// </summary>
+    /// <param name="graphs">The <see cref="CodeGraph"/>s to layout.</param>
+    /// <param name="layoutOptions">Options controlling the layout.</param>
+    /// <returns>A <see cref="PositionedCodeGraph"/> representing the positioned nodes and connections.</returns>
+    public static PositionedCodeGraph Layout(ReadOnlySpan<CodeGraph> graphs, LayoutOptions? layoutOptions = null)
     {
-        var layoutOptionsVal = layoutOptions ?? LayoutOptions.Defaut;
+        var layoutOptionsVal = layoutOptions ?? LayoutOptions.Default;
 
         layoutOptionsVal.Validate();
 
-        var scopeLayouts = CalculateAllLayouts(graph, graph.RootScope, layoutOptionsVal);
+        return CodeGraphPositionHelpers.LayoutGraphs(graphs, LayoutNodes, layoutOptionsVal);
+    }
+
+    private static int3 LayoutNodes(CodeGraph graph, Span<PositionedNodeData> nodes, int3 offset, LayoutOptions layoutOptions)
+    {
+        var scopeLayouts = CalculateAllLayouts(graph, graph.RootScope, layoutOptions);
 
         var scopeDepth = new int[graph.RootScope.GetHorizontalSize()];
 
         var rootLayout = scopeLayouts[graph.RootScope];
 
-        var nodes = new List<PositionedNodeData>(graph.NodeCount);
-        CollectionsMarshal.SetCount(nodes, graph.NodeCount);
-        var nodesSpan = CollectionsMarshal.AsSpan(nodes);
-        ApplyLayout(graph, graph.RootScope, 0, new int3(rootLayout.WidthLeft, 0, 0), scopeLayouts, nodesSpan, scopeDepth, layoutOptionsVal);
+        ApplyLayout(graph, graph.RootScope, 0, new int3(rootLayout.WidthLeft, 0, 0), scopeLayouts, nodes, scopeDepth, layoutOptions);
 
         int maxDepth = 0;
         foreach (var depth in scopeDepth)
@@ -48,22 +60,22 @@ public static class StructuredCodeGraphPositioner
 
         maxDepth = -maxDepth;
 
-        for (var i = 0; i < nodesSpan.Length; i++)
+        for (var i = 0; i < nodes.Length; i++)
         {
-            var node = nodesSpan[i];
+            var node = nodes[i];
             if (node._type is null)
             {
                 continue;
             }
 
-            var newOffset = node._offset + new short3(0, 0, maxDepth);
+            var newOffset = node._offset + new short3(0, 0, maxDepth) + (short3)offset;
             Debug.Assert(newOffset.X >= 0);
             Debug.Assert(newOffset.Y >= 0);
             Debug.Assert(newOffset.Z >= 0);
-            nodesSpan[i] = new PositionedNodeData(node.Type, node._settings, newOffset);
+            nodes[i] = new PositionedNodeData(node.Type, node._settings, newOffset);
         }
 
-        return PositionedCodeGraph.Create(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), new int3(rootLayout.GetTotalWidth(layoutOptionsVal.PaddingX), rootLayout.Height, maxDepth));
+        return new int3(rootLayout.GetTotalWidth(layoutOptions.PaddingX), rootLayout.Height, maxDepth);
     }
 
     private static void ApplyLayout(CodeGraph graph, CodeScope scope, int layer, int3 origin, Dictionary<CodeScope, ScopeLayout> scopeLayouts, Span<PositionedNodeData> nodes, int[] scopeDepth, LayoutOptions layoutOptions)
@@ -102,7 +114,7 @@ public static class StructuredCodeGraphPositioner
                 {
                     currentPos.Z -= 1;
                 }
-                
+
                 nodeIndex++;
                 continue;
             }
@@ -267,7 +279,7 @@ public static class StructuredCodeGraphPositioner
         /// Gets the default <see cref="LayoutOptions"/>.
         /// </summary>
         /// <value>A <see cref="LayoutOptions"/> instance with the default values.</value>
-        public static LayoutOptions Defaut => new();
+        public static LayoutOptions Default => new();
 
         /// <summary>
         /// Gets a compact <see cref="LayoutOptions"/>.

@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Maths.Vectors;
 using BitcoderCZ.Utils;
 
@@ -23,59 +24,54 @@ public static class TowerCodeGraphPositioner
     /// <param name="layoutOptions">Options controlling the layout.</param>
     /// <returns>A <see cref="PositionedCodeGraph"/> representing the positioned nodes and connections.</returns>
     public static PositionedCodeGraph Layout(CodeGraph graph, LayoutOptions? layoutOptions = null)
+        => Layout([graph], layoutOptions);
+
+    /// <summary>
+    /// Computes the 3D positions for all nodes and connections in the <see cref="CodeGraph"/>s according to the given layout options.
+    /// Places nodes in towers, ignores scopes.
+    /// </summary>
+    /// <param name="graphs">The <see cref="CodeGraph"/>s to layout.</param>
+    /// <param name="layoutOptions">Options controlling the layout.</param>
+    /// <returns>A <see cref="PositionedCodeGraph"/> representing the positioned nodes and connections.</returns>
+    public static PositionedCodeGraph Layout(ReadOnlySpan<CodeGraph> graphs, LayoutOptions? layoutOptions = null)
     {
         LayoutOptions layoutOptionsVal = layoutOptions ?? LayoutOptions.Defaut;
         layoutOptionsVal.Validate();
 
-        var nodes = new List<PositionedNodeData>(graph.NodeCount);
-        CollectionsMarshal.SetCount(nodes, graph.NodeCount);
-        var info = new LayoutInfo(graph, nodes, layoutOptionsVal);
-
-        int3 size = new int3(((info.TowerX - 1) * layoutOptionsVal.TowerSpacing) + Prefab.MaxSize, Math.Min(layoutOptionsVal.MaximumTowerHeight, graph.NodeCount), ((info.TowerZ - 1) * layoutOptionsVal.TowerSpacing) + Prefab.MaxSize);
-
-        // todo: this can now just enumerate the nodes in order, instead of using scopes
-        ApplyLayout(graph.RootScope, ref info);
-
-        return PositionedCodeGraph.Create(nodes, CollectionsMarshal.AsSpan(graph._regions), CollectionsMarshal.AsSpan(graph._connections), size);
+        return CodeGraphPositionHelpers.LayoutGraphs(graphs, LayoutNodes, layoutOptionsVal);
     }
 
-    private static void ApplyLayout(CodeScope scope, ref LayoutInfo info)
+    private static int3 LayoutNodes(CodeGraph graph, Span<PositionedNodeData> nodes, int3 offset, LayoutOptions layoutOptions)
     {
-        var nodes = scope._nodes.GetEnumerator();
+        var info = new LayoutInfo(graph, graph.NodeCount, layoutOptions);
 
-        for (; info.TowerIndex < info.TowerCount; info.TowerIndex++)
+        int nodeIndex = 0;
+        int yLevel = 0;
+        int towerIndex = 0;
+        int2 basePos = int2.Zero;
+        foreach (var node in graph._nodes)
         {
-            var basePos = GetTowerCoords(info.TowerIndex, info.TowerX) * info.Options.TowerSpacing;
-
-            for (; info.YLevel < info.Options.MaximumTowerHeight; info.YLevel++, info.NodeIndex++)
+            if (node.Type is null or { Prefab: { Id: 0 } })
             {
-                if (!nodes.MoveNext())
-                {
-                    goto breakLabel;
-                }
-
-                var handle = nodes.Current;
-                if (handle == NodeHandle.Null)
-                {
-                    info.YLevel--;
-                    continue;
-                }
-
-                var node = info.Graph.GetNode(handle, out var nodeSettings);
-
-                var position = new short3(basePos.X, info.YLevel, basePos.Y);
-                info.Nodes[handle._index] = new PositionedNodeData(node.Type, nodeSettings, position);
+                nodes[nodeIndex] = default;
+                nodeIndex++;
+                continue;
             }
 
-            info.YLevel = 0;
+            var position = offset + new int3(basePos.X, yLevel, basePos.Y);
+            nodes[nodeIndex] = new PositionedNodeData(node.Type, node.Settings, (short3)position);
+
+            nodeIndex++;
+            yLevel++;
+            if (yLevel >= layoutOptions.MaximumTowerHeight)
+            {
+                yLevel = 0;
+                towerIndex++;
+                basePos = GetTowerCoords(towerIndex, info.TowerX) * layoutOptions.TowerSpacing;
+            }
         }
 
-    breakLabel:
-
-        foreach (var child in scope.Children)
-        {
-            ApplyLayout(child, ref info);
-        }
+        return new int3(((info.TowerX - 1) * layoutOptions.TowerSpacing) + Prefab.MaxSize, Math.Min(layoutOptions.MaximumTowerHeight, graph.NodeCount), ((info.TowerZ - 1) * layoutOptions.TowerSpacing) + Prefab.MaxSize);
     }
 
     private static int2 GetTowerCoords(int towerIndex, int towersX)
@@ -146,26 +142,18 @@ public static class TowerCodeGraphPositioner
         LineZ,
     }
 
-    private struct LayoutInfo
+    private readonly struct LayoutInfo
     {
-        public readonly LayoutOptions Options;
         public readonly int TowerCount;
         public readonly int TowerX;
         public readonly int TowerZ;
         public readonly CodeGraph Graph;
-        public readonly List<PositionedNodeData> Nodes;
 
-        public int NodeIndex;
-        public int TowerIndex;
-        public int YLevel;
-
-        public LayoutInfo(CodeGraph graph, List<PositionedNodeData> nodes, LayoutOptions options)
+        public LayoutInfo(CodeGraph graph, int nodeCount, LayoutOptions options)
         {
             Graph = graph;
-            Nodes = nodes;
-            Options = options;
 
-            TowerCount = (nodes.Count + options.MaximumTowerHeight - 1) / options.MaximumTowerHeight;
+            TowerCount = (nodeCount + options.MaximumTowerHeight - 1) / options.MaximumTowerHeight;
 
             switch (options.PlacementMode)
             {
