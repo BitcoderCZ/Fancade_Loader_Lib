@@ -366,7 +366,7 @@ public sealed partial class CodeGraph
                     return terminal;
                 }
 
-                return terminal.WithGraphId(_graphId, mergedIndex.NodeIndex);
+                return terminal.WithGraphIdInternal(_graphId, mergedIndex.NodeIndex);
             }
             else if (type is Scripting.Node.TerminalType.ObjectRelative)
             {
@@ -376,7 +376,7 @@ public sealed partial class CodeGraph
                     return terminal;
                 }
 
-                return terminal.WithGraphId(_graphId, mergedIndex.RegionIndex);
+                return terminal.WithGraphIdInternal(_graphId, mergedIndex.RegionIndex);
             }
             else
             {

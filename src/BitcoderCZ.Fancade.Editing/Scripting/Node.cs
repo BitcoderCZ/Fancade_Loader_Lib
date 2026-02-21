@@ -510,6 +510,17 @@ public readonly struct Node : IEquatable<Node>
         public Terminal WithGraphId(int graphId)
             => WithGraphIdInternal(checked((ushort)graphId));
 
+        /// <summary>
+        /// Returns a <see cref="Terminal"/> instance with the specified graph id and adjusted node or region index, if the terminal is a node or block region terminal.
+        /// </summary>
+        /// <param name="graphId">The graph id to associate with the terminal.</param>
+        /// <param name="indexOffset">The value added to the current node or region index when creating the new terminal.</param>
+        /// <returns>
+        /// The current <see cref="Terminal"/> instance if no graph is assigned; otherwise, a new <see cref="Terminal"/> instance with the specified graph id and adjusted index.
+        /// </returns>
+        public Terminal WithGraphId(int graphId, int indexOffset)
+            => WithGraphIdInternal(checked((ushort)graphId), indexOffset);
+
         /// <inheritdoc/>
         public bool Equals(Terminal other)
             => _graphId == other._graphId && _nodeOrRegionIndex == other._nodeOrRegionIndex && _blockPositon == other._blockPositon && _voxelPosition == other._voxelPosition && _signalType == other._signalType;
@@ -532,11 +543,11 @@ public readonly struct Node : IEquatable<Node>
         /// <returns>The contructed terminal.</returns>
         internal static Terminal ObjectRelative(BlockRegionHandle region, int3 positionInRange, byte3 voxelPositon, SignalType signalType)
             => new Terminal(region, checked((short3)positionInRange), voxelPositon, signalType);
-            
+
         internal Terminal WithGraphIdInternal(ushort graphId)
             => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, _nodeOrRegionIndex);
 
-        internal Terminal WithGraphId(ushort graphId, int indexOffset)
+        internal Terminal WithGraphIdInternal(ushort graphId, int indexOffset)
             => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, (ushort)(indexOffset + _nodeOrRegionIndex));
     }
 

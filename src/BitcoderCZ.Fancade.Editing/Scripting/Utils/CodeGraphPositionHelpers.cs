@@ -87,7 +87,7 @@ internal static class CodeGraphPositionHelpers
                                 }
                             }
 
-                            return terminal.WithGraphId(nodeHandle._graphId, indexOffset);
+                            return terminal.WithGraphIdInternal(nodeHandle._graphId, indexOffset);
                         }
 
                     case Node.TerminalType.ObjectRelative:
@@ -111,7 +111,7 @@ internal static class CodeGraphPositionHelpers
                                 }
                             }
 
-                            return terminal.WithGraphId(regionHandle._graphId, indexOffset);
+                            return terminal.WithGraphIdInternal(regionHandle._graphId, indexOffset);
                         }
 
                     default:
@@ -208,7 +208,7 @@ internal static class CodeGraphPositionHelpers
                                 }
                             }
 
-                            return terminal.WithGraphId(nodeHandle._graphId, indexOffset);
+                            return terminal.WithGraphIdInternal(nodeHandle._graphId, indexOffset);
                         }
 
                     case Node.TerminalType.ObjectRelative:
@@ -232,7 +232,7 @@ internal static class CodeGraphPositionHelpers
                                 }
                             }
 
-                            return terminal.WithGraphId(regionHandle._graphId, indexOffset);
+                            return terminal.WithGraphIdInternal(regionHandle._graphId, indexOffset);
                         }
 
                     default:
