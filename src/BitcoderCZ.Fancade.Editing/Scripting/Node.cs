@@ -185,14 +185,14 @@ public readonly struct Node : IEquatable<Node>
             => !(left == right);
 
         /// <summary>
-        /// Returns a new <see cref="Connection"/> instance whose terminals are associated with the specified graph id.
+        /// Returns a new <see cref="Connection"/> instance whose terminals are associated with the specified graph.
         /// </summary>
-        /// <param name="graphId">The graph id to assign to both the <c>From</c> and <c>To</c> terminals.</param>
+        /// <param name="graph">The graph to assign to both the <c>From</c> and <c>To</c> terminals.</param>
         /// <returns>
-        /// A new <see cref="Connection"/> instance with both terminals updated to use the specified graph id.
+        /// A new <see cref="Connection"/> instance with both terminals updated to use the specified graph.
         /// </returns>
-        public Connection WithGraphId(ushort graphId)
-            => new Connection(From.WithGraphId(graphId), To.WithGraphId(graphId));
+        public Connection WithGraph(CodeGraph graph)
+            => WithGraphId(graph._id);
 
         /// <inheritdoc/>
         public bool Equals(Connection other)
@@ -205,6 +205,9 @@ public readonly struct Node : IEquatable<Node>
         /// <inheritdoc/>
         public override int GetHashCode()
             => HashCode.Combine(From, To);
+
+        internal Connection WithGraphId(ushort graphId)
+            => new Connection(From.WithGraphId(graphId), To.WithGraphId(graphId));
     }
 
     /// <summary>
@@ -478,14 +481,14 @@ public readonly struct Node : IEquatable<Node>
             => new Terminal(region, checked((short3)positionInRegion), voxelPositon, SignalType.Obj);
 
         /// <summary>
-        /// Returns a <see cref="Terminal"/> instance with the specified graph identifier, if the terminal is a node or block region terminal.
+        /// Returns a <see cref="Terminal"/> instance with the specified graph, if the terminal is a node or block region terminal.
         /// </summary>
-        /// <param name="graphId">The graph identifier to associate with the terminal.</param>
+        /// <param name="graph">The graph to associate with the terminal.</param>
         /// <returns>
-        /// The current <see cref="Terminal"/> instance if no graph is assigned; otherwise, a new <see cref="Terminal"/> instance with the specified graph id.
+        /// The current <see cref="Terminal"/> instance if no graph is assigned; otherwise, a new <see cref="Terminal"/> instance with the specified graph.
         /// </returns>
-        public Terminal WithGraphId(ushort graphId)
-            => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, _nodeOrRegionIndex);
+        public Terminal WithGraph(CodeGraph graph)
+            => WithGraphId(graph._id);
 
         /// <inheritdoc/>
         public bool Equals(Terminal other)
@@ -509,6 +512,9 @@ public readonly struct Node : IEquatable<Node>
         /// <returns>The contructed terminal.</returns>
         internal static Terminal ObjectRelative(BlockRegionHandle region, int3 positionInRange, byte3 voxelPositon, SignalType signalType)
             => new Terminal(region, checked((short3)positionInRange), voxelPositon, signalType);
+            
+        internal Terminal WithGraphId(ushort graphId)
+            => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, _nodeOrRegionIndex);
 
         internal Terminal WithGraphId(ushort graphId, int indexOffset)
             => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, (ushort)(indexOffset + _nodeOrRegionIndex));
