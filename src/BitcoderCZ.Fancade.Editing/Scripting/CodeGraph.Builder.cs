@@ -302,10 +302,11 @@ public sealed partial class CodeGraph
                 }
             }
 
+            // todo: if all nodes are removed, get the next last child
             var lastExpressionChild = scope._children.LastOrDefault(static child => child.Type is ScopeType.Expression);
             if (lastExpressionChild is not null)
             {
-                while (lastExpressionChild._nodes.Last() == default)
+                while (lastExpressionChild._nodes.Count > 0 && lastExpressionChild._nodes.Last() == default)
                 {
                     lastExpressionChild._nodes.RemoveAt(lastExpressionChild._nodes.Count - 1);
                 }

@@ -281,6 +281,11 @@ public static class StructuredCodeGraphPositioner
 
         foreach (var nodeHandle in scope.Nodes)
         {
+            if (nodeHandle == NodeHandle.Null)
+            {
+                continue;
+            }
+
             var node = graph.GetNode(nodeHandle, out _);
             height = Math.Max(height, node.Type.Size.Y);
 
