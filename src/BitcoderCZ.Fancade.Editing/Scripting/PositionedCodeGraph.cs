@@ -44,6 +44,12 @@ public sealed class PositionedCodeGraph
     }
 
     /// <summary>
+    /// Gets the id of the graph.
+    /// </summary>
+    /// <value>Id of the graph.</value>
+    public int Id => _id;
+
+    /// <summary>
     /// Gets the size of the graph.
     /// </summary>
     /// <value>Size of the region containing all nodes, does not include <see cref="Offset"/> or <see cref="Regions"/>.</value>
@@ -81,7 +87,7 @@ public sealed class PositionedCodeGraph
 
     internal ReadOnlySpan<PositionedNodeData> NodesSpan => CollectionsMarshal.AsSpan(_nodes);
 
-     /// <summary>
+    /// <summary>
     /// Gets a node from the graph.
     /// </summary>
     /// <param name="index">Index of the node to get.</param>
@@ -148,7 +154,7 @@ public sealed class PositionedCodeGraph
         int index = 0;
         foreach (var connection in connections)
         {
-            positionedConnectionsSpan[index++] = connection.WithGraphId(graphId);
+            positionedConnectionsSpan[index++] = connection.WithGraphIdInternal(graphId);
         }
 
         return new PositionedCodeGraph(graphId, nodes, positionedRegions, positionedConnections, size, offset);

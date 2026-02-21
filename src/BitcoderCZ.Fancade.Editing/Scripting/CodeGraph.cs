@@ -48,6 +48,12 @@ public sealed partial class CodeGraph
     }
 
     /// <summary>
+    /// Gets the id of the graph.
+    /// </summary>
+    /// <value>Id of the graph.</value>
+    public int Id => _id;
+
+    /// <summary>
     /// Gets the root scope of the <see cref="CodeGraph"/>.
     /// </summary>
     /// <value>The root scope of the <see cref="CodeGraph"/>.</value>

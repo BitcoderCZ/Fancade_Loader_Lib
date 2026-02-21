@@ -52,6 +52,12 @@ public sealed partial class CodeGraph
         }
 
         /// <summary>
+        /// Gets the id of the graph.
+        /// </summary>
+        /// <value>Id of the graph.</value>
+        public int Id => _graphId;
+
+        /// <summary>
         /// Gets the number of nodes contained in the builder.
         /// </summary>
         /// <value>Number of nodes contained in the builder.</value>
@@ -222,7 +228,7 @@ public sealed partial class CodeGraph
             {
                 destinationNodes[index++] = new Node(new NodeHandle(destination._graphId, (ushort)(destinationNodeCount + node._handle._index)), node.Type, node._expressionDepth, node._settings);
             }
-            
+
             var destinationRegions = destination.RegionsSpan[destinationRegionCount..];
             index = 0;
             foreach (ref var region in RegionsSpan)
