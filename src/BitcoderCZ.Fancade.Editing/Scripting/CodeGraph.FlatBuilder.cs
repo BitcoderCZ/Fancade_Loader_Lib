@@ -226,7 +226,13 @@ public sealed partial class CodeGraph
             int index = 0;
             foreach (ref var node in NodesSpan)
             {
-                destinationNodes[index++] = new Node(new NodeHandle(destination._graphId, (ushort)(destinationNodeCount + node._handle._index)), node.Type, node._expressionDepth, node._settings);
+                destinationNodes[index] = new Node(
+                    node._handle == NodeHandle.Null ? NodeHandle.Null : new NodeHandle(destination._graphId, (ushort)(destinationNodeCount + node._handle._index)),
+                    node.Type,
+                    node._expressionDepth,
+                    node._settings);
+
+                index++;
             }
 
             var destinationRegions = destination.RegionsSpan[destinationRegionCount..];
@@ -280,6 +286,7 @@ public sealed partial class CodeGraph
 
             int declaringNodeOffset = nestedExpressionsEmittedFirst ? 1 : 0;
 
+            int index = 0;
             foreach (var node in NodesSpan)
             {
                 var targetCount = node._expressionDepth + 1;
@@ -297,7 +304,7 @@ public sealed partial class CodeGraph
                     scopeStack.Push(childScope);
                 }
 
-                nodes[node._handle._index] = new NodeData(node.Type, node._settings);
+                nodes[index++] = new NodeData(node.Type, node._settings);
                 scopeStack.Peek()._nodes.Add(node._handle);
             }
 
