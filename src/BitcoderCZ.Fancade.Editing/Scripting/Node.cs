@@ -184,6 +184,16 @@ public readonly struct Node : IEquatable<Node>
         public static bool operator !=(Connection left, Connection right)
             => !(left == right);
 
+        /// <summary>
+        /// Returns a new <see cref="Connection"/> instance whose terminals are associated with the specified graph id.
+        /// </summary>
+        /// <param name="graphId">The graph id to assign to both the <c>From</c> and <c>To</c> terminals.</param>
+        /// <returns>
+        /// A new <see cref="Connection"/> instance with both terminals updated to use the specified graph id.
+        /// </returns>
+        public Connection WithGraphId(ushort graphId)
+            => new Connection(From.WithGraphId(graphId), To.WithGraphId(graphId));
+
         /// <inheritdoc/>
         public bool Equals(Connection other)
             => From == other.From && To == other.To;
@@ -195,9 +205,6 @@ public readonly struct Node : IEquatable<Node>
         /// <inheritdoc/>
         public override int GetHashCode()
             => HashCode.Combine(From, To);
-
-        internal Connection WithGraphId(ushort graphId)
-            => new Connection(From.WithGraphId(graphId), To.WithGraphId(graphId));
     }
 
     /// <summary>
@@ -470,6 +477,16 @@ public readonly struct Node : IEquatable<Node>
         public static Terminal ObjectRelative(BlockRegionHandle region, int3 positionInRegion, byte3 voxelPositon)
             => new Terminal(region, checked((short3)positionInRegion), voxelPositon, SignalType.Obj);
 
+        /// <summary>
+        /// Returns a <see cref="Terminal"/> instance with the specified graph identifier, if the terminal is a node or block region terminal.
+        /// </summary>
+        /// <param name="graphId">The graph identifier to associate with the terminal.</param>
+        /// <returns>
+        /// The current <see cref="Terminal"/> instance if no graph is assigned; otherwise, a new <see cref="Terminal"/> instance with the specified graph id.
+        /// </returns>
+        public Terminal WithGraphId(ushort graphId)
+            => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, _nodeOrRegionIndex);
+
         /// <inheritdoc/>
         public bool Equals(Terminal other)
             => _graphId == other._graphId && _nodeOrRegionIndex == other._nodeOrRegionIndex && _blockPositon == other._blockPositon && _voxelPosition == other._voxelPosition && _signalType == other._signalType;
@@ -492,9 +509,6 @@ public readonly struct Node : IEquatable<Node>
         /// <returns>The contructed terminal.</returns>
         internal static Terminal ObjectRelative(BlockRegionHandle region, int3 positionInRange, byte3 voxelPositon, SignalType signalType)
             => new Terminal(region, checked((short3)positionInRange), voxelPositon, signalType);
-
-        internal Terminal WithGraphId(ushort graphId)
-            => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, _nodeOrRegionIndex);
 
         internal Terminal WithGraphId(ushort graphId, int indexOffset)
             => _graphId is 0 ? this : new Terminal(_blockPositon, _voxelPosition, _signalType, graphId, (ushort)(indexOffset + _nodeOrRegionIndex));
