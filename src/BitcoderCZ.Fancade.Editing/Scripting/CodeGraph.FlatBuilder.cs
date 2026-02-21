@@ -401,7 +401,7 @@ public sealed partial class CodeGraph
             /// Type of the node; or <see langword="null"/>, if the node is empty/null.
             /// </summary>
             public BlockDef? Type;
-            internal readonly ushort _expressionDepth;
+            internal ushort _expressionDepth;
             internal NodeHandle _handle;
             internal SettingsCollection _settings;
 
@@ -433,7 +433,7 @@ public sealed partial class CodeGraph
             public readonly NodeSettingsCollection Settings => new NodeSettingsCollection(_settings);
 
             /// <summary>
-            /// Gets the expression nesting depth of the node.
+            /// Gets or sets the expression nesting depth of the node.
             /// </summary>
             /// <remarks>
             /// A value of <c>0</c> indicates that the node belongs to the root <see cref="ScopeType.Statement"/> scope.
@@ -441,7 +441,15 @@ public sealed partial class CodeGraph
             /// A value greater than <c>0</c> indicates that the node belongs to a nested <see cref="ScopeType.Expression"/> scope, where the value represents the level of expression nesting.
             /// </remarks>
             /// <value>The zero-based expression nesting depth.</value>
-            public readonly int ExpressionDepth => _expressionDepth;
+            public int ExpressionDepth
+            {
+                readonly get => _expressionDepth;
+                set
+                {
+                    ThrowHelper.ThrowIfNegative(value);
+                    _expressionDepth = checked((ushort)value);
+                }
+            }
 
             /// <summary>
             /// Add a setting to the node.
