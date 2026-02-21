@@ -68,7 +68,7 @@ public static class StructuredCodeGraphPositioner
 
         var rootLayout = scopeLayouts[graph.RootScope];
 
-        ApplyLayout(graph, graph.RootScope, 0, new int3(rootLayout.WidthLeft, 0, 0), scopeLayouts, nodes, scopeDepth, layoutOptions);
+        ApplyLayout(graph, graph.RootScope, 0, new int3(0, 0, 0), scopeLayouts, nodes, scopeDepth, layoutOptions);
 
         int maxDepth = 0;
         foreach (var depth in scopeDepth)
@@ -93,7 +93,7 @@ public static class StructuredCodeGraphPositioner
             nodes[i] = new PositionedNodeData(node.Type, node._settings, newOffset);
         }
 
-        return new int3(rootLayout.GetTotalWidth(layoutOptions.PaddingX), rootLayout.Height, maxDepth);
+        return new int3(rootLayout.GetTotalWidth(layoutOptions.PaddingX), rootLayout.Height, maxDepth - 1);
     }
 
     private static void ApplyLayout(CodeGraph graph, CodeScope scope, int layer, int3 origin, Dictionary<CodeScope, ScopeLayout> scopeLayouts, Span<PositionedNodeData> nodes, int[] scopeDepth, LayoutOptions layoutOptions)
@@ -103,7 +103,7 @@ public static class StructuredCodeGraphPositioner
         switch (scope.Type)
         {
             case ScopeType.Statement:
-                origin.X += thisLayout.WidthLeft;
+                origin.X += thisLayout.WidthLeft + layoutOptions.PaddingX;
                 layer += scope.GetMaxExpressionDepth();
                 break;
             case ScopeType.Expression:
@@ -275,14 +275,16 @@ public static class StructuredCodeGraphPositioner
 
     private static ScopeLayout CalculateLayoutNodesOnly(CodeGraph graph, CodeScope scope)
     {
-        int width = 0;
+        // todo: handle different widths
+        int width = 2;
         int height = 0;
 
         foreach (var nodeHandle in scope.Nodes)
         {
             var node = graph.GetNode(nodeHandle, out _);
             height = Math.Max(height, node.Type.Size.Y);
-            width = Math.Max(width, node.Type.Size.X);
+
+            // width = Math.Max(width, node.Type.Size.X);
         }
 
         return new ScopeLayout(width, 0, 0, height);

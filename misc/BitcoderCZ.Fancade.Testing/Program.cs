@@ -20,7 +20,7 @@ using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
     prefabs.AddPrefab(level);
 
     var writer = new CodeWriter(new CodeGraph.Builder());
-    writer.Inspect(Vector(new Vector3(1, 2, 3)));
+    writer.Inspect(BreakVector(Vector(Vector3.One)).X);
     // writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
     // writer.Inspect(MakeVector(None(), None(), AddNumbers(None(), None())));
     // writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));

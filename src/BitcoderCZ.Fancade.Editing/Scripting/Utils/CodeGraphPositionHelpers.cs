@@ -44,7 +44,7 @@ internal static class CodeGraphPositionHelpers
         int regionOffset = 0;
         foreach (var graph in graphs)
         {
-            var size = layoutNodes(graph, nodesSpan.Slice(nodeOffset, graph.NodeCount), graphOffset, arg0);
+            var size = graph.NodeCount is 0 ? int3.Zero : layoutNodes(graph, nodesSpan.Slice(nodeOffset, graph.NodeCount), graphOffset, arg0);
 
             foreach (var region in graph.RegionsSpan)
             {
