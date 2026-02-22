@@ -64,10 +64,18 @@ public sealed partial class CodeGraph
         public int NodeCount => _nodes.Count;
 
         /// <summary>
-        /// Gets the current expression scope depth.
+        /// Gets or sets the current expression scope depth.
         /// </summary>
         /// <value>The current expression scope depth.</value>
-        public int CurrentExpressionDepth => _expressionDepth;
+        public int CurrentExpressionDepth
+        {
+            get => _expressionDepth;
+            set
+            {
+                ThrowIfNegative(value);
+                _expressionDepth = (ushort)value;
+            }
+        }
 
         /// <summary>
         /// Gets the nodes of the builder.
@@ -103,8 +111,8 @@ public sealed partial class CodeGraph
         /// Gets the connections of the builder as span.
         /// </summary>
         /// <value>Connections of the builder.</value>
-        public Span<Scripting.Node.Connection> ConnectionsSpan => CollectionsMarshal.AsSpan(_connections); 
-        
+        public Span<Scripting.Node.Connection> ConnectionsSpan => CollectionsMarshal.AsSpan(_connections);
+
         private Span<Scripting.Node.BlockRegion> RegionsSpanRW => CollectionsMarshal.AsSpan(_regions);
 
         /// <summary>
