@@ -69,11 +69,43 @@ public sealed partial class CodeGraph
         /// <value>The current expression scope depth.</value>
         public int CurrentExpressionDepth => _expressionDepth;
 
-        private Span<Node> NodesSpan => CollectionsMarshal.AsSpan(_nodes);
+        /// <summary>
+        /// Gets the nodes of the builder.
+        /// </summary>
+        /// <value>Nodes of the builder.</value>
+        public IList<Node> Nodes => _nodes;
 
-        private Span<Scripting.Node.BlockRegion> RegionsSpan => CollectionsMarshal.AsSpan(_regions);
+        /// <summary>
+        /// Gets the nodes of the builder as span.
+        /// </summary>
+        /// <value>Nodes of the builder.</value>
+        public Span<Node> NodesSpan => CollectionsMarshal.AsSpan(_nodes);
 
-        private Span<Scripting.Node.Connection> ConnectionsSpan => CollectionsMarshal.AsSpan(_connections);
+        /// <summary>
+        /// Gets the regions of the builder.
+        /// </summary>
+        /// <value>Regions of the builder.</value>
+        public IReadOnlyList<Scripting.Node.BlockRegion> Regions => _regions;
+
+        /// <summary>
+        /// Gets the regions of the builder as span.
+        /// </summary>
+        /// <value>Regions of the builder.</value>
+        public ReadOnlySpan<Scripting.Node.BlockRegion> RegionsSpan => CollectionsMarshal.AsSpan(_regions);
+
+        /// <summary>
+        /// Gets the connections of the builder.
+        /// </summary>
+        /// <value>Connections of the builder.</value>
+        public IList<Scripting.Node.Connection> Connections => _connections;
+
+        /// <summary>
+        /// Gets the connections of the builder as span.
+        /// </summary>
+        /// <value>Connections of the builder.</value>
+        public Span<Scripting.Node.Connection> ConnectionsSpan => CollectionsMarshal.AsSpan(_connections); 
+        
+        private Span<Scripting.Node.BlockRegion> RegionsSpanRW => CollectionsMarshal.AsSpan(_regions);
 
         /// <summary>
         /// Places a new node of the specified type in the current scope.
@@ -108,8 +140,18 @@ public sealed partial class CodeGraph
         /// <param name="size">Size of the region to create.</param>
         /// <returns>The created <see cref="Scripting.Node.BlockRegion"/>.</returns>
         public Scripting.Node.BlockRegion CreateRegion(int3 size)
+            => CreateRegion(new Array3D<ushort>(size));
+
+        /// <summary>
+        /// Creates a <see cref="Scripting.Node.BlockRegion"/>, for placing non script blocks.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="Scripting.Node.Terminal.ObjectRelative(BlockRegionHandle, int3, byte3)"/> to reference blocks inside the <see cref="Scripting.Node.BlockRegion"/>.
+        /// </remarks>
+        /// <param name="array">The region's block data.</param>
+        /// <returns>The created <see cref="Scripting.Node.BlockRegion"/>.</returns>
+        public Scripting.Node.BlockRegion CreateRegion(Array3D<ushort> array)
         {
-            var array = new Array3D<ushort>(size);
             var region = new Scripting.Node.BlockRegion(_graphId, (ushort)_regions.Count, array);
             _regions.Add(region);
 
@@ -235,9 +277,9 @@ public sealed partial class CodeGraph
                 index++;
             }
 
-            var destinationRegions = destination.RegionsSpan[destinationRegionCount..];
+            var destinationRegions = destination.RegionsSpanRW[destinationRegionCount..];
             index = 0;
-            foreach (ref var region in RegionsSpan)
+            foreach (ref var region in RegionsSpanRW)
             {
                 destinationRegions[index++] = new Scripting.Node.BlockRegion(destination._graphId, (ushort)(destinationRegionCount + region._index), region._blocks);
             }
