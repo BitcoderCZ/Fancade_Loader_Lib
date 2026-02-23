@@ -187,10 +187,10 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)3);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 2))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 2))).IsEqualTo((ushort)4);
         }
 
         var prefab2 = CreatePrefab(3, 2);
@@ -206,12 +206,12 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)4);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)5);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)6);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 2))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 2))).IsEqualTo((ushort)6);
         }
     }
 
@@ -291,16 +291,16 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)3);
-            await Assert.That(blocks.GetBlock(new int3(0, 1, 0))).IsEqualTo((ushort)4);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 1, 0))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)5);
         }
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 0))).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
-            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 1, 0))).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
-            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 1))).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 0))).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlockInBounds(new int3(0, 1, 0))).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 1))).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
         }
 
         using (Assert.Multiple())
@@ -358,15 +358,15 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
 
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)4);
-            await Assert.That(blocks.GetBlock(new int3(2, 0, 1))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlockInBounds(new int3(2, 0, 1))).IsEqualTo((ushort)5);
 
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)6);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)7);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 2))).IsEqualTo((ushort)6);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 2))).IsEqualTo((ushort)7);
         }
     }
 
@@ -399,15 +399,15 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
 
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)4);
-            await Assert.That(blocks.GetBlock(new int3(2, 0, 1))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlockInBounds(new int3(2, 0, 1))).IsEqualTo((ushort)0);
 
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)5);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)6);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 2))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 2))).IsEqualTo((ushort)6);
         }
     }
 
@@ -449,12 +449,12 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
 
-            await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)3);
-            await Assert.That(blocks.GetBlock(new int3(3, 0, 0))).IsEqualTo((ushort)4);
-            await Assert.That(blocks.GetBlock(new int3(4, 0, 0))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(2, 0, 0))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(3, 0, 0))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlockInBounds(new int3(4, 0, 0))).IsEqualTo((ushort)5);
         }
     }
 
@@ -490,12 +490,12 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(2, 0, 0))).IsEqualTo((ushort)3);
 
-            await Assert.That(blocks.GetBlock(new int3(3, 0, 0))).IsEqualTo((ushort)0);
-            await Assert.That(blocks.GetBlock(new int3(4, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(3, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(4, 0, 0))).IsEqualTo((ushort)0);
         }
     }
 
@@ -560,9 +560,9 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)0);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)0);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)1);
         }
     }
 
@@ -595,14 +595,14 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
 
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)0);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)0);
 
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)5);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)6);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 2))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 2))).IsEqualTo((ushort)6);
         }
     }
 
@@ -634,11 +634,11 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
 
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)5);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)6);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)6);
         }
     }
 
@@ -755,10 +755,10 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)4);
         }
     }
 
@@ -799,18 +799,18 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 0))).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
-            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 1, 0))).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
-            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 1))).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 0))).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlockInBounds(new int3(0, 1, 0))).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 1))).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
         }
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(0, 1, 0))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)4);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 1, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 2))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 2))).IsEqualTo((ushort)5);
         }
     }
 
@@ -838,8 +838,8 @@ public class PrefabListTests
         using (Assert.Multiple())
         {
             await Assert.That(prefab.Count).IsEqualTo(1);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)5);
         }
     }
 
@@ -868,8 +868,8 @@ public class PrefabListTests
         using (Assert.Multiple())
         {
             await Assert.That(prefab.Count).IsEqualTo(2);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
         }
     }
 
@@ -898,9 +898,9 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(2, 0, 0))).IsEqualTo((ushort)0);
         }
     }
 
@@ -943,18 +943,18 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 0))).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
-            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 1, 0))).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
-            await Assert.That(prefabList.GetSegment(blocks.GetBlock(new int3(0, 0, 1))).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 0))).PosInPrefab).IsEqualTo(new int3(0, 0, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlockInBounds(new int3(0, 1, 0))).PosInPrefab).IsEqualTo(new int3(0, 1, 0));
+            await Assert.That(prefabList.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 1))).PosInPrefab).IsEqualTo(new int3(0, 0, 1));
         }
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(0, 1, 0))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)3);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)4);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 2))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 1, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 2))).IsEqualTo((ushort)4);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 2))).IsEqualTo((ushort)5);
         }
     }
 
@@ -985,8 +985,8 @@ public class PrefabListTests
         using (Assert.Multiple())
         {
             await Assert.That(prefab.Count).IsEqualTo(1);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)5);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)5);
         }
     }
 
@@ -1017,8 +1017,8 @@ public class PrefabListTests
         using (Assert.Multiple())
         {
             await Assert.That(prefab.Count).IsEqualTo(2);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)2);
         }
     }
 
@@ -1082,10 +1082,10 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)0);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)3);
         }
     }
 
@@ -1126,10 +1126,10 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)0);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)3);
         }
 
         if (instanceCache is not null)
@@ -1170,8 +1170,8 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)0);
         }
 
         if (instanceCache is not null)
@@ -1217,10 +1217,10 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)0);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)2);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)3);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)3);
         }
 
         if (instanceCache is not null)
@@ -1261,9 +1261,9 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)0);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)1);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)2);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)0);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)1);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)2);
         }
 
         if (instanceCache is not null)
@@ -1306,9 +1306,9 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)10);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)11);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)12);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)10);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)11);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)12);
         }
     }
 
@@ -1346,9 +1346,9 @@ public class PrefabListTests
 
         using (Assert.Multiple())
         {
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)10);
-            await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)11);
-            await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)12);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)10);
+            await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)11);
+            await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)12);
         }
     }
 

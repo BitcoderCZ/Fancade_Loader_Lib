@@ -121,7 +121,7 @@ public struct GameMeshInfo
             {
                 BlockMesh blockMesh = prefab.Type is PrefabType.Level && prefab.Id != mainPrefabId
                     ? BlockMesh.Empty
-                    : BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, segmentMeshes, (mesh, meshIndex) =>
+                    : BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, ImmutableCollectionsMarshal.AsImmutableArray(segmentMeshes), (mesh, meshIndex) =>
                     {
                         int index = lookup.GetOrAdd(mesh, static (mesh, item) =>
                         {
@@ -181,7 +181,7 @@ public struct GameMeshInfo
             {
                 if (prefab.Id == mainPrefabId || prefab.Type != PrefabType.Level)
                 {
-                    blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, segmentMeshes, (mesh, meshIndex) =>
+                    blockMeshes.Add(prefab.Id, BlockMesh.Create(prefab.Blocks, createScriptMesh && prefab.Id == mainPrefabId, prefabs, ImmutableCollectionsMarshal.AsImmutableArray(segmentMeshes), (mesh, meshIndex) =>
                     {
                         ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, mesh, out bool exists);
 
@@ -229,7 +229,7 @@ public struct GameMeshInfo
     /// </summary>
     /// <param name="id">Id of the prefab.</param>
     /// <returns><see cref="BlockMesh"/> for the prefab.</returns>
-    public BlockMesh GetBlockMesh(ushort id)
+    public readonly BlockMesh GetBlockMesh(ushort id)
         => _blockMeshes[id];
 
     /// <summary>
@@ -237,7 +237,7 @@ public struct GameMeshInfo
     /// </summary>
     /// <param name="id">Id of the segment.</param>
     /// <returns>The <see cref="PrefabSegmentMeshes"/> for the segment.</returns>
-    public PrefabSegmentMeshes GetSegmentMesh(ushort id)
+    public readonly PrefabSegmentMeshes GetSegmentMesh(ushort id)
         => _segmentMeshes[id];
 
     /// <summary>
@@ -245,7 +245,7 @@ public struct GameMeshInfo
     /// </summary>
     /// <param name="id">Id of the prefab.</param>
     /// <returns>Mesh bounds of the prefab.</returns>
-    public (int3 Min, int3 Max) GetPrefabMeshBounds(ushort id)
+    public readonly (int3 Min, int3 Max) GetPrefabMeshBounds(ushort id)
         => _prefabMeshBounds[id];
 
     public readonly ValueList<FcMesh.Block> GetUniqueMesh(int uniqueMeshIndex)
@@ -279,7 +279,7 @@ public struct GameMeshInfo
             var stockPrefabs = StockBlocks.PrefabList;
 
             stockBlockMeshes = new (ushort, BlockMesh)[stockPrefabs.PrefabCount];
-            stockUniqueMeshes = new(32); // todo: actual capacity
+            stockUniqueMeshes = new(1);
             stockSegmentMeshes = new PrefabSegmentMeshes[stockPrefabs.SegmentCount];
 
             if (createMultiThreaded)
@@ -319,7 +319,7 @@ public struct GameMeshInfo
                     item =>
                 {
                     var (prefabIndex, prefab) = item;
-                    stockBlockMeshes[prefabIndex] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, stockSegmentMeshes, (mesh, meshIndex) =>
+                    stockBlockMeshes[prefabIndex] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, ImmutableCollectionsMarshal.AsImmutableArray(stockSegmentMeshes), (mesh, meshIndex) =>
                         {
                             int index = lookup.GetOrAdd(mesh, static (mesh, item) =>
                             {
@@ -353,7 +353,7 @@ public struct GameMeshInfo
                 int prefabIndex = 0;
                 foreach (var prefab in stockPrefabs.OrderBy(prefab => prefab.Id))
                 {
-                    stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, stockSegmentMeshes, (mesh, meshIndex) =>
+                    stockBlockMeshes[prefabIndex++] = (prefab.Id, BlockMesh.Create(prefab.Blocks, false, emptyList, ImmutableCollectionsMarshal.AsImmutableArray(stockSegmentMeshes), (mesh, meshIndex) =>
                     {
                         ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(lookup, mesh, out bool exists);
 

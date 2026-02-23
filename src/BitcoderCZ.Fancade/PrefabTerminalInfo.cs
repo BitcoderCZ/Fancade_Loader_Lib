@@ -172,7 +172,7 @@ public readonly struct PrefabTerminalInfo
         {
             if (connection.IsFromOutside && !infoBuilder.Any(terminal => terminal.Position == connection.FromVoxel))
             {
-                var insidePrefab = getPrefab(prefab.Blocks.GetBlockOrDefault(connection.To));
+                var insidePrefab = getPrefab(prefab.Blocks.GetBlock(connection.To));
 
                 if (insidePrefab is not null)
                 {
@@ -191,7 +191,7 @@ public readonly struct PrefabTerminalInfo
             }
             else if (connection.IsToOutside && !infoBuilder.Any(terminal => terminal.Position == connection.ToVoxel))
             {
-                var insidePrefab = getPrefab(prefab.Blocks.GetBlockOrDefault(connection.From));
+                var insidePrefab = getPrefab(prefab.Blocks.GetBlock(connection.From));
 
                 if (insidePrefab is not null)
                 {
@@ -257,7 +257,7 @@ public readonly struct PrefabTerminalInfo
         {
             if (connection.IsFromOutside && connection.FromVoxel == terminalPos)
             {
-                var insidePrefab = getPrefab(prefab.Blocks.GetBlockOrDefault(connection.To));
+                var insidePrefab = getPrefab(prefab.Blocks.GetBlock(connection.To));
 
                 if (insidePrefab is not null)
                 {
@@ -266,7 +266,7 @@ public readonly struct PrefabTerminalInfo
             }
             else if (connection.IsToOutside && connection.ToVoxel == terminalPos)
             {
-                var insidePrefab = getPrefab(prefab.Blocks.GetBlockOrDefault(connection.From));
+                var insidePrefab = getPrefab(prefab.Blocks.GetBlock(connection.From));
 
                 if (insidePrefab is not null)
                 {

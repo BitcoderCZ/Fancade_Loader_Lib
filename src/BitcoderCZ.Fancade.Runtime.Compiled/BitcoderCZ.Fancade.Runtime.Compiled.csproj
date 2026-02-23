@@ -10,7 +10,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade.Runtime.Compiled</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>1.0.0-develop.25</Version>
+    <Version>1.0.0-develop.29</Version>
     <Description>Compile fancade scripts for faster execution.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -55,7 +55,7 @@
 
   <ItemGroup>
     <PackageReference Include="BitcoderCZ.Maths" Version="1.2.0" />
-    <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
+    <PackageReference Include="hamarb123.Analyzers" Version="1.3.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

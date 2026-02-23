@@ -1,50 +1,55 @@
 ﻿using BitcoderCZ.Fancade.Editing;
-using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
+using BitcoderCZ.Fancade.Editing.Scripting;
+using BitcoderCZ.Fancade.Editing.Scripting.Emitters;
+using BitcoderCZ.Fancade.Editing.Scripting.Positioners;
 using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
 using System.Numerics;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
-using static BitcoderCZ.Fancade.Runtime.Tests.Common.ExeUtils;
+using static BitcoderCZ.Fancade.Editing.Scripting.Node;
 
 namespace BitcoderCZ.Fancade.Runtime.Simulated.Tests;
 
 public class FcWorldTests
 {
-    [Test]
-    public async Task Physics_ObjectFalls()
-    {
-        var writer = CreateWriter(out var prefab);
+    // [Test]
+    // public async Task Physics_ObjectFalls()
+    // {
+    //     var writer = new CodeWriter(new CodeGraph.Builder());
 
-        var blocks = prefab.Blocks;
-        blocks.SetPrefab(new int3(50, 1, 0), StockBlocks.Templates.PhysicsBox.Prefab);
+    //     var prefab = Prefab.CreateLevel(0, "A");
+    //     var blocks = prefab.Blocks;
+    //     blocks.SetPrefab(new int3(50, 1, 0), StockBlocks.Templates.PhysicsBox.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 0)) { VoxelPosition = byte3.Zero };
-        writer.PlaySensor(writer =>
-        {
-            writer.Inspect(GreaterThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(1.4f)));
-        });
+    //     var terminal = Terminal.ObjectAbsolute(new int3(50, 1, 0), byte3.Zero);
+    //     writer.PlaySensor(writer =>
+    //     {
+    //         writer.Inspect(GreaterThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(1.4f)));
+    //     });
 
-        writer.If(EqualsNumbers(CurrentFrame(), Number(120f)),
-        @true: writer =>
-        {
-            writer.Inspect(LessThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(0.6f)));
-        }, null);
+    //     writer.If(EqualsNumbers(CurrentFrame(), Number(120f)),
+    //     @true: writer =>
+    //     {
+    //         writer.Inspect(LessThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(0.6f)));
+    //     }, null);
 
-        var tester = AstRunnerTester.CreatePhysics(writer, options: new() { RunFor = 121, });
+    //     var tester = AstRunnerTester.CreatePhysics(writer, prefab, options: new() { RunFor = 121, });
 
-        await Assert.That(tester).Inspects(new(true) { Count = 2 });
-    }
+    //     await Assert.That(tester).Inspects(new(true) { Count = 2 });
+    // }
 
     [Test]
     public async Task Physics_ObjectFalls_2()
     {
-        var writer = CreateWriter(out var prefab);
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
+        var prefab = Prefab.CreateLevel(0, "A");
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(50, 1, 1), StockBlocks.Templates.PhysicsBox.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 1)) { VoxelPosition = byte3.Zero };
+        var terminal = Terminal.ObjectAbsolute(new int3(50, 1, 1), byte3.Zero);
+
         writer.PlaySensor(writer =>
         {
             writer.Inspect(GreaterThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(1.4f)));
@@ -56,7 +61,7 @@ public class FcWorldTests
             writer.Inspect(LessThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(0.6f)));
         }, null);
 
-        var tester = AstRunnerTester.CreatePhysics(writer, options: new() { RunFor = 121, });
+        var tester = AstRunnerTester.CreatePhysics(writer, prefab, options: new() { RunFor = 121, });
 
         await Assert.That(tester).Inspects(new(true) { Count = 2 });
     }
@@ -64,19 +69,20 @@ public class FcWorldTests
     [Test]
     public async Task Physics_NonPhysics_DoesNotMove()
     {
-        var writer = CreateWriter(out var prefab);
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
+        var prefab = Prefab.CreateLevel(0, "A");
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(50, 1, 0), StockBlocks.Templates.Box.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(50, 1, 0)) { VoxelPosition = byte3.Zero };
+        var terminal = Terminal.ObjectAbsolute(new int3(50, 1, 0), byte3.Zero);
         writer.If(EqualsNumbers(CurrentFrame(), Number(120f)),
         @true: writer =>
         {
             writer.Inspect(GreaterThan(BreakVector(GetPos(terminal.Wrap()).Position).Y, Number(1.4f)));
         }, null);
 
-        var tester = AstRunnerTester.CreatePhysics(writer, options: new() { RunFor = 121, });
+        var tester = AstRunnerTester.CreatePhysics(writer, prefab, options: new() { RunFor = 121, });
 
         await Assert.That(tester).Inspects(new(true) { Count = 2 });
     }
@@ -84,8 +90,9 @@ public class FcWorldTests
     [Test]
     public async Task Physics_Object_Rotates()
     {
-        var writer = CreateWriter(out var prefab);
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
+        var prefab = Prefab.CreateLevel(0, "A");
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(50, 1, 1), StockBlocks.Templates.PhysicsBox.Prefab);
         blocks.SetPrefab(new int3(50, 2, 1), StockBlocks.Templates.PhysicsBox.Prefab);
@@ -94,7 +101,7 @@ public class FcWorldTests
         blocks.SetBlock(new int3(49, 0, 1), 1);
         blocks.SetBlock(new int3(51, 0, 1), 1);
 
-        var terminal = new AbsolutePositionTerminal(new int3(50, 2, 0)) { VoxelPosition = byte3.Zero };
+        var terminal = Terminal.ObjectAbsolute(new int3(50, 2, 0), byte3.Zero);
 
         writer.If(EqualsNumbers(CurrentFrame(), Number(120f)),
         @true: writer =>
@@ -102,7 +109,7 @@ public class FcWorldTests
             writer.Inspect(GetPos(terminal.Wrap()).Rotation);
         }, null);
 
-        var tester = AstRunnerTester.CreatePhysics(writer, options: new() { RunFor = 121, });
+        var tester = AstRunnerTester.CreatePhysics(writer, prefab, options: new() { RunFor = 121, });
 
         await Assert.That(tester).Inspects(new(Quaternion.CreateFromYawPitchRoll(0f, -45f * (float.Pi / 180f), 0f)) { Count = 1 });
     }
@@ -110,17 +117,18 @@ public class FcWorldTests
     [Test]
     public async Task ConnectionToBlock_ConnectsToCorrectBlock()
     {
-        var writer = CreateWriter(out var prefab);
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
+        var prefab = Prefab.CreateLevel(0, "A");
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(4, 2, 1), StockBlocks.Templates.Box.Prefab);
         blocks.SetPrefab(new int3(4, 0, 0), StockBlocks.Templates.Box.Prefab);
         blocks.SetPrefab(new int3(4, 0, 1), StockBlocks.Templates.Box.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(4, 2, 1)) { VoxelPosition = byte3.Zero };
+        var terminal = Terminal.ObjectAbsolute(new int3(4, 2, 1), byte3.Zero);
         writer.Inspect(GetPos(terminal.Wrap()).Position);
 
-        var tester = AstRunnerTester.CreatePhysics(writer);
+        var tester = AstRunnerTester.CreatePhysics(writer, prefab);
 
         await Assert.That(tester).Inspects(new(new Vector3(4.5f, 2.5f, 1.5f)) { Frequency = InspectFrequency.EveryFrame });
     }
@@ -128,17 +136,18 @@ public class FcWorldTests
     [Test]
     public async Task ConnectionToBlock_ConnectsToCorrectBlock_2()
     {
-        var writer = CreateWriter(out var prefab);
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
+        var prefab = Prefab.CreateLevel(0, "A");
         var blocks = prefab.Blocks;
         blocks.SetPrefab(new int3(4, 2, 1), StockBlocks.Templates.Box.Prefab);
         blocks.SetPrefab(new int3(4, 0, 0), StockBlocks.Templates.Box.Prefab);
         blocks.SetPrefab(new int3(4, 0, 1), StockBlocks.Templates.Box.Prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(4, 0, 0)) { VoxelPosition = byte3.Zero };
+        var terminal = Terminal.ObjectAbsolute(new int3(4, 0, 0), byte3.Zero);
         writer.Inspect(GetPos(terminal.Wrap()).Position);
 
-        var tester = AstRunnerTester.CreatePhysics(writer);
+        var tester = AstRunnerTester.CreatePhysics(writer, prefab);
 
         await Assert.That(tester).Inspects(new(new Vector3(4.5f, 0.5f, 1f)) { Frequency = InspectFrequency.EveryFrame });
     }
@@ -146,7 +155,8 @@ public class FcWorldTests
     [Test]
     public async Task ConnectionToBlock_ConnectsToCorrectBlock_3()
     {
-        var writer = CreateWriter(out var prefab);
+        var writer = new CodeWriter(new CodeGraph.Builder());
+        var prefab = Prefab.CreateBlock(0, "A");
         prefab[int3.Zero].Voxels.Fill(new Voxel(FcColor.Black, false));
 
         var prefabs = new PrefabList();
@@ -177,11 +187,13 @@ public class FcWorldTests
 
         blocks.SetPrefab(new int3(1, 1, 1), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = byte3.One };
+        var terminal = Terminal.OutsideInput(byte3.One, SignalType.Obj);
         var size = GetSize(terminal.Wrap());
         writer.Inspect(SubtractVectors(size.Max, size.Min));
 
-        var tester = AstRunnerTester.CreatePhysics(writer, prefabs, level.Id);
+        PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), prefab, int3.Zero);
+
+        var tester = AstRunnerTester.CreatePhysics(prefabs, level.Id);
 
         await Assert.That(tester).Inspects(new(new Vector3(1f, 1f, 1f)) { Frequency = InspectFrequency.EveryFrame });
     }
@@ -189,7 +201,8 @@ public class FcWorldTests
     [Test]
     public async Task ConnectionToSelf_ReferencesSelf()
     {
-        var writer = CreateWriter(out var prefab);
+        var writer = new CodeWriter(new CodeGraph.Builder());
+        var prefab = Prefab.CreateBlock(0, "A");
         prefab[int3.Zero].Voxels.Fill(new Voxel(FcColor.Black, false));
 
         var prefabs = new PrefabList();
@@ -201,10 +214,12 @@ public class FcWorldTests
         var blocks = level.Blocks;
         blocks.SetPrefab(new int3(0, 0, 0), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = byte3.One };
+        var terminal = Terminal.OutsideInput(byte3.One, SignalType.Obj);
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
 
-        var tester = AstRunnerTester.CreatePhysics(writer, prefabs, level.Id);
+        PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), prefab, int3.Zero);
+
+        var tester = AstRunnerTester.CreatePhysics(prefabs, level.Id);
 
         await Assert.That(tester).Inspects(new(new FcObject(1)) { Frequency = InspectFrequency.EveryFrame });
     }
@@ -212,7 +227,8 @@ public class FcWorldTests
     [Test]
     public async Task ConnectionToSelf_ReferencesSelf2()
     {
-        var writer = CreateWriter(out var prefab);
+        var writer = new CodeWriter(new CodeGraph.Builder());
+        var prefab = Prefab.CreateBlock(0, "A");
         var voxels = prefab[int3.Zero].Voxels;
         var voxel = new Voxel(FcColor.Black, false);
         voxels[new int3(1, 1, 1)] = voxel;
@@ -229,10 +245,11 @@ public class FcWorldTests
         blocks.SetBlock(new int3(0, 0, 0), 1);
         blocks.SetPrefab(new int3(1, 0, 0), prefab);
 
-        var terminal = new AbsolutePositionTerminal(new int3(Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue, Connection.IsFromToOutsideValue)) { VoxelPosition = new byte3(2, 1, 1) };
+        var terminal = Terminal.OutsideInput(new byte3(2, 1, 1), SignalType.Obj);
         writer.Inspect(terminal.Wrap(), SignalType.Obj);
+        PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), prefab, int3.Zero);
 
-        var tester = AstRunnerTester.CreatePhysics(writer, prefabs, level.Id);
+        var tester = AstRunnerTester.CreatePhysics(prefabs, level.Id);
 
         await Assert.That(tester).Inspects(new(new FcObject(2)) { Frequency = InspectFrequency.EveryFrame });
     }

@@ -17,12 +17,15 @@ public struct ValueListWithHash<T> : IEquatable<ValueListWithHash<T>>
     public void ComputeHash()
         => _hashCode = List.CalculateHashCode();
 
+    /// <inheritdoc/>
     public readonly bool Equals(ValueListWithHash<T> other)
         => _hashCode == other._hashCode && List.SequenceEqual(in other.List);
 
+    /// <inheritdoc/>
     public override int GetHashCode()
         => _hashCode ??= List.CalculateHashCode();
 
+    /// <inheritdoc/>
     public override readonly bool Equals([NotNullWhen(true)] object? obj)
         => obj is ValueListWithHash<T> other && Equals(other);
 }

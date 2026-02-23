@@ -13,7 +13,7 @@ namespace BitcoderCZ.Fancade.Raw;
 /// <summary>
 /// Directly represents a fancade game.
 /// </summary>
-public class RawGame
+public partial class RawGame
 {
     /// <summary>
     /// The current file version.
@@ -123,8 +123,9 @@ public class RawGame
     /// Loads a <see cref="RawGame"/> from a zlib compressed <see cref="Stream"/>.
     /// </summary>
     /// <param name="stream">The reader to read the <see cref="RawGame"/> from.</param>
+    /// <param name="options">The <see cref="LoadOptions"/>.</param>
     /// <returns>A <see cref="RawGame"/> read from <paramref name="stream"/>.</returns>
-    public static RawGame LoadCompressed(Stream stream)
+    public static RawGame LoadCompressed(Stream stream, LoadOptions? options = null)
     {
         // decompress
         using MemoryStream ms = new MemoryStream();
@@ -134,17 +135,20 @@ public class RawGame
 
         using FcBinaryReader reader = new FcBinaryReader(ms);
 
-        return Load(reader);
+        return Load(reader, options);
     }
 
     /// <summary>
     /// Loads a <see cref="RawGame"/> from a <see cref="FcBinaryReader"/>.
     /// </summary>
     /// <param name="reader">The reader to read the <see cref="RawGame"/> from.</param>
+    /// <param name="options">The <see cref="LoadOptions"/>.</param>
     /// <returns>A <see cref="RawGame"/> read from <paramref name="reader"/>.</returns>
-    public static RawGame Load(FcBinaryReader reader)
+    public static RawGame Load(FcBinaryReader reader, LoadOptions? options = null)
     {
         ThrowIfNull(reader, nameof(reader));
+
+        var optionsVal = options ?? LoadOptions.Default;
 
         ushort fileVersion = reader.ReadUInt16();
 
@@ -165,10 +169,18 @@ public class RawGame
 
         ushort numbPrefabs = reader.ReadUInt16();
 
-        List<RawPrefab> prefabs = new List<RawPrefab>(numbPrefabs);
-        for (int i = 0; i < numbPrefabs; i++)
+        List<RawPrefab> prefabs;
+        if ((optionsVal.Flags & LoadFlags.Prefabs) == LoadFlags.Prefabs)
         {
-            prefabs.Add(RawPrefab.Load(reader));
+            prefabs = new List<RawPrefab>(numbPrefabs);
+            for (int i = 0; i < numbPrefabs; i++)
+            {
+                prefabs.Add(RawPrefab.Load(reader, optionsVal.PrefabOptions));
+            }
+        }
+        else
+        {
+            prefabs = [];
         }
 
         return new RawGame(name, author, description, idOffset, prefabs);

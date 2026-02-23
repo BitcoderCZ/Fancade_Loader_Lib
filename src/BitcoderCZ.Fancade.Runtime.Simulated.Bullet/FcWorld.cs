@@ -41,7 +41,7 @@ public sealed partial class FcWorld : IAstRunner
 
     private readonly PrefabList _prefabs;
 
-    private GameMeshInfo _gameMesh;
+    private readonly GameMeshInfo _gameMesh;
 
     private readonly List<RuntimeObject> _objects = [];
 
@@ -215,6 +215,7 @@ public sealed partial class FcWorld : IAstRunner
                 }
             }
 
+            // TODO: now with BulletSharp it can be done
             // TODO: IsActive and Distance not needed originally, also AppliedImpulse seems to be higher with my impl, fancade uses custom collision algorithm so that might be the cause, but I can't replicate that with BulletSharp (without modifying it, which I don't want to/can't do); investigate why
             if (strongestPoint == null || maxImpulse < 0.1f || strongestPoint.Distance > -0.005f)
             {
@@ -296,6 +297,7 @@ public sealed partial class FcWorld : IAstRunner
                 }
             }
 
+            // TODO: now with BulletSharp it can be done
             // TODO: IsActive and Distance not needed originally, also AppliedImpulse seems to be higher with my impl, fancade uses custom collision algorithm so that might be the cause, but I can't replicate that with BulletSharp (without modifying it, which I don't want to/can't do); investigate why
             if (strongestPoint == null || maxImpulse < 0.1f || strongestPoint.Distance > -0.005f)
             {
@@ -512,7 +514,6 @@ public sealed partial class FcWorld : IAstRunner
             meshInfo.GetMesh(meshIndex, out var mesh, out int uniqueMeshIndex);
 
             var blocks = prefab.Blocks;
-            ushort[] blocksArray = blocks.Array.Array;
 
             float totalVolume = 0f;
             Vector3 centerOfMass = Vector3.Zero;
@@ -526,8 +527,7 @@ public sealed partial class FcWorld : IAstRunner
                 var meshPos = block.Offset;
                 var blockPos = mesh.Position + meshPos;
 
-                int index = blocks.Index(blockPos);
-                ushort blockId = blocksArray[index];
+                ushort blockId = blocks.GetBlockInBounds(blockPos);
 
                 if (blockId is 0)
                 {
@@ -542,7 +542,7 @@ public sealed partial class FcWorld : IAstRunner
 
                 for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
                 {
-                    if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
+                    if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo._blockMeshIdOffsets[blockPos - blocks.BoundsMin]] != meshIndex)
                     {
                         continue;
                     }
@@ -594,8 +594,7 @@ public sealed partial class FcWorld : IAstRunner
                 var meshPos = block.Offset;
                 var blockPos = mesh.Position + meshPos;
 
-                int index = blocks.Index(blockPos);
-                ushort blockId = blocksArray[index];
+                ushort blockId = blocks.GetBlockInBounds(blockPos);
 
                 if (blockId is 0)
                 {
@@ -613,7 +612,7 @@ public sealed partial class FcWorld : IAstRunner
 
                 for (int segmentMeshIndex = 0; segmentMeshIndex < currentSegmentMesh.MeshCount; segmentMeshIndex++)
                 {
-                    if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo.BlockMeshIdOffsets[index]] != meshIndex)
+                    if (meshInfo.BlockMeshIds[segmentMeshIndex + meshInfo._blockMeshIdOffsets[blockPos - blocks.BoundsMin]] != meshIndex)
                     {
                         continue;
                     }
@@ -882,8 +881,8 @@ public sealed partial class FcWorld : IAstRunner
                 return;
             }
 
-            ushort blockId = prefab.Blocks.GetBlockOrDefault(connection.From);
-            ushort segmentId = prefab.Blocks.GetBlockOrDefault(connection.From + (connection.FromVoxel / 8));
+            ushort blockId = prefab.Blocks.GetBlock(connection.From);
+            ushort segmentId = prefab.Blocks.GetBlock(connection.From + (connection.FromVoxel / 8));
 
             if (blockId == 0 || segmentId == 0)
             {
@@ -902,7 +901,8 @@ public sealed partial class FcWorld : IAstRunner
                     return;
                 }
 
-                int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(meshInfo.Size.X, meshInfo.Size.Y)]];
+                var offset = meshInfo.BlockMeshIdOffsets[((int3)connection.From).ToIndex(meshInfo.Size.X, meshInfo.Size.Y)];
+                int meshIndex = meshInfo.BlockMeshIds[localMeshIndex + offset];
 
                 var obj = _objects.FirstOrDefault(obj => obj.OutsidePrefabId == prefab.Id && obj.InPrefabMeshIndex == meshIndex);
 
@@ -956,7 +956,7 @@ public sealed partial class FcWorld : IAstRunner
             return false;
         }
 
-        ushort segmentId = prefab.Blocks.GetBlockOrDefault(pos + (voxelPos / 8));
+        ushort segmentId = prefab.Blocks.GetBlock(pos + (voxelPos / 8));
 
         if (segmentId == 0)
         {

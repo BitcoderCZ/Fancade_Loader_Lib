@@ -211,7 +211,7 @@ public sealed class RuntimeObject
     internal void Reset(DynamicsWorld world, IRuntimeContext ctx)
     {
         RigidBody.Friction = 0.5f;
-        RigidBody.Restitution = 0f; // TODO: is this the correct value?
+        RigidBody.Restitution = 0f;
         RigidBody.LinearVelocity = Vector3.Zero;
         RigidBody.AngularVelocity = Vector3.Zero;
         RigidBody.LinearFactor = Vector3.One;

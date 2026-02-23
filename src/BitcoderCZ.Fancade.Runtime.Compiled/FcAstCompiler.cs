@@ -1307,7 +1307,7 @@ public sealed partial class FcAstCompiler
         /// Gets a value indicating whether the transpiled code should be human readable, <see langword="false"/> by default.
         /// </summary>
         /// <value><see langword="true"/> if the transpiled code should be human readable; otherwise, <see langword="false"/>.</value>
-        public bool HumanReadable { get; init; } // TODO: don't indent and write new lines if false
+        public bool HumanReadable { get; init; } // TODO: don't indent or write new lines if false
 
         /// <summary>
         /// Gets the time after which <see cref="FcTimeoutException"/> will be thrown, 3s by default.

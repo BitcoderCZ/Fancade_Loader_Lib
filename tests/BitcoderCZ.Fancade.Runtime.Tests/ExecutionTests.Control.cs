@@ -1,7 +1,7 @@
-﻿using BitcoderCZ.Fancade.Editing.Utils;
+﻿using BitcoderCZ.Fancade.Editing.Scripting;
+using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
-using static BitcoderCZ.Fancade.Runtime.Tests.Common.ExeUtils;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
 
@@ -10,7 +10,7 @@ public partial class ExecutionTests
     [Test]
     public async Task Loop_Ascending()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.Loop(None(), Literal(3f), (writer, index) =>
         {
@@ -28,7 +28,7 @@ public partial class ExecutionTests
     [Test]
     public async Task Loop_Descending()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.Loop(Literal(3f), None(), (writer, index) =>
         {
@@ -46,7 +46,7 @@ public partial class ExecutionTests
     [Test]
     public async Task If_TrueFalseExecutesBeforeAfter()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.If(Truth(true),
         @true: writer =>
@@ -66,7 +66,7 @@ public partial class ExecutionTests
     [Test]
     public async Task PlaySensor()
     {
-        var writer = CreateWriter();
+        var writer = new CodeWriter(new CodeGraph.Builder());
 
         writer.PlaySensor(writer =>
         {

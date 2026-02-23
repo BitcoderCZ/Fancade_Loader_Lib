@@ -50,6 +50,7 @@ public struct Connection : IEquatable<Connection>
     /// <param name="toVoxel">Position of the voxel that this connection connects to, from <paramref name="to"/>.</param>
     public Connection(int3 from, int3 to, byte3 fromVoxel, byte3 toVoxel)
     {
+        // todo: reorder arguments: from, fromVoxel, to, toVoxel
         From = from;
         To = to;
         FromVoxel = fromVoxel;

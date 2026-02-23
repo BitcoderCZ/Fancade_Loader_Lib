@@ -3,39 +3,36 @@
 // </copyright>
 
 using BitcoderCZ.Fancade.Editing.Scripting.Exceptions;
-using BitcoderCZ.Fancade.Editing.Scripting.Placers;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
-using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
-using BitcoderCZ.Fancade.Editing.Scripting.TerminalStores;
-using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Editing.Utils;
 using System.Diagnostics;
 using static BitcoderCZ.Utils.ThrowHelper;
+using Terminal = BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal;
+using TerminalStore = BitcoderCZ.Fancade.Editing.Scripting.Node.TerminalStore;
 
 namespace BitcoderCZ.Fancade.Editing.Scripting;
 
 /// <summary>
 /// A helper class for writing fancade code.
 /// </summary>
-public sealed partial class CodeWriter
+public sealed partial class CodeWriter : IDisposable
 {
-    private readonly IScopedCodePlacer _codePlacer;
+    private readonly CodeGraph.Builder _codeBuilder;
 
     private readonly TerminalConnector _connector;
 
     private readonly Dictionary<string, object?> _labels = [];
-    private readonly List<(ITerminalStore Store, string LabelName)> _gotos = [];
+    private readonly List<(TerminalStore Store, string LabelName)> _gotos = [];
     private readonly Queue<string> _labelsToProcess = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CodeWriter"/> class.
     /// </summary>
-    /// <param name="codePlacer">The <see cref="ICodePlacer"/> used to place blocks.</param>
-    /// <param name="connector">The <see cref="TerminalConnector"/> to use to connect statements.</param>
-    public CodeWriter(ICodePlacer codePlacer, TerminalConnector connector)
+    /// <param name="builder">The <see cref="CodeGraph.Builder"/> used to place blocks.</param>
+    public CodeWriter(CodeGraph.Builder builder)
     {
-        _codePlacer = codePlacer is IScopedCodePlacer scoped ? scoped : new ScopedCodePlacerWrapper(codePlacer);
-        _connector = connector;
+        _codeBuilder = builder;
+        _connector = new TerminalConnector(_codeBuilder);
     }
 
     /// <summary>
@@ -53,15 +50,15 @@ public sealed partial class CodeWriter
         /// Writes the <see cref="IExpression"/> to <paramref name="writer"/>.
         /// </summary>
         /// <param name="writer">The <see cref="CodeWriter"/> to write the <see cref="IExpression"/> to.</param>
-        /// <returns>An <see cref="ITerminal"/> representing the written output of the expression.</returns>
-        ITerminal WriteTo(CodeWriter writer);
+        /// <returns>An <see cref="Terminal"/> representing the written output of the expression.</returns>
+        Terminal WriteTo(CodeWriter writer);
     }
 
     /// <summary>
-    /// Gets the underlying <see cref="ICodePlacer"/>.
+    /// Gets the underlying <see cref="CodeGraph.Builder"/>.
     /// </summary>
-    /// <value>The underlying <see cref="ICodePlacer"/>.</value>
-    public ICodePlacer Placer => _codePlacer;
+    /// <value>The underlying <see cref="CodeGraph.Builder"/>.</value>
+    public CodeGraph.Builder Builder => _codeBuilder;
 
     /// <summary>
     /// Gets the underlying <see cref="TerminalConnector"/>.
@@ -99,7 +96,7 @@ public sealed partial class CodeWriter
             _labels[label] = labelName;
         }
 
-        _connector.SetLast(NopTerminalStore.Instance);
+        _connector.SetLast(default);
     }
 
     /// <summary>
@@ -108,7 +105,7 @@ public sealed partial class CodeWriter
     /// <param name="blockDef">The block to place.</param>
     /// <param name="expressions">Inputs to the block.</param>
     /// <returns>Outputs of the placed block.</returns>
-    public IEnumerable<ITerminal> CustomBlock(BlockDef blockDef, params ReadOnlySpan<IExpression> expressions)
+    public IEnumerable<Terminal> CustomBlock(BlockDef blockDef, params ReadOnlySpan<IExpression> expressions)
         => CustomBlock(blockDef, expressions, null);
 
     /// <summary>
@@ -118,19 +115,19 @@ public sealed partial class CodeWriter
     /// <param name="expressions">Inputs to the block.</param>
     /// <param name="voidTerminalCallback">Callback for void outputs.</param>
     /// <returns>Outputs of the placed block.</returns>
-    public IEnumerable<ITerminal> CustomBlock(BlockDef blockDef, ReadOnlySpan<IExpression> expressions, Action<CodeWriter, TerminalDef, Block>? voidTerminalCallback)
+    public IEnumerable<Terminal> CustomBlock(BlockDef blockDef, ReadOnlySpan<IExpression> expressions, Action<CodeWriter, TerminalDef, Node>? voidTerminalCallback)
     {
         if (blockDef.BlockType is not ScriptBlockType.Active)
         {
             ThrowArgumentException($"{nameof(blockDef.BlockType)} must be {nameof(ScriptBlockType)}.{nameof(ScriptBlockType.Active)}", nameof(blockDef));
         }
 
-        var block = _codePlacer.PlaceBlock(blockDef);
+        var block = _codeBuilder.Place(blockDef);
 
         if (expressions.Length > 0)
         {
             int exprIndex = 0;
-            IDisposable? exprDisposable = null;
+            CodeGraph.Builder.ExpressionScopeDisposable? exprDisposable = null;
             foreach (var terminal in block.Type.Terminals)
             {
                 if (terminal is not { Type: TerminalType.In, SignalType: not SignalType.Error and not SignalType.Void })
@@ -138,9 +135,9 @@ public sealed partial class CodeWriter
                     continue;
                 }
 
-                exprDisposable ??= ExpressionBlock();
+                exprDisposable ??= ExpressionScope();
 
-                _codePlacer.Connect(expressions[exprIndex].WriteTo(this), new BlockTerminal(block, terminal));
+                _codeBuilder.Connect(expressions[exprIndex].WriteTo(this), new Terminal(block, terminal));
 
                 exprIndex++;
 
@@ -156,7 +153,7 @@ public sealed partial class CodeWriter
         /*int settingIndex = 0;
         foreach (object setting in settings)
         {
-            _codePlacer.SetSetting(block, settingIndex++, setting);
+            _codeBuilder.SetSetting(block, settingIndex++, setting);
         }*/
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -170,8 +167,8 @@ public sealed partial class CodeWriter
                     continue;
                 }
 
-                _connector.SetLast(new TerminalStore(NopTerminal.Instance, [new BlockTerminal(block, terminal)]));
-                using (_codePlacer.StatementBlock())
+                _connector.SetLast(TerminalStore.CreateOut(new Terminal(block, terminal)));
+                using (StatementScope())
                 {
                     voidTerminalCallback(this, terminal, block);
                 }
@@ -182,7 +179,7 @@ public sealed partial class CodeWriter
 
         return blockDef.Terminals
             .Where(terminal => terminal is { SignalType: not SignalType.Error and not SignalType.Void, Type: TerminalType.In })
-            .Select(terminal => (ITerminal)new BlockTerminal(block, terminal));
+            .Select(terminal => new Terminal(block, terminal));
     }
 
     #region Statements
@@ -196,9 +193,9 @@ public sealed partial class CodeWriter
         ThrowIfGreaterThan(delay, 120);
         ThrowIfLessThan(delay, 0);
 
-        var block = _codePlacer.PlaceBlock(StockBlocks.Game.Win);
+        var block = _codeBuilder.Place(StockBlocks.Game.Win);
 
-        _codePlacer.SetSetting(block, 0, (byte)delay);
+        _codeBuilder.SetSetting(block, new(0, (byte)delay));
 
         ConnectorAddInternal(new TerminalStore(block));
     }
@@ -212,9 +209,9 @@ public sealed partial class CodeWriter
         ThrowIfGreaterThan(delay, 120);
         ThrowIfLessThan(delay, 0);
 
-        var block = _codePlacer.PlaceBlock(StockBlocks.Game.Lose);
+        var block = _codeBuilder.Place(StockBlocks.Game.Lose);
 
-        _codePlacer.SetSetting(block, 0, (byte)delay);
+        _codeBuilder.SetSetting(block, new(0, (byte)delay));
 
         ConnectorAddInternal(new TerminalStore(block));
     }
@@ -227,14 +224,14 @@ public sealed partial class CodeWriter
     /// <param name="coins">The new amount of coins.</param>
     public void SetScore(Ranking ranking, IExpression score, IExpression coins)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Game.SetScore);
+        var block = _codeBuilder.Place(StockBlocks.Game.SetScore);
 
-        _codePlacer.SetSetting(block, 0, (byte)ranking);
+        _codeBuilder.SetSetting(block, new(0, (byte)ranking));
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(score.WriteTo(this), new BlockTerminal(block, "Score"));
-            _codePlacer.Connect(coins.WriteTo(this), new BlockTerminal(block, "Coins"));
+            _codeBuilder.Connect(score.WriteTo(this), new Terminal(block, "Score"));
+            _codeBuilder.Connect(coins.WriteTo(this), new Terminal(block, "Coins"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -254,15 +251,15 @@ public sealed partial class CodeWriter
     /// </param>
     public void SetCamera(bool perpective, IExpression position, IExpression rotation, IExpression range)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Game.SetCamera);
+        var block = _codeBuilder.Place(StockBlocks.Game.SetCamera);
 
-        _codePlacer.SetSetting(block, 0, (byte)(perpective ? 1 : 0));
+        _codeBuilder.SetSetting(block, new(0, (byte)(perpective ? 1 : 0)));
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(position.WriteTo(this), new BlockTerminal(block, "Position"));
-            _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
-            _codePlacer.Connect(range.WriteTo(this), new BlockTerminal(block, "Range"));
+            _codeBuilder.Connect(position.WriteTo(this), new Terminal(block, "Position"));
+            _codeBuilder.Connect(rotation.WriteTo(this), new Terminal(block, "Rotation"));
+            _codeBuilder.Connect(range.WriteTo(this), new Terminal(block, "Range"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -275,12 +272,12 @@ public sealed partial class CodeWriter
     /// <param name="rotation">Direction of the light.</param>
     public void SetLight(IExpression position, IExpression rotation)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Game.SetLight);
+        var block = _codeBuilder.Place(StockBlocks.Game.SetLight);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(position.WriteTo(this), new BlockTerminal(block, "Position"));
-            _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
+            _codeBuilder.Connect(position.WriteTo(this), new Terminal(block, "Position"));
+            _codeBuilder.Connect(rotation.WriteTo(this), new Terminal(block, "Rotation"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -301,16 +298,16 @@ public sealed partial class CodeWriter
     {
         ThrowIfNull(name);
 
-        var block = _codePlacer.PlaceBlock(StockBlocks.Game.MenuItem);
+        var block = _codeBuilder.Place(StockBlocks.Game.MenuItem);
 
-        _codePlacer.SetSetting(block, 0, name);
-        _codePlacer.SetSetting(block, 1, (byte)maxBuyCount);
-        _codePlacer.SetSetting(block, 2, (byte)priceIncrease);
+        _codeBuilder.SetSetting(block, new(0, SettingType.String, name));
+        _codeBuilder.SetSetting(block, new(1, (byte)maxBuyCount));
+        _codeBuilder.SetSetting(block, new(2, (byte)priceIncrease));
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
-            _codePlacer.Connect(picture.WriteTo(this), new BlockTerminal(block, "Picture"));
+            _codeBuilder.Connect(variable.WriteTo(this), new Terminal(block, "Variable"));
+            _codeBuilder.Connect(picture.WriteTo(this), new Terminal(block, "Picture"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -324,13 +321,13 @@ public sealed partial class CodeWriter
     /// <param name="rotation">The new rotation.</param>
     public void SetPosition(IExpression @object, IExpression position, IExpression rotation)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Objects.SetPos);
+        var block = _codeBuilder.Place(StockBlocks.Objects.SetPos);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
-            _codePlacer.Connect(position.WriteTo(this), new BlockTerminal(block, "Position"));
-            _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
+            _codeBuilder.Connect(position.WriteTo(this), new Terminal(block, "Position"));
+            _codeBuilder.Connect(rotation.WriteTo(this), new Terminal(block, "Rotation"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -343,12 +340,12 @@ public sealed partial class CodeWriter
     /// <param name="visible">The new visibility of the object.</param>
     public void SetVisible(IExpression @object, IExpression visible)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Objects.SetVisible);
+        var block = _codeBuilder.Place(StockBlocks.Objects.SetVisible);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
-            _codePlacer.Connect(visible.WriteTo(this), new BlockTerminal(block, "Visible"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
+            _codeBuilder.Connect(visible.WriteTo(this), new Terminal(block, "Visible"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -359,18 +356,18 @@ public sealed partial class CodeWriter
     /// </summary>
     /// <param name="object">The object to clone.</param>
     /// <returns>A copy of <paramref name="object"/>.</returns>
-    public ITerminal CreateObject(IExpression @object)
+    public Terminal CreateObject(IExpression @object)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Objects.CreateObject);
+        var block = _codeBuilder.Place(StockBlocks.Objects.CreateObject);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        return new BlockTerminal(block, "Copy");
+        return new Terminal(block, "Copy");
     }
 
     /// <summary>
@@ -379,11 +376,11 @@ public sealed partial class CodeWriter
     /// <param name="object">The object to be destroyed.</param>
     public void DestroyObject(IExpression @object)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Objects.DestroyObject);
+        var block = _codeBuilder.Place(StockBlocks.Objects.DestroyObject);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -396,21 +393,21 @@ public sealed partial class CodeWriter
     /// <param name="volume">Volume of the sound.</param>
     /// <param name="pitch">Pitch of the sound.</param>
     /// <returns>The channel on which the sound is playing.</returns>
-    public ITerminal PlaySound(FcSound sound, IExpression volume, IExpression pitch)
+    public Terminal PlaySound(FcSound sound, IExpression volume, IExpression pitch)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Sound.PlaySound);
+        var block = _codeBuilder.Place(StockBlocks.Sound.PlaySound);
 
-        _codePlacer.SetSetting(block, 0, (byte)sound);
+        _codeBuilder.SetSetting(block, new(0, (byte)sound));
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(volume.WriteTo(this), new BlockTerminal(block, "Volume"));
-            _codePlacer.Connect(pitch.WriteTo(this), new BlockTerminal(block, "Pitch"));
+            _codeBuilder.Connect(volume.WriteTo(this), new Terminal(block, "Volume"));
+            _codeBuilder.Connect(pitch.WriteTo(this), new Terminal(block, "Pitch"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        return new BlockTerminal(block, "Channel");
+        return new Terminal(block, "Channel");
     }
 
     /// <summary>
@@ -421,13 +418,13 @@ public sealed partial class CodeWriter
     /// <param name="pitch">The channel's new pitch.</param>
     public void VolumePitch(IExpression channel, IExpression volume, IExpression pitch)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Sound.VolumePitch);
+        var block = _codeBuilder.Place(StockBlocks.Sound.VolumePitch);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(channel.WriteTo(this), new BlockTerminal(block, "Channel"));
-            _codePlacer.Connect(volume.WriteTo(this), new BlockTerminal(block, "Volume"));
-            _codePlacer.Connect(pitch.WriteTo(this), new BlockTerminal(block, "Pitch"));
+            _codeBuilder.Connect(channel.WriteTo(this), new Terminal(block, "Channel"));
+            _codeBuilder.Connect(volume.WriteTo(this), new Terminal(block, "Volume"));
+            _codeBuilder.Connect(pitch.WriteTo(this), new Terminal(block, "Pitch"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -439,11 +436,11 @@ public sealed partial class CodeWriter
     /// <param name="channel">The channel whose sound should be stopped.</param>
     public void StopSound(IExpression channel)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Sound.StopSound);
+        var block = _codeBuilder.Place(StockBlocks.Sound.StopSound);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(channel.WriteTo(this), new BlockTerminal(block, "Channel"));
+            _codeBuilder.Connect(channel.WriteTo(this), new Terminal(block, "Channel"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -458,14 +455,14 @@ public sealed partial class CodeWriter
     /// <param name="torque">The rotational force to apply to <paramref name="object"/>.</param>
     public void AddForce(IExpression @object, IExpression force, IExpression applyAt, IExpression torque)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AddForce);
+        var block = _codeBuilder.Place(StockBlocks.Physics.AddForce);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
-            _codePlacer.Connect(force.WriteTo(this), new BlockTerminal(block, "Force"));
-            _codePlacer.Connect(applyAt.WriteTo(this), new BlockTerminal(block, "Apply at"));
-            _codePlacer.Connect(torque.WriteTo(this), new BlockTerminal(block, "Torque"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
+            _codeBuilder.Connect(force.WriteTo(this), new Terminal(block, "Force"));
+            _codeBuilder.Connect(applyAt.WriteTo(this), new Terminal(block, "Apply at"));
+            _codeBuilder.Connect(torque.WriteTo(this), new Terminal(block, "Torque"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -479,13 +476,13 @@ public sealed partial class CodeWriter
     /// <param name="spin">The new rotational velocity of <paramref name="object"/>.</param>
     public void SetVelocity(IExpression @object, IExpression velocity, IExpression spin)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetVelocity);
+        var block = _codeBuilder.Place(StockBlocks.Physics.SetVelocity);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
-            _codePlacer.Connect(velocity.WriteTo(this), new BlockTerminal(block, "Velocity"));
-            _codePlacer.Connect(spin.WriteTo(this), new BlockTerminal(block, "Spin"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
+            _codeBuilder.Connect(velocity.WriteTo(this), new Terminal(block, "Velocity"));
+            _codeBuilder.Connect(spin.WriteTo(this), new Terminal(block, "Spin"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -499,13 +496,13 @@ public sealed partial class CodeWriter
     /// <param name="rotation">The rotation multiplier.</param>
     public void SetLocked(IExpression @object, IExpression position, IExpression rotation)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetLocked);
+        var block = _codeBuilder.Place(StockBlocks.Physics.SetLocked);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
-            _codePlacer.Connect(position.WriteTo(this), new BlockTerminal(block, "Position"));
-            _codePlacer.Connect(rotation.WriteTo(this), new BlockTerminal(block, "Rotation"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
+            _codeBuilder.Connect(position.WriteTo(this), new Terminal(block, "Position"));
+            _codeBuilder.Connect(rotation.WriteTo(this), new Terminal(block, "Rotation"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -518,12 +515,12 @@ public sealed partial class CodeWriter
     /// <param name="mass">The new mass of the object.</param>
     public void SetMass(IExpression @object, IExpression mass)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetMass);
+        var block = _codeBuilder.Place(StockBlocks.Physics.SetMass);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
-            _codePlacer.Connect(mass.WriteTo(this), new BlockTerminal(block, "Mass"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
+            _codeBuilder.Connect(mass.WriteTo(this), new Terminal(block, "Mass"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -536,12 +533,12 @@ public sealed partial class CodeWriter
     /// <param name="friction">The new friction of the object.</param>
     public void SetFriction(IExpression @object, IExpression friction)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetFriction);
+        var block = _codeBuilder.Place(StockBlocks.Physics.SetFriction);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
-            _codePlacer.Connect(friction.WriteTo(this), new BlockTerminal(block, "Friction"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
+            _codeBuilder.Connect(friction.WriteTo(this), new Terminal(block, "Friction"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -554,12 +551,12 @@ public sealed partial class CodeWriter
     /// <param name="bounciness">The new bounciness of the object.</param>
     public void SetBounciness(IExpression @object, IExpression bounciness)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetBounciness);
+        var block = _codeBuilder.Place(StockBlocks.Physics.SetBounciness);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@object.WriteTo(this), new BlockTerminal(block, "Object"));
-            _codePlacer.Connect(bounciness.WriteTo(this), new BlockTerminal(block, "Bounciness"));
+            _codeBuilder.Connect(@object.WriteTo(this), new Terminal(block, "Object"));
+            _codeBuilder.Connect(bounciness.WriteTo(this), new Terminal(block, "Bounciness"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -571,11 +568,11 @@ public sealed partial class CodeWriter
     /// <param name="gravity">The new gravity.</param>
     public void SetGravity(IExpression gravity)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.SetGravity);
+        var block = _codeBuilder.Place(StockBlocks.Physics.SetGravity);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(gravity.WriteTo(this), new BlockTerminal(block, "Gravity"));
+            _codeBuilder.Connect(gravity.WriteTo(this), new Terminal(block, "Gravity"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -588,20 +585,20 @@ public sealed partial class CodeWriter
     /// <param name="part">The part of the constraint.</param>
     /// <param name="pivot">The pivot of the constraint.</param>
     /// <returns>The constraint.</returns>
-    public ITerminal AddConstraint(IExpression @base, IExpression part, IExpression pivot)
+    public Terminal AddConstraint(IExpression @base, IExpression part, IExpression pivot)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AddConstraint);
+        var block = _codeBuilder.Place(StockBlocks.Physics.AddConstraint);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(@base.WriteTo(this), new BlockTerminal(block, "Base"));
-            _codePlacer.Connect(part.WriteTo(this), new BlockTerminal(block, "Part"));
-            _codePlacer.Connect(pivot.WriteTo(this), new BlockTerminal(block, "Pivot"));
+            _codeBuilder.Connect(@base.WriteTo(this), new Terminal(block, "Base"));
+            _codeBuilder.Connect(part.WriteTo(this), new Terminal(block, "Part"));
+            _codeBuilder.Connect(pivot.WriteTo(this), new Terminal(block, "Pivot"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        return new BlockTerminal(block, "Constraint");
+        return new Terminal(block, "Constraint");
     }
 
     /// <summary>
@@ -612,13 +609,13 @@ public sealed partial class CodeWriter
     /// <param name="upper">The upper limit.</param>
     public void LinearLimits(IExpression constraint, IExpression lower, IExpression upper)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.LinearLimits);
+        var block = _codeBuilder.Place(StockBlocks.Physics.LinearLimits);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
-            _codePlacer.Connect(lower.WriteTo(this), new BlockTerminal(block, "Lower"));
-            _codePlacer.Connect(upper.WriteTo(this), new BlockTerminal(block, "Upper"));
+            _codeBuilder.Connect(constraint.WriteTo(this), new Terminal(block, "Constraint"));
+            _codeBuilder.Connect(lower.WriteTo(this), new Terminal(block, "Lower"));
+            _codeBuilder.Connect(upper.WriteTo(this), new Terminal(block, "Upper"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -632,13 +629,13 @@ public sealed partial class CodeWriter
     /// <param name="upper">The upper limit.</param>
     public void AngularLimits(IExpression constraint, IExpression lower, IExpression upper)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AngularLimits);
+        var block = _codeBuilder.Place(StockBlocks.Physics.AngularLimits);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
-            _codePlacer.Connect(lower.WriteTo(this), new BlockTerminal(block, "Lower"));
-            _codePlacer.Connect(upper.WriteTo(this), new BlockTerminal(block, "Upper"));
+            _codeBuilder.Connect(constraint.WriteTo(this), new Terminal(block, "Constraint"));
+            _codeBuilder.Connect(lower.WriteTo(this), new Terminal(block, "Lower"));
+            _codeBuilder.Connect(upper.WriteTo(this), new Terminal(block, "Upper"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -652,13 +649,13 @@ public sealed partial class CodeWriter
     /// <param name="damping">The spring's damping.</param>
     public void LinearSpring(IExpression constraint, IExpression stiffness, IExpression damping)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.LinearSpring);
+        var block = _codeBuilder.Place(StockBlocks.Physics.LinearSpring);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
-            _codePlacer.Connect(stiffness.WriteTo(this), new BlockTerminal(block, "Stiffness"));
-            _codePlacer.Connect(damping.WriteTo(this), new BlockTerminal(block, "Damping"));
+            _codeBuilder.Connect(constraint.WriteTo(this), new Terminal(block, "Constraint"));
+            _codeBuilder.Connect(stiffness.WriteTo(this), new Terminal(block, "Stiffness"));
+            _codeBuilder.Connect(damping.WriteTo(this), new Terminal(block, "Damping"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -672,13 +669,13 @@ public sealed partial class CodeWriter
     /// <param name="damping">The spring's damping.</param>
     public void AngularSpring(IExpression constraint, IExpression stiffness, IExpression damping)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AngularSpring);
+        var block = _codeBuilder.Place(StockBlocks.Physics.AngularSpring);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
-            _codePlacer.Connect(stiffness.WriteTo(this), new BlockTerminal(block, "Stiffness"));
-            _codePlacer.Connect(damping.WriteTo(this), new BlockTerminal(block, "Damping"));
+            _codeBuilder.Connect(constraint.WriteTo(this), new Terminal(block, "Constraint"));
+            _codeBuilder.Connect(stiffness.WriteTo(this), new Terminal(block, "Stiffness"));
+            _codeBuilder.Connect(damping.WriteTo(this), new Terminal(block, "Damping"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -692,13 +689,13 @@ public sealed partial class CodeWriter
     /// <param name="force">The motor's force.</param>
     public void LinearMotor(IExpression constraint, IExpression speed, IExpression force)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.LinearMotor);
+        var block = _codeBuilder.Place(StockBlocks.Physics.LinearMotor);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
-            _codePlacer.Connect(speed.WriteTo(this), new BlockTerminal(block, "Speed"));
-            _codePlacer.Connect(force.WriteTo(this), new BlockTerminal(block, "Force"));
+            _codeBuilder.Connect(constraint.WriteTo(this), new Terminal(block, "Constraint"));
+            _codeBuilder.Connect(speed.WriteTo(this), new Terminal(block, "Speed"));
+            _codeBuilder.Connect(force.WriteTo(this), new Terminal(block, "Force"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -712,13 +709,13 @@ public sealed partial class CodeWriter
     /// <param name="force">The motor's force.</param>
     public void AngularMotor(IExpression constraint, IExpression speed, IExpression force)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Physics.AngularMotor);
+        var block = _codeBuilder.Place(StockBlocks.Physics.AngularMotor);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(constraint.WriteTo(this), new BlockTerminal(block, "Constraint"));
-            _codePlacer.Connect(speed.WriteTo(this), new BlockTerminal(block, "Speed"));
-            _codePlacer.Connect(force.WriteTo(this), new BlockTerminal(block, "Force"));
+            _codeBuilder.Connect(constraint.WriteTo(this), new Terminal(block, "Constraint"));
+            _codeBuilder.Connect(speed.WriteTo(this), new Terminal(block, "Speed"));
+            _codeBuilder.Connect(force.WriteTo(this), new Terminal(block, "Force"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -732,17 +729,17 @@ public sealed partial class CodeWriter
     /// <param name="false">Writes what should be executed when <paramref name="condition"/> is <see langword="false"/>.</param>
     public void If(IExpression condition, Action<CodeWriter>? @true, Action<CodeWriter>? @false)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Control.If);
+        var block = _codeBuilder.Place(StockBlocks.Control.If);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(condition.WriteTo(this), new BlockTerminal(block, "Condition"));
+            _codeBuilder.Connect(condition.WriteTo(this), new Terminal(block, "Condition"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        ConnectOutInternal(new BlockTerminal(block, "True"), @true);
-        ConnectOutInternal(new BlockTerminal(block, "False"), @false);
+        ConnectOutInternal(new Terminal(block, "True"), @true);
+        ConnectOutInternal(new Terminal(block, "False"), @false);
 
         _connector.SetLast(new TerminalStore(block));
     }
@@ -753,11 +750,11 @@ public sealed partial class CodeWriter
     /// <param name="onPlay">Writes what should be executed only on the first frame.</param>
     public void PlaySensor(Action<CodeWriter>? onPlay)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Control.PlaySensor);
+        var block = _codeBuilder.Place(StockBlocks.Control.PlaySensor);
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        ConnectOutInternal(new BlockTerminal(block, "On Play"), onPlay);
+        ConnectOutInternal(new Terminal(block, "On Play"), onPlay);
 
         _connector.SetLast(new TerminalStore(block));
     }
@@ -768,11 +765,11 @@ public sealed partial class CodeWriter
     /// <param name="afterPhysics">Writes what should be executed only after physics but before rendering.</param>
     public void LateUpdate(Action<CodeWriter>? afterPhysics)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Control.LateUpdate);
+        var block = _codeBuilder.Place(StockBlocks.Control.LateUpdate);
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        ConnectOutInternal(new BlockTerminal(block, "After Physics"), afterPhysics);
+        ConnectOutInternal(new Terminal(block, "After Physics"), afterPhysics);
 
         _connector.SetLast(new TerminalStore(block));
     }
@@ -783,11 +780,11 @@ public sealed partial class CodeWriter
     /// <param name="onScreenshot">Writes what should be executed only when taking boxart.</param>
     public void BoxArtSensor(Action<CodeWriter>? onScreenshot)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Control.BoxArtSensor);
+        var block = _codeBuilder.Place(StockBlocks.Control.BoxArtSensor);
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        ConnectOutInternal(new BlockTerminal(block, "On Screenshot"), onScreenshot);
+        ConnectOutInternal(new Terminal(block, "On Screenshot"), onScreenshot);
 
         _connector.SetLast(new TerminalStore(block));
     }
@@ -799,25 +796,25 @@ public sealed partial class CodeWriter
     /// <param name="touchFinger">Index of the finger to detect, 0 - 2.</param>
     /// <param name="touched">Writes what should be executed when touch is detected.</param>
     /// <returns>The x and y position of the touch.</returns>
-    public (ITerminal ScreenX, ITerminal ScreenY) TouchSensor(TouchState touchState, int touchFinger, Action<CodeWriter, ITerminal, ITerminal>? touched)
+    public (Terminal ScreenX, Terminal ScreenY) TouchSensor(TouchState touchState, int touchFinger, Action<CodeWriter, Terminal, Terminal>? touched)
     {
         if (touchFinger < 0 || touchFinger > FancadeConstants.TouchSensorMaxFingerIndex)
         {
             ThrowArgumentOutOfRangeException(nameof(touchFinger));
         }
 
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Control.TouchSensor);
+        var block = _codeBuilder.Place(StockBlocks.Control.TouchSensor);
 
-        _codePlacer.SetSetting(block, 0, (byte)touchState);
-        _codePlacer.SetSetting(block, 1, (byte)touchFinger);
+        _codeBuilder.SetSetting(block, new(0, (byte)touchState));
+        _codeBuilder.SetSetting(block, new(1, (byte)touchFinger));
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        ConnectOutInternal(new BlockTerminal(block, "Touched"), touched, new BlockTerminal(block, "Screen X"), new BlockTerminal(block, "Screen Y"));
+        ConnectOutInternal(new Terminal(block, "Touched"), touched, new Terminal(block, "Screen X"), new Terminal(block, "Screen Y"));
 
         _connector.SetLast(new TerminalStore(block));
 
-        return (new BlockTerminal(block, "Screen X"), new BlockTerminal(block, "Screen Y"));
+        return (new Terminal(block, "Screen X"), new Terminal(block, "Screen Y"));
     }
 
     /// <summary>
@@ -825,17 +822,17 @@ public sealed partial class CodeWriter
     /// </summary>
     /// <param name="swiped">Writes what should be executed when swipe is detected.</param>
     /// <returns>Direction of the swipe.</returns>
-    public ITerminal SwipeSensor(Action<CodeWriter, ITerminal>? swiped)
+    public Terminal SwipeSensor(Action<CodeWriter, Terminal>? swiped)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Control.SwipeSensor);
+        var block = _codeBuilder.Place(StockBlocks.Control.SwipeSensor);
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        ConnectOutInternal(new BlockTerminal(block, "Swiped"), swiped, new BlockTerminal(block, "Direction"));
+        ConnectOutInternal(new Terminal(block, "Swiped"), swiped, new Terminal(block, "Direction"));
 
         _connector.SetLast(new TerminalStore(block));
 
-        return new BlockTerminal(block, "Direction");
+        return new Terminal(block, "Direction");
     }
 
     /// <summary>
@@ -845,13 +842,13 @@ public sealed partial class CodeWriter
     /// <param name="button">Writes what should be executed when the button is pressed.</param>
     public void Button(ButtonType buttonType, Action<CodeWriter>? button)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Button);
+        var block = _codeBuilder.Place(StockBlocks.Control.Button);
 
-        _codePlacer.SetSetting(block, 0, (byte)buttonType);
+        _codeBuilder.SetSetting(block, new(0, (byte)buttonType));
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        ConnectOutInternal(new BlockTerminal(block, "Button"), button);
+        ConnectOutInternal(new Terminal(block, "Button"), button);
 
         _connector.SetLast(new TerminalStore(block));
     }
@@ -862,22 +859,22 @@ public sealed partial class CodeWriter
     /// <param name="firstObject">The object whose collisions should be detected.</param>
     /// <param name="collided">Writes what should be executed when <paramref name="firstObject"/> collides with another object.</param>
     /// <returns>The object <paramref name="firstObject"/> collided with, impulse of the collision and the normal of the collision.</returns>
-    public (ITerminal SecondObjectTerminal, ITerminal ImpulseTerminal, ITerminal NormalTerminal) Collision(IExpression firstObject, Action<CodeWriter, ITerminal, ITerminal, ITerminal>? collided)
+    public (Terminal SecondObjectTerminal, Terminal ImpulseTerminal, Terminal NormalTerminal) Collision(IExpression firstObject, Action<CodeWriter, Terminal, Terminal, Terminal>? collided)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Collision);
+        var block = _codeBuilder.Place(StockBlocks.Control.Collision);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(firstObject.WriteTo(this), new BlockTerminal(block, "1st Object"));
+            _codeBuilder.Connect(firstObject.WriteTo(this), new Terminal(block, "1st Object"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        ConnectOutInternal(new BlockTerminal(block, "Collided"), collided, new BlockTerminal(block, "2nd Object"), new BlockTerminal(block, "Impulse"), new BlockTerminal(block, "Normal"));
+        ConnectOutInternal(new Terminal(block, "Collided"), collided, new Terminal(block, "2nd Object"), new Terminal(block, "Impulse"), new Terminal(block, "Normal"));
 
         _connector.SetLast(new TerminalStore(block));
 
-        return (new BlockTerminal(block, "2nd Object"), new BlockTerminal(block, "Impulse"), new BlockTerminal(block, "Normal"));
+        return (new Terminal(block, "2nd Object"), new Terminal(block, "Impulse"), new Terminal(block, "Normal"));
     }
 
     /// <summary>
@@ -887,23 +884,23 @@ public sealed partial class CodeWriter
     /// <param name="stop">The end value (exclusive).</param>
     /// <param name="do">Writes what should be executed in the loop.</param>
     /// <returns>The current value of the loop.</returns>
-    public ITerminal Loop(IExpression start, IExpression stop, Action<CodeWriter, ITerminal>? @do)
+    public Terminal Loop(IExpression start, IExpression stop, Action<CodeWriter, Terminal>? @do)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Control.Loop);
+        var block = _codeBuilder.Place(StockBlocks.Control.Loop);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(start.WriteTo(this), new BlockTerminal(block, "Start"));
-            _codePlacer.Connect(stop.WriteTo(this), new BlockTerminal(block, "Stop"));
+            _codeBuilder.Connect(start.WriteTo(this), new Terminal(block, "Start"));
+            _codeBuilder.Connect(stop.WriteTo(this), new Terminal(block, "Stop"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
 
-        ConnectOutInternal(new BlockTerminal(block, "Do"), @do, new BlockTerminal(block, "Counter"));
+        ConnectOutInternal(new Terminal(block, "Do"), @do, new Terminal(block, "Counter"));
 
         _connector.SetLast(new TerminalStore(block));
 
-        return new BlockTerminal(block, "Counter");
+        return new Terminal(block, "Counter");
     }
 
     /// <summary>
@@ -912,11 +909,11 @@ public sealed partial class CodeWriter
     /// <param name="seed">The new random seed.</param>
     public void RandomSeed(IExpression seed)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Math.RandomSeed);
+        var block = _codeBuilder.Place(StockBlocks.Math.RandomSeed);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(seed.WriteTo(this), new BlockTerminal(block, "Seed"));
+            _codeBuilder.Connect(seed.WriteTo(this), new Terminal(block, "Seed"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -935,8 +932,8 @@ public sealed partial class CodeWriter
 
         foreach (var lineRange in StringUtils.SplitByMaxLength(span, FancadeConstants.MaxCommentLength))
         {
-            Block block = _codePlacer.PlaceBlock(StockBlocks.Values.Comment);
-            _codePlacer.SetSetting(block, 0, new string(span[lineRange]));
+            var block = _codeBuilder.Place(StockBlocks.Values.Comment);
+            _codeBuilder.SetSetting(block, new(0, SettingType.String, new string(span[lineRange])));
         }
     }
 
@@ -954,11 +951,11 @@ public sealed partial class CodeWriter
     /// <param name="type">Type of the inspect block.</param>
     public void Inspect(IExpression value, SignalType type)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Values.InspectByType(type));
+        var block = _codeBuilder.Place(StockBlocks.Values.InspectByType(type));
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(value.WriteTo(this), new BlockTerminal(block, 1));
+            _codeBuilder.Connect(value.WriteTo(this), new Terminal(block, 1));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -971,13 +968,13 @@ public sealed partial class CodeWriter
     /// <param name="value">The new value of the variable.</param>
     public void SetVariable(Variable variable, IExpression value)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetVariableByType(variable.Type));
+        var block = _codeBuilder.Place(StockBlocks.Variables.SetVariableByType(variable.Type));
 
-        _codePlacer.SetSetting(block, 0, variable.Name);
+        _codeBuilder.SetSetting(block, new(0, SettingType.String, variable.Name));
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(value.WriteTo(this), new BlockTerminal(block, "Value"));
+            _codeBuilder.Connect(value.WriteTo(this), new Terminal(block, "Value"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -999,12 +996,12 @@ public sealed partial class CodeWriter
     /// <param name="variableType">Type of the variable.</param>
     public void SetVariable(IExpression variable, IExpression value, SignalType variableType)
     {
-        var block = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(variableType));
+        var block = _codeBuilder.Place(StockBlocks.Variables.SetPtrByType(variableType));
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
-            _codePlacer.Connect(value.WriteTo(this), new BlockTerminal(block, "Value"));
+            _codeBuilder.Connect(variable.WriteTo(this), new Terminal(block, "Variable"));
+            _codeBuilder.Connect(value.WriteTo(this), new Terminal(block, "Value"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -1022,7 +1019,7 @@ public sealed partial class CodeWriter
     {
         var signalType = SignalTypeUtils.FromType(typeof(T));
 
-        ITerminal? lastElementTerminal = null;
+        Terminal? lastElementTerminal = null;
 
         var variableEx = Expressions.Variable(variable);
 
@@ -1034,28 +1031,28 @@ public sealed partial class CodeWriter
             }
             else
             {
-                Block setBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.SetPtrByType(signalType));
+                var setBlock = _codeBuilder.Place(StockBlocks.Variables.SetPtrByType(signalType));
 
                 ConnectorAddInternal(new TerminalStore(setBlock));
 
-                using (ExpressionBlock())
+                using (ExpressionScope())
                 {
-                    Block listBlock = _codePlacer.PlaceBlock(StockBlocks.Variables.ListByType(signalType));
+                    var listBlock = _codeBuilder.Place(StockBlocks.Variables.ListByType(signalType));
 
-                    _codePlacer.Connect(TerminalStore.CreateOut(listBlock, listBlock.Type["Element"]), TerminalStore.CreateIn(setBlock, setBlock.Type["Variable"]));
+                    _codeBuilder.Connect(TerminalStore.CreateOut(new Terminal(listBlock, "Element")), TerminalStore.CreateIn(new(setBlock, "Variable")));
 
-                    using (ExpressionBlock())
+                    using (ExpressionScope())
                     {
                         lastElementTerminal ??= variableEx.WriteTo(this);
 
-                        _codePlacer.Connect(lastElementTerminal, TerminalStore.CreateIn(listBlock, listBlock.Type["Variable"]));
+                        _codeBuilder.Connect(lastElementTerminal.Value, TerminalStore.CreateIn(new(listBlock, "Variable")));
 
-                        lastElementTerminal = new BlockTerminal(listBlock, "Element");
+                        lastElementTerminal = new Terminal(listBlock, "Element");
 
-                        _codePlacer.Connect(i == 0 ? startIndex.WriteTo(this) : Expressions.Number(1f).WriteTo(this), TerminalStore.CreateIn(listBlock, listBlock.Type["Index"]));
+                        _codeBuilder.Connect(i == 0 ? startIndex.WriteTo(this) : Expressions.Number(1f).WriteTo(this), TerminalStore.CreateIn(new(listBlock, "Index")));
                     }
 
-                    _codePlacer.Connect(Expressions.Literal(values[i]).WriteTo(this), TerminalStore.CreateIn(setBlock, setBlock.Type["Value"]));
+                    _codeBuilder.Connect(Expressions.Literal(values[i]).WriteTo(this), TerminalStore.CreateIn(new(setBlock, "Value")));
                 }
             }
         }
@@ -1067,11 +1064,11 @@ public sealed partial class CodeWriter
     /// <param name="variable">The variable that should be incremented.</param>
     public void IncrementNumber(IExpression variable)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.IncrementNumber);
+        var block = _codeBuilder.Place(StockBlocks.Variables.IncrementNumber);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
+            _codeBuilder.Connect(variable.WriteTo(this), new Terminal(block, "Variable"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -1083,11 +1080,11 @@ public sealed partial class CodeWriter
     /// <param name="variable">The variable that should be decremented.</param>
     public void DecrementNumber(IExpression variable)
     {
-        Block block = _codePlacer.PlaceBlock(StockBlocks.Variables.DecrementNumber);
+        var block = _codeBuilder.Place(StockBlocks.Variables.DecrementNumber);
 
-        using (ExpressionBlock())
+        using (ExpressionScope())
         {
-            _codePlacer.Connect(variable.WriteTo(this), new BlockTerminal(block, "Variable"));
+            _codeBuilder.Connect(variable.WriteTo(this), new Terminal(block, "Variable"));
         }
 
         ConnectorAddInternal(new TerminalStore(block));
@@ -1098,13 +1095,12 @@ public sealed partial class CodeWriter
     /// Flushes the <see cref="CodeWriter"/>.
     /// </summary>
     /// <remarks>
-    /// Processes gotos and calls <see cref="ICodePlacer.Flush"/> on the underlying <see cref="ICodePlacer"/>.
+    /// Processes gotos.
     /// </remarks>
     /// <exception cref="KeyNotFoundException">Thrown when a goto targets a label that was not defined.</exception>
     /// <exception cref="GotoRecursionException">Thrown when a recursive goto is encountered.</exception>
     public void Flush()
     {
-        // TODO: for stuff like if-true/false, return like a new scope or something, so that a label at the end of it does not get connected to something else, but ends up as null
         HashSet<string> encounteredLabels = [];
         foreach (var item in _gotos)
         {
@@ -1121,8 +1117,8 @@ public sealed partial class CodeWriter
 
                 switch (labelTarget)
                 {
-                    case ITerminal terminal:
-                        _codePlacer.Connect(store, terminal);
+                    case Terminal terminal:
+                        _codeBuilder.Connect(store, terminal);
                         goto nextGoto;
                     case string label:
                         gotoLabel = label;
@@ -1130,7 +1126,7 @@ public sealed partial class CodeWriter
                     case null:
                         goto nextGoto; // a label was defined, but nothing was placed after it
                     default:
-                        Debug.Fail($"Expected labelTarget to be {nameof(ITerminal)} or string, but it was: {labelTarget.GetType().FullName}");
+                        Debug.Fail($"Expected labelTarget to be {nameof(Terminal)} or string, but it was: {labelTarget.GetType().FullName}");
                         goto nextGoto;
                 }
             }
@@ -1141,8 +1137,11 @@ public sealed partial class CodeWriter
         }
 
         _gotos.Clear();
-        _codePlacer.Flush();
     }
+
+    /// <inheritdoc/>
+    public void Dispose()
+        => Flush();
 
     #region Blocks
 
@@ -1150,22 +1149,15 @@ public sealed partial class CodeWriter
     /// Enters a statement block.
     /// </summary>
     /// <returns>An <see cref="IDisposable"/>, that when disposed exits the statement block.</returns>
-    public IDisposable StatementBlock()
-        => _codePlacer.StatementBlock();
+    public CodeGraph.Builder.StatementScopeDisposable StatementScope()
+        => _codeBuilder.StatementScope();
 
     /// <summary>
     /// Enters an expression block.
     /// </summary>
     /// <returns>An <see cref="IDisposable"/>, that when disposed exits the expression block.</returns>
-    public IDisposable ExpressionBlock()
-        => _codePlacer.ExpressionBlock();
-
-    /// <summary>
-    /// Enters a highlight block.
-    /// </summary>
-    /// <returns>An <see cref="IDisposable"/>, that when disposed exits the highlight block.</returns>
-    public IDisposable HighlightBlock()
-        => _codePlacer.HighlightBlock();
+    public CodeGraph.Builder.ExpressionScopeDisposable ExpressionScope()
+        => _codeBuilder.ExpressionScope();
 
     #endregion
 
@@ -1178,9 +1170,9 @@ public sealed partial class CodeWriter
     /// </remarks>
     /// <example>
     /// // place a "win" block
-    /// var block = writer.Placer.PlaceBlock(StockBlocks.Game.Win);
+    /// var block = writer.Builder.Place(StockBlocks.Game.Win);
     /// 
-    /// writer.Placer.SetSetting(block, 0, (byte)delay);
+    /// writer.Builder.SetSetting(block, new(0, (byte)delay));
     /// 
     /// writer.ConnectorAddInternal(new TerminalStore(block));
     /// </example>
@@ -1206,26 +1198,26 @@ public sealed partial class CodeWriter
     /// </remarks>
     /// <example>
     /// // place an "on play" block
-    /// Block block = writer.Placer.PlaceBlock(StockBlocks.Control.PlaySensor);
+    /// Block block = writer.Builder.Place(StockBlocks.Control.PlaySensor);
     /// 
     /// writer.ConnectorAddInternal(new TerminalStore(block));
     /// 
-    /// writer.ConnectOutInternal(new BlockTerminal(block, "On Play"), onPlay);
+    /// writer.ConnectOutInternal(new Terminal(block, "On Play"), onPlay);
     /// 
     /// writer.Connector.SetLast(new TerminalStore(block));
     /// </example>
     /// <param name="terminal">The last execution terminal.</param>
     /// <param name="writeFunc">The callback function.</param>
 #pragma warning restore SA1629 // Documentation text should end with a period
-    public void ConnectOutInternal(ITerminal terminal, Action<CodeWriter>? writeFunc)
+    public void ConnectOutInternal(Terminal terminal, Action<CodeWriter>? writeFunc)
     {
         if (writeFunc is null)
         {
             return;
         }
 
-        _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
-        using (_codePlacer.StatementBlock())
+        _connector.SetLast(TerminalStore.CreateOut(terminal));
+        using (StatementScope())
         {
             writeFunc(this);
         }
@@ -1241,11 +1233,11 @@ public sealed partial class CodeWriter
     /// </remarks>
     /// <example>
     /// // place an "on play" block
-    /// Block block = writer.Placer.PlaceBlock(StockBlocks.Control.PlaySensor);
+    /// Block block = writer.Builder.Place(StockBlocks.Control.PlaySensor);
     /// 
     /// writer.ConnectorAddInternal(new TerminalStore(block));
     /// 
-    /// writer.ConnectOutInternal(new BlockTerminal(block, "On Play"), onPlay);
+    /// writer.ConnectOutInternal(new Terminal(block, "On Play"), onPlay);
     /// 
     /// writer.Connector.SetLast(new TerminalStore(block));
     /// </example>
@@ -1253,15 +1245,15 @@ public sealed partial class CodeWriter
     /// <param name="writeFunc">The callback function.</param>
     /// <param name="arg1">The first argument to the function.</param>
 #pragma warning restore SA1629 // Documentation text should end with a period
-    public void ConnectOutInternal(ITerminal terminal, Action<CodeWriter, ITerminal>? writeFunc, ITerminal arg1)
+    public void ConnectOutInternal(Terminal terminal, Action<CodeWriter, Terminal>? writeFunc, Terminal arg1)
     {
         if (writeFunc is null)
         {
             return;
         }
 
-        _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
-        using (_codePlacer.StatementBlock())
+        _connector.SetLast(TerminalStore.CreateOut(terminal));
+        using (StatementScope())
         {
             writeFunc(this, arg1);
         }
@@ -1277,11 +1269,11 @@ public sealed partial class CodeWriter
     /// </remarks>
     /// <example>
     /// // place an "on play" block
-    /// Block block = writer.Placer.PlaceBlock(StockBlocks.Control.PlaySensor);
+    /// Block block = writer.Builder.Place(StockBlocks.Control.PlaySensor);
     /// 
     /// writer.ConnectorAddInternal(new TerminalStore(block));
     /// 
-    /// writer.ConnectOutInternal(new BlockTerminal(block, "On Play"), onPlay);
+    /// writer.ConnectOutInternal(new Terminal(block, "On Play"), onPlay);
     /// 
     /// writer.Connector.SetLast(new TerminalStore(block));
     /// </example>
@@ -1290,15 +1282,15 @@ public sealed partial class CodeWriter
     /// <param name="arg1">The first argument to the function.</param>
     /// <param name="arg2">The second argument to the function.</param>
 #pragma warning restore SA1629 // Documentation text should end with a period
-    public void ConnectOutInternal(ITerminal terminal, Action<CodeWriter, ITerminal, ITerminal>? writeFunc, ITerminal arg1, ITerminal arg2)
+    public void ConnectOutInternal(Terminal terminal, Action<CodeWriter, Terminal, Terminal>? writeFunc, Terminal arg1, Terminal arg2)
     {
         if (writeFunc is null)
         {
             return;
         }
 
-        _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
-        using (_codePlacer.StatementBlock())
+        _connector.SetLast(TerminalStore.CreateOut(terminal));
+        using (StatementScope())
         {
             writeFunc(this, arg1, arg2);
         }
@@ -1314,11 +1306,11 @@ public sealed partial class CodeWriter
     /// </remarks>
     /// <example>
     /// // place an "on play" block
-    /// Block block = writer.Placer.PlaceBlock(StockBlocks.Control.PlaySensor);
+    /// Block block = writer.Builder.Place(StockBlocks.Control.PlaySensor);
     /// 
     /// writer.ConnectorAddInternal(new TerminalStore(block));
     /// 
-    /// writer.ConnectOutInternal(new BlockTerminal(block, "On Play"), onPlay);
+    /// writer.ConnectOutInternal(new Terminal(block, "On Play"), onPlay);
     /// 
     /// writer.Connector.SetLast(new TerminalStore(block));
     /// </example>
@@ -1328,15 +1320,15 @@ public sealed partial class CodeWriter
     /// <param name="arg2">The second argument to the function.</param>
     /// <param name="arg3">The third argument to the function.</param>
 #pragma warning restore SA1629 // Documentation text should end with a period
-    public void ConnectOutInternal(ITerminal terminal, Action<CodeWriter, ITerminal, ITerminal, ITerminal>? writeFunc, ITerminal arg1, ITerminal arg2, ITerminal arg3)
+    public void ConnectOutInternal(Terminal terminal, Action<CodeWriter, Terminal, Terminal, Terminal>? writeFunc, Terminal arg1, Terminal arg2, Terminal arg3)
     {
         if (writeFunc is null)
         {
             return;
         }
 
-        _connector.SetLast(new TerminalStore(NopTerminal.Instance, [terminal]));
-        using (_codePlacer.StatementBlock())
+        _connector.SetLast(TerminalStore.CreateOut(terminal));
+        using (StatementScope())
         {
             writeFunc(this, arg1, arg2, arg3);
         }

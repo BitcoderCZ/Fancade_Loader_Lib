@@ -1,4 +1,5 @@
-﻿using BitcoderCZ.Fancade.Raw;
+﻿using BitcoderCZ.Fancade.Data;
+using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
 
@@ -107,26 +108,26 @@ public class GameTests
             new RawPrefab(true, false, false, false, false, 0, "A", 0, 0, (byte)FcColorUtils.DefaultBackgroundColor, 0, idOff, new byte3(2, 0, 0), null, null, null, null),
         ]);
 
-        var game = Game.FromRaw(raw, true);
+        var game = Game.FromRaw(raw);
 
         await Assert.That(game.Prefabs.SegmentCount).IsEqualTo(7);
         await Assert.That(game.Prefabs.PrefabCount).IsEqualTo(4);
 
         var blocks = game.Prefabs.GetPrefab(idOff).Blocks;
 
-        await Assert.That(blocks.GetBlock(new int3(0, 0, 0))).IsEqualTo((ushort)(idOff + 1));
-        await Assert.That(blocks.GetBlock(new int3(1, 0, 0))).IsEqualTo((ushort)(idOff + 2));
-        await Assert.That(blocks.GetBlock(new int3(2, 0, 0))).IsEqualTo((ushort)(idOff + 3));
-        await Assert.That(blocks.GetBlock(new int3(0, 0, 1))).IsEqualTo((ushort)(idOff + 4));
-        await Assert.That(blocks.GetBlock(new int3(1, 0, 1))).IsEqualTo((ushort)(idOff + 5));
-        await Assert.That(blocks.GetBlock(new int3(0, 0, 2))).IsEqualTo((ushort)(idOff + 6));
+        await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 0))).IsEqualTo((ushort)(idOff + 1));
+        await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 0))).IsEqualTo((ushort)(idOff + 2));
+        await Assert.That(blocks.GetBlockInBounds(new int3(2, 0, 0))).IsEqualTo((ushort)(idOff + 3));
+        await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 1))).IsEqualTo((ushort)(idOff + 4));
+        await Assert.That(blocks.GetBlockInBounds(new int3(1, 0, 1))).IsEqualTo((ushort)(idOff + 5));
+        await Assert.That(blocks.GetBlockInBounds(new int3(0, 0, 2))).IsEqualTo((ushort)(idOff + 6));
 
-        var seg0 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(0, 0, 0)));
-        var seg1 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(1, 0, 0)));
-        var seg2 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(2, 0, 0)));
-        var seg3 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(0, 0, 1)));
-        var seg4 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(1, 0, 1)));
-        var seg5 = game.Prefabs.GetSegment(blocks.GetBlock(new int3(0, 0, 2)));
+        var seg0 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 0)));
+        var seg1 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(1, 0, 0)));
+        var seg2 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(2, 0, 0)));
+        var seg3 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 1)));
+        var seg4 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(1, 0, 1)));
+        var seg5 = game.Prefabs.GetSegment(blocks.GetBlockInBounds(new int3(0, 0, 2)));
 
         await Assert.That(seg0.PrefabId).IsEqualTo((ushort)(idOff + 1));
         await Assert.That(seg0.PosInPrefab).IsEqualTo(new int3(0, 0, 0));
@@ -147,7 +148,7 @@ public class GameTests
     {
         var game = new Game("A", "B", "C", new());
 
-        BlockData blocks = new BlockData();
+        ArrayBlockData blocks = new ArrayBlockData();
         blocks.SetBlock(new int3(1, 1, 1), 5);
 
         game.Prefabs.AddPrefab(new Prefab(RawGame.CurrentNumbStockPrefabs, "ABC", PrefabCollider.Box, PrefabType.Script, FcColor.Gray4, true, blocks, [new(int3.One, PrefabSettings.Empty.Add(new(5, SettingType.Int, 10)))], [new Connection(int3.One, int3.One * 2, byte3.Zero, byte3.One)], [new PrefabSegment(RawGame.CurrentNumbStockPrefabs, int3.Zero)]));
@@ -188,7 +189,7 @@ public class GameTests
     {
         var game = new Game("A", "B", "C", new());
 
-        BlockData blocks = new BlockData();
+        ArrayBlockData blocks = new ArrayBlockData();
         blocks.SetBlock(new int3(1, 1, 1), 5);
 
         game.Prefabs.AddPrefab(new Prefab(RawGame.CurrentNumbStockPrefabs, "ABC", PrefabCollider.Box, PrefabType.Script, FcColor.Gray4, true, blocks, [new(int3.One, PrefabSettings.Empty.Add(new(5, SettingType.Int, 10)))], [new Connection(int3.One, int3.One * 2, byte3.Zero, byte3.One)], [new PrefabSegment(RawGame.CurrentNumbStockPrefabs, int3.Zero)]));

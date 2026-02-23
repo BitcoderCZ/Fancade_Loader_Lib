@@ -11,23 +11,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade.Editing</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>4.0.0-develop.31</Version>
+    <Version>4.0.0-develop.53</Version>
     <Description>Additional utils for easier editing of fancade games.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <NoWarn>SA1201</NoWarn>
-  </PropertyGroup>
-	
-	<PropertyGroup>
-		<NoWarn>SA1201<!--SA does not like extension blocks--></NoWarn>
-	</PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
 
@@ -51,7 +40,7 @@
 
   <ItemGroup>
     <PackageReference Include="BitcoderCZ.Maths" Version="1.2.0" />
-    <PackageReference Include="hamarb123.Analyzers" Version="1.2.2">
+    <PackageReference Include="hamarb123.Analyzers" Version="1.3.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -71,13 +60,17 @@
 
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
     <PackageReference Include="System.Collections.Immutable" Version="10.0.2" />
-    <Reference Include="Bcl.CollectionsMarshal">
-      <HintPath>..\..\libs\Bcl.CollectionsMarshal.dll</HintPath>
-    </Reference>
+		<Reference Include="Bcl.CollectionsMarshal">
+			<HintPath>..\..\libs\Bcl.CollectionsMarshal.dll</HintPath>
+		</Reference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BitcoderCZ.Fancade\BitcoderCZ.Fancade.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BitcoderCZ.Fancade.Editing.Tests" />
   </ItemGroup>
 
 </Project>

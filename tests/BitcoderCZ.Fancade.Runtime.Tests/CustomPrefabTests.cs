@@ -1,14 +1,13 @@
 ﻿using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Editing.Scripting;
-using BitcoderCZ.Fancade.Editing.Scripting.Builders;
-using BitcoderCZ.Fancade.Editing.Scripting.Placers;
-using BitcoderCZ.Fancade.Editing.Scripting.Terminals;
 using BitcoderCZ.Fancade.Editing.Scripting.Utils;
 using BitcoderCZ.Fancade.Partial;
 using BitcoderCZ.Fancade.Runtime.Tests.Common;
 using BitcoderCZ.Maths.Vectors;
+using Terminal = BitcoderCZ.Fancade.Editing.Scripting.Node.Terminal;
 using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
-using static BitcoderCZ.Fancade.Runtime.Tests.Common.ExeUtils;
+using BitcoderCZ.Fancade.Editing.Scripting.Emitters;
+using BitcoderCZ.Fancade.Editing.Scripting.Positioners;
 
 namespace BitcoderCZ.Fancade.Runtime.Tests;
 
@@ -30,33 +29,32 @@ public class CustomPrefabTests
         prefab.Connections.Add(new Connection(int3.One * Connection.IsFromToOutsideValue, int3.Zero, fromPos, StockBlocks.Control.If["Before"].Position));
         prefab.Connections.Add(new Connection(int3.Zero, int3.One * Connection.IsFromToOutsideValue, TerminalDef.AfterPosition, toPos));
 
-        var builder = new PrefabBlockBuilder(level);
+        var builder = new CodeGraph.Builder();
 
-        ITerminal onPlay = NopTerminal.Instance;
+        Terminal onPlay = Terminal.Null;
         {
-            var writer = new CodeWriter(new TowerCodePlacer(builder), new TerminalConnector(builder.Connect));
+            using var writer = new CodeWriter(builder);
             writer.PlaySensor(writer =>
             {
                 onPlay = writer.Connector.Store.Out[0];
             });
-            writer.Flush();
         }
 
         var customBlock = new Block(new BlockDef(prefab.ToPartial(), ScriptBlockType.Active, PrefabTerminalInfo.Create(prefab, prefabs)), int3.Zero);
-        builder.AddBlockSegments([customBlock]);
+        var region = builder.CreateRegion(int3.One);
+        region.Blocks[int3.Zero] = prefab.Id;
 
-        ITerminal inspectInput = NopTerminal.Instance;
+        Terminal inspectInput = Terminal.Null;
         {
-            var writer = new CodeWriter(new TowerCodePlacer(builder), new TerminalConnector(builder.Connect));
+            using var writer = new CodeWriter(builder);
             writer.Inspect(Number(1f));
             inspectInput = writer.Connector.Store.In;
-            writer.Flush();
         }
 
-        builder.Connect(onPlay, new BlockTerminal(customBlock, new TerminalDef(SignalType.Void, TerminalType.In, 0, fromPos)));
-        builder.Connect(new BlockTerminal(customBlock, new TerminalDef(SignalType.Void, TerminalType.Out, 0, toPos)), inspectInput);
+        builder.Connect(onPlay, Terminal.ObjectRelative(region.Handle, int3.Zero, fromPos, SignalType.Void));
+        builder.Connect(Terminal.ObjectRelative(region.Handle, int3.Zero, toPos, SignalType.Void), inspectInput);
 
-        builder.Build(int3.Zero);
+        PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(builder.BuildAndClear()), level, int3.Zero);
 
         var tester = AstRunnerTester.Create(prefabs, options: new() { RunFor = 2, });
 
@@ -64,13 +62,11 @@ public class CustomPrefabTests
     }
 
     [Test]
-    public async Task Execution_CustomPrefab_CorrectOrderByPlacement()
+    public async Task CustomPrefab_Execution_CorrectOrderByPlacement()
     {
-        var builder = CreateBuilder(out var level);
+        var level = Prefab.CreateLevel(0, "A");
         var prefabs = new PrefabList();
         prefabs.AddPrefab(level);
-
-        List<Block> blocks = [];
 
         AddInspect(new int3(2, 0, 10), 0);
 
@@ -81,9 +77,6 @@ public class CustomPrefabTests
 
         AddInspect(new int3(2, 0, 0), 5);
 
-        builder.AddBlockSegments(blocks);
-
-        builder.Build(int3.Zero);
         var tester = AstRunnerTester.Create(prefabs);
 
         await Assert.That(tester)
@@ -96,13 +89,12 @@ public class CustomPrefabTests
 
         void AddInspect(int3 pos, int count)
         {
-            var inspect = new Block(StockBlocks.Values.Inspect_Number, pos);
-            blocks.Add(inspect);
+            level.Blocks.SetPrefab(pos, StockBlocks.Values.Inspect_Number.Prefab);
 
-            var numb = new Block(StockBlocks.Values.Number, pos + new int3(-2, 0, 1));
-            blocks.Add(numb);
+            var numbPos = pos + new int3(-2, 0, 1);
+            level.Blocks.SetPrefab(numbPos, StockBlocks.Values.Number.Prefab);
 
-            builder.SetSetting(numb, 0, (float)count);
+            level.Settings[numbPos] = new PrefabSettings(new PrefabSetting(0, (float)count));
         }
 
         void AddCustomInspect(int3 pos, int count)
@@ -110,13 +102,12 @@ public class CustomPrefabTests
             var prefab = Prefab.CreateBlock(0, "A");
             prefabs.AddPrefab(prefab);
 
-            var builder = new PrefabBlockBuilder(prefab);
-            var writer = new CodeWriter(new TowerCodePlacer(builder), new TerminalConnector(builder.Connect));
+            prefab.Blocks.SetPrefab(pos, StockBlocks.Values.Inspect_Number.Prefab);
 
-            writer.Inspect(Number(count));
+            var numbPos = pos + new int3(-2, 0, 1);
+            prefab.Blocks.SetPrefab(numbPos, StockBlocks.Values.Number.Prefab);
 
-            writer.Flush();
-            builder.Build(int3.Zero);
+            prefab.Settings[numbPos] = new PrefabSettings(new PrefabSetting(0, (float)count));
 
             level.Blocks.SetPrefab(pos, prefab);
         }

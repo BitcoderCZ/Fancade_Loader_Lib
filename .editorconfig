@@ -116,6 +116,9 @@ dotnet_diagnostic.CA1200.severity = suggestion
 # IDE0004
 dotnet_diagnostic.IDE0004.severity = warning
 
+# SA1405: Debug.Assert should provide message text
+dotnet_diagnostic.SA1405.severity = suggestion
+
 [*.{cs,vb}]
 #### Naming styles ####
 
@@ -175,7 +178,7 @@ dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:warning
 dotnet_style_prefer_simplified_boolean_expressions = true:warning
 dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
-dotnet_style_prefer_conditional_expression_over_return = true:warning
+dotnet_style_prefer_conditional_expression_over_return = true:suggestion
 dotnet_style_explicit_tuple_names = true:suggestion
 dotnet_style_prefer_inferred_tuple_names = true:suggestion
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
@@ -209,3 +212,6 @@ indent_style = space
 # IDE0045: Convert to conditional expression
 dotnet_diagnostic.IDE0045.severity = suggestion
 dotnet_diagnostic.CA1821.severity = warning
+
+# IDE0046: Convert to conditional expression
+dotnet_diagnostic.IDE0046.severity = suggestion

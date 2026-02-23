@@ -43,6 +43,76 @@ public struct RawPrefabSetting : IEquatable<RawPrefabSetting>
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="RawPrefabSetting"/> struct, with a <see langword="byte"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="pos">The position of the block this setting applies to.</param>
+    /// <param name="value">Value of this setting.</param>
+    public RawPrefabSetting(byte index, ushort3 pos, byte value)
+    {
+        Index = index;
+        _type = SettingType.Byte;
+        Position = pos;
+        _value = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RawPrefabSetting"/> struct, with a <see langword="ushort"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="pos">The position of the block this setting applies to.</param>
+    /// <param name="value">Value of this setting.</param>
+    public RawPrefabSetting(byte index, ushort3 pos, ushort value)
+    {
+        Index = index;
+        _type = SettingType.Ushort;
+        Position = pos;
+        _value = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RawPrefabSetting"/> struct, with a <see langword="int"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="pos">The position of the block this setting applies to.</param>
+    /// <param name="value">Value of this setting.</param>
+    public RawPrefabSetting(byte index, ushort3 pos, int value)
+    {
+        Index = index;
+        _type = SettingType.Int;
+        Position = pos;
+        _value = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RawPrefabSetting"/> struct, with a <see langword="float"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="pos">The position of the block this setting applies to.</param>
+    /// <param name="value">Value of this setting.</param>
+    public RawPrefabSetting(byte index, ushort3 pos, float value)
+    {
+        Index = index;
+        _type = SettingType.Float;
+        Position = pos;
+        _value = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RawPrefabSetting"/> struct, with a <see langword="Vector3"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="pos">The position of the block this setting applies to.</param>
+    /// <param name="value">Value of this setting.</param>
+    public RawPrefabSetting(byte index, ushort3 pos, Vector3 value)
+    {
+        Index = index;
+        _type = SettingType.Vec3;
+        Position = pos;
+        _value = value;
+    }
+
+    /// <summary>
     /// Gets or sets the index of the <see cref="RawPrefabSetting"/>.
     /// </summary>
     /// <remarks>

@@ -4,6 +4,8 @@ using System.Numerics;
 using System.Runtime.Loader;
 using BitcoderCZ.Fancade.Editing;
 using BitcoderCZ.Fancade.Editing.Scripting;
+using BitcoderCZ.Fancade.Editing.Scripting.Emitters;
+using BitcoderCZ.Fancade.Editing.Scripting.Positioners;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime.Compiled;
@@ -71,28 +73,46 @@ public sealed class AstRunnerTester
         return CreatePhysics(FcAST.Parse(prefabs, levelId.Value), prefabs, levelId, options);
     }
 
-    public static AstRunnerTester Create(BlockBuilder builder, ushort? levelId = null, Options? options = null)
-        => Create(new PrefabList([(Prefab)builder.Build(int3.Zero)]), levelId, options);
+    public static AstRunnerTester Create(CodeGraph.Builder builder, ushort? levelId = null, Options? options = null)
+        => Create(new PrefabList([BuilderToPrefab(builder)]), levelId, options);
 
-    public static AstRunnerTester CreatePhysics(BlockBuilder builder, ushort? levelId = null, Options? options = null)
-        => CreatePhysics(new PrefabList([(Prefab)builder.Build(int3.Zero)]), levelId, options);
+    public static AstRunnerTester CreatePhysics(CodeGraph.Builder builder, ushort? levelId = null, Options? options = null)
+        => CreatePhysics(new PrefabList([BuilderToPrefab(builder)]), levelId, options);
 
     public static AstRunnerTester Create(CodeWriter writer, ushort? levelId = null, Options? options = null)
     {
         writer.Flush();
-        return Create(writer.Placer.Builder, levelId, options);
+        return Create(writer.Builder, levelId, options);
     }
 
     public static AstRunnerTester CreatePhysics(CodeWriter writer, ushort? levelId = null, Options? options = null)
     {
         writer.Flush();
-        return CreatePhysics(writer.Placer.Builder, levelId, options);
+        return CreatePhysics(writer.Builder, levelId, options);
+    }
+
+    public static AstRunnerTester Create(CodeWriter writer, Prefab prefab, Options? options = null)
+    {
+        writer.Flush();
+        var prefabs = new PrefabList();
+        prefabs.AddPrefab(prefab);
+        PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), prefab, int3.Zero);
+        return Create(prefabs, prefab.Id, options);
+    }
+
+    public static AstRunnerTester CreatePhysics(CodeWriter writer, Prefab prefab, Options? options = null)
+    {
+        writer.Flush();
+        var prefabs = new PrefabList();
+        prefabs.AddPrefab(prefab);
+        PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), prefab, int3.Zero);
+        return CreatePhysics(prefabs, prefab.Id, options);
     }
 
     public static AstRunnerTester Create(CodeWriter writer, PrefabList prefabs, ushort? levelId = null, Options? options = null)
     {
         writer.Flush();
-        var prefab = (Prefab)writer.Placer.Builder.Build(int3.Zero);
+        var prefab = BuilderToPrefab(writer.Builder);
 
         Debug.Assert(prefabs.ContainsPrefab(prefab.Id));
         prefabs.AddImplicitConnections();
@@ -103,7 +123,7 @@ public sealed class AstRunnerTester
     public static AstRunnerTester CreatePhysics(CodeWriter writer, PrefabList prefabs, ushort? levelId = null, Options? options = null)
     {
         writer.Flush();
-        var prefab = (Prefab)writer.Placer.Builder.Build(int3.Zero);
+        var prefab = BuilderToPrefab(writer.Builder);
 
         Debug.Assert(prefabs.ContainsPrefab(prefab.Id));
         prefabs.AddImplicitConnections();
@@ -131,6 +151,13 @@ public sealed class AstRunnerTester
         }
 
         return _expectedInspects[inspect] ?? AssertionResult.Passed;
+    }
+
+    private static Prefab BuilderToPrefab(CodeGraph.Builder builder)
+    {
+        var prefab = new Prefab(RawGame.CurrentNumbStockPrefabs);
+        PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(builder.BuildAndClear()), prefab, int3.Zero);
+        return prefab;
     }
 
     private void RunAll()
@@ -300,8 +327,8 @@ public sealed class AstRunnerTester
 
     private static bool Equals(RuntimeValue a, object b, SignalType type)
     {
-        const float MaxDeltaNumber = Constants.EqualsNumbersMaxDiff;
-        const float MaxDeltaVector = Constants.EqualsVectorsMaxDiff;
+        const float MaxDeltaNumber = FancadeConstants.EqualsNumbersMaxDifference;
+        const float MaxDeltaVector = FancadeConstants.EqualsVectorsMaxDifferenceSquared;
         const float MaxDeltaRotationRadians = 0.01f;
 
         return type switch

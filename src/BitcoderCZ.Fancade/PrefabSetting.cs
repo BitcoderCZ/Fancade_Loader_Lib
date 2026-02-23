@@ -4,6 +4,7 @@
 
 using BitcoderCZ.Fancade.Raw;
 using System.Diagnostics;
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace BitcoderCZ.Fancade;
@@ -33,6 +34,66 @@ public readonly struct PrefabSetting : IEquatable<PrefabSetting>
 
         _index = index;
         _type = type;
+        _value = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PrefabSetting"/> struct, with a <see langword="byte"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="value">Value of this setting.</param>
+    public PrefabSetting(byte index, byte value)
+    {
+        _index = index;
+        _type = SettingType.Byte;
+        _value = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PrefabSetting"/> struct, with a <see langword="ushort"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="value">Value of this setting.</param>
+    public PrefabSetting(byte index, ushort value)
+    {
+        _index = index;
+        _type = SettingType.Ushort;
+        _value = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PrefabSetting"/> struct, with a <see langword="int"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="value">Value of this setting.</param>
+    public PrefabSetting(byte index, int value)
+    {
+        _index = index;
+        _type = SettingType.Int;
+        _value = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PrefabSetting"/> struct, with a <see langword="float"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="value">Value of this setting.</param>
+    public PrefabSetting(byte index, float value)
+    {
+        _index = index;
+        _type = SettingType.Float;
+        _value = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PrefabSetting"/> struct, with a <see langword="Vector3"/> value.
+    /// </summary>
+    /// <param name="index">Index of this setting.</param>
+    /// <param name="value">Value of this setting.</param>
+    public PrefabSetting(byte index, Vector3 value)
+    {
+        _index = index;
+        _type = SettingType.Vec3;
         _value = value;
     }
 

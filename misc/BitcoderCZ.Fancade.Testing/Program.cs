@@ -2,47 +2,78 @@
 using System.Numerics;
 using BitcoderCZ.Fancade;
 using BitcoderCZ.Fancade.Editing;
+using BitcoderCZ.Fancade.Editing.Scripting;
+using BitcoderCZ.Fancade.Editing.Scripting.Emitters;
+using BitcoderCZ.Fancade.Editing.Scripting.Positioners;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
+using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime;
+using BitcoderCZ.Fancade.Runtime.Simulated;
 using BitcoderCZ.Fancade.Runtime.Simulated.Bullet;
 using BitcoderCZ.Fancade.Runtime.Utils;
 using BitcoderCZ.Maths.Vectors;
+using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
 
-Game game;
-using (var file = File.OpenRead("/home/bitcoder/Downloads/697490CB4D4A8AFF"))
 {
-    game = Game.LoadCompressed(file);
+    var prefabs = new PrefabList();
+    var level = Prefab.CreateLevel(0, "A");
+    prefabs.AddPrefab(level);
+
+    var writer = new CodeWriter(new CodeGraph.Builder());
+    writer.Inspect(BreakVector(Vector(Vector3.One)).X);
+    // writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
+    // writer.Inspect(MakeVector(None(), None(), AddNumbers(None(), None())));
+    // writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
+    // writer.Inspect(MakeVector(None(), None(), AddNumbers(AddNumbers(None(), None()), None())));
+
+    writer.Flush();
+    PrefabCodeGraphEmitter.Emit(StructuredCodeGraphPositioner.Layout(writer.Builder.BuildAndClear()), level, int3.Zero);
+    var game = new Game("A", "Unknown Author", "D", prefabs);
+    using (var fs = File.OpenWrite("game.fcg"))
+    {
+        game.SaveCompressed(fs);
+    }
+
+    return;
 }
 
-ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "Level 1").Id;
-
-Console.WriteLine("Parsing ast");
-var ast = FcAST.Parse(game.Prefabs, levelId);
-
-var ctx = new MyRuntimeCtx();
-Console.WriteLine("Building level");
-FcWorld world;
-//while (true)
-//{
-world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx, timeout: Timeout.InfiniteTimeSpan), true);
-//}
-
-var gameMesh = world.GameMeshInfo;
-for (int uniqueMeshIndex = 0; uniqueMeshIndex < gameMesh.UniqueMeshCount; uniqueMeshIndex++)
 {
-    var (prefabId, meshIndex) = gameMesh.GetUniqueMeshFirstOccurrence(uniqueMeshIndex);
-    var blockMesh = gameMesh.GetBlockMesh(prefabId);
+    Game game;
+    using (var file = File.OpenRead("/home/bitcoder/Downloads/697490CB4D4A8AFF"))
+    {
+        game = Game.LoadCompressed(file);
+    }
 
-    blockMesh.GetMesh(meshIndex, out var mesh, out _);
-}
+    ushort levelId = game.Prefabs.FirstOrDefault(prefab => prefab.Name is "Level 1").Id;
 
-for (int i = 0; i < 60; i++)
-{
-    Console.WriteLine($"Running frame {i}");
-    world.RunFrame(timeStep: 1f / 60f);
+    Console.WriteLine("Parsing ast");
+    var ast = FcAST.Parse(game.Prefabs, levelId);
 
-    ctx.Camera.Step(MyRuntimeCtx.ScreenInfo);
-    Thread.Sleep(1);
+    var ctx = new MyRuntimeCtx();
+    Console.WriteLine("Building level");
+    FcWorld world;
+    //while (true)
+    //{
+    world = FcWorld.Create(levelId, game.Prefabs, ctx, fullCtx => new Interpreter(ast, fullCtx, timeout: Timeout.InfiniteTimeSpan), true);
+    //}
+
+    var gameMesh = world.GameMeshInfo;
+    for (int uniqueMeshIndex = 0; uniqueMeshIndex < gameMesh.UniqueMeshCount; uniqueMeshIndex++)
+    {
+        var (prefabId, meshIndex) = gameMesh.GetUniqueMeshFirstOccurrence(uniqueMeshIndex);
+        var blockMesh = gameMesh.GetBlockMesh(prefabId);
+
+        blockMesh.GetMesh(meshIndex, out var mesh, out _);
+    }
+
+    for (int i = 0; i < 60; i++)
+    {
+        Console.WriteLine($"Running frame {i}");
+        world.RunFrame(timeStep: 1f / 60f);
+
+        ctx.Camera.Step(MyRuntimeCtx.ScreenInfo);
+        Thread.Sleep(1);
+    }
 }
 
 Console.WriteLine("Done");

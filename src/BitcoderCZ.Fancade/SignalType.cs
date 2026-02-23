@@ -11,7 +11,7 @@ namespace BitcoderCZ.Fancade;
 /// <summary>
 /// Represents the type of a wire/terminal.
 /// </summary>
-public enum SignalType
+public enum SignalType : byte
 {
     /// <summary>
     /// Invalid type.
