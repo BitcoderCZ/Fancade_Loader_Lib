@@ -1212,7 +1212,7 @@ public sealed class Interpreter : IAstRunner
 
                     return new TerminalOutput(value);
 
-                    float FcMod(float a, float b)
+                    static float FcMod(float a, float b)
                     {
                         float res = a % b;
 
