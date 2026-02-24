@@ -455,6 +455,17 @@ public sealed partial class CodeGraph
             internal NodeHandle _handle;
             internal SettingsCollection _settings;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Node"/> struct.
+            /// </summary>
+            /// <param name="handle">Handle of the node.</param>
+            /// <param name="type">Type of the node; or <see langword="null"/>, if the node is empty/null.</param>
+            /// <param name="expressionDepth">The zero-based expression nesting depth.</param>
+            public Node(NodeHandle handle, BlockDef? type, int expressionDepth)
+                : this(handle, type, checked((ushort)expressionDepth))
+            {
+            }
+
             internal Node(NodeHandle handle, BlockDef? type, ushort expressionDepth)
             {
                 _handle = handle;
