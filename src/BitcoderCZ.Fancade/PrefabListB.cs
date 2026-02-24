@@ -383,7 +383,7 @@ public sealed class PrefabListB
 
         var prefab = GetPrefab(prefabId);
 
-        return prefab
+        return prefab;
     }
 
     /// <summary>
@@ -405,7 +405,7 @@ public sealed class PrefabListB
 
         var prefab = GetPrefab(prefabId);
 
-        prefab.TryAddSegmentToPrefab(prefabId, segmentPosition, voxels, overwriteBlocks, cache)
+        prefab.TryAddSegmentToPrefab(prefabId, segmentPosition, voxels, overwriteBlocks, cache);
     }
 
     /// <summary>

@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
+using BitcoderCZ.Fancade.Data;
+using BitcoderCZ.Fancade.Exceptions;
 using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
 using BitcoderCZ.Utils;
@@ -23,6 +25,7 @@ public sealed class ListPrefab
     internal int _id;
     internal PrefabListB? _owner;
 
+    // todo: binary search?
     // todo: InlineList<FixedArray4<KeyValuePair<byte3, int>>, KeyValuePair<byte3, int>> _segments?
     internal Dictionary<byte3, int> _segments;
 
@@ -78,7 +81,7 @@ public sealed class ListPrefab
 
     public List<Connection> Connections { get; } = [];
 
-    public BlockData Blocks { get; } = new();
+    public IBlockData Blocks { get; } = new ArrayBlockData();
 
     public IEnumerable<KeyValuePair<byte3, int>> Segments => _segments;
 
@@ -157,8 +160,31 @@ public sealed class ListPrefab
         return -1;
     }
 
-    public bool RemoveSegment(byte3 posInPrefab, out int segmentId, out int3 shift)
+    public int AddSegment(int3 segmentPosition, Voxels voxels, bool overwriteBlocks, BlockInstancesCache? cache = null)
     {
+        EnsureCustom();
+
+        var segmentPos = ValidateSegmentPosition(segmentPosition);
+
+        if (_segments.ContainsKey(segmentPos))
+        {
+            ThrowHelper.ThrowArgumentException($"A segment with the specified position is already in the prefab.", nameof(segmentPosition));
+        }
+
+        if (_owner is not null && !overwriteBlocks && !_owner.CanAddIdToPrefab(_id, segmentPos, cache, out var obstructionInfo))
+        {
+            throw new BlockObstructedException(obstructionInfo, $"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+        }
+
+        ushort segmentId = (ushort)(_id + GetNewSegmentIndex(segmentPos));
+
+        // todo: voxels
+        _segments.Add(segmentPos, segmentId);
+    }
+
+    public bool RemoveSegment(int3 segmentPosition, out int segmentId, out int3 shift)
+    {
+        EnsureCustom();
         throw new NotImplementedException(); // _owner.RemoveSegmentInternal, ensure custom
         if (_segments.Count <= 1)
         {
@@ -195,6 +221,21 @@ public sealed class ListPrefab
         }
 
         return i;
+    }
+
+    private static byte3 ValidateSegmentPosition(int3 pos, [CallerArgumentExpression(nameof(pos))] string argName = "")
+    {
+        int val = pos.X | pos.Y | pos.Z;
+        if (val < 0)
+        {
+            ThrowHelper.ThrowArgumentOutOfRangeException(argName, $"{argName} cannot be nagative.");
+        }
+        else if (val >= Prefab.MaxSize)
+        {
+            ThrowHelper.ThrowArgumentOutOfRangeException(argName, $"{argName} cannot be greater than or equal to {nameof(Prefab)}.{nameof(Prefab.MaxSize)} ({Prefab.MaxSize}).");
+        }
+
+        return (byte3)pos;
     }
 
     private void EnsureCustom()
