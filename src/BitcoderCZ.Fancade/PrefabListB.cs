@@ -79,7 +79,11 @@ public sealed class PrefabListB
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => TotalSegmentCapacity - StockSegmentCount;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => TotalSegmentCapacity = value + StockSegmentCount;
+        set
+        {
+            ThrowHelper.ThrowIfNegative(value);
+            TotalSegmentCapacity = value + StockSegmentCount;
+        }
     }
 
     public PrefabEnumerable AllPrefabs => new(_prefabs, 0, StockSegmentCount + _customSegmentCount);
@@ -429,6 +433,8 @@ public sealed class PrefabListB
     /// </summary>
     /// <param name="prefabId">Id of the prefab.</param>
     /// <param name="segmentPosition">Position of the segment to remove.</param>
+    /// <param name="segmentId">Id of the removed segment.</param>
+    /// <param name="shift">Specifies by how much the prefab moved, always positive.</param>
     /// <param name="keepInPlace">
     /// If <see langword="true"/>, the prefab will be moved back, keeping the position the same;
     /// if <see langword="false"/>, the prefab may "move" (segments stay in the same place, but the postion increases).
@@ -490,24 +496,53 @@ public sealed class PrefabListB
 
         _segments[segmentId] = value;
         AddIdToPrefab((ushort)prefab._id, value.PosInPrefab, (ushort)segmentId, cache);
+
+        ValidateState();
     }
 
-    internal bool RemovePrefabFromBlocks(Prefab prefab, BlockInstancesCache? cache = null)
+    internal void RemoveSegmentFromPrefabInternal(ListPrefab prefab, int3 segmentPosition, int segmentId, int3 shift, bool keepInPlace, BlockInstancesCache? cache)
+    {
+        _segments[segmentId] = null!;
+        RemoveIdFromPrefab(id, posInPrefab, cache);
+
+        if (segmentId == TotalSegmentCount)
+        {
+            return;
+        }
+
+        ShiftBlockIds(segmentId + 1, -1);
+
+        if (shift != int3.Zero)
+        {
+            if (keepInPlace)
+            {
+                ShiftPrefabRemovedSegment(prefab, segmentPosition, -shift, false, cache);
+            }
+            else
+            {
+                cache?.MovePositions(shift);
+            }
+        }
+
+        ValidateState();
+    }
+
+    internal bool RemovePrefabFromBlocks(ListPrefab prefab, BlockInstancesCache? cache = null)
     {
         Debug.Assert(cache is null || cache.BlockId == prefab.Id, "The cache should be for the prefab.");
 
-        Debug.Assert(prefab.Count <= 4 * 4 * 4, "prefab.Count should be smaller that it's max size.");
+        Debug.Assert(prefab.SegmentCount <= 4 * 4 * 4, "prefab.Count should be smaller that it's max size.");
         Span<int3> offsets = stackalloc int3[4 * 4 * 4];
 
         int len = 0;
-        foreach (var offset in prefab.Keys)
+        foreach (var segment in prefab._segments)
         {
-            offsets[len++] = offset;
+            offsets[len++] = segment.Key;
         }
 
         offsets = offsets[..len];
 
-        return RemoveIdsFromPrefab(prefab.Id, offsets, cache);
+        return RemoveIdsFromPrefab((ushort)prefab._id, offsets, cache);
     }
 
     internal bool RemoveIdsFromPrefab(ushort prefabId, ReadOnlySpan<int3> offsets, BlockInstancesCache? cache)

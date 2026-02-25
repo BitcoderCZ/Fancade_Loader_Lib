@@ -83,7 +83,7 @@ public sealed class ListPrefab
 
     public IBlockData Blocks { get; } = new ArrayBlockData();
 
-    public IEnumerable<KeyValuePair<byte3, int>> Segments => _segments;
+    public IReadOnlyCollection<KeyValuePair<byte3, int>> Segments => _segments;
 
     public int SegmentCount
     {
@@ -91,20 +91,7 @@ public sealed class ListPrefab
         get => _segments.Count;
     }
 
-    // TODO: cache?
-    public int3 Size
-    {
-        get
-        {
-            var maxPos = byte3.Zero;
-            foreach (var pos in _segments.Keys)
-            {
-                maxPos = byte3.Max(maxPos, pos);
-            }
-
-            return maxPos + byte3.One;
-        }
-    }
+    public int3 Size { get; private set; }
 
     public IEnumerable<KeyValuePair<byte3, int>> PosOrderedValues
     {
@@ -196,6 +183,8 @@ public sealed class ListPrefab
         // todo: voxels, allocate a temp storage if not in list? set to null when added to list
         _segments.Add(segmentPos, segmentId);
 
+        CalculateSize();
+
         _owner?.AddSegmentToPrefabInternal(this, segmentId, new PrefabListB.SegmentData(_id, segmentPos, voxels), cache);
 
         return segmentId;
@@ -232,6 +221,8 @@ public sealed class ListPrefab
         // todo: voxels, allocate a temp storage if not in list? set to null when added to list
         _segments.Add(segmentPos, segmentId);
 
+        CalculateSize();
+
         _owner?.AddSegmentToPrefabInternal(this, segmentId, new PrefabListB.SegmentData(_id, segmentPos, voxels), cache);
 
         return true;
@@ -243,39 +234,27 @@ public sealed class ListPrefab
     public bool RemoveSegment(int3 segmentPosition, out int segmentId, out int3 shift, bool keepInPlace = true, BlockInstancesCache? cache = null)
     {
         EnsureCustom();
-        throw new NotImplementedException(); // _owner.RemoveSegmentInternal, ensure custom
- 
-        var segmentIndex = prefab.IndexOf(segmentPosition);
-        if (!prefab.Remove(posInPrefab, out _, out var shift))
+
+        var segmentPos = ValidateSegmentPosition(segmentPosition);
+
+        if (_segments.Count <= 1)
         {
+            ThrowHelper.ThrowInvalidOperationException("Prefab must have at least 1 segment.");
+        }
+
+        if (!_segments.Remove(segmentPos, out var segmentIdShort))
+        {
+            segmentId = default;
+            shift = default;
             return false;
         }
 
-        Debug.Assert(segmentIndex != -1, "Because the segment was succesfully removed, it's index before removal shoudn't be -1.");
+        segmentId = segmentIdShort;
 
-        ushort segmentId = (ushort)(id + segmentIndex);
+        CalculateSize();
+        shift = ShiftToZero();
 
-        _segments.RemoveAt(segmentId - IdOffset);
-        RemoveIdFromPrefab(id, posInPrefab, cache);
-
-        if (segmentId == SegmentCount + IdOffset)
-        {
-            return true;
-        }
-
-        DecreaseAfter((ushort)(segmentId + 1), 1);
-
-        if (shift != int3.Zero)
-        {
-            if (keepInPlace)
-            {
-                ShiftPrefabRemovedSegment(prefab, posInPrefab, -shift, false, cache);
-            }
-            else
-            {
-                cache?.MovePositions(shift);
-            }
-        }
+        
 
         return true;
     }
@@ -319,6 +298,17 @@ public sealed class ListPrefab
         }
     }
 
+
+    private void CalculateSize()
+    {
+        Size = int3.Zero;
+
+        foreach (var pos in _segments.Keys)
+        {
+            Size = int3.Max(Size, pos + int3.One);
+        }
+    }
+
     private int3 ShiftToZero()
     {
         var minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
@@ -326,11 +316,6 @@ public sealed class ListPrefab
         foreach (var pos in _segments.Keys)
         {
             minPos = int3.Min(minPos, pos);
-        }
-
-        if (minPos == int3.Zero)
-        {
-            return int3.Zero;
         }
 
         for (int z = minPos.Z; z < MaxSize; z++)
@@ -349,6 +334,8 @@ public sealed class ListPrefab
                 }
             }
         }
+
+        Size -= minPos;
 
         return minPos;
     }
