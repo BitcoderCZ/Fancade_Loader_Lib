@@ -748,6 +748,16 @@ public readonly struct NodeHandle : IEquatable<NodeHandle>
     internal readonly ushort _graphId;
     internal readonly ushort _index;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NodeHandle"/> struct.
+    /// </summary>
+    /// <param name="graphId">Id of the graph the node belongs to.</param>
+    /// <param name="index">Index of the node in the graph.</param>
+    public NodeHandle(int graphId, int index)
+        : this(checked((ushort)graphId), checked((ushort)index))
+    {
+    }
+
     internal NodeHandle(ushort graphId, ushort index)
     {
         _graphId = graphId;
@@ -761,9 +771,9 @@ public readonly struct NodeHandle : IEquatable<NodeHandle>
     public int GraphId => _graphId;
 
     /// <summary>
-    /// Gets the index of the node in <see cref="CodeGraph"/>.
+    /// Gets the index of the node in the graph.
     /// </summary>
-    /// <value>Index of the node in <see cref="CodeGraph"/>.</value>
+    /// <value>Index of the node in the graph.</value>
     public int Index => _index;
 
     /// <summary>Returns a value that indicates whether the 2 <see cref="NodeHandle"/>s are equal.</summary>
