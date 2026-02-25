@@ -6,6 +6,7 @@ using BitcoderCZ.Fancade.Editing.Scripting;
 using BitcoderCZ.Fancade.Editing.Scripting.Emitters;
 using BitcoderCZ.Fancade.Editing.Scripting.Positioners;
 using BitcoderCZ.Fancade.Editing.Scripting.Settings;
+using BitcoderCZ.Fancade.Editing.Utils;
 using BitcoderCZ.Fancade.Raw;
 using BitcoderCZ.Fancade.Runtime;
 using BitcoderCZ.Fancade.Runtime.Simulated;
@@ -19,8 +20,17 @@ using static BitcoderCZ.Fancade.Editing.Scripting.CodeWriter.Expressions;
     var level = Prefab.CreateLevel(0, "A");
     prefabs.AddPrefab(level);
 
+    var a = new Variable("a", SignalType.Float);
+
     var writer = new CodeWriter(new CodeGraph.Builder());
-    writer.Inspect(BreakVector(Vector(Vector3.One)).X);
+    writer.SetVariable(List(Variable(a), Number(5), SignalType.Float), Number(1f), SignalType.Float);
+    writer.SetVariable(List(Variable(a), Number(0), SignalType.Float), Vector(new Vector3(1, 2, 3)), SignalType.Vec3);
+    writer.SetVariable(List(Variable(a), Number(1), SignalType.Float), Vector(new Vector3(4, 5, 6)), SignalType.Vec3);
+
+    writer.Loop(None(), Number(6), (writer, index) =>
+    {
+        writer.Inspect(List(Variable(a), index.Wrap()));
+    });
     // writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
     // writer.Inspect(MakeVector(None(), None(), AddNumbers(None(), None())));
     // writer.Inspect(Scale(MakeVector(AddNumbers(None(), None()), AddNumbers(None(), None()), AddNumbers(None(), None())), None()));
