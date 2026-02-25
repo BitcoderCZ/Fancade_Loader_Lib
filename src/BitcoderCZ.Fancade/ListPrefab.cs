@@ -130,9 +130,9 @@ public sealed class ListPrefab
     /// <summary>
     /// Determines the index of a segment, if it was at the specified position.
     /// </summary>
-    /// <param name="key">Position of the segment.</param>
+    /// <param name="segmentPosition">Position of the segment.</param>
     /// <returns>The index of the segment if it is in bounds; otherwise, <c>-1</c>.</returns>
-    public int GetNewSegmentIndex(int3 key)
+    public int GetNewSegmentIndex(int3 segmentPosition)
     {
         int index = 0;
 
@@ -144,7 +144,7 @@ public sealed class ListPrefab
                 {
                     var pos = new byte3(x, y, z);
 
-                    if (pos == key)
+                    if (pos == segmentPosition)
                     {
                         return index;
                     }
@@ -160,6 +160,21 @@ public sealed class ListPrefab
         return -1;
     }
 
+    public bool ContainsSegment(int3 position)
+        => _segments.ContainsKey((byte3)position);
+
+    /// <summary>
+    /// Adds a segment to the prefab.
+    /// </summary>
+    /// <param name="segmentPosition">Position of the segment to add.</param>
+    /// <param name="voxels">Voxels of the segment to add.</param>
+    /// <param name="overwriteBlocks">
+    /// If <see langword="true"/>, blocks will be overwritten,
+    /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, an <see cref="BlockObstructedException"/> will be thrown.
+    /// </param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabListB"/> and must represent the current state of the prefabs.</param>
+    /// <returns>Id of the added segment.</returns>
+    /// <exception cref="BlockObstructedException">Thrown when the segment cannot be added, bacause it is obstructed by a block.</exception>
     public int AddSegment(int3 segmentPosition, Voxels voxels, bool overwriteBlocks, BlockInstancesCache? cache = null)
     {
         EnsureCustom();
@@ -171,14 +186,14 @@ public sealed class ListPrefab
             ThrowHelper.ThrowArgumentException($"A segment with the specified position is already in the prefab.", nameof(segmentPosition));
         }
 
-        if (_owner is not null && !overwriteBlocks && !_owner.CanAddIdToPrefab(_id, segmentPos, cache, out var obstructionInfo))
+        if (_owner is not null && !overwriteBlocks && !_owner.CanAddIdToPrefab((ushort)_id, segmentPos, cache, out var obstructionInfo))
         {
             throw new BlockObstructedException(obstructionInfo, $"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
         }
 
         var segmentId = _id + GetNewSegmentIndex(segmentPos);
 
-        // todo: voxels
+        // todo: voxels, allocate a temp storage if not in list? set to null when added to list
         _segments.Add(segmentPos, segmentId);
 
         _owner?.AddSegmentToPrefabInternal(this, segmentId, new PrefabListB.SegmentData(_id, segmentPos, voxels), cache);
@@ -186,29 +201,83 @@ public sealed class ListPrefab
         return segmentId;
     }
 
-    public bool RemoveSegment(int3 segmentPosition, out int segmentId, out int3 shift)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="segmentPosition"></param>
+    /// <param name="voxels"></param>
+    /// <param name="overwriteBlocks"></param>
+    /// <param name="segmentId">Id of the added segment.</param>
+    /// <param name="cache"></param>
+    /// <returns></returns>
+    public bool TryAddSegmentToPrefab(int3 segmentPosition, Voxels voxels, bool overwriteBlocks, out int segmentId, BlockInstancesCache? cache)
     {
         EnsureCustom();
-        throw new NotImplementedException(); // _owner.RemoveSegmentInternal, ensure custom
-        if (_segments.Count <= 1)
+
+        var segmentPos = ValidateSegmentPosition(segmentPosition);
+
+        if (_segments.ContainsKey(segmentPos))
         {
-            segmentId = 0;
-            shift = int3.Zero;
+            ThrowHelper.ThrowArgumentException($"A segment with the specified position is already in the prefab.", nameof(segmentPosition));
+        }
+
+        if (_owner is not null && !overwriteBlocks && !_owner.CanAddIdToPrefab((ushort)_id, segmentPos, cache, out _))
+        {
+            segmentId = default;
             return false;
         }
 
-        bool removed = _segments.Remove(posInPrefab, out segmentId);
+        segmentId = _id + GetNewSegmentIndex(segmentPos);
 
-        if (removed)
+        // todo: voxels, allocate a temp storage if not in list? set to null when added to list
+        _segments.Add(segmentPos, segmentId);
+
+        _owner?.AddSegmentToPrefabInternal(this, segmentId, new PrefabListB.SegmentData(_id, segmentPos, voxels), cache);
+
+        return true;
+    }
+
+    public bool RemoveSegment(int3 segmentPosition, bool keepInPlace = true, BlockInstancesCache? cache = null)
+        => RemoveSegment(segmentPosition, out _, out _, keepInPlace, cache);
+
+    public bool RemoveSegment(int3 segmentPosition, out int segmentId, out int3 shift, bool keepInPlace = true, BlockInstancesCache? cache = null)
+    {
+        EnsureCustom();
+        throw new NotImplementedException(); // _owner.RemoveSegmentInternal, ensure custom
+ 
+        var segmentIndex = prefab.IndexOf(segmentPosition);
+        if (!prefab.Remove(posInPrefab, out _, out var shift))
         {
-            shift = ShiftToZero();
-        }
-        else
-        {
-            shift = int3.Zero;
+            return false;
         }
 
-        return removed;
+        Debug.Assert(segmentIndex != -1, "Because the segment was succesfully removed, it's index before removal shoudn't be -1.");
+
+        ushort segmentId = (ushort)(id + segmentIndex);
+
+        _segments.RemoveAt(segmentId - IdOffset);
+        RemoveIdFromPrefab(id, posInPrefab, cache);
+
+        if (segmentId == SegmentCount + IdOffset)
+        {
+            return true;
+        }
+
+        DecreaseAfter((ushort)(segmentId + 1), 1);
+
+        if (shift != int3.Zero)
+        {
+            if (keepInPlace)
+            {
+                ShiftPrefabRemovedSegment(prefab, posInPrefab, -shift, false, cache);
+            }
+            else
+            {
+                cache?.MovePositions(shift);
+            }
+        }
+
+        return true;
     }
 
     public int CopySegmentsTo(Span<KeyValuePair<byte3, int>> dest)

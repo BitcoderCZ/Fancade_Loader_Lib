@@ -12,9 +12,9 @@ internal readonly struct BlockObstructionInfo
     public readonly int3 PrefabPosition;
     public readonly int3 ObstructedPosition;
 
-    public BlockObstructionInfo(int prefabName, int3 position, int3 obstructedPosition)
+    public BlockObstructionInfo(int prefabId, int3 position, int3 obstructedPosition)
     {
-        PrefabId = prefabName;
+        PrefabId = prefabId;
         PrefabPosition = position;
         ObstructedPosition = obstructedPosition;
     }

@@ -183,8 +183,16 @@ public interface IBlockData
     /// </summary>
     /// <typeparam name="TAction">Type of the action.</typeparam>
     /// <param name="action">An action to execute at every non air positon.</param>
-    void EnumerateNonEmptyBlocks<TAction>(TAction action)
+    void EnumerateNonEmptyBlocks<TAction>(ref TAction action)
         where TAction : IRefValueAction<ushort, int3>;
+
+    /// <summary>
+    /// Enumerates all blocks, ignoring empty/air.
+    /// </summary>
+    /// <typeparam name="TFunc">Type of the action.</typeparam>
+    /// <param name="function">A function to execute at every non air positon; return <see langword="true"/> to break.</param>
+    void EnumerateNonEmptyBlocksWithBreak<TFunc>(ref TFunc function)
+        where TFunc : IRefValueFunc<ushort, int3, bool>;
 
     /// <summary>
     /// Materializes the contents of this <see cref="IBlockData"/> as an <see cref="Array3D{T}"/>.

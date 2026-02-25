@@ -154,7 +154,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
         uint count = reader.ReadUInt32();
         ushort idOffset = reader.ReadUInt16();
 
-        RawPrefab[] rawPrefabs = new RawPrefab[count];
+        var rawPrefabs = new RawPrefab[count];
 
         for (int i = 0; i < count; i++)
         {
@@ -755,13 +755,13 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 {
                     for (int x = 0; x < prefab.Blocks.Size.X; x++)
                     {
-                        int3 pos = new int3(x, y, z);
+                        var pos = new int3(x, y, z);
 
                         if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
                             if (prefab.Blocks.GetBlock(pos + offset) != 0)
                             {
-                                obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
+                                obstructionInfo = new BlockObstructionInfo(prefab.Id, pos, pos + offset);
                                 return false;
                             }
                         }
@@ -803,7 +803,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 {
                     for (int x = 0; x < prefab.Blocks.Size.X; x++)
                     {
-                        int3 pos = new int3(x, y, z);
+                        var pos = new int3(x, y, z);
 
                         if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
@@ -811,7 +811,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                             {
                                 if (prefab.Blocks.GetBlock(pos + offset) != 0)
                                 {
-                                    obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
+                                    obstructionInfo = new BlockObstructionInfo(prefab.Id, pos, pos + offset);
                                     return false;
                                 }
                             }
@@ -841,7 +841,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 {
                     for (int x = 0; x < prefab.Blocks.Size.X; x++)
                     {
-                        int3 pos = new int3(x, y, z);
+                        var pos = new int3(x, y, z);
 
                         if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
@@ -881,7 +881,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 {
                     for (int x = 0; x < prefab.Blocks.Size.X; x++)
                     {
-                        int3 pos = new int3(x, y, z);
+                        var pos = new int3(x, y, z);
 
                         if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
                         {
@@ -959,7 +959,7 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 {
                     for (int x = 0; x < item.Blocks.Size.X; x++)
                     {
-                        int3 pos = new int3(x, y, z);
+                        var pos = new int3(x, y, z);
 
                         if (item.Blocks.GetBlockUnchecked(pos) == prefab.Id)
                         {
@@ -1000,7 +1000,8 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 prefabsToChangeId.Add(prefabId);
             }
 
-            prefab.Blocks.EnumerateNonEmptyBlocks(new IncreaseAfterAction(id, amount));
+            var action = new IncreaseAfterAction(id, amount);
+            prefab.Blocks.EnumerateNonEmptyBlocks(ref action);
         }
 
         foreach (ushort prefabId in prefabsToChangeId.OrderByDescending(item => item))
@@ -1037,7 +1038,8 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
                 prefabsToChangeId.Add(prefabId);
             }
 
-            prefab.Blocks.EnumerateNonEmptyBlocks(new DecreaseAfterAction(id, amount));
+            var action = new DecreaseAfterAction(id, amount);
+            prefab.Blocks.EnumerateNonEmptyBlocks(ref action);
         }
 
         foreach (ushort prefabId in prefabsToChangeId.OrderBy(item => item))

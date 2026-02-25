@@ -270,19 +270,45 @@ public class ArrayBlockData : IBlockData
     }
 
     /// <inheritdoc/>
-    public void EnumerateNonEmptyBlocks<TAction>(TAction action)
+    public void EnumerateNonEmptyBlocks<TAction>(ref TAction action)
         where TAction : IRefValueAction<ushort, int3>
     {
         var array = Array;
         var arr = array.Array;
+        var actionLocal = action;
         for (var i = 0; i < arr.Length; i++)
         {
             ref ushort block = ref arr[i];
             if (block != 0)
             {
-                action.Invoke(ref block, array.Index(i));
+                actionLocal.Invoke(ref block, array.Index(i));
             }
         }
+
+        action = actionLocal;
+    }
+
+    /// <inheritdoc/>
+    public void EnumerateNonEmptyBlocksWithBreak<TFunc>(ref TFunc function)
+        where TFunc : IRefValueFunc<ushort, int3, bool>
+    {
+        var array = Array;
+        var arr = array.Array;
+        var functionLocal = function;
+        for (var i = 0; i < arr.Length; i++)
+        {
+            ref ushort block = ref arr[i];
+            if (block != 0)
+            {
+                if (functionLocal.Invoke(ref block, array.Index(i)))
+                {
+                    function = functionLocal;
+                    return;
+                }
+            }
+        }
+
+        function = functionLocal;
     }
 
     /// <inheritdoc/>
@@ -307,7 +333,7 @@ public class ArrayBlockData : IBlockData
         int maxY = int.MaxValue;
         int maxZ = int.MaxValue;
 
-        int3 scanPos = Size - int3.One;
+        var scanPos = Size - int3.One;
 
         while (true)
         {
@@ -317,7 +343,7 @@ public class ArrayBlockData : IBlockData
                 {
                     for (int z = 0; z <= scanPos.Z; z++)
                     {
-                        int3 pos = new int3(scanPos.X, y, z);
+                        var pos = new int3(scanPos.X, y, z);
                         Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
 
                         if (Array.GetUnchecked(pos) != 0)
@@ -336,7 +362,7 @@ public class ArrayBlockData : IBlockData
                 {
                     for (int z = 0; z <= scanPos.Z; z++)
                     {
-                        int3 pos = new int3(x, scanPos.Y, z);
+                        var pos = new int3(x, scanPos.Y, z);
                         Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
 
                         if (Array.GetUnchecked(pos) != 0)
@@ -355,7 +381,7 @@ public class ArrayBlockData : IBlockData
                 {
                     for (int y = 0; y <= scanPos.Y; y++)
                     {
-                        int3 pos = new int3(x, y, scanPos.Z);
+                        var pos = new int3(x, y, scanPos.Z);
                         Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
 
                         if (Array.GetUnchecked(pos) != 0)
@@ -422,7 +448,7 @@ public class ArrayBlockData : IBlockData
         int minY = int.MinValue;
         int minZ = int.MinValue;
 
-        int3 scanPos = int3.Zero;
+        var scanPos = int3.Zero;
 
         while (true)
         {
@@ -432,7 +458,7 @@ public class ArrayBlockData : IBlockData
                 {
                     for (int z = scanPos.Z; z < Size.Z; z++)
                     {
-                        int3 pos = new int3(scanPos.X, y, z);
+                        var pos = new int3(scanPos.X, y, z);
                         Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
 
                         if (Array.GetUnchecked(pos) != 0)
@@ -451,7 +477,7 @@ public class ArrayBlockData : IBlockData
                 {
                     for (int z = scanPos.Z; z < Size.Z; z++)
                     {
-                        int3 pos = new int3(x, scanPos.Y, z);
+                        var pos = new int3(x, scanPos.Y, z);
                         Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
 
                         if (Array.GetUnchecked(pos) != 0)
@@ -470,7 +496,7 @@ public class ArrayBlockData : IBlockData
                 {
                     for (int y = scanPos.Y; y < Size.Y; y++)
                     {
-                        int3 pos = new int3(x, y, scanPos.Z);
+                        var pos = new int3(x, y, scanPos.Z);
                         Debug.Assert(InBounds(pos), $"{nameof(pos)} should be in bounds.");
 
                         if (Array.GetUnchecked(pos) != 0)
@@ -485,7 +511,7 @@ public class ArrayBlockData : IBlockData
         endZ:
             if (minX != int.MinValue && minY != int.MinValue && minZ != int.MinValue)
             {
-                int3 minPos = new int3(minX, trimY ? minY : 0, minZ);
+                var minPos = new int3(minX, trimY ? minY : 0, minZ);
 
                 if (minPos == int3.Zero)
                 {
@@ -692,7 +718,7 @@ public class ArrayBlockData : IBlockData
         {
             for (int y = startY; y != endY; y += stepY)
             {
-                int3 pos = new int3(0, y, z);
+                var pos = new int3(0, y, z);
                 int index = Index(pos + min);
                 System.Array.Copy(arr, index, arr, Index(pos + dest), moveSize.X);
 
@@ -760,7 +786,7 @@ public class ArrayBlockData : IBlockData
         {
             for (int y = startY; y != endY; y += stepY)
             {
-                int3 pos = new int3(0, y, z);
+                var pos = new int3(0, y, z);
                 int srcIndex = Index(pos + min);
                 int destIndex = Index(pos + dest);
 

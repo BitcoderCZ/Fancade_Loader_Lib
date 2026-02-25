@@ -359,12 +359,12 @@ public sealed class PrefabListB
     /// If <see langword="true"/>, block overwritting is allowed,
     /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, <see langword="false"/> is returned.
     /// </param>
-    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabListB"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if <paramref name="segmentPosition"/> can be added to the prefab; otherwise <see langword="false"/>.</returns>
     public bool CanAddSegmentToPrefab(int id, int3 segmentPosition, bool overwriteBlocks, BlockInstancesCache? cache = null)
         => TryGetPrefab(id, out var prefab) &&
-            (overwriteBlocks || CanAddIdToPrefab(id, segmentPosition, cache, out _)) &&
-            !prefab.ContainsKey(segmentPosition);
+            (overwriteBlocks || CanAddIdToPrefab((ushort)id, segmentPosition, cache, out _)) &&
+            !prefab.ContainsSegment(segmentPosition);
 
     /// <summary>
     /// Adds a segment to a prefab.
@@ -376,23 +376,15 @@ public sealed class PrefabListB
     /// If <see langword="true"/>, blocks will be overwritten,
     /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, an <see cref="BlockObstructedException"/> will be thrown.
     /// </param>
-    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabListB"/> and must represent the current state of the prefabs.</param>
+    /// <returns>Id of the added segment.</returns>
+    /// <exception cref="BlockObstructedException">Thrown when the segment cannot be added, bacause it is obstructed by a block.</exception>
+    /// <exception cref="KeyNotFoundException">Thrown when the list does not contain the prefab with the specified id.</exception>
     public int AddSegmentToPrefab(int prefabId, int3 segmentPosition, Voxels voxels, bool overwriteBlocks, BlockInstancesCache? cache = null)
     {
         var prefab = GetPrefab(prefabId);
 
         return prefab.AddSegment(segmentPosition, voxels, overwriteBlocks, cache);
-    }
-
-    internal void AddSegmentToPrefabInternal(ListPrefab prefab, int segmentId, SegmentData value, BlockInstancesCache? cache)
-    {
-        if (!IsLastPrefab(prefab))
-        {
-            ShiftBlockIds(segmentId, 1);
-        }
-
-        _segments[segmentId] = value
-        AddIdToPrefab(prefab._id, value.PosInPrefab, segmentId, cache);
     }
 
     /// <summary>
@@ -406,15 +398,47 @@ public sealed class PrefabListB
     /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, <see langword="false"/> is returned.
     /// </param>
     /// <param name="segmentId">Id of the added segment.</param>
-    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabListB"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if the segment was added to the prefab; otherwise <see langword="false"/>.</returns>
+    /// <exception cref="KeyNotFoundException">Thrown when the list does not contain the prefab with the specified id.</exception>
     public bool TryAddSegmentToPrefab(int prefabId, int3 segmentPosition, Voxels voxels, bool overwriteBlocks, out int segmentId, BlockInstancesCache? cache = null)
     {
         EnsureCustom(prefabId);
 
         var prefab = GetPrefab(prefabId);
 
-        prefab.TryAddSegmentToPrefab(prefabId, segmentPosition, voxels, overwriteBlocks, cache);
+        return prefab.TryAddSegmentToPrefab(segmentPosition, voxels, overwriteBlocks, out segmentId, cache);
+    }
+
+    /// <summary>
+    /// Removes a segment from a prefab.
+    /// </summary>
+    /// <param name="prefabId">Id of the prefab.</param>
+    /// <param name="segmentPosition">Position of the segment to remove.</param>
+    /// <param name="keepInPlace">
+    /// If <see langword="true"/>, the prefab will be moved back, keeping the position the same;
+    /// if <see langword="false"/>, the prefab may "move" (segments stay in the same place, but the postion increases).
+    /// </param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    /// <returns><see langword="true"/> if the segment was removed from the prefab; otherwise <see langword="false"/>.</returns>
+    public bool RemoveSegmentFromPrefab(int prefabId, int3 segmentPosition, bool keepInPlace = true, BlockInstancesCache? cache = null)
+        => RemoveSegmentFromPrefab(prefabId, segmentPosition, out _, out _, keepInPlace, cache);
+
+    /// <summary>
+    /// Removes a segment from a prefab.
+    /// </summary>
+    /// <param name="prefabId">Id of the prefab.</param>
+    /// <param name="segmentPosition">Position of the segment to remove.</param>
+    /// <param name="keepInPlace">
+    /// If <see langword="true"/>, the prefab will be moved back, keeping the position the same;
+    /// if <see langword="false"/>, the prefab may "move" (segments stay in the same place, but the postion increases).
+    /// </param>
+    /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
+    /// <returns><see langword="true"/> if the segment was removed from the prefab; otherwise <see langword="false"/>.</returns>
+    public bool RemoveSegmentFromPrefab(int prefabId, int3 segmentPosition, out int segmentId, out int3 shift, bool keepInPlace = true, BlockInstancesCache? cache = null)
+    {
+        var prefab = GetPrefab(prefabId);
+        return prefab.RemoveSegment(segmentPosition, out segmentId, out shift, keepInPlace, cache);
     }
 
     /// <summary>
@@ -457,6 +481,68 @@ public sealed class PrefabListB
     internal void Grow(int totalSegmentCapacity)
         => TotalSegmentCapacity = GetNewCapacity(totalSegmentCapacity);
 
+    internal void AddSegmentToPrefabInternal(ListPrefab prefab, int segmentId, SegmentData value, BlockInstancesCache? cache)
+    {
+        if (!IsLastPrefab(prefab))
+        {
+            ShiftBlockIds(segmentId, 1);
+        }
+
+        _segments[segmentId] = value;
+        AddIdToPrefab((ushort)prefab._id, value.PosInPrefab, (ushort)segmentId, cache);
+    }
+
+    internal bool RemovePrefabFromBlocks(Prefab prefab, BlockInstancesCache? cache = null)
+    {
+        Debug.Assert(cache is null || cache.BlockId == prefab.Id, "The cache should be for the prefab.");
+
+        Debug.Assert(prefab.Count <= 4 * 4 * 4, "prefab.Count should be smaller that it's max size.");
+        Span<int3> offsets = stackalloc int3[4 * 4 * 4];
+
+        int len = 0;
+        foreach (var offset in prefab.Keys)
+        {
+            offsets[len++] = offset;
+        }
+
+        offsets = offsets[..len];
+
+        return RemoveIdsFromPrefab(prefab.Id, offsets, cache);
+    }
+
+    internal bool RemoveIdsFromPrefab(ushort prefabId, ReadOnlySpan<int3> offsets, BlockInstancesCache? cache)
+    {
+        if (cache is not null)
+        {
+            cache.RemoveBlocks(offsets);
+            return !cache.IsEmpty;
+        }
+
+        bool found = false;
+
+        foreach (var prefab in _prefabs)
+        {
+            if (prefab is null)
+            {
+                continue;
+            }
+
+            unsafe
+            {
+                fixed (int3* offsetsPtr = offsets)
+                {
+                    var action = new RemoveIdsFromPrefabAction(prefabId, prefab.Blocks, offsetsPtr, offsets.Length);
+                    prefab.Blocks.EnumerateNonEmptyBlocks(ref action);
+                    if (!found)
+                    {
+                        found = action.Found;
+                    }
+                }
+            }
+        }
+
+        return found;
+    }
 
     internal bool CanAddIdToPrefab(ushort prefabId, int3 offset, BlockInstancesCache? cache, out BlockObstructionInfo obstructionInfo)
     {
@@ -465,26 +551,20 @@ public sealed class PrefabListB
             return cache.CanAddBlock(offset, out obstructionInfo);
         }
 
-        foreach (var prefab in _prefabs.Values)
+        foreach (var prefab in _prefabs)
         {
-            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+            if (prefab is null)
             {
-                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
-                {
-                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
-                    {
-                        int3 pos = new int3(x, y, z);
+                continue;
+            }
 
-                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
-                        {
-                            if (prefab.Blocks.GetBlock(pos + offset) != 0)
-                            {
-                                obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
-                                return false;
-                            }
-                        }
-                    }
-                }
+            var action = new CanAddIdToPrefabFunc(prefabId, offset, prefab.Blocks);
+            prefab.Blocks.EnumerateNonEmptyBlocksWithBreak(ref action);
+
+            if (action.ObstructionInfo is not null)
+            {
+                obstructionInfo = action.ObstructionInfo.Value;
+                return false;
             }
         }
 
@@ -492,7 +572,25 @@ public sealed class PrefabListB
         return true;
     }
 
+    internal void AddIdToPrefab(ushort prefabId, int3 offset, ushort id, BlockInstancesCache? cache)
+    {
+        if (cache is not null)
+        {
+            cache.AddBlock(this, offset, id);
+            return;
+        }
 
+        foreach (var prefab in _prefabs)
+        {
+            if (prefab is null)
+            {
+                continue;
+            }
+
+            var action = new AddIdToPrefabAction(prefabId, id, offset, prefab.Blocks, this);
+            prefab.Blocks.EnumerateNonEmptyBlocks(ref action);
+        }
+    }
 
     // todo: update - allows chaning multiple segments at a time
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -509,6 +607,7 @@ public sealed class PrefabListB
     {
         if (prefabId < StockSegmentCount)
         {
+            // todo: custom exception type
             ThrowHelper.ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be the id of a stock prefab.");
         }
     }
@@ -812,6 +911,105 @@ public sealed class PrefabListB
 
         public readonly void Dispose()
         {
+        }
+    }
+
+    private struct CanAddIdToPrefabFunc : IRefValueFunc<ushort, int3, bool>
+    {
+        private readonly ushort _prefabId;
+        private readonly int3 _offset;
+        private readonly IBlockData _blocks;
+
+        public CanAddIdToPrefabFunc(ushort prefabId, int3 offset, IBlockData blocks)
+        {
+            _prefabId = prefabId;
+            _offset = offset;
+            _blocks = blocks;
+        }
+
+        public BlockObstructionInfo? ObstructionInfo { get; private set; }
+
+        public bool Invoke(ref ushort segmentId, int3 pos)
+        {
+            if (segmentId == _prefabId)
+            {
+                if (_blocks.GetBlock(pos + _offset) != 0)
+                {
+                    ObstructionInfo = new BlockObstructionInfo(_prefabId, pos, pos + _offset);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    private readonly struct AddIdToPrefabAction : IRefValueAction<ushort, int3>
+    {
+        private readonly ushort _prefabId;
+        private readonly ushort _idToAdd;
+        private readonly int3 _offset;
+        private readonly IBlockData _blocks;
+        private readonly PrefabListB _prefabs;
+
+        public AddIdToPrefabAction(ushort prefabId, ushort idToAdd, int3 offset, IBlockData blocks, PrefabListB prefabs)
+        {
+            _prefabId = prefabId;
+            _idToAdd = idToAdd;
+            _offset = offset;
+            _blocks = blocks;
+            _prefabs = prefabs;
+        }
+
+        public readonly void Invoke(ref ushort segmentId, int3 pos)
+        {
+            if (segmentId == _prefabId)
+            {
+                ushort idOld = _blocks.GetBlock(pos + _offset);
+
+                if (idOld != 0 && _prefabs.TryGetPrefab(idOld, out var oldPrefab))
+                {
+                    var prefabPos = pos + _offset - _prefabs.GetSegment(idOld).PosInPrefab;
+
+                    foreach (var segment in oldPrefab._segments)
+                    {
+                        _blocks.SetBlock(prefabPos + segment.Key, 0);
+                    }
+                }
+
+                _blocks.SetBlock(pos + _offset, _idToAdd);
+            }
+        }
+    }
+
+    private unsafe struct RemoveIdsFromPrefabAction : IRefValueAction<ushort, int3>
+    {
+        private readonly ushort _prefabId;
+        private readonly IBlockData _blocks;
+        private readonly int3* _offsets;
+        private readonly int _offsetsLength;
+
+        public RemoveIdsFromPrefabAction(ushort prefabId, IBlockData blocks, int3* offsets, int offsetsLength)
+        {
+            _prefabId = prefabId;
+            _blocks = blocks;
+            _offsets = offsets;
+            _offsetsLength = offsetsLength;
+        }
+
+        public bool Found { get; private set; } = false;
+
+        public void Invoke(ref ushort segmentId, int3 pos)
+        {
+            if (segmentId == _prefabId)
+            {
+                Found = true;
+
+                for (int i = 0; i < _offsetsLength; i++)
+                {
+                    _blocks.SetBlock(pos + _offsets[i], 0);
+                }
+            }
         }
     }
 

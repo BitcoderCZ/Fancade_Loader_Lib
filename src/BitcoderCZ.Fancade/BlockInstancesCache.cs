@@ -189,6 +189,34 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         }
     }
 
+    internal void AddBlock(PrefabListB list, int3 offset, ushort id)
+    {
+        if (IsEmpty)
+        {
+            return;
+        }
+
+        foreach (var (prefab, positions) in _instances)
+        {
+            foreach (var pos in positions)
+            {
+                ushort idOld = prefab.Blocks.GetBlock(pos + offset);
+
+                if (idOld != 0 && list.TryGetPrefab(idOld, out var oldPrefab))
+                {
+                    int3 prefabPos = pos + offset - list.GetSegment(idOld).PosInPrefab;
+
+                    foreach (var segment in oldPrefab._segments)
+                    {
+                        prefab.Blocks.SetBlock(prefabPos + segment.Key, 0);
+                    }
+                }
+
+                prefab.Blocks.SetBlock(pos + offset, id);
+            }
+        }
+    }
+
     internal void AddBlocks(PrefabList list, ReadOnlySpan<(int3 Offset, ushort Id)> ids)
     {
         if (IsEmpty)
@@ -235,7 +263,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
             {
                 if (prefab.Blocks.GetBlock(pos + offset) != 0)
                 {
-                    obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
+                    obstructionInfo = new BlockObstructionInfo(prefab.Id, pos, pos + offset);
                     return false;
                 }
             }
@@ -261,7 +289,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
                 {
                     if (prefab.Blocks.GetBlock(pos + offset) != 0)
                     {
-                        obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
+                        obstructionInfo = new BlockObstructionInfo(prefab.Id, pos, pos + offset);
                         return false;
                     }
                 }

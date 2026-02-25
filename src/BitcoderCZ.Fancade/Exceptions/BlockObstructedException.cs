@@ -14,25 +14,25 @@ public sealed class BlockObstructedException : Exception
     /// <summary>
     /// Initializes a new instance of the <see cref="BlockObstructedException"/> class.
     /// </summary>
-    /// <param name="prefabName">Name of the prefab the obstruction was found in.</param>
+    /// <param name="prefabId">Id of the prefab the obstruction was found in.</param>
     /// <param name="prefabPosition">Position of the prefab that is obstructed.</param>
     /// <param name="obstructedPosition">Position of the obstruction.</param>
-    public BlockObstructedException(string prefabName, int3 prefabPosition, int3 obstructedPosition)
-        : this(prefabName, prefabPosition, obstructedPosition, $"Cannot place block because its position is obstructed in prefab '{prefabName}' at position '{prefabPosition}'.")
+    public BlockObstructedException(int prefabId, int3 prefabPosition, int3 obstructedPosition)
+        : this(prefabId, prefabPosition, obstructedPosition, $"Cannot place block because its position is obstructed in prefab '{prefabId}' at position '{prefabPosition}'.")
     {
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BlockObstructedException"/> class.
     /// </summary>
-    /// <param name="prefabName">Name of the prefab the obstruction was found in.</param>
+    /// <param name="prefabId">Id of the prefab the obstruction was found in.</param>
     /// <param name="prefabPosition">Position of the prefab that is obstructed.</param>
     /// <param name="obstructedPosition">Position of the obstruction.</param>
     /// <param name="message">The message that describes the error.</param>
-    public BlockObstructedException(string prefabName, int3 prefabPosition, int3 obstructedPosition, string message)
+    public BlockObstructedException(int prefabId, int3 prefabPosition, int3 obstructedPosition, string message)
         : base(message)
     {
-        PrefabName = prefabName;
+        PrefabId = prefabId;
         PrefabPosition = prefabPosition;
         ObstructedPosition = obstructedPosition;
     }
@@ -48,10 +48,10 @@ public sealed class BlockObstructedException : Exception
     }
 
     /// <summary>
-    /// Gets the name of the prefab the obstruction was found in.
+    /// Gets the id of the prefab the obstruction was found in.
     /// </summary>
-    /// <value>The name of the prefab the obstruction was found in.</value>
-    public string PrefabName { get; }
+    /// <value>The id of the prefab the obstruction was found in.</value>
+    public int PrefabId { get; }
 
     /// <summary>
     /// Gets the position of the prefab that is obstructed.
