@@ -134,6 +134,151 @@ public sealed partial class CodeGraph
 
     private static ushort GetNextGraphId()
         => (ushort)Interlocked.Increment(ref nextGraphId);
+
+    /// <summary>
+    /// A common builder interface.
+    /// </summary>
+    public interface IBuilder
+    {
+        /// <summary>
+        /// Places a new node of the specified type in the current scope.
+        /// </summary>
+        /// <param name="type">The block definition type to place.</param>
+        /// <returns>The newly created <see cref="Node"/>.</returns>
+        Node Place(BlockDef type);
+
+        /// <summary>
+        /// Places an empty node in the currently active scope.
+        /// </summary>
+        void PlaceEmptyNode();
+
+        /// <summary>
+        /// Creates a <see cref="Node.BlockRegion"/>, for placing non script blocks.
+        /// </summary>
+        /// <remarks>
+        /// Use <see cref="Node.Terminal.ObjectRelative(Node.BlockRegion, int3, byte3)"/> to reference blocks inside the <see cref="Node.BlockRegion"/>.
+        /// </remarks>
+        /// <param name="size">Size of the region to create.</param>
+        /// <returns>The created <see cref="Node.BlockRegion"/>.</returns>
+        Node.BlockRegion CreateRegion(int3 size);
+
+        /// <summary>
+        /// Adds a setting to a node.
+        /// </summary>
+        /// <param name="node">The node to set.</param>
+        /// <param name="setting">The setting to add.</param>
+        virtual void SetSetting(Node node, PrefabSetting setting)
+            => SetSetting(node.Handle, setting);
+
+        /// <summary>
+        /// Adds a setting to a node.
+        /// </summary>
+        /// <param name="handle">The node to set.</param>
+        /// <param name="setting">The setting to add.</param>
+        void SetSetting(NodeHandle handle, PrefabSetting setting);
+
+        /// <summary>
+        /// Connects a <see cref="Node.Terminal"/> to a <see cref="Node.Terminal"/>.
+        /// </summary>
+        /// <remarks>
+        /// Ignores connections if either terminal is null (<see cref="Node.Terminal.IsNull"/>).
+        /// </remarks>
+        /// <param name="from">The source <see cref="Node.Terminal"/>.</param>
+        /// <param name="to">The target <see cref="Node.Terminal"/>.</param>
+        void Connect(Node.Terminal from, Node.Terminal to);
+
+        /// <summary>
+        /// Connects a <see cref="Node.TerminalStore"/> to a <see cref="Node.Terminal"/>.
+        /// </summary>
+        /// <remarks>
+        /// Ignores "null" parameters.
+        /// </remarks>
+        /// <param name="from">The source <see cref="Node.TerminalStore"/> to connect from.</param>
+        /// <param name="to">The target <see cref="Node.Terminal"/> to connect to.</param>
+        virtual void Connect(Node.TerminalStore from, Node.Terminal to)
+        {
+            if (from.OutCount is 0 || to.IsNull)
+            {
+                return;
+            }
+
+            foreach (var terminal in from.Out)
+            {
+                Connect(terminal, to);
+            }
+        }
+
+        /// <summary>
+        /// Connects a <see cref="Node.Terminal"/> to a <see cref="Node.TerminalStore"/>.
+        /// </summary>
+        /// <remarks>
+        /// Ignores "null" parameters.
+        /// </remarks>
+        /// <param name="from">The source <see cref="Node.Terminal"/> to connect from.</param>
+        /// <param name="to">The target <see cref="Node.TerminalStore"/> to connect to.</param>
+        virtual void Connect(Node.Terminal from, Node.TerminalStore to)
+            => Connect(from, to.In);
+
+        /// <summary>
+        /// Connects a <see cref="Node.TerminalStore"/> to a <see cref="Node.TerminalStore"/>.
+        /// </summary>
+        /// <remarks>
+        /// Ignores "null" parameters.
+        /// </remarks>
+        /// <param name="from">The source <see cref="Node.TerminalStore"/> to connect from.</param>
+        /// <param name="to">The target <see cref="Node.TerminalStore"/> to connect to.</param>
+        virtual void Connect(Node.TerminalStore from, Node.TerminalStore to)
+            => Connect(from, to.In);
+
+        /// <summary>
+        /// Enters a new expression scope.
+        /// </summary>
+        void EnterExpressionScope();
+
+        /// <summary>
+        /// Exits the current expression scope.
+        /// </summary>
+        void ExitExpressionScope();
+
+        /// <summary>
+        /// Enters a new expression scope.
+        /// </summary>
+        /// <returns>A disposable that exits the scope when disposed.</returns>
+        ExpressionScopeDisposable ExpressionScope()
+            => new ExpressionScopeDisposable(this);
+
+        /// <summary>
+        /// Builds the final <see cref="CodeGraph"/> and clears the builder for reuse.
+        /// </summary>
+        /// <returns>The constructed <see cref="CodeGraph"/>.</returns>
+        CodeGraph BuildAndClear();
+
+        /// <summary>
+        /// Disposable helper to automatically exit an expression scope.
+        /// </summary>
+#pragma warning disable IDE0040 // Remove accessibility modifiers
+        public struct ExpressionScopeDisposable : IDisposable
+#pragma warning restore IDE0040 // Remove accessibility modifiers
+        {
+            private IBuilder? _builder;
+
+            internal ExpressionScopeDisposable(IBuilder builder)
+            {
+                _builder = builder;
+                _builder.EnterExpressionScope();
+            }
+
+            /// <summary>
+            /// Exits the expression scope.
+            /// </summary>
+            public void Dispose()
+            {
+                // todo: should this validate that it's existing the same scope it entered?
+                _builder?.ExitExpressionScope();
+                _builder = null;
+            }
+        }
+    }
 }
 
 /// <summary>

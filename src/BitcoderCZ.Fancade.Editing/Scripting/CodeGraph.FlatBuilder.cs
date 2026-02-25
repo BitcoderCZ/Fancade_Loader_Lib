@@ -18,7 +18,7 @@ public sealed partial class CodeGraph
     /// <summary>
     /// Builder for creating a <see cref="CodeGraph"/>, without statement scopes.
     /// </summary>
-    public sealed class FlatBuilder
+    public sealed class FlatBuilder : IBuilder
     {
         internal ushort _graphId;
 
@@ -137,6 +137,17 @@ public sealed partial class CodeGraph
             ref var node = ref AddNode();
             node = new(NodeHandle.Null, null, _expressionDepth);
             return ref node;
+        }
+
+        /// <inheritdoc/>
+        void IBuilder.PlaceEmptyNode()
+            => PlaceEmptyNode();
+
+        /// <inheritdoc/>
+        Scripting.Node IBuilder.Place(BlockDef type)
+        {
+            var node = Place(type);
+            return new Scripting.Node(node._handle._graphId, node._handle._index, node.Type!);
         }
 
         /// <summary>
@@ -371,6 +382,10 @@ public sealed partial class CodeGraph
             return new CodeGraph(graphId, nodes, rootScope, regions, connections);
         }
 
+        /// <inheritdoc/>
+        CodeGraph IBuilder.BuildAndClear()
+            => BuildAndClear(false);
+
         /// <summary>
         /// Clears the contents of the builder.
         /// </summary>
@@ -507,7 +522,7 @@ public sealed partial class CodeGraph
                 readonly get => _expressionDepth;
                 set
                 {
-                    ThrowHelper.ThrowIfNegative(value);
+                    ThrowIfNegative(value);
                     _expressionDepth = checked((ushort)value);
                 }
             }
