@@ -176,10 +176,14 @@ public sealed class ListPrefab
             throw new BlockObstructedException(obstructionInfo, $"Cannot add segment because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
         }
 
-        ushort segmentId = (ushort)(_id + GetNewSegmentIndex(segmentPos));
+        var segmentId = _id + GetNewSegmentIndex(segmentPos);
 
         // todo: voxels
         _segments.Add(segmentPos, segmentId);
+
+        _owner?.AddSegmentToPrefabInternal(this, segmentId, new PrefabListB.SegmentData(_id, segmentPos, voxels), cache);
+
+        return segmentId;
     }
 
     public bool RemoveSegment(int3 segmentPosition, out int segmentId, out int3 shift)

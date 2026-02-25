@@ -361,7 +361,7 @@ public sealed class PrefabListB
     /// </param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if <paramref name="segmentPosition"/> can be added to the prefab; otherwise <see langword="false"/>.</returns>
-    public bool CanAddSegmentToPrefab(ushort id, int3 segmentPosition, bool overwriteBlocks, BlockInstancesCache? cache = null)
+    public bool CanAddSegmentToPrefab(int id, int3 segmentPosition, bool overwriteBlocks, BlockInstancesCache? cache = null)
         => TryGetPrefab(id, out var prefab) &&
             (overwriteBlocks || CanAddIdToPrefab(id, segmentPosition, cache, out _)) &&
             !prefab.ContainsKey(segmentPosition);
@@ -377,13 +377,22 @@ public sealed class PrefabListB
     /// if <see langword="false"/>, if the segment would be placed at a position that is already occupied, an <see cref="BlockObstructedException"/> will be thrown.
     /// </param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
-    public int AddSegmentToPrefab(ushort prefabId, int3 segmentPosition, Voxels voxels, bool overwriteBlocks, BlockInstancesCache? cache = null)
+    public int AddSegmentToPrefab(int prefabId, int3 segmentPosition, Voxels voxels, bool overwriteBlocks, BlockInstancesCache? cache = null)
     {
-        EnsureCustom(prefabId);
-
         var prefab = GetPrefab(prefabId);
 
-        return prefab;
+        return prefab.AddSegment(segmentPosition, voxels, overwriteBlocks, cache);
+    }
+
+    internal void AddSegmentToPrefabInternal(ListPrefab prefab, int segmentId, SegmentData value, BlockInstancesCache? cache)
+    {
+        if (!IsLastPrefab(prefab))
+        {
+            ShiftBlockIds(segmentId, 1);
+        }
+
+        _segments[segmentId] = value
+        AddIdToPrefab(prefab._id, value.PosInPrefab, segmentId, cache);
     }
 
     /// <summary>
@@ -399,7 +408,7 @@ public sealed class PrefabListB
     /// <param name="segmentId">Id of the added segment.</param>
     /// <param name="cache">Cache of the instances of the prefab, must be created from this <see cref="PrefabList"/> and must represent the current state of the prefabs.</param>
     /// <returns><see langword="true"/> if the segment was added to the prefab; otherwise <see langword="false"/>.</returns>
-    public bool TryAddSegmentToPrefab(ushort prefabId, int3 segmentPosition, Voxels voxels, bool overwriteBlocks, out int segmentId, BlockInstancesCache? cache = null)
+    public bool TryAddSegmentToPrefab(int prefabId, int3 segmentPosition, Voxels voxels, bool overwriteBlocks, out int segmentId, BlockInstancesCache? cache = null)
     {
         EnsureCustom(prefabId);
 
@@ -447,6 +456,43 @@ public sealed class PrefabListB
 
     internal void Grow(int totalSegmentCapacity)
         => TotalSegmentCapacity = GetNewCapacity(totalSegmentCapacity);
+
+
+    internal bool CanAddIdToPrefab(ushort prefabId, int3 offset, BlockInstancesCache? cache, out BlockObstructionInfo obstructionInfo)
+    {
+        if (cache is not null)
+        {
+            return cache.CanAddBlock(offset, out obstructionInfo);
+        }
+
+        foreach (var prefab in _prefabs.Values)
+        {
+            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+            {
+                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+                {
+                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
+                    {
+                        int3 pos = new int3(x, y, z);
+
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
+                        {
+                            if (prefab.Blocks.GetBlock(pos + offset) != 0)
+                            {
+                                obstructionInfo = new BlockObstructionInfo(prefab.Name, pos, pos + offset);
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        obstructionInfo = default;
+        return true;
+    }
+
+
 
     // todo: update - allows chaning multiple segments at a time
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
