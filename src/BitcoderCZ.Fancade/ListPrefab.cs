@@ -199,7 +199,7 @@ public sealed class ListPrefab
     /// <param name="segmentId">Id of the added segment.</param>
     /// <param name="cache"></param>
     /// <returns></returns>
-    public bool TryAddSegmentToPrefab(int3 segmentPosition, Voxels voxels, bool overwriteBlocks, out int segmentId, BlockInstancesCache? cache)
+    public bool TryAddSegment(int3 segmentPosition, Voxels voxels, bool overwriteBlocks, out int segmentId, BlockInstancesCache? cache)
     {
         EnsureCustom();
 
@@ -254,7 +254,7 @@ public sealed class ListPrefab
         CalculateSize();
         shift = ShiftToZero();
 
-        
+        _owner?.RemoveSegmentFromPrefabInternal(this, segmentPosition, segmentId, shift, keepInPlace, cache);
 
         return true;
     }
@@ -297,7 +297,6 @@ public sealed class ListPrefab
             ThrowHelper.ThrowInvalidOperationException("Cannot edit a stock prefab.");
         }
     }
-
 
     private void CalculateSize()
     {

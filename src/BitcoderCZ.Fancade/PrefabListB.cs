@@ -411,7 +411,7 @@ public sealed class PrefabListB
 
         var prefab = GetPrefab(prefabId);
 
-        return prefab.TryAddSegmentToPrefab(segmentPosition, voxels, overwriteBlocks, out segmentId, cache);
+        return prefab.TryAddSegment(segmentPosition, voxels, overwriteBlocks, out segmentId, cache);
     }
 
     /// <summary>
@@ -543,6 +543,37 @@ public sealed class PrefabListB
         offsets = offsets[..len];
 
         return RemoveIdsFromPrefab((ushort)prefab._id, offsets, cache);
+    }
+
+    private void RemoveIdFromPrefab(ushort prefabId, int3 offset, BlockInstancesCache? cache)
+    {
+        if (cache is not null)
+        {
+            cache.RemoveBlock(offset);
+            return;
+        }
+
+        foreach (var prefab in _prefabs)
+        {
+            if (prefab is null)
+            {
+                continue;
+            }
+
+            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+            {
+                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+                {
+                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
+                    {
+                        if (prefab.Blocks.GetBlockUnchecked(new int3(x, y, z)) == prefabId)
+                        {
+                            prefab.Blocks.SetBlock(new int3(x, y, z) + offset, 0);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     internal bool RemoveIdsFromPrefab(ushort prefabId, ReadOnlySpan<int3> offsets, BlockInstancesCache? cache)
@@ -1014,6 +1045,14 @@ public sealed class PrefabListB
 
                 _blocks.SetBlock(pos + _offset, _idToAdd);
             }
+        }
+    }
+
+    private readonly struct RemoveIdFromPrefabAction : IRefValueAction<ushort, int3>
+    {
+        public void Invoke(ref ushort arg0, int3 arg1)
+        {
+            
         }
     }
 
