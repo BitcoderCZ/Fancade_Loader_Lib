@@ -25,6 +25,7 @@ namespace BitcoderCZ.Fancade;
 public sealed class PrefabListB
 {
     private static readonly int StockSegmentCount = Raw.RawGame.CurrentNumbStockPrefabs;
+    private static readonly int StockPrefabCount = Raw.RawGame.CurrentNumbStockGroups;
     private const int DefaultCustomCapacity = 512;
     private static readonly int DefaultCapacity = StockSegmentCount + DefaultCustomCapacity;
 
@@ -54,6 +55,12 @@ public sealed class PrefabListB
     {
         _prefabs = prefabs;
         _segments = segments;
+    }
+
+    public int TotalPrefabCount
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => StockPrefabCount + _customPrefabCount;
     }
 
     public int CustomPrefabCount
@@ -214,7 +221,7 @@ public sealed class PrefabListB
         return true;
     }
 
-    public bool TryGeSegment(int segmentId, [MaybeNullWhen(false)] out SegmentData segment)
+    public bool TryGetSegment(int segmentId, [MaybeNullWhen(false)] out SegmentData segment)
     {
         if (!SegmentIdInBounds(segmentId))
         {

@@ -106,30 +106,23 @@ public readonly struct PrefabTerminalInfo
     /// <summary>
     /// Initializes a new instance of the <see cref="PrefabTerminalInfo"/> struct from a <see cref="Prefab"/>.
     /// </summary>
-    /// <param name="prefab">The <see cref="Prefab"/> to create the <see cref="PrefabTerminalInfo"/> from.</param>
-    /// <param name="prefabList">A <see cref="PrefabList"/> used to resolve a terminal's type.</param>
+    /// <param name="prefab">The <see cref="ListPrefab"/> to create the <see cref="PrefabTerminalInfo"/> from.</param>
+    /// <param name="prefabList">A <see cref="PrefabListB"/> used to resolve a terminal's type.</param>
     /// <returns>The <see cref="PrefabTerminalInfo"/> created from <paramref name="prefab"/>.</returns>
-    public static PrefabTerminalInfo Create(Prefab prefab, PrefabList prefabList)
+    public static PrefabTerminalInfo Create(ListPrefab prefab, PrefabListB prefabList)
         => Create(prefab, id =>
         {
-            Prefab? prefab;
-            if (prefabList.TryGetSegment(id, out var segment))
-            {
-                return prefabList.TryGetPrefab(segment.PrefabId, out prefab) ? prefab : null;
-            }
-
-            var stockPrefabs = StockBlocks.PrefabList;
-            return stockPrefabs.TryGetSegment(id, out segment) && stockPrefabs.TryGetPrefab(segment.PrefabId, out prefab) ? prefab : null;
+            return prefabList.TryGetSegment(id, out var segment) && prefabList.TryGetPrefab(segment.PrefabId, out var prefab) ? prefab : null;
         });
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PrefabTerminalInfo"/> struct from a <see cref="Prefab"/>.
+    /// Initializes a new instance of the <see cref="PrefabTerminalInfo"/> struct from a <see cref="ListPrefab"/>.
     /// </summary>
-    /// <param name="prefab">The <see cref="Prefab"/> to create the <see cref="PrefabTerminalInfo"/> from.</param>
-    /// <param name="getPrefab">Gets a <see cref="Prefab"/>, from a segment id.</param>
+    /// <param name="prefab">The <see cref="ListPrefab"/> to create the <see cref="PrefabTerminalInfo"/> from.</param>
+    /// <param name="getPrefab">Gets a <see cref="ListPrefab"/>, from a segment id.</param>
     /// <returns>The <see cref="PrefabTerminalInfo"/> created from <paramref name="prefab"/>.</returns>
     // todo: is this actually necesary, or is CreateFromSettingsOnly enough
-    public static PrefabTerminalInfo Create(Prefab prefab, Func<ushort, Prefab?> getPrefab)
+    public static PrefabTerminalInfo Create(ListPrefab prefab, Func<ushort, ListPrefab?> getPrefab)
     {
         ImmutableArray<TerminalInfo>.Builder infoBuilder = ImmutableArray.CreateBuilder<TerminalInfo>(2);
 
@@ -208,27 +201,27 @@ public readonly struct PrefabTerminalInfo
     /// </summary>
     /// <param name="prefabs">The <see cref="Prefab"/>s to create the <see cref="FrozenDictionary{TKey, TValue}"/> from.</param>
     /// <returns>The <see cref="FrozenDictionary{TKey, TValue}"/> created from <paramref name="prefabs"/>.</returns>
-    public static FrozenDictionary<ushort, PrefabTerminalInfo> Create(PrefabList prefabs)
+    public static FrozenDictionary<int, PrefabTerminalInfo> Create(PrefabListB prefabs)
     {
-        Dictionary<ushort, PrefabTerminalInfo> terminalInfos = new(prefabs.PrefabCount);
+        Dictionary<int, PrefabTerminalInfo> terminalInfos = new(prefabs.TotalPrefabCount);
 
-        foreach (var prefab in prefabs)
+        foreach (var (prefabId, prefab) in prefabs.AllPrefabs)
         {
-            terminalInfos.Add(prefab.Id, Create(prefab, prefabs));
+            terminalInfos.Add(prefabId, Create(prefab, prefabs));
         }
 
         return terminalInfos.ToFrozenDictionary();
     }
 
     /// <summary>
-    /// Creates a <see cref="FrozenDictionary{TKey, TValue}"/> of prefab id to <see cref="PrefabTerminalInfo"/> for <see cref="IEnumerable{T}"/> of <see cref="Prefab"/>s.
+    /// Creates a <see cref="FrozenDictionary{TKey, TValue}"/> of prefab id to <see cref="PrefabTerminalInfo"/> for <see cref="IEnumerable{T}"/> of <see cref="ListPrefab"/>s.
     /// </summary>
-    /// <param name="prefabs">The <see cref="Prefab"/>s to create the <see cref="FrozenDictionary{TKey, TValue}"/> from.</param>
-    /// <param name="getPrefab">Gets a <see cref="Prefab"/>, from a segment id.</param>
+    /// <param name="prefabs">The <see cref="ListPrefab"/>s to create the <see cref="FrozenDictionary{TKey, TValue}"/> from.</param>
+    /// <param name="getPrefab">Gets a <see cref="ListPrefab"/>, from a segment id.</param>
     /// <returns>The <see cref="FrozenDictionary{TKey, TValue}"/> created from <paramref name="prefabs"/>.</returns>
-    public static FrozenDictionary<ushort, PrefabTerminalInfo> Create(IEnumerable<Prefab> prefabs, Func<ushort, Prefab?> getPrefab)
+    public static FrozenDictionary<int, PrefabTerminalInfo> Create(IEnumerable<ListPrefab> prefabs, Func<ushort, ListPrefab?> getPrefab)
     {
-        Dictionary<ushort, PrefabTerminalInfo> terminalInfos = prefabs.TryGetNonEnumeratedCount(out int count)
+        Dictionary<int, PrefabTerminalInfo> terminalInfos = prefabs.TryGetNonEnumeratedCount(out int count)
             ? new(count)
             : new();
 
@@ -240,7 +233,7 @@ public readonly struct PrefabTerminalInfo
         return terminalInfos.ToFrozenDictionary();
     }
 
-    private static SignalType ResolveBlockTerminalType(Prefab prefab, byte3 terminalPos, Func<ushort, Prefab?> getPrefab, int depth = 0)
+    private static SignalType ResolveBlockTerminalType(ListPrefab prefab, byte3 terminalPos, Func<ushort, ListPrefab?> getPrefab, int depth = 0)
     {
         if (depth > 6)
         {
