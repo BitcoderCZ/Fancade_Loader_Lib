@@ -26,7 +26,7 @@ public sealed class FcRandom
     /// </summary>
     public void ResetSeed()
     {
-        DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         DateTime now = DateTime.UtcNow;
         _state = (ulong)(int)(now - epoch).TotalSeconds;
     }

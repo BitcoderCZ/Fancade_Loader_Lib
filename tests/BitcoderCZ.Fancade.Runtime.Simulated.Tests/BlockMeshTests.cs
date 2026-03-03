@@ -107,7 +107,7 @@ public class BlockMeshTests
             {
                 for (int x = 0; x < Voxels.Size; x++)
                 {
-                    Voxel voxel = new Voxel(FcColor.Black, false);
+                    var voxel = new Voxel(FcColor.Black, false);
                     if (x == 7)
                     {
                         voxel.Attribs[0] = true;

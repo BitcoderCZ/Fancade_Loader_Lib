@@ -106,8 +106,8 @@ public sealed class PrefabSegmentMeshes
 
         var voxels = segment.Voxels;
 
-        int3 min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
-        int3 max = new int3(int.MinValue, int.MinValue, int.MinValue);
+        var min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+        var max = new int3(int.MinValue, int.MinValue, int.MinValue);
 
         for (int z = 0; z < 8; z++)
         {
@@ -181,7 +181,7 @@ public sealed class PrefabSegmentMeshes
                     voxelIndex = Voxels.Index(voxelPos, 0);
                     int voxelSideIndex = Voxels.Index(voxelPos, sideIndex);
 
-                    VoxelFace face = new VoxelFace(voxels.GetRawFace(voxelSideIndex));
+                    var face = new VoxelFace(voxels.GetRawFace(voxelSideIndex));
                     byte faceX = voxels.GetRawFace(voxelIndex);
                     if (face.HasGlue && faceX != 0)
                     {
@@ -227,14 +227,14 @@ public sealed class PrefabSegmentMeshes
 
     private static PrefabSegmentMesh[] ChunkVoxels(int meshCount, byte[] voxelMeshIndex, Voxels voxels)
     {
-        PrefabSegmentMesh[] meshes = new PrefabSegmentMesh[meshCount];
+        var meshes = new PrefabSegmentMesh[meshCount];
 
         Span<byte> rawVoxels = voxels.Data;
 
         Span<ulong> connectsOnSide = stackalloc ulong[6];
 
-        short3 voxelsMin = new short3(short.MaxValue, short.MaxValue, short.MaxValue);
-        short3 voxelsMax = new short3(short.MinValue, short.MinValue, short.MinValue);
+        var voxelsMin = new short3(short.MaxValue, short.MaxValue, short.MaxValue);
+        var voxelsMax = new short3(short.MinValue, short.MinValue, short.MinValue);
 
         for (int meshIndex = 0; meshIndex < meshCount; meshIndex++)
         {
@@ -254,7 +254,7 @@ public sealed class PrefabSegmentMeshes
 
                         if (voxelMeshIndex[voxelIndex] == meshIndex)
                         {
-                            VoxelFace face = new VoxelFace(voxels.GetRawFace(voxelSideIndex));
+                            var face = new VoxelFace(voxels.GetRawFace(voxelSideIndex));
                             byte faceX = voxels.GetRawFace(voxelIndex);
                             if (face.HasGlue && faceX != 0)
                             {
@@ -269,8 +269,8 @@ public sealed class PrefabSegmentMeshes
 
             int meshVoxelCount = 0;
 
-            byte3 min = new byte3(byte.MaxValue, byte.MaxValue, byte.MaxValue);
-            byte3 max = new byte3(byte.MinValue, byte.MinValue, byte.MinValue);
+            var min = new byte3(byte.MaxValue, byte.MaxValue, byte.MaxValue);
+            var max = new byte3(byte.MinValue, byte.MinValue, byte.MinValue);
             for (int i = 0; i < Voxels.Size * Voxels.Size * Voxels.Size; i++)
             {
                 if (voxels.GetRawFace(i) != 0 && voxelMeshIndex[i] == meshIndex)

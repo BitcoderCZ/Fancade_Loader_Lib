@@ -14,7 +14,7 @@ public class GameTests
         string author = new string('b', 255);
         string description = new string('c', 255);
 
-        Game game = new Game(name, author, description, new());
+        var game = new Game(name, author, description, new());
 
         await Assert.That(game.Name).IsEqualTo(name);
         await Assert.That(game.Author).IsEqualTo(author);
@@ -66,7 +66,7 @@ public class GameTests
     {
         string description = string.Empty;
 
-        Game game = new Game("a", "a", description, new());
+        var game = new Game("a", "a", description, new());
 
         await Assert.That(game.Description).IsEqualTo(description);
     }
@@ -148,7 +148,7 @@ public class GameTests
     {
         var game = new Game("A", "B", "C", new());
 
-        ArrayBlockData blocks = new ArrayBlockData();
+        var blocks = new ArrayBlockData();
         blocks.SetBlock(new int3(1, 1, 1), 5);
 
         game.Prefabs.AddPrefab(new Prefab(RawGame.CurrentNumbStockPrefabs, "ABC", PrefabCollider.Box, PrefabType.Script, FcColor.Gray4, true, blocks, [new(int3.One, PrefabSettings.Empty.Add(new(5, SettingType.Int, 10)))], [new Connection(int3.One, int3.One * 2, byte3.Zero, byte3.One)], [new PrefabSegment(RawGame.CurrentNumbStockPrefabs, int3.Zero)]));
@@ -189,7 +189,7 @@ public class GameTests
     {
         var game = new Game("A", "B", "C", new());
 
-        ArrayBlockData blocks = new ArrayBlockData();
+        var blocks = new ArrayBlockData();
         blocks.SetBlock(new int3(1, 1, 1), 5);
 
         game.Prefabs.AddPrefab(new Prefab(RawGame.CurrentNumbStockPrefabs, "ABC", PrefabCollider.Box, PrefabType.Script, FcColor.Gray4, true, blocks, [new(int3.One, PrefabSettings.Empty.Add(new(5, SettingType.Int, 10)))], [new Connection(int3.One, int3.One * 2, byte3.Zero, byte3.One)], [new PrefabSegment(RawGame.CurrentNumbStockPrefabs, int3.Zero)]));
@@ -200,7 +200,7 @@ public class GameTests
 
             ms.Position = 0;
 
-            Game loadedGame = Game.LoadCompressed(ms);
+            var loadedGame = Game.LoadCompressed(ms);
 
             await Assert.That(loadedGame.Name).IsEqualTo(game.Name);
             await Assert.That(loadedGame.Author).IsEqualTo(game.Author);

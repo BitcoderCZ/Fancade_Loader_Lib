@@ -93,7 +93,7 @@ public class Array3DTests
     [Arguments(9, 9, 9)]
     public async Task InBounds_PosInBounds_ReturnsTrue(int x, int y, int z)
     {
-        int3 pos = new int3(x, y, z);
+        var pos = new int3(x, y, z);
 
         var array = new Array3D(int3.One * 10);
 
@@ -109,7 +109,7 @@ public class Array3DTests
     [Arguments(0, 0, 10)]
     public async Task InBounds_PosNotInBounds_ReturnsFalse(int x, int y, int z)
     {
-        int3 pos = new int3(x, y, z);
+        var pos = new int3(x, y, z);
 
         var array = new Array3D(int3.One * 10);
 
@@ -124,7 +124,7 @@ public class Array3DTests
     [Arguments(3, 3, 3, 4 * 4 * 4 - 1)]
     public async Task Index_int3_ReturnsCorrectIndex(int x, int y, int z, int expected)
     {
-        int3 pos = new int3(x, y, z);
+        var pos = new int3(x, y, z);
 
         var array = new Array3D(int3.One * 4);
 
@@ -139,7 +139,7 @@ public class Array3DTests
     [Arguments(4 * 4 * 4 - 1, 3, 3, 3)]
     public async Task Index_int_ReturnsCorrectIndex(int index, int expectedX, int expectedY, int expectedZ)
     {
-        int3 expected = new int3(expectedX, expectedY, expectedZ);
+        var expected = new int3(expectedX, expectedY, expectedZ);
 
         var array = new Array3D(int3.One * 4);
 
@@ -155,7 +155,7 @@ public class Array3DTests
     [Arguments(0, 0, 10)]
     public async Task Get_PosOutOfBounds_Throws(int x, int y, int z)
     {
-        int3 pos = new int3(x, y, z);
+        var pos = new int3(x, y, z);
 
         var array = new Array3D(int3.One * 10);
 
@@ -169,7 +169,7 @@ public class Array3DTests
         [MatrixRange<ushort>(0, 3)] int y,
         [MatrixRange<ushort>(0, 3)] int z)
     {
-        int3 pos = new int3(x, y, z);
+        var pos = new int3(x, y, z);
 
         var array = new Array3D(int3.One * 4);
 
@@ -193,7 +193,7 @@ public class Array3DTests
     [Arguments(20, 20, 20)]
     public async Task Resize_Resizes(int x, int y, int z)
     {
-        int3 size = new int3(x, y, z);
+        var size = new int3(x, y, z);
 
         var array = new Array3D(int3.One * 10);
 
@@ -205,7 +205,7 @@ public class Array3DTests
     [Test]
     public async Task Resize_KeepsData()
     {
-        int3 size = new int3(2, 3, 4);
+        var size = new int3(2, 3, 4);
 
         var array = new Array3D(size);
 
@@ -239,7 +239,7 @@ public class Array3DTests
     [Test]
     public async Task Clear_Clears()
     {
-        int3 size = new int3(4, 4, 4);
+        var size = new int3(4, 4, 4);
 
         var array = new Array3D(size);
 
@@ -278,7 +278,7 @@ public class Array3DTests
             {
                 for (int z = -1; z <= 2; z++)
                 {
-                    int3 size = new int3(x, y, z);
+                    var size = new int3(x, y, z);
 
                     if (size.LengthSquared > 0 && (size.X == 0 || size.Y == 0 || size.Z == 0))
                     {

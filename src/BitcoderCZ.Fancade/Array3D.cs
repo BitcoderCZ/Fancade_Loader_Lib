@@ -309,14 +309,14 @@ public class Array3D<T> : IReadOnly3DArray<T>
             ThrowArgumentOutOfRangeException(nameof(newSize));
         }
 
-        T[] newArray = new T[newSize.X * newSize.Y * newSize.Z];
+        var newArray = new T[newSize.X * newSize.Y * newSize.Z];
         int newLayerSize = newSize.X * newSize.Y;
         int minX = Math.Min(Size.X, newSize.X);
         for (int z = 0; z < newSize.Z; z++)
         {
             for (int y = 0; y < newSize.Y; y++)
             {
-                int3 pos = new int3(0, y, z);
+                var pos = new int3(0, y, z);
 
                 if (InBounds(pos) && InBoundsNew(y, z))
                 {

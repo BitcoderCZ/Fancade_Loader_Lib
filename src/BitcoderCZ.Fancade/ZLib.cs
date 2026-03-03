@@ -31,15 +31,15 @@ public static class Zlib
         ThrowIfNull(to, nameof(to));
 
 #if NET6_0_OR_GREATER
-        using ZLibStream zlib = new ZLibStream(from, CompressionMode.Decompress, true);
+        using var zlib = new ZLibStream(from, CompressionMode.Decompress, true);
 
         zlib.CopyTo(to);
 #else
 #pragma warning disable CA2000 // ZInputStream always disposes the underlying stream, which isn't desirelable, so dispose isn't called on it
-        ZInputStream zlib = new ZInputStream(from);
+        var zlib = new ZInputStream(from);
 #pragma warning restore CA2000
 
-        using MemoryStream ms = new MemoryStream();
+        using var ms = new MemoryStream();
         byte[] buffer = ArrayPool<byte>.Shared.Rent(1024 * 8);
         try
         {
@@ -87,12 +87,12 @@ public static class Zlib
             _ => CompressionLevel.Optimal,
         };
 
-        using ZLibStream zlib = new ZLibStream(to, level, true);
+        using var zlib = new ZLibStream(to, level, true);
 
         from.CopyTo(zlib);
 #else
 #pragma warning disable CA2000 // ZOutputStream always disposes the underlying stream, which isn't desirelable, so dispose isn't called on it
-        ZOutputStream zlib = new ZOutputStream(to, compressionLevel);
+        var zlib = new ZOutputStream(to, compressionLevel);
 #pragma warning restore CA2000
 
         byte[] buffer = ArrayPool<byte>.Shared.Rent(1024 * 8);

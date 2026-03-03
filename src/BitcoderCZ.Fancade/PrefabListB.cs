@@ -15,6 +15,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using static BitcoderCZ.Utils.ThrowHelper;
 
 namespace BitcoderCZ.Fancade;
 
@@ -25,6 +26,7 @@ namespace BitcoderCZ.Fancade;
 public sealed class PrefabListB
 {
     private static readonly int StockSegmentCount = Raw.RawGame.CurrentNumbStockPrefabs;
+    private static readonly int StockPrefabCount = Raw.RawGame.CurrentNumbStockGroups;
     private const int DefaultCustomCapacity = 512;
     private static readonly int DefaultCapacity = StockSegmentCount + DefaultCustomCapacity;
 
@@ -54,6 +56,12 @@ public sealed class PrefabListB
     {
         _prefabs = prefabs;
         _segments = segments;
+    }
+
+    public int TotalPrefabCount
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => StockPrefabCount + _customPrefabCount;
     }
 
     public int CustomPrefabCount
@@ -214,7 +222,7 @@ public sealed class PrefabListB
         return true;
     }
 
-    public bool TryGeSegment(int segmentId, [MaybeNullWhen(false)] out SegmentData segment)
+    public bool TryGetSegment(int segmentId, [MaybeNullWhen(false)] out SegmentData segment)
     {
         if (!SegmentIdInBounds(segmentId))
         {
@@ -503,7 +511,7 @@ public sealed class PrefabListB
     internal void RemoveSegmentFromPrefabInternal(ListPrefab prefab, int3 segmentPosition, int segmentId, int3 shift, bool keepInPlace, BlockInstancesCache? cache)
     {
         _segments[segmentId] = null!;
-        RemoveIdFromPrefab(id, posInPrefab, cache);
+        RemoveIdFromPrefab((ushort)prefab._id, segmentPosition, cache);
 
         if (segmentId == TotalSegmentCount)
         {
@@ -545,7 +553,7 @@ public sealed class PrefabListB
         return RemoveIdsFromPrefab((ushort)prefab._id, offsets, cache);
     }
 
-    private void RemoveIdFromPrefab(ushort prefabId, int3 offset, BlockInstancesCache? cache)
+    internal void RemoveIdFromPrefab(ushort prefabId, int3 offset, BlockInstancesCache? cache)
     {
         if (cache is not null)
         {
@@ -560,19 +568,8 @@ public sealed class PrefabListB
                 continue;
             }
 
-            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
-            {
-                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
-                {
-                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
-                    {
-                        if (prefab.Blocks.GetBlockUnchecked(new int3(x, y, z)) == prefabId)
-                        {
-                            prefab.Blocks.SetBlock(new int3(x, y, z) + offset, 0);
-                        }
-                    }
-                }
-            }
+            var action = new RemoveIdFromPrefabAction(prefabId, offset, prefab.Blocks);
+            prefab.Blocks.EnumerateNonEmptyBlocks(ref action);
         }
     }
 
@@ -597,7 +594,7 @@ public sealed class PrefabListB
             {
                 fixed (int3* offsetsPtr = offsets)
                 {
-                    var action = new RemoveIdsFromPrefabAction(prefabId, prefab.Blocks, offsetsPtr, offsets.Length);
+                    var action = new RemoveIdsFromPrefabAction(prefabId, prefab.Blocks, new RONSpan<int3>(offsetsPtr, offsets.Length));
                     prefab.Blocks.EnumerateNonEmptyBlocks(ref action);
                     if (!found)
                     {
@@ -655,6 +652,62 @@ public sealed class PrefabListB
 
             var action = new AddIdToPrefabAction(prefabId, id, offset, prefab.Blocks, this);
             prefab.Blocks.EnumerateNonEmptyBlocks(ref action);
+        }
+    }
+
+    internal void ShiftPrefabRemovedSegment(ListPrefab prefab, int3 removed, int3 shift, bool checkForObstructions, BlockInstancesCache? cache)
+    {
+        Debug.Assert(prefab.SegmentCount <= 4 * 4 * 4, "value.Count should be smaller that it's max size.");
+
+        Span<int3> removeOffsets = stackalloc int3[4 * 4 * 4];
+        Span<(int3 Offset, ushort Id)> ids = stackalloc (int3 Offset, ushort Id)[4 * 4 * 4];
+
+        int removeLen = 0;
+        int idsLen = 0;
+
+        foreach (var (segmentPos, segmentId) in prefab._segments)
+        {
+            removeOffsets[removeLen++] = segmentPos - shift;
+            ids[idsLen++] = (segmentPos, (ushort)segmentId);
+        }
+
+        removeOffsets[removeLen++] = removed;
+
+        removeOffsets = removeOffsets[..removeLen];
+        ids = ids[..idsLen];
+
+        if (cache is not null)
+        {
+            cache.MoveBlock(removeOffsets, ids, checkForObstructions);
+            return;
+        }
+
+        if (checkForObstructions)
+        {
+            ThrowNotImplementedException();
+        }
+
+        unsafe
+        {
+#pragma warning disable SA1519 // Braces should not be omitted from multi-line child statement
+            fixed (int3* removeOffsetsPtr = removeOffsets)
+            fixed ((int3, ushort)* idsPtr = ids)
+#pragma warning restore SA1519 // Braces should not be omitted from multi-line child statement
+            {
+                var removeOffsetsSpan = new RONSpan<int3>(removeOffsetsPtr, removeOffsets.Length);
+                var idsSpan = new RONSpan<(int3 Offset, ushort Id)>(idsPtr, ids.Length);
+
+                foreach (var item in _prefabs)
+                {
+                    if (item is null)
+                    {
+                        continue;
+                    }
+
+                    var action = new ShiftPrefabRemovedSegmentAction((ushort)prefab.Id, item.Blocks, shift, removeOffsetsSpan, idsSpan);
+                    item.Blocks.EnumerateNonEmptyBlocks(ref action);
+                }
+            }
         }
     }
 
@@ -843,6 +896,7 @@ public sealed class PrefabListB
     private bool SegmentIdInBounds(int segmentId)
         => (uint)segmentId < (uint)TotalSegmentCount;
 
+    [StructLayout(LayoutKind.Auto)]
     public readonly struct PrefabEnumerable : IEnumerable<KeyValuePair<int, ListPrefab>>
     {
         private readonly ListPrefab?[] _prefabs;
@@ -866,6 +920,7 @@ public sealed class PrefabListB
             => GetEnumerator();
     }
 
+    [StructLayout(LayoutKind.Auto)]
     public readonly struct SegmentEnumerable : IEnumerable<KeyValuePair<int, SegmentData>>
     {
         private readonly SegmentData[] _segments;
@@ -889,6 +944,7 @@ public sealed class PrefabListB
             => GetEnumerator();
     }
 
+    [StructLayout(LayoutKind.Auto)]
     public struct PrefabEnumerator : IEnumerator<KeyValuePair<int, ListPrefab>>
     {
         private readonly ListPrefab?[] _prefabs;
@@ -937,6 +993,7 @@ public sealed class PrefabListB
         }
     }
 
+    [StructLayout(LayoutKind.Auto)]
     public struct SegmentEnumerator : IEnumerator<KeyValuePair<int, SegmentData>>
     {
         private readonly SegmentData[] _segments;
@@ -980,6 +1037,7 @@ public sealed class PrefabListB
         }
     }
 
+    [StructLayout(LayoutKind.Auto)]
     private struct CanAddIdToPrefabFunc : IRefValueFunc<ushort, int3, bool>
     {
         private readonly ushort _prefabId;
@@ -1010,6 +1068,7 @@ public sealed class PrefabListB
         }
     }
 
+    [StructLayout(LayoutKind.Auto)]
     private readonly struct AddIdToPrefabAction : IRefValueAction<ushort, int3>
     {
         private readonly ushort _prefabId;
@@ -1048,27 +1107,76 @@ public sealed class PrefabListB
         }
     }
 
-    private readonly struct RemoveIdFromPrefabAction : IRefValueAction<ushort, int3>
+    [StructLayout(LayoutKind.Auto)]
+    private readonly struct ShiftPrefabRemovedSegmentAction : IRefValueAction<ushort, int3>
     {
-        public void Invoke(ref ushort arg0, int3 arg1)
+        private readonly ushort _prefabId;
+        private readonly IBlockData _blocks;
+        private readonly int3 _shift;
+        private readonly RONSpan<int3> _removeOffsets;
+        private readonly RONSpan<(int3 Offset, ushort Id)> _ids;
+
+        public ShiftPrefabRemovedSegmentAction(ushort prefabId, IBlockData blocks, int3 shift, RONSpan<int3> removeOffsets, RONSpan<(int3 Offset, ushort Id)> ids)
         {
-            
+            _prefabId = prefabId;
+            _blocks = blocks;
+            _shift = shift;
+            _removeOffsets = removeOffsets;
+            _ids = ids;
+        }
+
+        public void Invoke(ref ushort segmentId, int3 segmentPos)
+        {
+            if (segmentId == _prefabId)
+            {
+                foreach (var offset in _removeOffsets)
+                {
+                    _blocks.SetBlockUnchecked(segmentPos + offset, 0);
+                }
+
+                foreach (var (offset, id) in _ids)
+                {
+                    _blocks.SetBlock(segmentPos + _shift + offset, id);
+                }
+            }
         }
     }
 
+    [StructLayout(LayoutKind.Auto)]
+    private readonly struct RemoveIdFromPrefabAction : IRefValueAction<ushort, int3>
+    {
+        private readonly ushort _prefabId;
+        private readonly int3 _offset;
+        private readonly IBlockData _blocks;
+
+        public RemoveIdFromPrefabAction(ushort prefabId, int3 offset, IBlockData blocks)
+        {
+            _prefabId = prefabId;
+            _offset = offset;
+            _blocks = blocks;
+        }
+
+        public void Invoke(ref ushort segmentId, int3 segmentPos)
+        {
+            if (segmentId == _prefabId)
+            {
+                _blocks.SetBlock(segmentPos + _offset, 0);
+            }
+        }
+    }
+
+    [StructLayout(LayoutKind.Auto)]
     private unsafe struct RemoveIdsFromPrefabAction : IRefValueAction<ushort, int3>
     {
         private readonly ushort _prefabId;
         private readonly IBlockData _blocks;
-        private readonly int3* _offsets;
-        private readonly int _offsetsLength;
+        private readonly RONSpan<int3> _offsets;
 
-        public RemoveIdsFromPrefabAction(ushort prefabId, IBlockData blocks, int3* offsets, int offsetsLength)
+        public RemoveIdsFromPrefabAction(ushort prefabId, IBlockData blocks, RONSpan<int3> offsets)
         {
             _prefabId = prefabId;
             _blocks = blocks;
             _offsets = offsets;
-            _offsetsLength = offsetsLength;
         }
 
         public bool Found { get; private set; } = false;
@@ -1079,7 +1187,7 @@ public sealed class PrefabListB
             {
                 Found = true;
 
-                for (int i = 0; i < _offsetsLength; i++)
+                for (int i = 0; i < _offsets.Length; i++)
                 {
                     _blocks.SetBlock(pos + _offsets[i], 0);
                 }

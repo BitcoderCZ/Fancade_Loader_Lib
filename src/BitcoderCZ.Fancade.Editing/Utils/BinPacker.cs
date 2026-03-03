@@ -26,7 +26,7 @@ internal static class BinPacker
             return [int3.Zero];
         }
 
-        int3[] positions = new int3[count];
+        var positions = new int3[count];
 
         int[] indices = ArrayPool<int>.Shared.Rent(count);
         long totalArea = 0;

@@ -313,18 +313,18 @@ public sealed class FcCamera
         float ndcX = ((2.0f * screenPos.X) / screen.Width) - 1.0f;
         float ndcY = 1.0f - ((2.0f * screenPos.Y) / screen.Height);
 
-        Vector4 clipNear = new Vector4(ndcX, ndcY, 0f, 1.0f);
-        Vector4 clipFar = new Vector4(ndcX, ndcY, Perspective ? 1f : 2f, 1.0f);
+        var clipNear = new Vector4(ndcX, ndcY, 0f, 1.0f);
+        var clipFar = new Vector4(ndcX, ndcY, Perspective ? 1f : 2f, 1.0f);
 
-        Vector4 worldNearH = Vector4.Transform(clipNear, WorldViewpointMatrixInverted);
-        Vector4 worldFarH = Vector4.Transform(clipFar, WorldViewpointMatrixInverted);
+        var worldNearH = Vector4.Transform(clipNear, WorldViewpointMatrixInverted);
+        var worldFarH = Vector4.Transform(clipFar, WorldViewpointMatrixInverted);
 
-        Vector3 worldNear = new Vector3(
+        var worldNear = new Vector3(
             worldNearH.X / worldNearH.W,
             worldNearH.Y / worldNearH.W,
             worldNearH.Z / worldNearH.W);
 
-        Vector3 worldFar = new Vector3(
+        var worldFar = new Vector3(
             worldFarH.X / worldFarH.W,
             worldFarH.Y / worldFarH.W,
             worldFarH.Z / worldFarH.W);
@@ -340,9 +340,9 @@ public sealed class FcCamera
     /// <returns>Position of <paramref name="worldPos"/> on the screen.</returns>
     public Vector2 WorldToScreen(Vector3 worldPos, ScreenInfo screen)
     {
-        Vector4 worldPos4 = new Vector4(worldPos, 1f);
+        var worldPos4 = new Vector4(worldPos, 1f);
 
-        Vector4 transformed = Vector4.Transform(worldPos4, WorldViewpointMatrix);
+        var transformed = Vector4.Transform(worldPos4, WorldViewpointMatrix);
 
         float screenX = (screen.Width * 0.5f) + ((transformed.X / transformed.W) * 0.5f * screen.Width);
         float screenY = (screen.Height * 0.5f) - ((transformed.Y / transformed.W) * 0.5f * screen.Height);

@@ -79,8 +79,8 @@ public struct GameMeshInfo
 
         InitStock(createMultiThreaded);
 
-        Dictionary<ushort, BlockMesh> blockMeshes = new Dictionary<ushort, BlockMesh>(stockBlockMeshes.Length + prefabs.PrefabCount);
-        PrefabSegmentMeshes[] segmentMeshes = new PrefabSegmentMeshes[stockSegmentMeshes.Length + prefabs.SegmentCount];
+        var blockMeshes = new Dictionary<ushort, BlockMesh>(stockBlockMeshes.Length + prefabs.PrefabCount);
+        var segmentMeshes = new PrefabSegmentMeshes[stockSegmentMeshes.Length + prefabs.SegmentCount];
         (int3 Min, int3 Max)[] prefabMeshBounds = new (int3, int3)[stockSegmentMeshes.Length + prefabs.SegmentCount];
 
         stockSegmentMeshes.AsSpan().CopyTo(segmentMeshes);
@@ -151,8 +151,8 @@ public struct GameMeshInfo
                     blockMeshes.Add(prefab.Id, blockMesh);
                 }
 
-                int3 min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
-                int3 max = new int3(int.MinValue, int.MinValue, int.MinValue);
+                var min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                var max = new int3(int.MinValue, int.MinValue, int.MinValue);
 
                 foreach (var (segment, segmentId) in prefab.EnumerateWithId())
                 {
@@ -204,8 +204,8 @@ public struct GameMeshInfo
                     blockMeshes.Add(prefab.Id, BlockMesh.Empty);
                 }
 
-                int3 min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
-                int3 max = new int3(int.MinValue, int.MinValue, int.MinValue);
+                var min = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                var max = new int3(int.MinValue, int.MinValue, int.MinValue);
 
                 foreach (var (segment, segmentId) in prefab.EnumerateWithId())
                 {

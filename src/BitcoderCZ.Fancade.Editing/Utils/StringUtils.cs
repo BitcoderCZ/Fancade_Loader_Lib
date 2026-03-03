@@ -48,7 +48,7 @@ internal static class StringUtils
 
         int index = 0;
 
-        List<Range> currentLine = new List<Range>(maxLength / 2);
+        var currentLine = new List<Range>(maxLength / 2);
         int currentLineLength = 0;
 
         while (index < str.Length)
@@ -60,7 +60,7 @@ internal static class StringUtils
                 spaceIndex = str.Length;
             }
 
-            Range wordRange = new Range(index, spaceIndex);
+            var wordRange = new Range(index, spaceIndex);
             int wordLength = spaceIndex - index;
             if (wordLength == 0)
             {

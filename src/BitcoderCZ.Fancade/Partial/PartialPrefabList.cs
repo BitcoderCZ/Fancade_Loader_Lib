@@ -164,7 +164,7 @@ public partial class PartialPrefabList : IEnumerable<PartialPrefab>, ICloneable
         uint count = reader.ReadUInt32();
         ushort idOffset = reader.ReadUInt16();
 
-        OldPartialPrefab[] rawPrefabs = new OldPartialPrefab[count];
+        var rawPrefabs = new OldPartialPrefab[count];
 
         for (int i = 0; i < count; i++)
         {

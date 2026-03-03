@@ -21,9 +21,14 @@ public partial class RawGame
     public static readonly ushort CurrentFileVersion = 31;
 
     /// <summary>
-    /// The current amount of segments of stock/built in prefabs in fancade.
+    /// The current amount of segments of stock/built in prefabs in fancade (<see cref="PrefabListB.SegmentData"/>).
     /// </summary>
     public static readonly ushort CurrentNumbStockPrefabs = 597;
+
+    /// <summary>
+    /// The current amount of stock/built in prefabs in fancade (<see cref="ListPrefab"/>).
+    /// </summary>
+    public static readonly ushort CurrentNumbStockGroups = 218;
 
     /// <summary>
     /// The prefabs of this game.
@@ -103,12 +108,12 @@ public partial class RawGame
     public static (ushort FileVersion, string Name, string Author, string Description) LoadInfoCompressed(Stream stream)
     {
         // decompress
-        using MemoryStream ms = new MemoryStream();
+        using var ms = new MemoryStream();
 
         Zlib.Decompress(stream, ms);
         ms.Position = 0;
 
-        using FcBinaryReader reader = new FcBinaryReader(ms);
+        using var reader = new FcBinaryReader(ms);
 
         ushort fileVersion = reader.ReadUInt16();
 
@@ -128,12 +133,12 @@ public partial class RawGame
     public static RawGame LoadCompressed(Stream stream, LoadOptions? options = null)
     {
         // decompress
-        using MemoryStream ms = new MemoryStream();
+        using var ms = new MemoryStream();
 
         Zlib.Decompress(stream, ms);
         ms.Position = 0;
 
-        using FcBinaryReader reader = new FcBinaryReader(ms);
+        using var reader = new FcBinaryReader(ms);
 
         return Load(reader, options);
     }
@@ -197,8 +202,8 @@ public partial class RawGame
     /// </param>
     public void SaveCompressed(Stream stream, int compressionLevel = -1)
     {
-        using (MemoryStream writerStream = new MemoryStream())
-        using (FcBinaryWriter writer = new FcBinaryWriter(writerStream))
+        using (var writerStream = new MemoryStream())
+        using (var writer = new FcBinaryWriter(writerStream))
         {
             Save(writer);
 
@@ -327,7 +332,7 @@ public partial class RawGame
                     {
                         for (int x = 0; x < blocks.Size.X; x++)
                         {
-                            int3 pos = new int3(x, y, z);
+                            var pos = new int3(x, y, z);
                             ushort id = blocks.GetUnchecked(pos);
 
                             if (id != 0)

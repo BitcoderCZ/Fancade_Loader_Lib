@@ -251,7 +251,7 @@ public struct FcMesh : IEquatable<FcMesh>, IReadOnlyList<FcMesh.Block>
 
         public void Drain(out FcMesh mesh)
         {
-            int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+            var minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
             foreach (var block in _blocks)
             {
                 minPos = int3.Min(minPos, block.Offset);

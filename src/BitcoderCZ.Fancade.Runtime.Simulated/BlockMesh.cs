@@ -118,7 +118,7 @@ public readonly struct BlockMesh
         var blockMeshIdOffsets = new Array3D<int>(blocksSize);
 
         var countSegmentsAction = new CountMeshSegmentsAction(blocks.BoundsMin, createScriptMesh, prefabs, blockMeshIdOffsets, segmentMeshes);
-        blocks.EnumerateNonEmptyBlocks(countSegmentsAction);
+        blocks.EnumerateNonEmptyBlocks(ref countSegmentsAction);
         int totalSegmentMeshCount = countSegmentsAction.TotalSegmentMeshCount;
 
         if (totalSegmentMeshCount == 0)
@@ -138,7 +138,7 @@ public readonly struct BlockMesh
         if (createScriptMesh)
         {
             var createScriptMeshAction = new CreateScriptMeshAction(blocks.BoundsMin, prefabs, stockPrefabs, blockMeshIds, blockMeshIdOffsets, segmentMeshes);
-            blocks.EnumerateNonEmptyBlocks(createScriptMeshAction);
+            blocks.EnumerateNonEmptyBlocks(ref createScriptMeshAction);
             var blockList = createScriptMeshAction.BlockList;
 
             int3 minPos;
@@ -185,7 +185,7 @@ public readonly struct BlockMesh
         }
 
         var createMeshAction = new CreateMeshAction(blocks, prefabs, stockPrefabs, blockMeshIds, blockMeshIdOffsets, getUnique, segmentMeshes, meshes, createScriptMesh);
-        blocks.EnumerateNonEmptyBlocks(createMeshAction);
+        blocks.EnumerateNonEmptyBlocks(ref createMeshAction);
         var meshIndex = createMeshAction.MeshIndex;
 
         return new BlockMesh(meshIndex, blockMeshIdOffsets, meshes, blockMeshIds);
@@ -247,7 +247,7 @@ public readonly struct BlockMesh
         uniqueMeshIndex = item.UniqueMeshIndex;
     }
 
-    private sealed unsafe class CountMeshSegmentsAction : IRefValueAction<ushort, int3>
+    private struct CountMeshSegmentsAction : IRefValueAction<ushort, int3>
     {
         private readonly int3 _boundsMin;
         private readonly bool _createScriptMesh;
@@ -284,7 +284,7 @@ public readonly struct BlockMesh
         }
     }
 
-    private sealed unsafe class CreateScriptMeshAction : IRefValueAction<ushort, int3>
+    private struct CreateScriptMeshAction : IRefValueAction<ushort, int3>
     {
         public ValueListWithHash<FcMesh.Block> BlockList;
 
@@ -339,7 +339,7 @@ public readonly struct BlockMesh
             => prefabId < RawGame.CurrentNumbStockPrefabs ? _stockPrefabs.GetPrefab(prefabId) : _prefabs.GetPrefab(prefabId);
     }
 
-    private sealed unsafe class CreateMeshAction : IRefValueAction<ushort, int3>, IDisposable
+    private struct CreateMeshAction : IRefValueAction<ushort, int3>, IDisposable
     {
         private readonly IBlockData _blocks;
         private readonly PrefabList _prefabs;
@@ -442,7 +442,7 @@ public readonly struct BlockMesh
                     }
                 }
 
-                int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                var minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
                 foreach (var block in _blockList.List)
                 {
                     minPos = int3.Min(minPos, block.Offset);

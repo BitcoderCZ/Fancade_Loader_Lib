@@ -47,7 +47,7 @@ public static class QuaternionUtils
         forward = Vector3.Normalize(forward);
         up = Vector3.Normalize(up);
 
-        Vector3 right = Vector3.Cross(up, forward);
+        var right = Vector3.Cross(up, forward);
         if (right == Vector3.Zero)
         {
             right = Vector3.UnitX;
@@ -60,7 +60,7 @@ public static class QuaternionUtils
         up = Vector3.Cross(forward, right);
 
 #pragma warning disable SA1117 // Parameters should be on same line or separate lines
-        Matrix4x4 rotationMatrix = new Matrix4x4(
+        var rotationMatrix = new Matrix4x4(
             right.X, right.Y, right.Z, 0,
             up.X, up.Y, up.Z, 0,
             forward.X, forward.Y, forward.Z, 0,

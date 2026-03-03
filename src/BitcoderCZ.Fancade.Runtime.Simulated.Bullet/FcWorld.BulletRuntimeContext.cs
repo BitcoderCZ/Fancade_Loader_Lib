@@ -494,15 +494,15 @@ public sealed partial class FcWorld
             inverted = Matrix4x4.Invert(rPart.RigidBody.WorldTransform.ToMatrix4x4(), out var invPart);
             Debug.Assert(inverted, "Matrix invert should succeed.");
 
-            Vector3 localPivotA = Vector3.Transform(pivotVal, invBase);
-            Vector3 localPivotB = Vector3.Transform(pivotVal, invPart);
+            var localPivotA = Vector3.Transform(pivotVal, invBase);
+            var localPivotB = Vector3.Transform(pivotVal, invPart);
 
             var frameInA = Transform.Identity;
             frameInA.Translation = localPivotA;
             var frameInB = Transform.Identity;
             frameInB.Translation = localPivotB;
 
-            Generic6DofSpring2Constraint constraint = new Generic6DofSpring2Constraint(rBase.RigidBody, rPart.RigidBody, in frameInA, in frameInB, RotateOrder.XYZ);
+            var constraint = new Generic6DofSpring2Constraint(rBase.RigidBody, rPart.RigidBody, in frameInA, in frameInB, RotateOrder.XYZ);
 
             constraint.SetAngularLowerLimit(Vector3.Zero);
             constraint.SetAngularUpperLimit(Vector3.Zero);
