@@ -169,7 +169,7 @@ public sealed partial class FcAstCompiler
         {
         }
 
-        CSharpCompilation compilation = CSharpCompilation.Create(
+        var compilation = CSharpCompilation.Create(
             assemblyName,
             syntaxTrees: [tree],
             references: references,

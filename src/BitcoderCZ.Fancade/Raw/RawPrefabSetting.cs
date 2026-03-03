@@ -242,7 +242,7 @@ public struct RawPrefabSetting : IEquatable<RawPrefabSetting>
         ThrowIfNull(reader, nameof(reader));
 
         byte valueIndex = reader.ReadUInt8();
-        SettingType type = (SettingType)reader.ReadUInt8();
+        var type = (SettingType)reader.ReadUInt8();
         ushort3 pos = reader.ReadVec3US();
         object value = type switch
         {

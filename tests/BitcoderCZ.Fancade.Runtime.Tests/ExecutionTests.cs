@@ -160,7 +160,7 @@ public partial class ExecutionTests
         var writer = new CodeWriter(new CodeGraph.Builder());
 
         const string LoopStart = "LoopStart";
-        Variable index = new Variable("i", SignalType.Float);
+        var index = new Variable("i", SignalType.Float);
         writer.PlaySensor(writer =>
         {
             writer.Label(LoopStart);

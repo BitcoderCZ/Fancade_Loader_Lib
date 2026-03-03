@@ -443,7 +443,7 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
             {
                 for (int x = 0; x < Size.X; x++)
                 {
-                    int3 pos = new int3(x, y, z);
+                    var pos = new int3(x, y, z);
 
                     if (pos == key)
                     {
@@ -476,7 +476,7 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
             {
                 for (int x = 0; x < MaxSize; x++)
                 {
-                    int3 pos = new int3(x, y, z);
+                    var pos = new int3(x, y, z);
 
                     if (pos == key)
                     {
@@ -681,7 +681,7 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
 
     private int3 ShiftToZero()
     {
-        int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+        var minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
 
         foreach (var pos in _segments.Keys)
         {
@@ -694,7 +694,7 @@ public sealed class PartialPrefab : IDictionary<int3, PartialPrefabSegment>, ICl
             {
                 for (int x = minPos.X; x < MaxSize; x++)
                 {
-                    int3 pos = new int3(x, y, z);
+                    var pos = new int3(x, y, z);
 
                     if (_segments.TryGetValue(pos, out var segment))
                     {

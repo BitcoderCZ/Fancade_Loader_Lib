@@ -161,7 +161,7 @@ public struct Voxel : IEquatable<Voxel>
     /// <returns>The string representation of the current instance.</returns>
     public readonly override string ToString()
     {
-        StringBuilder builder = new StringBuilder(64);
+        var builder = new StringBuilder(64);
 
         builder.Append('[');
 

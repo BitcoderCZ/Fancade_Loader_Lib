@@ -442,7 +442,7 @@ public readonly struct BlockMesh
                     }
                 }
 
-                int3 minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
+                var minPos = new int3(int.MaxValue, int.MaxValue, int.MaxValue);
                 foreach (var block in _blockList.List)
                 {
                     minPos = int3.Min(minPos, block.Offset);

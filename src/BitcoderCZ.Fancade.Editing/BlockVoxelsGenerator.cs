@@ -47,7 +47,7 @@ public sealed class BlockVoxelsGenerator
             ThrowArgumentOutOfRangeException(nameof(sizeInBlocks));
         }
 
-        int3 sizeInVoxels = new int3((sizeInBlocks.X * 8) - 1, 3, (sizeInBlocks.Y * 8) - 1);
+        var sizeInVoxels = new int3((sizeInBlocks.X * 8) - 1, 3, (sizeInBlocks.Y * 8) - 1);
 
         var generator = new BlockVoxelsGenerator();
 
@@ -140,12 +140,12 @@ public sealed class BlockVoxelsGenerator
             {
                 for (int bx = 0; bx <= toBlock.X; bx++)
                 {
-                    int3 blockPos = new int3(bx, by, bz);
+                    var blockPos = new int3(bx, by, bz);
                     int3 voxelPos = blockPos * 8;
                     Voxels block = GetBlock(blockPos);
 
-                    int3 min = int3.Max(int3.Zero, from - voxelPos);
-                    int3 max = int3.Min(new int3(8, 8, 8), to - voxelPos);
+                    var min = int3.Max(int3.Zero, from - voxelPos);
+                    var max = int3.Min(new int3(8, 8, 8), to - voxelPos);
 
                     for (int z = min.Z; z < max.Z; z++)
                     {
@@ -194,12 +194,12 @@ public sealed class BlockVoxelsGenerator
             {
                 for (int bx = 0; bx <= toBlock.X; bx++)
                 {
-                    int3 blockPos = new int3(bx, by, bz);
+                    var blockPos = new int3(bx, by, bz);
                     int3 voxelPos = blockPos * 8;
                     Voxels block = GetBlock(blockPos);
 
-                    int3 min = int3.Max(int3.Zero, from - voxelPos);
-                    int3 max = int3.Min(new int3(8, 8, 8), to - voxelPos);
+                    var min = int3.Max(int3.Zero, from - voxelPos);
+                    var max = int3.Min(new int3(8, 8, 8), to - voxelPos);
 
                     for (int z = min.Z; z < max.Z; z++)
                     {

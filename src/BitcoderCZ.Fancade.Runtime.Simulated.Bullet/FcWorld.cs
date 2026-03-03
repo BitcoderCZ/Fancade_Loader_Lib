@@ -517,8 +517,8 @@ public sealed partial class FcWorld : IAstRunner
 
             float totalVolume = 0f;
             Vector3 centerOfMass = Vector3.Zero;
-            Vector3 sizeMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-            Vector3 sizeMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+            var sizeMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            var sizeMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
 
             bool foundPhysics = false;
 

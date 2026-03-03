@@ -67,7 +67,7 @@ public readonly struct TerminalBuilder
     /// <returns>The built terminals.</returns>
     public ImmutableArray<TerminalDef> Build(int3 blockSize, ScriptBlockType blockType)
     {
-        TerminalDef[] terminals = new TerminalDef[_terminals.Count];
+        var terminals = new TerminalDef[_terminals.Count];
 
         int off = blockType == ScriptBlockType.Active ? 1 : 0;
 

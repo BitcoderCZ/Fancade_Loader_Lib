@@ -24,7 +24,7 @@ public sealed class InspectAssertion : Assertion<AstRunnerTester>
 
     protected override string GetExpectation()
     {
-        StringBuilder builder = new StringBuilder();
+        var builder = new StringBuilder();
 
         //if (AllowOnlyExpectedInspects)
         //{

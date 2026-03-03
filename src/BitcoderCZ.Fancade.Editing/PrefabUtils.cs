@@ -376,7 +376,7 @@ public static class PrefabUtils
             {
                 for (int x = from.X; x <= to.X; x++)
                 {
-                    int3 pos = new int3(x, y, z);
+                    var pos = new int3(x, y, z);
                     if (prefab.TryGetValue(pos, out var segment))
                     {
                         if (segment.Voxels.IsEmpty)
@@ -452,7 +452,7 @@ public static class PrefabUtils
             {
                 for (int x = from.X; x <= to.X; x++)
                 {
-                    int3 pos = new int3(x, y, z);
+                    var pos = new int3(x, y, z);
                     if (prefab.TryGetValue(pos, out var segment))
                     {
                         if (segment.Voxels.IsEmpty)
