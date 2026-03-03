@@ -12,16 +12,16 @@ namespace BitcoderCZ.Fancade;
 /// <summary>
 /// Caches the positions of a certain block.
 /// </summary>
-public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerable<int3> Position)>
+public sealed class BlockInstancesCache : IEnumerable<(ListPrefab Prefab, IEnumerable<int3> Position)>
 {
-    private readonly List<(Prefab Prefab, List<int3> Position)> _instances = [];
+    private readonly List<(ListPrefab Prefab, List<int3> Position)> _instances = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BlockInstancesCache"/> class.
     /// </summary>
     /// <param name="prefabs">The prefabs to scan for the block id.</param>
     /// <param name="blockId">Id of the block to find.</param>
-    public BlockInstancesCache(IEnumerable<Prefab> prefabs, ushort blockId)
+    public BlockInstancesCache(IEnumerable<ListPrefab> prefabs, ushort blockId)
     {
         BlockId = blockId;
 
@@ -87,7 +87,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
     }
 
     /// <inheritdoc/>
-    public IEnumerator<(Prefab Prefab, IEnumerable<int3> Position)> GetEnumerator()
+    public IEnumerator<(ListPrefab Prefab, IEnumerable<int3> Position)> GetEnumerator()
         => _instances.Select(item => (item.Prefab, (IEnumerable<int3>)item.Position)).GetEnumerator();
 
     /// <inheritdoc/>
@@ -161,34 +161,6 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         }
     }
 
-    internal void AddBlock(PrefabList list, int3 offset, ushort id)
-    {
-        if (IsEmpty)
-        {
-            return;
-        }
-
-        foreach (var (prefab, positions) in _instances)
-        {
-            foreach (var pos in positions)
-            {
-                ushort idOld = prefab.Blocks.GetBlock(pos + offset);
-
-                if (idOld != 0 && list.TryGetPrefab(idOld, out var oldPrefab))
-                {
-                    int3 prefabPos = pos + offset - list.GetSegment(idOld).PosInPrefab;
-
-                    foreach (var segPos in oldPrefab.Keys)
-                    {
-                        prefab.Blocks.SetBlock(prefabPos + segPos, 0);
-                    }
-                }
-
-                prefab.Blocks.SetBlock(pos + offset, id);
-            }
-        }
-    }
-
     internal void AddBlock(PrefabListB list, int3 offset, ushort id)
     {
         if (IsEmpty)
@@ -217,7 +189,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         }
     }
 
-    internal void AddBlocks(PrefabList list, ReadOnlySpan<(int3 Offset, ushort Id)> ids)
+    internal void AddBlocks(PrefabListB list, ReadOnlySpan<(int3 Offset, ushort Id)> ids)
     {
         if (IsEmpty)
         {
@@ -236,7 +208,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
                     {
                         int3 prefabPos = pos + offset - list.GetSegment(idOld).PosInPrefab;
 
-                        foreach (var segPos in oldPrefab.Keys)
+                        foreach (var (segPos, _) in oldPrefab._segments)
                         {
                             prefab.Blocks.SetBlock(prefabPos + segPos, 0);
                         }
@@ -330,7 +302,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
     {
         private readonly List<int3> _positions;
 
-        internal PrefabInstances(Prefab prefab, List<int3> positions)
+        internal PrefabInstances(ListPrefab prefab, List<int3> positions)
         {
             Prefab = prefab;
             _positions = positions;
@@ -340,7 +312,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         /// Gets the prefab the instances are in.
         /// </summary>
         /// <value>The prefab the instances are in.</value>
-        public Prefab Prefab { get; }
+        public ListPrefab Prefab { get; }
 
         /// <summary>
         /// Gets the positions of the instances.
@@ -353,7 +325,7 @@ public sealed class BlockInstancesCache : IEnumerable<(Prefab Prefab, IEnumerabl
         /// </summary>
         /// <param name="prefab">The prefab the instances are in.</param>
         /// <param name="positions">Posititons of the instances.</param>
-        public void Deconstruct(out Prefab prefab, out ReadOnlySpan<int3> positions)
+        public void Deconstruct(out ListPrefab prefab, out ReadOnlySpan<int3> positions)
         {
             prefab = Prefab;
             positions = Positions;
