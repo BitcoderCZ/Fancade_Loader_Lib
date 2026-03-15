@@ -71,7 +71,7 @@ public class ArrayBlockData : IBlockData
     public int3 BoundsMin => int3.Zero;
 
     /// <inheritdoc/>
-    public int3 BoundsMax => Size;
+    public int3 BoundsMax => Size - int3.One;
 
     /// <summary>
     /// Gets the size of the data.
