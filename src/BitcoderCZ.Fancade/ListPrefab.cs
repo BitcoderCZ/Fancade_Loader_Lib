@@ -2,12 +2,16 @@
 // Copyright (c) BitcoderCZ. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using BitcoderCZ.Fancade.Data;
 using BitcoderCZ.Fancade.Exceptions;
 using BitcoderCZ.Fancade.Utils;
 using BitcoderCZ.Maths.Vectors;
 using BitcoderCZ.Utils;
+using SegmentData = BitcoderCZ.Fancade.PrefabListB.SegmentData;
 
 namespace BitcoderCZ.Fancade;
 
@@ -15,6 +19,7 @@ namespace BitcoderCZ.Fancade;
 #pragma warning disable SA1600
 
 // can exist on it's own, or in (only) 1 list
+// todo: make IDisposable, free segment data on dispose
 public sealed class ListPrefab
 {
     public const int MaxSize = BitcoderCZ.Fancade.Prefab.MaxSize;
@@ -28,6 +33,10 @@ public sealed class ListPrefab
     // todo: binary search?
     // todo: InlineList<FixedArray4<KeyValuePair<byte3, int>>, KeyValuePair<byte3, int>> _segments?
     internal Dictionary<byte3, int> _segments;
+
+    internal Dictionary<byte3, SegmentData>? _segmentData;
+
+    private static readonly ObjectPool<Dictionary<byte3, SegmentData>> SegmentDataPool = new(() => new(4), segmentData => segmentData.Clear());
 
     private string _name;
 
@@ -49,9 +58,23 @@ public sealed class ListPrefab
     /// Gets a value indicating whether the <see cref="ListPrefab"/> is in a <see cref="PrefabListB"/>.
     /// </summary>
     /// <value><see langword="true"/> if the <see cref="ListPrefab"/> is in a <see cref="PrefabListB"/>; otherwise, <see langword="false"/>.</value>
+    [MemberNotNullWhen(true, nameof(_owner))]
     public bool IsInList => _owner is not null;
 
-    public int Id => _id; // todo: editable when not in prefab
+    public int Id
+    {
+        get => _id;
+        internal set  // todo: editable when not in prefab
+        {
+            int idChange = value - _id;
+            _id = value;
+            
+            foreach (var item in _segments)
+            {
+                CollectionsMarshal.GetValueRefOrNullRef(_segments, item.Key) = item.Value + idChange;
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets the name of this prefab.
@@ -80,6 +103,8 @@ public sealed class ListPrefab
     public PrefabTerminalInfo Terminals { get; set; }
 
     public List<Connection> Connections { get; } = [];
+
+    public Dictionary<int3, PrefabSettings> Settings { get; } = [];
 
     public IBlockData Blocks { get; } = new ArrayBlockData();
 
@@ -113,6 +138,18 @@ public sealed class ListPrefab
             }
         }
     }
+
+    /// <summary>
+    /// Gets the <see cref="Voxel"/> at the specified position.
+    /// </summary>
+    /// <param name="position">Position of the <see cref="Voxel"/> to get.</param>
+    /// <returns>The <see cref="Voxel"/> at the <paramref name="position"/>, if <paramref name="position"/> is in bounds; otherwise, <see langword="default"/>.</returns>
+    public Voxel GetVoxel(int3 position)
+        => position.X < 0 || position.X >= MaxSize * 8 || position.Y < 0 || position.Y >= MaxSize * 8 || position.Z < 0 || position.Z >= MaxSize * 8
+            ? default
+            : TryGetSegmentData((byte3)(position / 8), out var segmentData) && !segmentData.Voxels.IsEmpty
+            ? segmentData.Voxels[position % 8]
+            : default;
 
     /// <summary>
     /// Determines the index of a segment, if it was at the specified position.
@@ -185,20 +222,19 @@ public sealed class ListPrefab
 
         CalculateSize();
 
-        _owner?.AddSegmentToPrefabInternal(this, segmentId, new PrefabListB.SegmentData(_id, segmentPos, voxels), cache);
+        if (IsInList)
+        {
+            _owner.AddSegmentToPrefabInternal(this, segmentId, new SegmentData(_id, segmentPos, voxels), cache);
+        }
+        else
+        {
+            InitSegmentData();
+            _segmentData.Add(segmentPos, new SegmentData(_id, segmentPos, voxels));
+        }
 
         return segmentId;
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="segmentPosition"></param>
-    /// <param name="voxels"></param>
-    /// <param name="overwriteBlocks"></param>
-    /// <param name="segmentId">Id of the added segment.</param>
-    /// <param name="cache"></param>
-    /// <returns></returns>
     public bool TryAddSegment(int3 segmentPosition, Voxels voxels, bool overwriteBlocks, out int segmentId, BlockInstancesCache? cache)
     {
         EnsureCustom();
@@ -275,6 +311,26 @@ public sealed class ListPrefab
         return i;
     }
 
+    internal void AddToList(PrefabListB prefabList)
+    {
+        Debug.Assert(!IsInList);
+
+        _owner = prefabList;
+        FreeSegmentData();
+    }
+
+    internal void PullSegmentData()
+    {
+        Debug.Assert(IsInList);
+
+        InitSegmentData();
+
+        foreach (var (segmentPosition, segmentId) in _segments)
+        {
+            _segmentData.Add(segmentPosition, _owner.GetSegment(segmentId));
+        }
+    }
+
     private static byte3 ValidateSegmentPosition(int3 pos, [CallerArgumentExpression(nameof(pos))] string argName = "")
     {
         int val = pos.X | pos.Y | pos.Z;
@@ -288,6 +344,27 @@ public sealed class ListPrefab
         }
 
         return (byte3)pos;
+    }
+
+    private bool TryGetSegmentData(byte3 segmentPos, [NotNullWhen(true)] out SegmentData? segmentData)
+    {
+        if (!_segments.TryGetValue(segmentPos, out var segmentId))
+        {
+            segmentData = null;
+            return false;
+        }
+
+        if (_owner is not null)
+        {
+            return _owner.TryGetSegment(segmentId, out segmentData);
+        }
+        else if (_segmentData is not null)
+        {
+            return _segmentData.TryGetValue(segmentPos, out segmentData);
+        }
+
+        segmentData = null;
+        return false;
     }
 
     private void EnsureCustom()
@@ -337,5 +414,20 @@ public sealed class ListPrefab
         Size -= minPos;
 
         return minPos;
+    }
+
+    [MemberNotNull(nameof(_segmentData))]
+    private void InitSegmentData()
+        => _segmentData ??= SegmentDataPool.Allocate();
+
+    private void FreeSegmentData()
+    {
+        if (_segmentData is null)
+        {
+            return;
+        }
+
+        SegmentDataPool.Free(_segmentData);
+        _segmentData = null;
     }
 }

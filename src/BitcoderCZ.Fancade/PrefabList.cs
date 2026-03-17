@@ -829,8 +829,9 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
     {
         if (cache is not null)
         {
-            cache.AddBlock(this, offset, id);
-            return;
+            // cache.AddBlock(this, offset, id);
+            // return;
+            throw new NotImplementedException();
         }
 
         foreach (var prefab in _prefabs.Values)
@@ -869,8 +870,9 @@ public class PrefabList : IEnumerable<Prefab>, ICloneable
     {
         if (cache is not null)
         {
-            cache.AddBlocks(this, ids);
-            return;
+            // cache.AddBlocks(this, ids);
+            // return;
+            throw new NotImplementedException();
         }
 
         foreach (var prefab in _prefabs.Values)

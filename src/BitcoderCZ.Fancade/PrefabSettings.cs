@@ -10,7 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static BitcoderCZ.Utils.ThrowHelper;
-using SettingsCollection = BitcoderCZ.Buffers.ImmutableInlineArray<BitcoderCZ.Buffers.FixedArray2<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
+using SettingsCollection = BitcoderCZ.Buffers.ImmutableInlineArray<BitcoderCZ.Buffers.FixedArray1<BitcoderCZ.Fancade.PrefabSetting>, BitcoderCZ.Fancade.PrefabSetting>;
 
 namespace BitcoderCZ.Fancade;
 
@@ -34,7 +34,7 @@ public readonly struct PrefabSettings : IReadOnlyCollection<PrefabSetting>, IEqu
     /// <param name="setting">The item to be assigned to the <see cref="PrefabSettings"/>.</param>
     public PrefabSettings(PrefabSetting setting)
     {
-        _settings = ImmutableInlineArray.Create<FixedArray2<PrefabSetting>, PrefabSetting>(setting);
+        _settings = ImmutableInlineArray.Create<FixedArray1<PrefabSetting>, PrefabSetting>(setting);
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public readonly struct PrefabSettings : IReadOnlyCollection<PrefabSetting>, IEqu
     /// <param name="settings">The collection whose elements are copied to the new <see cref="PrefabSettings"/>.</param>
     public PrefabSettings(params ReadOnlySpan<PrefabSetting> settings)
     {
-        _settings = ImmutableInlineArray.Create<FixedArray2<PrefabSetting>, PrefabSetting>(settings);
+        _settings = ImmutableInlineArray.Create<FixedArray1<PrefabSetting>, PrefabSetting>(settings);
     }
 
     /// <summary>
@@ -59,12 +59,12 @@ public readonly struct PrefabSettings : IReadOnlyCollection<PrefabSetting>, IEqu
             return;
         }
 
-        _settings = ImmutableInlineArray.CreateRange<FixedArray2<PrefabSetting>, PrefabSetting>(settings);
+        _settings = ImmutableInlineArray.CreateRange<FixedArray1<PrefabSetting>, PrefabSetting>(settings);
     }
 
     private PrefabSettings(IEnumerable<RawPrefabSetting> settings)
     {
-        _settings = ImmutableInlineArray.CreateRange<FixedArray2<PrefabSetting>, PrefabSetting>(settings.Select(setting => new PrefabSetting(setting.Index, setting.Type, setting.Value)));
+        _settings = ImmutableInlineArray.CreateRange<FixedArray1<PrefabSetting>, PrefabSetting>(settings.Select(setting => new PrefabSetting(setting.Index, setting.Type, setting.Value)));
     }
 
     private PrefabSettings(SettingsCollection settings)

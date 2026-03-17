@@ -269,17 +269,39 @@ public sealed class PrefabListB
         return prefab;
     }
 
-    public void AddExisting(ListPrefab prefab)
+    public void AddPrefab(ListPrefab prefab)
     {
         EnsureCustom(prefab);
 
         if (prefab._owner is not null)
         {
-            ThrowHelper.ThrowArgumentException($"{nameof(prefab)} is already in another list.", nameof(prefab));
+            ThrowArgumentException($"{nameof(prefab)} is already in another list.", nameof(prefab));
         }
 
         _permanentIdCounter = Math.Max(_permanentIdCounter, prefab.PermanentId + 1);
-        throw new NotImplementedException();
+
+        prefab.Id = TotalSegmentCount;
+
+        if (prefab.Id + prefab.SegmentCount >= _segments.Length)
+        {
+            Grow(TotalSegmentCount + prefab.Id + prefab.SegmentCount);
+        }
+
+        _prefabs[prefab.Id] = prefab;
+
+        foreach (var (segmentPosition, segmentId) in prefab.PosOrderedValues)
+        {
+            _segments[segmentId] = prefab._segmentData is not null && prefab._segmentData.TryGetValue(segmentPosition, out var segmentData)
+                ? segmentData
+                : new SegmentData(prefab.Id, segmentPosition, Voxels.Empty);
+        }
+
+        _customPrefabCount++;
+        _customSegmentCount += prefab.SegmentCount;
+
+        prefab.AddToList(this);
+
+        ValidateState();
     }
 
     public ListPrefab InsertPrefab(int id, string name, PrefabType type, PrefabCollider collider)
@@ -304,11 +326,6 @@ public sealed class PrefabListB
         Span<byte3> sortedSegmentPositions = stackalloc byte3[Prefab.MaxSegmentCount];
         ValidateAndSortSegments(segmentPositions, ref sortedSegmentPositions);
 
-        if (id + segmentPositions.Length >= _segments.Length)
-        {
-            Grow(TotalSegmentCount + id + segmentPositions.Length);
-        }
-
         ShiftBlockIds(id, segmentPositions.Length);
 
         var prefab = new ListPrefab(this, TotalSegmentCount, Interlocked.Increment(ref _permanentIdCounter), name, type, collider, backgroundColor, terminals);
@@ -331,9 +348,46 @@ public sealed class PrefabListB
         return prefab;
     }
 
+    public void InsertPrefab(ListPrefab prefab)
+    {
+        EnsureCustom(prefab.Id);
+
+        if (WillBeLastPrefab(prefab))
+        {
+            AddPrefab(prefab);
+            return;
+        }
+
+        if (!ContainsPrefab(prefab.Id))
+        {
+            ThrowArgumentException($"The {nameof(PrefabListB)} must contain {nameof(prefab)}.{nameof(ListPrefab.Id)}.", nameof(prefab));
+        }
+
+        _permanentIdCounter = Math.Max(_permanentIdCounter, prefab.PermanentId + 1);
+
+        ShiftBlockIds(prefab.Id, prefab.SegmentCount);
+
+        _prefabs[prefab.Id] = prefab;
+
+        foreach (var (segmentPosition, segmentId) in prefab.PosOrderedValues)
+        {
+            _segments[segmentId] = prefab._segmentData is not null && prefab._segmentData.TryGetValue(segmentPosition, out var segmentData)
+                ? segmentData
+                : new SegmentData(prefab.Id, segmentPosition, Voxels.Empty);
+        }
+
+        _customPrefabCount++;
+        _customSegmentCount += prefab.SegmentCount;
+
+        prefab.AddToList(this);
+
+        ValidateState();
+    }
+
     public bool RemovePrefab(int prefabId, BlockInstancesCache? cache = null)
         => RemovePrefab(prefabId, out _, cache);
 
+    // todo: option to not preserve segment data
     public bool RemovePrefab(int prefabId, [MaybeNullWhen(false)] out ListPrefab prefab, BlockInstancesCache? cache = null)
     {
         EnsureCustom(prefabId);
@@ -727,7 +781,7 @@ public sealed class PrefabListB
         if (prefabId < StockSegmentCount)
         {
             // todo: custom exception type
-            ThrowHelper.ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be the id of a stock prefab.");
+            ThrowArgumentOutOfRangeException(paramName, $"{paramName} cannot be the id of a stock prefab.");
         }
     }
 
@@ -781,6 +835,11 @@ public sealed class PrefabListB
     private void ShiftBlockIds(int idShiftStart, int shiftAmount)
     {
         Debug.Assert(shiftAmount != 0);
+
+        if (shiftAmount > 0)
+        {
+            EnsureCapacity(CustomSegmentCount + shiftAmount);
+        }
 
         Span<KeyValuePair<byte3, int>> segments = stackalloc KeyValuePair<byte3, int>[Prefab.MaxSize * Prefab.MaxSize * Prefab.MaxSize];
 

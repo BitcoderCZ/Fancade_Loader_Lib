@@ -32,7 +32,7 @@ internal static class Validator
 
         if (value.Length is 0)
         {
-            ThrowArgumentOutOfRangeException($"{valueName} must not be empty.", valueName);   
+            ThrowArgumentOutOfRangeException($"{valueName} must not be empty.", valueName);
         }
 
         return value;
@@ -43,8 +43,10 @@ internal static class Validator
 #if NET8_0_OR_GREATER
         return Ascii.IsValid(value);
 #else
-        foreach (var item in value){
-            if (item > 127){
+        foreach (var item in value)
+        {
+            if (item > 127)
+            {
                 return false;
             }
         }

@@ -86,4 +86,35 @@ public static class TerminalDirectionUtils
 
         return dir;
     }
+
+     /// <summary>
+    /// Gets which direction a terminal at the specified position would be facing.
+    /// </summary>
+    /// <remarks>
+    /// Uses which voxels are occupied to determine the direction.
+    /// </remarks>
+    /// <param name="prefab">The <see cref="ListPrefab"/> to operate on.</param>
+    /// <param name="terminalPosition">Position of the terminal.</param>
+    /// <returns>The <see cref="TerminalDirection"/> of the terminal at <paramref name="terminalPosition"/>.</returns>
+    public static TerminalDirection GetTerminalDirection(this ListPrefab prefab, byte3 terminalPosition)
+    {
+        ThrowIfNull(prefab);
+
+        var dir = TerminalDirection.PositiveZ;
+        int3 iPos = terminalPosition;
+
+        if (!prefab.GetVoxel(iPos + new int3(0, 0, 1)).IsEmpty)
+        {
+            dir = TerminalDirection.NegativeX;
+
+            if (!prefab.GetVoxel(iPos + new int3(-1, 0, 0)).IsEmpty)
+            {
+                dir = prefab.GetVoxel(iPos + new int3(0, 0, -1)).IsEmpty
+                    ? TerminalDirection.NegativeZ
+                    : TerminalDirection.PositiveX;
+            }
+        }
+
+        return dir;
+    }
 }
