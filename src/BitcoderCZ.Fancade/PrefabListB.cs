@@ -390,31 +390,64 @@ public sealed class PrefabListB
 
         var prevPrefab = GetPrefab(newPrefab.Id);
 
-        if (!overwriteBlocks && !CanUpdatePrefabIds(prev, value, cache, out var obstructionInfo))
+        if (!overwriteBlocks && !CanUpdatePrefabIds(prevPrefab, newPrefab, cache, out var obstructionInfo))
         {
             throw new BlockObstructedException(obstructionInfo, $"Cannot update prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
         }
 
-        if (prev.Count > 1)
+        if (prevPrefab.SegmentCount > 1)
         {
-            Debug.Assert(prev.Count <= 4 * 4 * 4, "prev.Count should be smaller that it's max size.");
+            Debug.Assert(prevPrefab.SegmentCount <= 4 * 4 * 4, "prev.Count should be smaller that it's max size.");
             Span<int3> offsets = stackalloc int3[(4 * 4 * 4) - 1];
 
             int len = 0;
-            foreach (var (seg, id) in prev.EnumerateWithId())
+            foreach (var (segmentPosition, segmentId) in prevPrefab._segments)
             {
-                if (id != prev.Id)
+                if (segmentId != prevPrefab.Id)
                 {
-                    offsets[len++] = seg.PosInPrefab;
+                    offsets[len++] = segmentPosition;
                 }
             }
 
             offsets = offsets[..len];
 
-            RemoveIdsFromPrefab(prev.Id, offsets, cache);
+            RemoveIdsFromPrefab((ushort)prevPrefab.Id, offsets, cache);
         }
 
-        throw new NotImplementedException();
+        _segments.AsSpan(prevPrefab.Id, prevPrefab.SegmentCount).Clear();
+
+        if (prevPrefab.SegmentCount > newPrefab.SegmentCount)
+        {
+            ShiftBlockIds(prevPrefab.Id + (prevPrefab.SegmentCount - newPrefab.SegmentCount), newPrefab.SegmentCount - prevPrefab.SegmentCount);
+        }
+        else if (prevPrefab.SegmentCount < newPrefab.SegmentCount)
+        {
+            ShiftBlockIds(prevPrefab.Id, newPrefab.SegmentCount - prevPrefab.SegmentCount);
+        }
+
+        _prefabs[prevPrefab.Id] = newPrefab;
+        _segments.InsertRange(newPrefab.Id, newPrefab.OrderedValues);
+
+        if (newPrefab.SegmentCount > 1)
+        {
+            Debug.Assert(newPrefab.SegmentCount <= 4 * 4 * 4, "value.Count should be smaller that it's max size.");
+            Span<(int3, int)> ids = stackalloc (int3, int)[(4 * 4 * 4) - 1];
+
+            int len = 0;
+            foreach (var (segmentPosition, segmentId) in newPrefab._segments)
+            {
+                if (segmentId != newPrefab.Id)
+                {
+                    ids[len++] = (segmentPosition, segmentId);
+                }
+            }
+
+            ids = ids[..len];
+
+            AddIdsToPrefab(newPrefab.Id, ids, cache);
+        }
+
+        return prevPrefab;
     }
 
     public bool RemovePrefab(int prefabId, BlockInstancesCache? cache = null)
@@ -723,25 +756,28 @@ public sealed class PrefabListB
         return true;
     }
 
-    private bool CanUpdatePrefabIds(Prefab oldPrefab, Prefab newPrefab, BlockInstancesCache? cache, out BlockObstructionInfo obstructionInfo)
+    internal bool CanUpdatePrefabIds(ListPrefab oldPrefab, ListPrefab newPrefab, BlockInstancesCache? cache, out BlockObstructionInfo obstructionInfo)
     {
         Debug.Assert(oldPrefab.Id == newPrefab.Id, "Ids should be equal.");
 
-        ushort prefabId = oldPrefab.Id;
+        var oldPrefabId = oldPrefab.Id;
 
-        List<int3> newPositions = [];
+        Span<int3> newPositions = stackalloc int3[4 * 4 * 4];
+        int newPositionsLength = 0;
 
-        foreach (var pos in newPrefab.Keys)
+        foreach (var (segmentPos, _) in newPrefab._segments)
         {
-            if (!oldPrefab.ContainsKey(pos))
+            if (!oldPrefab.ContainsSegment(segmentPos))
             {
-                newPositions.Add(pos);
+                newPositions[newPositionsLength++] = segmentPos;
             }
         }
 
+        newPositions = newPositions[..newPositionsLength];
+
         if (cache is not null)
         {
-            return cache.CanAddBlocks(CollectionsMarshal.AsSpan(newPositions), out obstructionInfo);
+            return cache.CanAddBlocks(newPositions, out obstructionInfo);
         }
 
         foreach (var prefab in _prefabs)
@@ -751,32 +787,16 @@ public sealed class PrefabListB
                 continue;
             }
 
-            CanUpdatePrefabIdsFunc
-        }
-
-        throw new NotImplementedException();
-
-        foreach (var prefab in _prefabs.Values)
-        {
-            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+            unsafe
             {
-                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+                fixed (int3* newPositionsPtr = newPositions)
                 {
-                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
+                    var func = new CanUpdatePrefabIdsFunc(oldPrefab.Id, new RONSpan<int3>(newPositionsPtr, newPositions.Length), prefab.Id, prefab.Blocks);
+                    prefab.Blocks.EnumerateNonEmptyBlocksWithBreak(ref func);
+                    if (func.ObstructionInfo is not null)
                     {
-                        var pos = new int3(x, y, z);
-
-                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
-                        {
-                            foreach (var offset in newPositions)
-                            {
-                                if (prefab.Blocks.GetBlock(pos + offset) != 0)
-                                {
-                                    obstructionInfo = new BlockObstructionInfo(prefab.Id, pos, pos + offset);
-                                    return false;
-                                }
-                            }
-                        }
+                        obstructionInfo = func.ObstructionInfo.Value;
+                        return false;
                     }
                 }
             }
@@ -803,6 +823,59 @@ public sealed class PrefabListB
 
             var action = new AddIdToPrefabAction(prefabId, id, offset, prefab.Blocks, this);
             prefab.Blocks.EnumerateNonEmptyBlocks(ref action);
+        }
+    }
+
+    internal void AddIdsToPrefab(ushort prefabId, ReadOnlySpan<(int3 Offset, ushort Id)> ids, BlockInstancesCache? cache)
+    {
+        if (cache is not null)
+        {
+            cache.AddBlocks(this, ids);
+            return;
+        }
+
+        foreach (var prefab in _prefabs)
+        {
+            if (prefab is null)
+            {
+                continue;
+            }
+
+
+        }
+
+        foreach (var prefab in _prefabs.Values)
+        {
+            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+            {
+                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+                {
+                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
+                    {
+                        var pos = new int3(x, y, z);
+
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
+                        {
+                            foreach (var (offset, id) in ids)
+                            {
+                                ushort idOld = prefab.Blocks.GetBlock(pos + offset);
+
+                                if (idOld != 0 && TryGetPrefab(idOld, out var oldPrefab))
+                                {
+                                    int3 prefabPos = pos + offset - GetSegment(idOld).PosInPrefab;
+
+                                    foreach (var segPos in oldPrefab.Keys)
+                                    {
+                                        prefab.Blocks.SetBlock(prefabPos + segPos, 0);
+                                    }
+                                }
+
+                                prefab.Blocks.SetBlock(pos + offset, id);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1224,9 +1297,40 @@ public sealed class PrefabListB
         }
     }
 
+    [StructLayout(LayoutKind.Auto)]
     private struct CanUpdatePrefabIdsFunc : IRefValueFunc<ushort, int3, bool>
     {
-        
+        public BlockObstructionInfo? ObstructionInfo;
+
+        private readonly int _oldPrefabId;
+        private readonly RONSpan<int3> _newPositions;
+        private readonly int _prefabId;
+        private readonly IBlockData _blocks;
+
+        public CanUpdatePrefabIdsFunc(int oldPrefabId, RONSpan<int3> newPositions, int prefabId, IBlockData blocks)
+        {
+            _oldPrefabId = oldPrefabId;
+            _newPositions = newPositions;
+            _prefabId = prefabId;
+            _blocks = blocks;
+        }
+
+        public bool Invoke(ref ushort segmentId, int3 segmentPosition)
+        {
+            if (segmentId == _oldPrefabId)
+            {
+                foreach (var offset in _newPositions)
+                {
+                    if (_blocks.GetBlock(segmentPosition + offset) != 0)
+                    {
+                        ObstructionInfo = new BlockObstructionInfo(_prefabId, segmentPosition, segmentPosition + offset);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
     }
 
     [StructLayout(LayoutKind.Auto)]
