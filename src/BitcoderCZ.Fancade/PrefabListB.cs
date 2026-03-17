@@ -384,6 +384,39 @@ public sealed class PrefabListB
         ValidateState();
     }
 
+    public ListPrefab UpdatePrefab(ListPrefab newPrefab, bool overwriteBlocks, BlockInstancesCache? cache = null)
+    {
+        EnsureCustom(newPrefab.Id);
+
+        var prevPrefab = GetPrefab(newPrefab.Id);
+
+        if (!overwriteBlocks && !CanUpdatePrefabIds(prev, value, cache, out var obstructionInfo))
+        {
+            throw new BlockObstructedException(obstructionInfo, $"Cannot update prefab because it's position is obstructed and {nameof(overwriteBlocks)} is false.");
+        }
+
+        if (prev.Count > 1)
+        {
+            Debug.Assert(prev.Count <= 4 * 4 * 4, "prev.Count should be smaller that it's max size.");
+            Span<int3> offsets = stackalloc int3[(4 * 4 * 4) - 1];
+
+            int len = 0;
+            foreach (var (seg, id) in prev.EnumerateWithId())
+            {
+                if (id != prev.Id)
+                {
+                    offsets[len++] = seg.PosInPrefab;
+                }
+            }
+
+            offsets = offsets[..len];
+
+            RemoveIdsFromPrefab(prev.Id, offsets, cache);
+        }
+
+        throw new NotImplementedException();
+    }
+
     public bool RemovePrefab(int prefabId, BlockInstancesCache? cache = null)
         => RemovePrefab(prefabId, out _, cache);
 
@@ -589,6 +622,7 @@ public sealed class PrefabListB
         ValidateState();
     }
 
+    // todo: for all of these, can we skip the stock prefabs?
     internal bool RemovePrefabFromBlocks(ListPrefab prefab, BlockInstancesCache? cache = null)
     {
         Debug.Assert(cache is null || cache.BlockId == prefab.Id, "The cache should be for the prefab.");
@@ -682,6 +716,69 @@ public sealed class PrefabListB
             {
                 obstructionInfo = action.ObstructionInfo.Value;
                 return false;
+            }
+        }
+
+        obstructionInfo = default;
+        return true;
+    }
+
+    private bool CanUpdatePrefabIds(Prefab oldPrefab, Prefab newPrefab, BlockInstancesCache? cache, out BlockObstructionInfo obstructionInfo)
+    {
+        Debug.Assert(oldPrefab.Id == newPrefab.Id, "Ids should be equal.");
+
+        ushort prefabId = oldPrefab.Id;
+
+        List<int3> newPositions = [];
+
+        foreach (var pos in newPrefab.Keys)
+        {
+            if (!oldPrefab.ContainsKey(pos))
+            {
+                newPositions.Add(pos);
+            }
+        }
+
+        if (cache is not null)
+        {
+            return cache.CanAddBlocks(CollectionsMarshal.AsSpan(newPositions), out obstructionInfo);
+        }
+
+        foreach (var prefab in _prefabs)
+        {
+            if (prefab is null)
+            {
+                continue;
+            }
+
+            CanUpdatePrefabIdsFunc
+        }
+
+        throw new NotImplementedException();
+
+        foreach (var prefab in _prefabs.Values)
+        {
+            for (int z = 0; z < prefab.Blocks.Size.Z; z++)
+            {
+                for (int y = 0; y < prefab.Blocks.Size.Y; y++)
+                {
+                    for (int x = 0; x < prefab.Blocks.Size.X; x++)
+                    {
+                        var pos = new int3(x, y, z);
+
+                        if (prefab.Blocks.GetBlockUnchecked(pos) == prefabId)
+                        {
+                            foreach (var offset in newPositions)
+                            {
+                                if (prefab.Blocks.GetBlock(pos + offset) != 0)
+                                {
+                                    obstructionInfo = new BlockObstructionInfo(prefab.Id, pos, pos + offset);
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -1125,6 +1222,11 @@ public sealed class PrefabListB
 
             return false;
         }
+    }
+
+    private struct CanUpdatePrefabIdsFunc : IRefValueFunc<ushort, int3, bool>
+    {
+        
     }
 
     [StructLayout(LayoutKind.Auto)]
