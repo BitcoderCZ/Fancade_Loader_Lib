@@ -15,7 +15,7 @@ public sealed partial class CodeGraph
     /// <summary>
     /// Builder for creating a <see cref="CodeGraph"/>.
     /// </summary>
-    public sealed class Builder
+    public sealed class Builder : IBuilder
     {
         internal ushort _graphId;
         internal List<NodeData> _nodes;
@@ -66,11 +66,7 @@ public sealed partial class CodeGraph
         /// <value>Amount of nodes in the root scope.</value>
         public int RootScopeNodeCount => _scopeStack.Last()._nodes.Count;
 
-        /// <summary>
-        /// Places a new node of the specified type in the current scope.
-        /// </summary>
-        /// <param name="type">The block definition type to place.</param>
-        /// <returns>The newly created <see cref="Node"/>.</returns>
+        /// <inheritdoc/>
         public Node Place(BlockDef type)
         {
             var node = new Node(_graphId, (ushort)_nodes.Count, type);
@@ -131,14 +127,7 @@ public sealed partial class CodeGraph
             CollectionsMarshal.AsSpan(_nodes)[handle._index].Settings.Add(setting);
         }
 
-        /// <summary>
-        /// Connects a <see cref="Node.Terminal"/> to a <see cref="Node.Terminal"/>.
-        /// </summary>
-        /// <remarks>
-        /// Ignores connections if either terminal is null (<see cref="Node.Terminal.IsNull"/>).
-        /// </remarks>
-        /// <param name="from">The source <see cref="Node.Terminal"/>.</param>
-        /// <param name="to">The target <see cref="Node.Terminal"/>.</param>
+        /// <inheritdoc/>
         public void Connect(Node.Terminal from, Node.Terminal to)
         {
             if (from.IsNull || to.IsNull)

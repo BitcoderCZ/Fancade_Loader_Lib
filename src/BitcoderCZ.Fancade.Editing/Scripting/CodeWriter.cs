@@ -17,7 +17,7 @@ namespace BitcoderCZ.Fancade.Editing.Scripting;
 /// </summary>
 public sealed partial class CodeWriter : IDisposable
 {
-    private readonly CodeGraph.Builder _codeBuilder;
+    private readonly CodeGraph.IBuilder _codeBuilder;
 
     private readonly TerminalConnector _connector;
 
@@ -29,7 +29,7 @@ public sealed partial class CodeWriter : IDisposable
     /// Initializes a new instance of the <see cref="CodeWriter"/> class.
     /// </summary>
     /// <param name="builder">The <see cref="CodeGraph.Builder"/> used to place blocks.</param>
-    public CodeWriter(CodeGraph.Builder builder)
+    public CodeWriter(CodeGraph.IBuilder builder)
     {
         _codeBuilder = builder;
         _connector = new TerminalConnector(_codeBuilder);
@@ -58,7 +58,7 @@ public sealed partial class CodeWriter : IDisposable
     /// Gets the underlying <see cref="CodeGraph.Builder"/>.
     /// </summary>
     /// <value>The underlying <see cref="CodeGraph.Builder"/>.</value>
-    public CodeGraph.Builder Builder => _codeBuilder;
+    public CodeGraph.IBuilder Builder => _codeBuilder;
 
     /// <summary>
     /// Gets the underlying <see cref="TerminalConnector"/>.
@@ -127,7 +127,7 @@ public sealed partial class CodeWriter : IDisposable
         if (expressions.Length > 0)
         {
             int exprIndex = 0;
-            CodeGraph.Builder.ExpressionScopeDisposable? exprDisposable = null;
+            CodeGraph.IBuilder.ExpressionScopeDisposable? exprDisposable = null;
             foreach (var terminal in block.Type.Terminals)
             {
                 if (terminal is not { Type: TerminalType.In, SignalType: not SignalType.Error and not SignalType.Void })
@@ -1150,13 +1150,13 @@ public sealed partial class CodeWriter : IDisposable
     /// </summary>
     /// <returns>An <see cref="IDisposable"/>, that when disposed exits the statement block.</returns>
     public CodeGraph.Builder.StatementScopeDisposable StatementScope()
-        => _codeBuilder.StatementScope();
+        => _codeBuilder is CodeGraph.Builder builder ? builder.StatementScope() : default;
 
     /// <summary>
     /// Enters an expression block.
     /// </summary>
     /// <returns>An <see cref="IDisposable"/>, that when disposed exits the expression block.</returns>
-    public CodeGraph.Builder.ExpressionScopeDisposable ExpressionScope()
+    public CodeGraph.IBuilder.ExpressionScopeDisposable ExpressionScope()
         => _codeBuilder.ExpressionScope();
 
     #endregion

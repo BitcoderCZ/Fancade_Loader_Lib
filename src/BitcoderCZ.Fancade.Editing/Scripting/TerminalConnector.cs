@@ -21,7 +21,7 @@ public sealed class TerminalConnector
     /// Initializes a new instance of the <see cref="TerminalConnector"/> class.
     /// </summary>
     /// <param name="builder">The <see cref="CodeGraph.Builder"/> used to connect terminals.</param>
-    public TerminalConnector(CodeGraph.Builder builder)
+    public TerminalConnector(CodeGraph.IBuilder builder)
         : this(builder.Connect)
     {
     }

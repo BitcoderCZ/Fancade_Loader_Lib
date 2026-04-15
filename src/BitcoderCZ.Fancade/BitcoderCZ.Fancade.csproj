@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -12,7 +12,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>BitcoderCZ.Fancade</PackageId>
     <PackageTags>library;fancade</PackageTags>
-    <Version>4.0.0-develop.23</Version>
+    <Version>4.0.0-develop.24</Version>
     <Description>C# lib for loading, saving and modifying games for Fancade.</Description>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
@@ -43,11 +43,11 @@
     <PackageReference Include="BitcoderCZ.Buffers" Version="1.8.0" />
     <PackageReference Include="BitcoderCZ.Maths" Version="1.2.0" />
     <PackageReference Include="BitcoderCZ.Utils" Version="1.0.0" />
-    <PackageReference Include="hamarb123.Analyzers" Version="1.3.4">
+    <PackageReference Include="hamarb123.Analyzers" Version="1.3.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.202">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -64,7 +64,7 @@
   <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageReference Include="zlib.net-mutliplatform" Version="1.1.0" />
-	  <PackageReference Include="System.Collections.Immutable" Version="10.0.2" />
+	  <PackageReference Include="System.Collections.Immutable" Version="10.0.6" />
 		<Reference Include="Bcl.CollectionsMarshal">
 			<HintPath>..\..\libs\Bcl.CollectionsMarshal.dll</HintPath>
 		</Reference>

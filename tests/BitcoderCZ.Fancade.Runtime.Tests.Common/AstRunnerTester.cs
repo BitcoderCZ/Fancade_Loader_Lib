@@ -73,10 +73,10 @@ public sealed class AstRunnerTester
         return CreatePhysics(FcAST.Parse(prefabs, levelId.Value), prefabs, levelId, options);
     }
 
-    public static AstRunnerTester Create(CodeGraph.Builder builder, ushort? levelId = null, Options? options = null)
+    public static AstRunnerTester Create(CodeGraph.IBuilder builder, ushort? levelId = null, Options? options = null)
         => Create(new PrefabList([BuilderToPrefab(builder)]), levelId, options);
 
-    public static AstRunnerTester CreatePhysics(CodeGraph.Builder builder, ushort? levelId = null, Options? options = null)
+    public static AstRunnerTester CreatePhysics(CodeGraph.IBuilder builder, ushort? levelId = null, Options? options = null)
         => CreatePhysics(new PrefabList([BuilderToPrefab(builder)]), levelId, options);
 
     public static AstRunnerTester Create(CodeWriter writer, ushort? levelId = null, Options? options = null)
@@ -153,7 +153,7 @@ public sealed class AstRunnerTester
         return _expectedInspects[inspect] ?? AssertionResult.Passed;
     }
 
-    private static Prefab BuilderToPrefab(CodeGraph.Builder builder)
+    private static Prefab BuilderToPrefab(CodeGraph.IBuilder builder)
     {
         var prefab = new Prefab(RawGame.CurrentNumbStockPrefabs);
         PrefabCodeGraphEmitter.Emit(TowerCodeGraphPositioner.Layout(builder.BuildAndClear()), prefab, int3.Zero);
